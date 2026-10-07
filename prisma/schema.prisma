@@ -1,0 +1,119 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EstadoProducto {
+  ACTIVO
+  BORRADOR
+  SIN_STOCK
+}
+
+enum TipoCombo {
+  COMBO
+  PEDIDO_NICHO
+}
+
+model Product {
+  // El código es TEXTO: puede empezar con 0. Nunca se convierte a número.
+  codigo        String   @id
+  producto      String
+  marca         String
+  presentacion  String
+  categoria     String
+  formato       String
+  costo         Decimal  @db.Decimal(12, 2)
+  precioPublico Decimal  @db.Decimal(12, 2)
+  // (precio - costo) / precio * 100. Se recalcula en cada escritura de precio o costo.
+  margenPct     Decimal  @db.Decimal(6, 2)
+  contenido     Int?
+  unidad        String? // "g" | "ml"
+  pesoBrutoG    Int?
+  pesoEstimado  Boolean  @default(true)
+
+  fotoUrl String?
+  fotos   String[] @default([])
+
+  nichos                String[] @default([])
+  objetivos             String[] @default([])
+  clasificacionRevisada Boolean  @default(false)
+
+  estado           EstadoProducto @default(ACTIVO)
+  visible          Boolean        @default(true)
+  ocultoMotivo     String?
+  gancho           Boolean        @default(false)
+  porQueLoElegimos String?
+  vendidos         Int            @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  historial  PriceHistory[]
+  comboItems ComboItem[]
+
+  @@index([categoria])
+  @@index([marca])
+  @@index([visible, estado, margenPct])
+}
+
+model PriceHistory {
+  id            Int      @id @default(autoincrement())
+  codigo        String
+  product       Product  @relation(fields: [codigo], references: [codigo], onDelete: Cascade)
+  costo         Decimal  @db.Decimal(12, 2)
+  precioPublico Decimal  @db.Decimal(12, 2)
+  origen        String // "seed" | "csv" | "manual" | "sync"
+  fecha         DateTime @default(now())
+
+  @@index([codigo, fecha])
+}
+
+model Combo {
+  id           Int       @id @default(autoincrement())
+  slug         String    @unique
+  nombre       String
+  tipo         TipoCombo @default(COMBO)
+  nicho        String?
+  descuentoPct Decimal   @default(0) @db.Decimal(5, 2)
+  activo       Boolean   @default(true)
+  destacado    Boolean   @default(false)
+  vigenteDesde DateTime?
+  vigenteHasta DateTime?
+  items        ComboItem[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model ComboItem {
+  comboId  Int
+  codigo   String
+  cantidad Int     @default(1)
+  combo    Combo   @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  product  Product @relation(fields: [codigo], references: [codigo])
+
+  @@id([comboId, codigo])
+}
+
+// Fila única (id = 1) con la configuración del negocio.
+model Setting {
+  id                       Int      @id @default(1)
+  compraMinima             Decimal  @default(200000) @db.Decimal(12, 2)
+  margenMinimoPct          Decimal  @default(12) @db.Decimal(5, 2)
+  descuentoTransferenciaPct Decimal @default(0) @db.Decimal(5, 2)
+  comisionPagoPct          Decimal  @default(0) @db.Decimal(5, 2)
+  costoPackaging           Decimal  @default(0) @db.Decimal(12, 2)
+  envioGratisDesde         Decimal? @db.Decimal(12, 2)
+  updatedAt                DateTime @updatedAt
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
