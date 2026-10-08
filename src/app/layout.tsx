@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SITIO, urlSitio } from "@/lib/sitio";
 
 export const metadata: Metadata = {
-  title: { default: "Acopio Saludable", template: "%s · Acopio Saludable" },
-  description: "Productos saludables por volumen para negocios y familias. Envíos a todo el país desde Villa Carlos Paz.",
+  metadataBase: new URL(urlSitio()),
+  title: { default: `${SITIO.nombre}: productos saludables por volumen`, template: `%s · ${SITIO.nombre}` },
+  description: SITIO.descripcion,
+  openGraph: { siteName: SITIO.nombre, locale: "es_AR", type: "website" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

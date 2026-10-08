@@ -1,21 +1,25 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
+import { comboVigente } from "@/lib/tienda";
 import { calcularCombo, descuentoMaximo, pesos } from "@/lib/precios";
 
-export default async function Combos() {
+export default async function Combos({ searchParams }: { searchParams: Promise<{ eliminado?: string }> }) {
+  const { eliminado } = await searchParams;
   const [combos, cfg] = await Promise.all([
     prisma.combo.findMany({ include: { items: { include: { product: true } } }, orderBy: [{ tipo: "asc" }, { id: "asc" }] }),
     leerConfig(),
   ]);
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold">Combos y pedidos tipo</h1>
-        <p className="text-sm text-stone-500">
-          Cargados desde el seed. El alta, edición y vigencias llegan con la Fase 2; acá ya se controla el margen mínimo ({cfg.margenMinimoPct}%).
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold">Combos y pedidos tipo</h1>
+          <p className="text-sm text-stone-500">Ninguno puede quedar debajo del margen mínimo ({cfg.margenMinimoPct}%).</p>
+        </div>
+        <Link href="/admin/combos/nuevo" className="btn">Nuevo combo</Link>
       </div>
+      {eliminado && <p className="rounded-md bg-acopio-100 px-3 py-2 text-sm text-acopio-700">Combo eliminado.</p>}
       {combos.map((c) => {
         const lineas = c.items.map((i) => ({ precio: Number(i.product.precioPublico), costo: Number(i.product.costo), cantidad: i.cantidad }));
         const calc = calcularCombo(lineas, Number(c.descuentoPct), cfg.margenMinimoPct);
@@ -24,7 +28,9 @@ export default async function Combos() {
           <div key={c.id} className="tarjeta">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-semibold">
-                {c.nombre} <span className="chip bg-stone-100 text-stone-600">{c.tipo === "COMBO" ? "Combo" : "Pedido tipo"}</span>
+                <Link href={`/admin/combos/${c.id}`} className="hover:underline">{c.nombre}</Link>{" "}
+                {!comboVigente(c) && <span className="chip bg-stone-200 text-stone-700">{c.activo ? "Fuera de vigencia" : "Inactivo"}</span>}{" "}
+                <span className="chip bg-stone-100 text-stone-600">{c.tipo === "COMBO" ? "Combo" : "Pedido tipo"}</span>
               </h2>
               <div className="text-sm tabular-nums">
                 {pesos(calc.precioCombo)} · costo {pesos(calc.costo)} ·{" "}
@@ -32,7 +38,7 @@ export default async function Combos() {
               </div>
             </div>
             <p className="mt-1 text-xs text-stone-500">
-              Descuento actual {Number(c.descuentoPct)}% · descuento máximo sin perforar el margen: {descuentoMaximo(lineas, cfg.margenMinimoPct)}%
+              <Link href={`/admin/combos/${c.id}`} className="text-acopio-700 underline">Editar</Link> · Descuento actual {Number(c.descuentoPct)}% · descuento máximo sin perforar el margen: {descuentoMaximo(lineas, cfg.margenMinimoPct)}%
               {c.tipo === "PEDIDO_NICHO" && calc.precioCombo < cfg.compraMinima ? ` · no llega a la compra mínima de ${pesos(cfg.compraMinima)}` : ""}
             </p>
             {calc.bloqueado && <p className="mt-2 rounded bg-red-50 px-2 py-1 text-sm text-red-700">Bloqueado: queda por debajo del margen mínimo.</p>}

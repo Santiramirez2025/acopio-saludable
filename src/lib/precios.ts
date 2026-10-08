@@ -44,5 +44,6 @@ export function precioPorUnidadBase(precio: number, contenido: number | null, un
 }
 
 export function pesos(n: number): string {
-  return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
+  // Sin decimales cuando el importe es redondo ($ 200.000), con dos cuando no ($ 8.983,92).
+  return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
 }
