@@ -7,8 +7,10 @@ export const dynamic = "force-dynamic";
 
 const NAV = [
   ["/admin", "Resumen"],
+  ["/admin/pedidos", "Pedidos"],
   ["/admin/productos", "Productos"],
   ["/admin/combos", "Combos"],
+  ["/admin/envios", "Envíos"],
   ["/admin/importar", "Importar"],
   ["/admin/configuracion", "Configuración"],
 ];
@@ -18,7 +20,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   if (!session) redirect("/admin/login");
   return (
     <div className="min-h-screen">
-      <header className="border-b border-stone-200 bg-white">
+      <header className="border-b border-stone-200 bg-white print:hidden">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <Link href="/admin" className="font-semibold text-acopio-700">Acopio Saludable</Link>
           <nav className="flex flex-wrap gap-4 text-sm text-stone-600">

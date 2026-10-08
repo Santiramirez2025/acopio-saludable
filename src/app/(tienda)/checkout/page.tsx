@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { leerConfig } from "@/lib/config";
+import { mpConfigurado } from "@/lib/mercadopago";
+import { PROVINCIAS } from "@/lib/envios/geo";
 import { Titulo } from "@/components/Tienda";
+import { Checkout } from "@/components/Checkout";
 
 export const metadata: Metadata = { title: "Finalizar compra", robots: { index: false } };
 
-// El checkout (datos, envío, Mercado Pago y transferencia) se construye en la Fase 3.
-export default function Checkout() {
+export default async function CheckoutPagina() {
+  const cfg = await leerConfig();
   return (
-    <div className="mx-auto max-w-xl">
-      <Titulo sobre="Finalizar compra">Estamos terminando el checkout</Titulo>
-      <p className="text-stone-600">Tu carrito queda guardado en este dispositivo. Muy pronto vas a poder pagar con Mercado Pago o transferencia desde acá.</p>
-      <Link href="/carrito" className="btn mt-4">Volver al carrito</Link>
+    <div>
+      <Titulo sobre="Finalizar compra">Datos, envío y pago</Titulo>
+      <Checkout provincias={PROVINCIAS.map((p) => p.nombre)} mpDisponible={mpConfigurado()} descuentoTransferenciaPct={cfg.descuentoTransferenciaPct} />
     </div>
   );
 }
