@@ -42,3 +42,22 @@ export function whereVista(vista: string, margenMinimoPct: number): Prisma.Produ
       return {};
   }
 }
+
+// --- Sin TACC ---
+// Se toma del rótulo que informa el proveedor en el nombre o la presentación ("Sin Gluten", "Sin TACC", "S/TACC"...).
+// No es una certificación propia: en la tienda siempre se muestra con el aviso de verificar el envase.
+const ROTULOS_SIN_TACC = ["sin gluten", "sin tacc", "sin  tacc", "sin t.a.c.c", "s/tacc", "s/ tacc", "libre de gluten"];
+const PATRON_SIN_TACC = /sin\s*gluten|sin\s*t\.?a\.?c\.?c|s\/\s*tacc|libre de gluten/i;
+
+export const AVISO_SIN_TACC = "Productos rotulados sin TACC o sin gluten por su fabricante. Verificá siempre el logo oficial en el envase.";
+
+export function esSinTacc(p: { producto: string; presentacion: string }): boolean {
+  return PATRON_SIN_TACC.test(`${p.producto} ${p.presentacion}`);
+}
+
+export const WHERE_SIN_TACC: Prisma.ProductWhereInput = {
+  OR: ROTULOS_SIN_TACC.flatMap((r) => [
+    { producto: { contains: r, mode: "insensitive" as const } },
+    { presentacion: { contains: r, mode: "insensitive" as const } },
+  ]),
+};

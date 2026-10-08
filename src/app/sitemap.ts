@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     combosTienda({ tipo: "COMBO", activo: true }),
   ]);
   return [
-    ...["", "/catalogo", "/nichos", "/objetivos", "/combos", "/armador"].map((r) => ({ url: `${base}${r}` })),
+    ...["", "/catalogo", "/sin-tacc", "/nichos", "/objetivos", "/combos", "/armador"].map((r) => ({ url: `${base}${r}` })),
     ...NICHOS.map((n) => ({ url: `${base}/nichos/${n.id}` })),
     ...OBJETIVOS.map((o) => ({ url: `${base}/objetivos/${o.id}` })),
     ...combos.filter((c) => c.disponible).map((c) => ({ url: `${base}/combos/${c.slug}` })),

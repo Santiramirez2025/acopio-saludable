@@ -6,6 +6,7 @@ import { pesosCliente, useCarrito } from "./Carrito";
 
 const NAV = [
   ["/catalogo", "Catálogo"],
+  ["/sin-tacc", "Sin TACC"],
   ["/nichos", "Por negocio"],
   ["/objetivos", "Por objetivo"],
   ["/combos", "Combos"],
