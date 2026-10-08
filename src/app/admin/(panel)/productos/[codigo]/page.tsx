@@ -5,6 +5,7 @@ import { leerConfig } from "@/lib/config";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadBase } from "@/lib/precios";
 import { guardarProducto } from "@/lib/acciones";
+import { LineasHistorial } from "@/components/Graficos";
 
 export default async function EditarProducto({
   params,
@@ -18,7 +19,7 @@ export default async function EditarProducto({
   const [p, cfg] = await Promise.all([
     prisma.product.findUnique({
       where: { codigo },
-      include: { historial: { orderBy: { fecha: "desc" }, take: 10 }, comboItems: { include: { combo: true } } },
+      include: { historial: { orderBy: { fecha: "desc" }, take: 120 }, comboItems: { include: { combo: true } } },
     }),
     leerConfig(),
   ]);
@@ -132,8 +133,9 @@ export default async function EditarProducto({
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="tarjeta">
           <h2 className="mb-2 text-sm font-semibold">Historial de precios</h2>
-          <ul className="text-sm">
-            {p.historial.map((h) => (
+          <LineasHistorial puntos={[...p.historial].reverse().map((h) => ({ fecha: h.fecha, costo: Number(h.costo), precio: Number(h.precioPublico) }))} />
+          <ul className="mt-3 text-sm">
+            {p.historial.slice(0, 12).map((h) => (
               <li key={h.id} className="flex justify-between border-b border-stone-100 py-1 tabular-nums">
                 <span className="text-stone-500">{h.fecha.toLocaleDateString("es-AR")} · {h.origen}</span>
                 <span>costo {pesos(Number(h.costo))} · precio {pesos(Number(h.precioPublico))}</span>

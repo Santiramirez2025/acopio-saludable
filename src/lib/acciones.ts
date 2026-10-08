@@ -9,6 +9,9 @@ import { leerItemsCombo, slugDesdeNombre } from "./combos";
 import type { EstadoPedido } from "@prisma/client";
 import { ESTADOS, confirmarPago } from "./pedidos";
 import { ZONAS, normalizarCp, validarListaCp } from "./envios/geo";
+import { generarTokenSync, registrarSync, resolverPendientes, textoResumen } from "./sync";
+import { codigoMarcador } from "./marcador";
+import { urlSitio } from "./sitio";
 import { NICHO_IDS, OBJETIVO_IDS } from "./taxonomia";
 import { aplicarFotos, importarCatalogo, leerCatalogoCsv } from "./catalogo";
 import { leerJsonFotos } from "./fotos";
@@ -405,5 +408,73 @@ export async function guardarEnvios(fd: FormData) {
     destino = `/admin/envios?error=${encodeURIComponent(mensaje(e))}`;
   }
   revalidatePath("/", "layout");
+  redirect(destino);
+}
+
+// ---------- Actualización de precios ----------
+
+export type EstadoMarcador = { marcador: string } | { error: string } | null;
+
+/** Genera un token nuevo y devuelve el marcador armado. El token no vuelve a mostrarse. */
+export async function generarMarcador(_previo: EstadoMarcador, _fd: FormData): Promise<EstadoMarcador> {
+  await requireAdmin();
+  const sitio = urlSitio();
+  if (!sitio.startsWith("https://")) {
+    return { error: "El sitio tiene que estar publicado con https (definí NEXT_PUBLIC_SITE_URL): desde Distrimay, el navegador no deja enviar datos a una dirección sin https." };
+  }
+  return { marcador: codigoMarcador(sitio, await generarTokenSync()) };
+}
+
+export async function subirActualizacion(fd: FormData) {
+  await requireAdmin();
+  let destino: string;
+  try {
+    const archivo = fd.get("archivo");
+    if (!(archivo instanceof File) || archivo.size === 0) throw new Error("Elegí un archivo");
+    if (archivo.size > 5 * 1024 * 1024) throw new Error("El archivo supera los 5 MB");
+    const texto = await archivo.text();
+    let r;
+    if (/\.csv$/i.test(archivo.name) || !/^\s*[[{]/.test(texto)) {
+      // CSV del proveedor con las mismas columnas del catálogo. No se asume que esté completo.
+      const filas = leerCatalogoCsv(texto);
+      r = await registrarSync({ origen: "csv", modo: "costos", completo: false, items: filas.map((f) => ({ ...f, categoria: f.categoria })) });
+    } else {
+      const j = JSON.parse(texto);
+      r = await registrarSync({ origen: "json", modo: j.modo, completo: j.completo, items: j.items });
+    }
+    destino = `/admin/actualizaciones/${r.id}?resumen=${encodeURIComponent(textoResumen(r))}`;
+  } catch (e) {
+    destino = `/admin/actualizaciones?error=${encodeURIComponent(mensaje(e))}`;
+  }
+  revalidatePath("/", "layout");
+  redirect(destino);
+}
+
+export async function resolverCambios(fd: FormData) {
+  await requireAdmin();
+  const syncId = Number.parseInt(String(fd.get("syncId")), 10);
+  const accion = String(fd.get("accion"));
+  const ids = fd.getAll("ids").map((v) => Number.parseInt(String(v), 10)).filter(Number.isInteger);
+  let destino: string;
+  try {
+    if (!["aprobar", "rechazar", "aprobar-todos"].includes(accion)) throw new Error("Acción inválida");
+    if (accion !== "aprobar-todos" && !ids.length) throw new Error("Marcá al menos un cambio");
+    const n = await resolverPendientes(syncId, accion === "aprobar-todos" ? "todos" : ids, accion !== "rechazar");
+    destino = `/admin/actualizaciones/${syncId}?resumen=${encodeURIComponent(`${n} cambios ${accion === "rechazar" ? "rechazados" : "aplicados"}.`)}`;
+  } catch (e) {
+    destino = `/admin/actualizaciones/${syncId}?error=${encodeURIComponent(mensaje(e))}`;
+  }
+  revalidatePath("/", "layout");
+  redirect(destino);
+}
+
+export async function guardarUmbral(fd: FormData) {
+  await requireAdmin();
+  let destino = "/admin/actualizaciones?ok=1";
+  try {
+    await prisma.setting.update({ where: { id: 1 }, data: { umbralAutoPct: numero(fd, "umbralAutoPct", { min: 0, max: 100 }) } });
+  } catch (e) {
+    destino = `/admin/actualizaciones?error=${encodeURIComponent(mensaje(e))}`;
+  }
   redirect(destino);
 }
