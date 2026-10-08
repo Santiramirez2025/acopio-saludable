@@ -6,6 +6,8 @@ import { leerConfig } from "@/lib/config";
 import { aTienda, combosTienda, estaPublicado, productosTienda } from "@/lib/tienda";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadBase, precioSugerido } from "@/lib/precios";
+import { proximoCorte } from "@/lib/corte";
+import { CuentaRegresiva } from "@/components/CuentaRegresiva";
 import { urlSitio } from "@/lib/sitio";
 import { Galeria } from "@/components/Galeria";
 import { BotonAgregar } from "@/components/Carrito";
@@ -93,6 +95,7 @@ export default async function Producto({ params }: Props) {
               </div>
             )}
             <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
+            <CuentaRegresiva corte={proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null} className="mt-3" />
             <p className="mt-3 text-xs text-stone-600">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras. Envíos a todo el país.</p>
           </div>
           {fila.porQueLoElegimos && (

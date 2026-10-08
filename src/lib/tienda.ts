@@ -3,6 +3,7 @@
 import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
+import { proximoCorte } from "./corte";
 import { calcularCombo, precioSugerido, redondear2 } from "./precios";
 import { wherePublicado, esSinTacc } from "./filtros-producto";
 
@@ -142,6 +143,12 @@ export type Cotizacion = {
   falta: number;
   progresoPct: number;
   puedePagar: boolean;
+  /** Total con el descuento por transferencia; null si no hay descuento. */
+  conTransferencia: number | null;
+  /** Lo que ganaría revendiendo todo al precio sugerido; 0 si el sugerido está apagado. */
+  gananciaReventa: number;
+  /** Próximo corte de compra (ISO) o null. */
+  corte: string | null;
 };
 
 /** El precio siempre se calcula en el servidor: el navegador solo manda qué y cuánto. */
@@ -158,6 +165,7 @@ export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
   const porSlug = new Map(combos.map((c) => [c.slug, c]));
 
   const lineas: LineaCotizada[] = [];
+  let gananciaReventa = 0;
   for (const l of lineasEntrada) {
     if (l.tipo === "producto") {
       const p = porCodigo.get(l.id);
@@ -175,6 +183,7 @@ export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
         subtotal: disponible ? redondear2(precio * l.cantidad) : 0,
         disponible,
       });
+      if (disponible) gananciaReventa += (precioSugerido(precio, cfg.recargoSugeridoPct)?.ganancia ?? 0) * l.cantidad;
     } else {
       const c = porSlug.get(l.id);
       if (!c) continue;
@@ -201,5 +210,8 @@ export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
     falta,
     progresoPct: cfg.compraMinima > 0 ? Math.min(100, Math.round((subtotal / cfg.compraMinima) * 100)) : 100,
     puedePagar: subtotal > 0 && falta === 0,
+    conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? redondear2(subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) : null,
+    gananciaReventa: redondear2(gananciaReventa),
+    corte: proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null,
   };
 }

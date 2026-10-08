@@ -327,3 +327,18 @@ test("precio sugerido: recargo sobre el precio vigente, redondeado hacia arriba 
   assert.equal(precioSugerido(100100, 40)?.sugerido, 140500);
   assert.equal(precioSugerido(1000, 0), null);
 });
+
+test("corte de compra: próximo cierre en hora argentina", async () => {
+  const { proximoCorte, leerDiasCorte } = await import("./corte");
+  assert.deepEqual(leerDiasCorte("1, 3,5,9,x"), [1, 3, 5]);
+  const lv = [1, 2, 3, 4, 5];
+  // Jueves 8/10/2026 10:00 en Argentina (13:00 UTC): cierra hoy a las 14 (17:00 UTC).
+  assert.equal(proximoCorte(new Date("2026-10-08T13:00:00Z"), lv, 14)?.toISOString(), "2026-10-08T17:00:00.000Z");
+  // Jueves 15:00: ya cerró, pasa al viernes.
+  assert.equal(proximoCorte(new Date("2026-10-08T18:00:00Z"), lv, 14)?.toISOString(), "2026-10-09T17:00:00.000Z");
+  // Viernes 15:00: pasa al lunes.
+  assert.equal(proximoCorte(new Date("2026-10-09T18:00:00Z"), lv, 14)?.toISOString(), "2026-10-12T17:00:00.000Z");
+  // Un solo día por semana, justo después del cierre: la semana siguiente.
+  assert.equal(proximoCorte(new Date("2026-10-08T17:00:01Z"), [4], 14)?.toISOString(), "2026-10-15T17:00:00.000Z");
+  assert.equal(proximoCorte(new Date(), [], 14), null);
+});

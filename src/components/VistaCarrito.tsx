@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { BarraMinimo, pesosCliente, useCarrito } from "./Carrito";
 import { Foto } from "./Foto";
+import { CuentaRegresiva } from "./CuentaRegresiva";
 
 export function VistaCarrito() {
   const { lineas, listo, cotizacion, cotizando, fijar, vaciar } = useCarrito();
@@ -18,7 +19,7 @@ export function VistaCarrito() {
       </div>
     );
   }
-  const { puedePagar, falta, subtotal } = cotizacion;
+  const { puedePagar, falta, subtotal, conTransferencia, gananciaReventa, corte } = cotizacion;
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
@@ -58,12 +59,25 @@ export function VistaCarrito() {
           <span className="text-stone-600">Subtotal</span>
           <span className={`text-2xl font-semibold tabular-nums ${cotizando ? "opacity-50" : ""}`}>{pesosCliente(subtotal)}</span>
         </div>
-        <p className="text-xs text-stone-600">El envío se calcula en el paso siguiente.</p>
-        {puedePagar && !cotizando ? (
-          <Link href="/checkout" className="btn w-full">Continuar con la compra</Link>
-        ) : (
-          <button type="button" className="btn w-full" disabled aria-describedby="motivo-bloqueo">Continuar con la compra</button>
+        {conTransferencia !== null && (
+          <p className="flex items-baseline justify-between gap-3 text-sm">
+            <span className="text-stone-600">Pagando por transferencia</span>
+            <span className="text-right font-semibold tabular-nums text-acopio-600">{pesosCliente(conTransferencia)}<span className="block text-xs font-medium">ahorrás {pesosCliente(subtotal - conTransferencia)}</span></span>
+          </p>
         )}
+        {gananciaReventa > 0 && (
+          <div className="rounded-xl bg-acopio-100 px-3.5 py-2.5 text-sm">
+            <p className="text-stone-700">Si lo revendés al precio sugerido</p>
+            <p className="font-display text-xl font-bold tabular-nums text-acopio-700">ganás {pesosCliente(gananciaReventa)}</p>
+          </div>
+        )}
+        <CuentaRegresiva corte={corte} />
+        {puedePagar && !cotizando ? (
+          <Link href="/checkout" className="btn-comprar w-full">Continuar con la compra</Link>
+        ) : (
+          <button type="button" className="btn-comprar w-full" disabled aria-describedby="motivo-bloqueo">Continuar con la compra</button>
+        )}
+        <p className="text-xs text-stone-600">Al confirmar el pedido quedan fijos los precios de hoy. El envío se calcula en el paso siguiente.</p>
         {!puedePagar && (
           <p id="motivo-bloqueo" className="text-sm text-tierra-700">
             Te faltan {pesosCliente(falta)} para llegar a la compra mínima. <Link href="/catalogo" className="underline">Seguir sumando</Link>

@@ -15,6 +15,7 @@ import { urlSitio } from "./sitio";
 import { NICHO_IDS, OBJETIVO_IDS } from "./taxonomia";
 import { aplicarFotos, importarCatalogo, leerCatalogoCsv } from "./catalogo";
 import { leerJsonFotos } from "./fotos";
+import { leerDiasCorte } from "./corte";
 
 function numero(
   fd: FormData,
@@ -166,6 +167,8 @@ export async function guardarConfig(fd: FormData) {
           max: 99,
         }),
         recargoSugeridoPct: numero(fd, "recargoSugeridoPct", { min: 0, max: 300 }),
+        corteDias: leerDiasCorte(String(fd.get("corteDias") ?? "")).join(","),
+        corteHora: Math.round(numero(fd, "corteHora", { min: 0, max: 23 })),
         comisionPagoPct: numero(fd, "comisionPagoPct", { min: 0, max: 99 }),
         costoPackaging: numero(fd, "costoPackaging", { min: 0 }),
         envioGratisDesde:
