@@ -11,7 +11,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "fotos": "tsx scripts/aplicar-fotos.ts",
     "test": "tsx --test src/lib/*.test.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && DATABASE_URL=\"${DATABASE_URL_UNPOOLED:-$DATABASE_URL}\" prisma migrate deploy && tsx prisma/seed.ts && next build"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^6.19.3",
