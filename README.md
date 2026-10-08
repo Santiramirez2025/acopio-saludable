@@ -9,7 +9,7 @@ Stack: Next.js (App Router) + TypeScript, Prisma + PostgreSQL (Neon), NextAuth, 
 - **Fase 1 (hecha):** modelo de datos, importación del CSV (1.177 productos), fotos del proveedor (1.111), panel de productos, combos iniciales con control de margen, configuración.
 - **Fase 2 (hecha):** sitio público (home, catálogo con filtros, ficha, compra por negocio y por objetivo, combos, armador de pedido), carrito con compra mínima, alta y edición de combos en el panel, SEO básico (metadatos, sitemap, datos estructurados).
 - **Fase 3 (hecha):** checkout con cálculo de envío automático, Mercado Pago (Checkout Pro) y transferencia, pedidos con estados, lista de compra a Distrimay, etiqueta de envío, margen neto por pedido y configuración de envíos.
-- Fase 4: sincronización diaria de precios y estadísticas.
+- **Fase 4 (hecha):** sincronización diaria de precios con marcador, diff con aprobación, historial con gráfico y estadísticas de ventas y márgenes.
 
 ## Puesta en marcha
 
@@ -50,6 +50,19 @@ El seed se puede volver a correr: no duplica nada ni pisa lo editado en el panel
 - **Envíos:** entrega propia sin cargo por código postal; MiCorreo y Andreani si están sus credenciales; si no, tabla por peso y zona (Panel → Envíos). Bultos de hasta 25 kg, cotizados uno por uno. La tabla viene con **valores de ejemplo**: hay que cargar las tarifas reales.
 - **Confirmaciones:** email por Resend (`RESEND_API_KEY`, `EMAIL_FROM`) al recibir el pedido y al confirmar el pago; botón de WhatsApp con el mensaje armado para el cliente y para la tienda. No hay envío automático de WhatsApp.
 - **Lista de compra a Distrimay:** en cada pedido, con código, producto, cantidad, costo y total; también en CSV.
+
+## Actualización diaria de precios
+
+- **Marcador:** en Panel → Actualizaciones se genera un marcador para el navegador. Con la sesión de Distrimay abierta, un clic lee costos (tu lista de precios) y precios públicos de todo el catálogo y los manda a `/api/admin/price-sync`. Si no puede enviar, descarga `precios-distrimay.json` para subirlo a mano. También se acepta un CSV del proveedor.
+- **Lee del sistema del proveedor, no de la pantalla:** una sola consulta trae los 1.177 artículos, sin depender de la paginación ni del diseño de la página.
+- **Qué manda:** códigos, nombres, precios y nombres de foto. Nunca usuario, contraseña ni la sesión de Distrimay. La tienda guarda solo el hash del token del marcador.
+- **Reglas:** los cambios menores al umbral (10% por defecto) se aplican solos; los demás esperan aprobación. Productos nuevos entran en borrador. Los que desaparecen pasan a sin stock solo si la lectura fue completa; si falta más del 10% del catálogo de golpe, se pide aprobación.
+- **Aviso:** el panel muestra "Sincronizá los precios de hoy" hasta que haya una actualización del día.
+- Requiere el sitio publicado con https y `NEXT_PUBLIC_SITE_URL` definido.
+
+## Estadísticas
+
+Ventas, pedidos, ticket promedio, margen bruto y margen neto (descontando subsidio de envío, comisión de pago, packaging y descuentos), ventas por día y rankings de productos, combos y nichos por margen en pesos. Cuentan solo los pedidos con pago confirmado.
 
 ## Fotos
 

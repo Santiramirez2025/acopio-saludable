@@ -231,3 +231,76 @@ test("pedidos: lista de compra, margen neto, número y WhatsApp", () => {
   assert.equal(linkWhatsapp("+54 9 3541 555555", "a b"), "https://wa.me/5493541555555?text=a%20b");
   assert.equal(linkWhatsapp("123", "x"), null);
 });
+
+import { calcularDiff, sanearEntrantes, variacionPct } from "./sync-diff";
+
+test("sincronización: diff, umbral del 10%, nuevos, desaparecidos y reaparecidos", () => {
+  const actuales = [
+    { codigo: "00000010", producto: "Avena", costo: 1000, precioPublico: 1300, estado: "ACTIVO" as const },
+    { codigo: "2", producto: "Sube mucho", costo: 1000, precioPublico: 1300, estado: "ACTIVO" as const },
+    { codigo: "3", producto: "Justo 10", costo: 1000, precioPublico: 1300, estado: "ACTIVO" as const },
+    { codigo: "4", producto: "Sin cambios", costo: 500, precioPublico: 700, estado: "ACTIVO" as const },
+    { codigo: "5", producto: "Se fue", costo: 500, precioPublico: 700, estado: "ACTIVO" as const },
+    { codigo: "6", producto: "Volvió", costo: 500, precioPublico: 700, estado: "SIN_STOCK" as const },
+    { codigo: "7", producto: "Borrador ausente", costo: 1, precioPublico: 2, estado: "BORRADOR" as const },
+  ];
+  const { items: entrantes, descartados } = sanearEntrantes([
+    { codigo: "00000010", producto: "Avena", costo: 1050, precioPublico: "1365.004" },
+    { codigo: "2", producto: "x", costo: 1250, precioPublico: 1300 },
+    { codigo: "3", producto: "x", costo: 1000, precioPublico: 1170 },
+    { codigo: "4", producto: "x", costo: 500, precioPublico: 700 },
+    { codigo: "6", producto: "x", costo: 500, precioPublico: 700 },
+    { codigo: "0099", producto: "Nuevo", costo: 10, precioPublico: 15 },
+    { codigo: "0099", producto: "Repetido", costo: 10, precioPublico: 15 },
+    { codigo: "8", producto: "Precio roto", costo: -5, precioPublico: 15 },
+    { codigo: "", producto: "Sin código", costo: 5, precioPublico: 15 },
+    { codigo: 7796666359875, producto: "Código numérico", costo: null, precioPublico: null },
+  ]);
+  assert.equal(descartados, 4);
+  assert.equal(entrantes[0].precioPublico, 1365);
+  const r = calcularDiff(actuales, entrantes, { umbralAutoPct: 10, completo: true });
+  const ver = (c: string, t = "CAMBIO") => r.items.find((i) => i.codigo === c && i.tipo === t);
+  assert.deepEqual([ver("00000010")!.pct, ver("00000010")!.estado], [5, "APLICADO"]);
+  assert.deepEqual([ver("2")!.pct, ver("2")!.estado], [25, "PENDIENTE"]);
+  assert.deepEqual([ver("3")!.pct, ver("3")!.estado], [-10, "PENDIENTE"]); // 10% exacto no es "menor a 10%"
+  assert.equal(ver("4"), undefined);
+  assert.equal(ver("5", "DESAPARECIDO")!.estado, "APLICADO");
+  assert.equal(ver("6", "REAPARECIDO")!.estado, "APLICADO");
+  assert.equal(ver("7", "DESAPARECIDO"), undefined);
+  assert.equal(ver("0099", "NUEVO")!.costoNuevo, 10);
+  // lectura parcial: nadie pasa a sin stock
+  const parcial = calcularDiff(actuales, entrantes, { umbralAutoPct: 10, completo: false });
+  assert.equal(parcial.items.filter((i) => i.tipo === "DESAPARECIDO").length, 0);
+  assert.equal(parcial.avisos.length, 1);
+  // baja masiva: pide aprobación
+  const muchos = Array.from({ length: 100 }, (_, i) => ({ codigo: `m${i}`, producto: "p", costo: 1, precioPublico: 2, estado: "ACTIVO" as const }));
+  const masivo = calcularDiff(muchos, entrantes.slice(0, 1), { umbralAutoPct: 10, completo: true });
+  assert.ok(masivo.items.filter((i) => i.tipo === "DESAPARECIDO").every((i) => i.estado === "PENDIENTE"));
+  // solo precios públicos: el costo no se toca
+  const pub = calcularDiff(actuales, [{ codigo: "4", producto: "x", costo: null, precioPublico: 721 }], { umbralAutoPct: 10, completo: false });
+  assert.deepEqual([pub.items[0].costoNuevo, pub.items[0].precioNuevo, pub.items[0].pct], [500, 721, 3]);
+  assert.equal(variacionPct(0, 5), 100);
+  assert.throws(() => sanearEntrantes({}), /lista/);
+});
+
+import { resumir, serieDiaria } from "./estadisticas";
+
+test("estadísticas: ventas, ticket, márgenes y rankings por margen en pesos", () => {
+  const pedido = (fecha: string, extra: object, items: object[]) => ({ createdAt: new Date(fecha), subtotal: 0, descuento: 0, envioCobrado: 0, total: 0, costoProductos: 0, costoEnvioReal: 0, comisionPago: 0, costoPackaging: 0, items, ...extra }) as never;
+  const it = (codigo: string, cantidad: number, precio: number, costo: number, comboSlug: string | null = null) => ({ codigo, producto: codigo, presentacion: "", cantidad, precioUnitario: precio, costoUnitario: costo, comboSlug });
+  const r = resumir(
+    [
+      pedido("2026-10-05T15:00:00Z", { subtotal: 200000, costoProductos: 150000, costoEnvioReal: 10000, envioCobrado: 4000, comisionPago: 12000, costoPackaging: 1000 }, [it("a", 10, 15000, 11000), it("b", 5, 10000, 8000, "combo-x")]),
+      pedido("2026-10-07T02:00:00Z", { subtotal: 100000, descuento: 5000, costoProductos: 80000 }, [it("a", 2, 15000, 11000), it("c", 7, 10000, 8000)]),
+    ],
+    new Map([["a", ["gimnasios", "kioscos"]], ["b", ["kioscos"]]]),
+    { nichos: new Map([["gimnasios", "Gimnasios"]]), combos: new Map([["combo-x", "Combo X"]]) },
+  );
+  assert.deepEqual([r.pedidos, r.ventas, r.ticketPromedio, r.margenBruto, r.margenNeto], [2, 295000, 147500, 65000, 46000]);
+  assert.equal(r.margenBrutoPct, 22.03);
+  assert.deepEqual(r.productos.map((p) => [p.clave, p.unidades, p.margen]), [["a", 12, 48000], ["c", 7, 14000], ["b", 5, 10000]]);
+  assert.deepEqual(r.combos.map((c) => [c.nombre, c.margen]), [["Combo X", 10000]]);
+  assert.deepEqual(r.nichos.map((n) => [n.nombre, n.margen]), [["kioscos", 58000], ["Gimnasios", 48000]]);
+  // el segundo pedido es del 6 a la noche en Córdoba (UTC-3)
+  assert.deepEqual(serieDiaria(r.porDia, "2026-10-05", "2026-10-07").map((d) => [d.dia, d.ventas, d.pedidos]), [["2026-10-05", 200000, 1], ["2026-10-06", 95000, 1], ["2026-10-07", 0, 0]]);
+});
