@@ -23,7 +23,7 @@ export default async function EditarCombo({ params, searchParams }: { params: Pr
 
   return (
     <div className="max-w-3xl space-y-4">
-      <Link href="/admin/combos" className="text-sm text-stone-500 underline">← Combos</Link>
+      <Link href="/admin/combos" className="text-sm text-stone-600 underline">← Combos</Link>
       <h1 className="text-xl font-semibold">{combo ? combo.nombre : "Nuevo combo"}</h1>
       {ok && <p className="rounded-md bg-acopio-100 px-3 py-2 text-sm text-acopio-700">Combo guardado.</p>}
       {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">No se guardó: {error}</p>}
@@ -60,9 +60,9 @@ export default async function EditarCombo({ params, searchParams }: { params: Pr
               {combo.items.map((i) => (
                 <li key={i.codigo} className="flex justify-between border-b border-stone-100 py-1">
                   <Link href={`/admin/productos/${encodeURIComponent(i.codigo)}`} className="hover:underline">
-                    {i.cantidad} × {i.product.producto} <span className="text-stone-400">{i.product.presentacion}</span>
+                    {i.cantidad} × {i.product.producto} <span className="text-stone-500">{i.product.presentacion}</span>
                   </Link>
-                  <span className="tabular-nums text-stone-500">{pesos(Number(i.product.precioPublico) * i.cantidad)}</span>
+                  <span className="tabular-nums text-stone-600">{pesos(Number(i.product.precioPublico) * i.cantidad)}</span>
                 </li>
               ))}
             </ul>

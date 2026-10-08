@@ -20,12 +20,12 @@ export function PedidoEditable({ items, compraMinima, etiqueta = "Cargar este pe
               <Foto src={p.fotoUrl} alt="" etiqueta=" " className="h-14 w-14 shrink-0 rounded-md" />
               <div className="min-w-0 flex-1">
                 <a href={`/producto/${encodeURIComponent(p.codigo)}`} className="block truncate text-sm font-medium hover:underline">{p.producto}</a>
-                <p className="truncate text-xs text-stone-500">{p.presentacion} · {pesosCliente(p.precio)} c/u</p>
+                <p className="truncate text-xs text-stone-600">{p.presentacion} · {pesosCliente(p.precio)} c/u</p>
               </div>
               <div className="flex items-center rounded-md border border-stone-300">
-                <button type="button" className="px-2.5 py-1.5" aria-label={`Restar ${p.producto}`} onClick={() => fijar(p.codigo, n - 1)}>−</button>
-                <input className="w-9 border-0 bg-transparent p-0 text-center text-sm tabular-nums focus:outline-none" inputMode="numeric" aria-label={`Cantidad de ${p.producto}`} value={n} onChange={(e) => fijar(p.codigo, Number.parseInt(e.target.value, 10) || 0)} />
-                <button type="button" className="px-2.5 py-1.5" aria-label={`Sumar ${p.producto}`} onClick={() => fijar(p.codigo, n + 1)}>+</button>
+                <button type="button" className="paso" aria-label={`Restar ${p.producto}`} onClick={() => fijar(p.codigo, n - 1)}>−</button>
+                <input className="w-11 h-12 border-0 bg-transparent p-0 text-center text-sm font-semibold tabular-nums" inputMode="numeric" aria-label={`Cantidad de ${p.producto}`} value={n} onChange={(e) => fijar(p.codigo, Number.parseInt(e.target.value, 10) || 0)} />
+                <button type="button" className="paso" aria-label={`Sumar ${p.producto}`} onClick={() => fijar(p.codigo, n + 1)}>+</button>
               </div>
               <span className="hidden w-24 text-right text-sm tabular-nums sm:block">{pesosCliente(p.precio * n)}</span>
             </li>
@@ -35,7 +35,7 @@ export function PedidoEditable({ items, compraMinima, etiqueta = "Cargar este pe
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-tierra-200 p-4">
         <div>
           <p className="text-lg font-semibold tabular-nums">{pesosCliente(total)}</p>
-          <p className="text-xs text-stone-500">
+          <p className="text-xs text-stone-600">
             {total >= compraMinima ? "Llega a la compra mínima" : `Faltan ${pesosCliente(compraMinima - total)} para la compra mínima de ${pesosCliente(compraMinima)}`}
           </p>
         </div>

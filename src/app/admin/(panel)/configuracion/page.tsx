@@ -41,7 +41,7 @@ export default async function Configuracion({ searchParams }: { searchParams: Pr
           <label className="etiqueta" htmlFor="transferenciaDatos">Datos para transferencia</label>
           <textarea className="campo" id="transferenciaDatos" name="transferenciaDatos" rows={4} defaultValue={cfg.transferenciaDatos ?? ""} placeholder={"Titular, CUIT, banco, CBU y alias. Se muestran al cliente que elige transferencia."} />
         </div>
-        <p className="text-xs text-stone-500">Bajar o subir el margen mínimo cambia al instante qué productos y combos se publican.</p>
+        <p className="text-xs text-stone-600">Bajar o subir el margen mínimo cambia al instante qué productos y combos se publican.</p>
         <button className="btn">Guardar</button>
       </form>
     </div>

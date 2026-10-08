@@ -27,11 +27,11 @@ export default async function Envios({ searchParams }: { searchParams: Promise<{
           {correos.map(([nombre, activo, variables]) => (
             <li key={nombre}>
               <span className={`chip ${activo ? "bg-acopio-100 text-acopio-700" : "bg-stone-200 text-stone-600"}`}>{activo ? "Conectado" : "Sin credenciales"}</span> {nombre}
-              {!activo && <span className="text-stone-500"> · variables de entorno: {variables}</span>}
+              {!activo && <span className="text-stone-600"> · variables de entorno: {variables}</span>}
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-stone-500">Con un correo conectado se usa su cotización en vivo. La tabla de abajo queda como respaldo si no hay credenciales o la API no responde.</p>
+        <p className="mt-2 text-stone-600">Con un correo conectado se usa su cotización en vivo. La tabla de abajo queda como respaldo si no hay credenciales o la API no responde.</p>
       </div>
 
       <form action={guardarEnvios} className="space-y-4">
@@ -55,10 +55,10 @@ export default async function Envios({ searchParams }: { searchParams: Promise<{
               <input className="campo w-56" id="tramosKg" name="tramosKg" defaultValue={t.tramosKg.join(", ")} />
             </div>
           </div>
-          <p className="text-xs text-stone-500">Si cambiás la cantidad de tramos, guardá y volvé a completar los precios. Un bulto más pesado que el último tramo se cobra en proporción.</p>
+          <p className="text-xs text-stone-600">Si cambiás la cantidad de tramos, guardá y volvé a completar los precios. Un bulto más pesado que el último tramo se cobra en proporción.</p>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-stone-500">
+              <thead className="text-left text-xs uppercase tracking-wide text-stone-600">
                 <tr><th className="py-1 pr-2">Zona</th><th className="py-1 pr-2">Modalidad</th>{t.tramosKg.map((kg) => <th key={kg} className="py-1 pr-2">Hasta {kg} kg</th>)}<th className="py-1">Plazo</th></tr>
               </thead>
               <tbody>

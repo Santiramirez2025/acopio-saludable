@@ -7,7 +7,7 @@ import { productosTienda } from "@/lib/tienda";
 import { AvisoSuplementos, Titulo } from "@/components/Tienda";
 import { ExploradorObjetivos } from "@/components/ExploradorObjetivos";
 
-export const metadata: Metadata = { title: "Comprá por objetivo de bienestar" };
+export const metadata: Metadata = { title: "Comprá por objetivo de bienestar", description: "Recorré el catálogo según lo que estás buscando: productos que la gente elige para cada objetivo de bienestar.", alternates: { canonical: "/objetivos" } };
 
 export default async function Objetivos() {
   const cfg = await leerConfig();

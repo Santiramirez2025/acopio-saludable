@@ -30,14 +30,14 @@ export default async function Actualizaciones({ searchParams }: { searchParams: 
             <li>Cada mañana entrá a <span className="font-mono text-xs">compras.distrimay.com</span> con tu usuario.</li>
             <li>Tocá el marcador. Lee costos y precios públicos y los manda acá.</li>
           </ol>
-          <p className="text-stone-500">Con sesión iniciada lee tus costos y los precios públicos; sin sesión, solo los públicos. El marcador no lee ni guarda tu usuario ni tu contraseña de Distrimay.</p>
+          <p className="text-stone-600">Con sesión iniciada lee tus costos y los precios públicos; sin sesión, solo los públicos. El marcador no lee ni guarda tu usuario ni tu contraseña de Distrimay.</p>
           <GeneradorMarcador hayToken={Boolean(cfg.syncTokenHash)} />
         </div>
 
         <div className="space-y-4">
           <form action={subirActualizacion} className="tarjeta space-y-3 text-sm">
             <h2 className="font-semibold">Subir un archivo</h2>
-            <p className="text-stone-500">El <span className="font-mono text-xs">precios-distrimay.json</span> que descarga el marcador si no pudo enviar, o un CSV del proveedor con las columnas del catálogo (codigo, producto, marca, presentacion, categoria, formato, costo, precio_publico).</p>
+            <p className="text-stone-600">El <span className="font-mono text-xs">precios-distrimay.json</span> que descarga el marcador si no pudo enviar, o un CSV del proveedor con las columnas del catálogo (codigo, producto, marca, presentacion, categoria, formato, costo, precio_publico).</p>
             <input className="campo" type="file" name="archivo" accept=".json,.csv,application/json,text/csv" required />
             <button className="btn">Subir y ver cambios</button>
           </form>
@@ -47,7 +47,7 @@ export default async function Actualizaciones({ searchParams }: { searchParams: 
               <input className="campo w-32" id="umbralAutoPct" name="umbralAutoPct" inputMode="decimal" defaultValue={Number(cfg.umbralAutoPct)} required />
             </div>
             <button className="btn-sec">Guardar</button>
-            <p className="w-full text-xs text-stone-500">Los cambios iguales o mayores quedan esperando tu aprobación.</p>
+            <p className="w-full text-xs text-stone-600">Los cambios iguales o mayores quedan esperando tu aprobación.</p>
           </form>
         </div>
       </div>
@@ -56,7 +56,7 @@ export default async function Actualizaciones({ searchParams }: { searchParams: 
         <h2 className="mb-2 text-sm font-semibold">Últimas actualizaciones</h2>
         {corridas.length ? (
           <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-stone-500">
+            <thead className="text-left text-xs uppercase tracking-wide text-stone-600">
               <tr><th className="py-1">Fecha</th><th className="py-1">Origen</th><th className="py-1 text-right">Leídos</th><th className="py-1 text-right">Cambios</th><th className="py-1 text-right">Nuevos</th><th className="py-1 text-right">Desaparecidos</th><th className="py-1 text-right">Pendientes</th></tr>
             </thead>
             <tbody>
@@ -78,7 +78,7 @@ export default async function Actualizaciones({ searchParams }: { searchParams: 
             </tbody>
           </table>
         ) : (
-          <p className="text-sm text-stone-500">Todavía no hubo ninguna actualización.</p>
+          <p className="text-sm text-stone-600">Todavía no hubo ninguna actualización.</p>
         )}
       </div>
     </div>

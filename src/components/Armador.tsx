@@ -22,7 +22,7 @@ export function Armador({ nichos, compraMinima, nichoInicial }: { nichos: { id: 
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
   const opcion = (activa: boolean) =>
-    `rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition ${activa ? "border-acopio-600 bg-acopio-600 text-white" : "border-tierra-200 bg-white hover:border-acopio-500"}`;
+    `min-h-[48px] rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition ${activa ? "border-acopio-600 bg-acopio-600 text-white" : "border-tierra-200 bg-white hover:border-acopio-500"}`;
 
   async function armar() {
     setError("");
@@ -62,10 +62,10 @@ export function Armador({ nichos, compraMinima, nichoInicial }: { nichos: { id: 
       <div>
         <label htmlFor="presupuesto" className="mb-2 block font-display text-lg font-semibold">3. ¿Qué presupuesto tenés?</label>
         <div className="flex max-w-xs items-center gap-2">
-          <span className="text-stone-500">$</span>
+          <span className="text-stone-600">$</span>
           <input id="presupuesto" className="campo" inputMode="numeric" value={presupuesto} onChange={(e) => setPresupuesto(e.target.value.replace(/[^\d]/g, ""))} />
         </div>
-        <p className="mt-1 text-xs text-stone-500">La compra mínima es de {pesosCliente(compraMinima)}.</p>
+        <p className="mt-1 text-xs text-stone-600">La compra mínima es de {pesosCliente(compraMinima)}.</p>
       </div>
       <button type="button" className="btn" disabled={!nicho || !personas || !presupuesto || cargando} onClick={armar}>
         {cargando ? "Armando…" : "Ver pedido sugerido"}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { NICHOS } from "@/lib/taxonomia";
 import { Titulo } from "@/components/Tienda";
 
-export const metadata: Metadata = { title: "Comprá por tipo de negocio" };
+export const metadata: Metadata = { title: "Comprá por tipo de negocio", description: "Pedidos tipo para hoteles, gimnasios, dietéticas, cafeterías, kioscos, oficinas y familias. Ajustalos y cargalos al carrito de una vez.", alternates: { canonical: "/nichos" } };
 
 export default function Nichos() {
   return (

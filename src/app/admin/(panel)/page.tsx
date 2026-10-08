@@ -12,7 +12,7 @@ export default async function Resumen() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Resumen del catálogo</h1>
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-stone-600">
           Compra mínima {pesos(cfg.compraMinima)} · margen mínimo {cfg.margenMinimoPct}%
         </p>
       </div>
@@ -20,7 +20,7 @@ export default async function Resumen() {
         {VISTAS.map((v, i) => (
           <Link key={v.id} href={`/admin/productos?vista=${v.id}`} className="tarjeta hover:border-acopio-500">
             <div className="text-2xl font-semibold tabular-nums">{conteos[i]}</div>
-            <div className="text-xs text-stone-500">{v.nombre}</div>
+            <div className="text-xs text-stone-600">{v.nombre}</div>
           </Link>
         ))}
       </div>
@@ -30,7 +30,7 @@ export default async function Resumen() {
           {categorias.map((c) => (
             <li key={c.categoria} className="flex justify-between border-b border-stone-100 py-1">
               <Link href={`/admin/productos?categoria=${encodeURIComponent(c.categoria)}`} className="hover:underline">{c.categoria}</Link>
-              <span className="tabular-nums text-stone-500">{c._count}</span>
+              <span className="tabular-nums text-stone-600">{c._count}</span>
             </li>
           ))}
         </ul>

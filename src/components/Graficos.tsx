@@ -53,7 +53,7 @@ export function BarrasPorDia({ datos }: { datos: { dia: string; ventas: number; 
 
 /** Historial de costo y precio de un producto. Escalonado: un precio vale hasta el siguiente cambio. */
 export function LineasHistorial({ puntos }: { puntos: { fecha: Date; costo: number; precio: number }[] }) {
-  if (puntos.length < 2) return <p className="text-sm text-stone-500">Todavía hay un solo registro: el gráfico aparece cuando cambie el precio o el costo.</p>;
+  if (puntos.length < 2) return <p className="text-sm text-stone-600">Todavía hay un solo registro: el gráfico aparece cuando cambie el precio o el costo.</p>;
   const W = 520, H = 200, izq = 62, der = 70, arriba = 12, abajo = 24;
   const t0 = puntos[0].fecha.getTime();
   const t1 = Math.max(Date.now(), puntos[puntos.length - 1].fecha.getTime());

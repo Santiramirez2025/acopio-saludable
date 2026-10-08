@@ -13,7 +13,7 @@ export function Foto({ src, alt, etiqueta, className = "", prioridad = false, si
   const [rota, setRota] = useState(false);
   if (!src || rota) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-2 bg-acopio-100 p-3 text-center text-acopio-700 ${className}`} role="img" aria-label={alt || etiqueta || "Producto sin foto"}>
+      <div className={`flex flex-col items-center justify-center gap-2 bg-acopio-100 p-3 text-center text-acopio-700 ${className}`} {...(alt ? { role: "img", "aria-label": alt } : { "aria-hidden": true })}>
         <svg viewBox="0 0 64 64" className="h-2/5 max-h-20 w-auto" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M20 14c4 3 20 3 24 0M22 14c-8 10-10 22-8 34 1 5 5 6 18 6s17-1 18-6c2-12 0-24-8-34" />
           <path d="M27 34c3-6 7-6 10 0M32 30v14" />

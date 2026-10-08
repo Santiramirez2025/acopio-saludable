@@ -18,7 +18,7 @@ export function GeneradorMarcador({ hayToken }: { hayToken: boolean }) {
     <div className="space-y-3">
       <form action={accion}>
         <button className="btn" disabled={generando}>{generando ? "Generando…" : hayToken ? "Generar un marcador nuevo" : "Generar el marcador"}</button>
-        {hayToken && !marcador && <p className="mt-1 text-xs text-stone-500">Ya hay un marcador activo. Si generás otro, el anterior deja de funcionar.</p>}
+        {hayToken && !marcador && <p className="mt-1 text-xs text-stone-600">Ya hay un marcador activo. Si generás otro, el anterior deja de funcionar.</p>}
       </form>
       {estado && "error" in estado && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{estado.error}</p>}
       {marcador && (

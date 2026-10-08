@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
@@ -8,6 +9,8 @@ import { pesos } from "@/lib/precios";
 import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
 import { RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const cfg = await leerConfig();
@@ -33,10 +36,10 @@ export default async function Home() {
 
   return (
     <div className="space-y-9 md:space-y-12">
-      <section className="-mx-4 -mt-5 bg-acopio-900 px-4 pb-6 pt-4 text-white md:-mt-8 md:mx-0 md:rounded-3xl md:px-10 md:py-12">
-        <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_.85fr]">
-          <div>
-            <h1 className="font-display text-[34px] font-extrabold leading-[.98] tracking-tight sm:text-6xl">
+      <section className="fondo-oscuro -mx-4 -mt-5 bg-acopio-900 px-4 pb-6 pt-4 text-white md:-mt-8 md:mx-0 md:rounded-3xl md:px-10 md:py-12">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)]">
+          <div className="min-w-0">
+            <h1 className="text-balance font-display text-[clamp(30px,9vw,38px)] font-extrabold leading-none tracking-tight sm:text-6xl">
               Llená la despensa de tu negocio de una sola vez.
             </h1>
             <p className="mt-3 max-w-md text-[15px] text-white/80 sm:text-[17px]">
@@ -45,12 +48,12 @@ export default async function Home() {
             <p className="mt-5 text-sm font-semibold text-sol">¿Para quién comprás?</p>
             <div className="riel mt-2 md:mx-0 md:flex-wrap md:px-0">
               {NICHOS.map((n) => (
-                <Link key={n.id} href={`/nichos/${n.id}`} className="shrink-0 snap-start whitespace-nowrap rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white hover:text-acopio-900">{n.nombre}</Link>
+                <Link key={n.id} href={`/nichos/${n.id}`} className="shrink-0 snap-start whitespace-nowrap flex min-h-[48px] items-center rounded-full bg-white/10 px-4 text-sm font-semibold hover:bg-white hover:text-acopio-900">{n.nombre}</Link>
               ))}
             </div>
-            <div className="mt-4 flex gap-2.5">
-              <Link href="/armador" className="btn-comprar flex-1 sm:flex-none">Armame un pedido</Link>
-              <Link href="/catalogo" className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full border border-white/30 px-5 text-sm font-semibold hover:bg-white/10 sm:flex-none">Ver catálogo</Link>
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              <Link href="/armador" className="btn-comprar min-w-0 flex-1 whitespace-nowrap sm:flex-none">Armame un pedido</Link>
+              <Link href="/catalogo" className="inline-flex min-h-[48px] min-w-0 flex-1 items-center whitespace-nowrap justify-center rounded-full border border-white/30 px-5 text-sm font-semibold hover:bg-white/10 sm:flex-none">Ver catálogo</Link>
             </div>
           </div>
           {vitrina.length === 3 && (
@@ -81,10 +84,10 @@ export default async function Home() {
                       <Foto key={i.producto.codigo} src={i.producto.fotoUrl} alt="" etiqueta=" " className="aspect-square w-full rounded-lg" />
                     ))}
                   </div>
-                  <Link href={`/nichos/${p.nicho}`} className="mt-3 font-display text-xl font-bold leading-tight hover:underline">{p.nombre.replace(/^Pedido /, "")}</Link>
-                  <p className="text-xs text-stone-500">{items.length} productos, {items.reduce((s, i) => s + i.cantidad, 0)} unidades</p>
+                  <h3 className="mt-3 font-display text-xl font-bold leading-tight"><Link href={`/nichos/${p.nicho}`} className="hover:underline">{p.nombre.replace(/^Pedido /, "")}</Link></h3>
+                  <p className="text-xs text-stone-600">{items.length} productos, {items.reduce((s, i) => s + i.cantidad, 0)} unidades</p>
                   <p className="mt-2 font-display text-2xl font-bold tabular-nums">{pesos(total)}</p>
-                  <p className="mb-3 text-xs text-stone-500">{total >= cfg.compraMinima ? "Ya llega a la compra mínima" : `Te quedan ${pesos(cfg.compraMinima - total)} para completar el mínimo`}</p>
+                  <p className="mb-3 text-xs text-stone-600">{total >= cfg.compraMinima ? "Ya llega a la compra mínima" : `Te quedan ${pesos(cfg.compraMinima - total)} para completar el mínimo`}</p>
                   <div className="mt-auto flex gap-2">
                     <BotonCargarPedido etiqueta="Cargar pedido" className="btn-comprar flex-1" lineas={items.map((i) => ({ tipo: "producto" as const, id: i.producto.codigo, cantidad: i.cantidad }))} />
                     <Link href={`/nichos/${p.nicho}`} className="btn-sec px-4">Ajustar</Link>
@@ -111,7 +114,7 @@ export default async function Home() {
               <Link key={c.categoria} href={`/catalogo?categoria=${encodeURIComponent(c.categoria)}`} className="group rounded-2xl bg-white p-2 shadow-ficha">
                 <Foto src={portada.get(c.categoria) ?? null} alt="" etiqueta=" " className="aspect-square w-full rounded-xl" />
                 <p className="mt-2 line-clamp-2 px-1 text-[13px] font-semibold leading-tight group-hover:underline">{c.categoria}</p>
-                <p className="px-1 pb-1 text-[11px] text-stone-500">{c._count} productos</p>
+                <p className="px-1 pb-1 text-[11px] text-stone-600">{c._count} productos</p>
               </Link>
             ))}
           </div>
@@ -133,7 +136,7 @@ export default async function Home() {
         <TituloSeccion href="/objetivos" enlace="Explorar">Comprá por objetivo de bienestar</TituloSeccion>
         <div className="flex flex-wrap gap-2">
           {OBJETIVOS.map((o) => (
-            <Link key={o.id} href={`/objetivos/${o.id}`} className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold shadow-ficha hover:bg-acopio-900 hover:text-white">{o.nombre}</Link>
+            <Link key={o.id} href={`/objetivos/${o.id}`} className="flex min-h-[48px] items-center rounded-full bg-white px-4 text-sm font-semibold shadow-ficha hover:bg-acopio-900 hover:text-white">{o.nombre}</Link>
           ))}
         </div>
       </section>
@@ -145,7 +148,7 @@ export default async function Home() {
             <li key={titulo} className="flex gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-acopio-900 font-display text-lg font-bold text-sol">{i + 1}</span>
               <div>
-                <p className="font-semibold">{titulo}</p>
+                <h3 className="font-semibold">{titulo}</h3>
                 <p className="text-sm text-stone-600">{texto}</p>
               </div>
             </li>

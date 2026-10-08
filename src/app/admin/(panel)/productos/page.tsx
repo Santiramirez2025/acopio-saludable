@@ -51,7 +51,7 @@ export default async function Productos({ searchParams }: { searchParams: Promis
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="text-xl font-semibold">
-          Productos <span className="text-sm font-normal text-stone-500">({total})</span>
+          Productos <span className="text-sm font-normal text-stone-600">({total})</span>
         </h1>
         <form className="flex flex-wrap gap-2" action="/admin/productos">
           <input className="campo w-56" name="q" defaultValue={q} placeholder="Código, producto o marca" />
@@ -72,7 +72,7 @@ export default async function Productos({ searchParams }: { searchParams: Promis
 
       <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white">
         <table className="w-full min-w-[900px] text-sm">
-          <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+          <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-600">
             <tr>
               <th className="px-3 py-2">Foto</th>
               <th className="px-3 py-2">Producto</th>
@@ -95,13 +95,13 @@ export default async function Productos({ searchParams }: { searchParams: Promis
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.fotoUrl} alt="" loading="lazy" className="h-12 w-12 rounded object-cover" />
                     ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded bg-stone-100 text-[10px] text-stone-400">sin foto</div>
+                      <div className="flex h-12 w-12 items-center justify-center rounded bg-stone-100 text-[10px] text-stone-500">sin foto</div>
                     )}
                   </td>
                   <td className="px-3 py-2">
                     <Link href={`/admin/productos/${encodeURIComponent(p.codigo)}`} className="font-medium hover:underline">{p.producto}</Link>
-                    <div className="text-xs text-stone-500">{p.marca} · {p.presentacion}</div>
-                    <div className="text-xs text-stone-400">{p.categoria}</div>
+                    <div className="text-xs text-stone-600">{p.marca} · {p.presentacion}</div>
+                    <div className="text-xs text-stone-500">{p.categoria}</div>
                   </td>
                   <td className="px-3 py-2 font-mono text-xs">{p.codigo}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{pesos(Number(p.costo))}</td>
@@ -113,7 +113,7 @@ export default async function Productos({ searchParams }: { searchParams: Promis
                     {p.estado !== "ACTIVO" && <span className="chip bg-amber-100 text-amber-800">{p.estado === "BORRADOR" ? "Borrador" : "Sin stock"}</span>}
                     {p.visible && !sinMargen && p.estado === "ACTIVO" && <span className="chip bg-acopio-100 text-acopio-700">Publicado</span>}
                     {p.gancho && <span className="chip bg-tierra-100 text-tierra-500">Gancho</span>}
-                    {!p.visible && p.ocultoMotivo && <div className="max-w-[14rem] text-xs text-stone-400">{p.ocultoMotivo}</div>}
+                    {!p.visible && p.ocultoMotivo && <div className="max-w-[14rem] text-xs text-stone-500">{p.ocultoMotivo}</div>}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-col items-start gap-1">
@@ -133,7 +133,7 @@ export default async function Productos({ searchParams }: { searchParams: Promis
             })}
             {!productos.length && (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-stone-500">No hay productos con esos filtros.</td>
+                <td colSpan={8} className="px-3 py-8 text-center text-stone-600">No hay productos con esos filtros.</td>
               </tr>
             )}
           </tbody>
@@ -141,7 +141,7 @@ export default async function Productos({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="flex items-center justify-between text-sm">
-        <span className="text-stone-500">Página {pagina} de {paginas}</span>
+        <span className="text-stone-600">Página {pagina} de {paginas}</span>
         <div className="flex gap-2">
           {pagina > 1 && <Link className="btn-sec" href={enlace(pagina - 1)}>Anterior</Link>}
           {pagina < paginas && <Link className="btn-sec" href={enlace(pagina + 1)}>Siguiente</Link>}

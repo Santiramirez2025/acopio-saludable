@@ -109,7 +109,7 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
           <span className="font-medium">
             {falta > 0 ? `Te faltan ${pesosCliente(falta)} para la compra mínima` : "Llegaste a la compra mínima"}
           </span>
-          <span className="tabular-nums text-stone-500">
+          <span className="tabular-nums text-stone-600">
             {pesosCliente(subtotal)} / {pesosCliente(compraMinima)}
           </span>
         </div>
@@ -145,18 +145,18 @@ export function BotonAgregar({
   const [cantidad, setCantidad] = useState(1);
   const [agregado, setAgregado] = useState(false);
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
       {conCantidad && (
         <div className="flex items-center rounded-full border border-tierra-200 bg-white">
-          <button type="button" className="px-2.5 py-2 text-stone-600" aria-label="Restar" onClick={() => setCantidad((c) => Math.max(1, c - 1))}>−</button>
+          <button type="button" className="paso" aria-label="Restar" onClick={() => setCantidad((c) => Math.max(1, c - 1))}>−</button>
           <input
-            className="w-10 border-0 bg-transparent p-0 text-center text-sm tabular-nums focus:outline-none"
+            className="w-11 h-12 border-0 bg-transparent p-0 text-center text-sm font-semibold tabular-nums"
             inputMode="numeric"
             aria-label="Cantidad"
             value={cantidad}
             onChange={(e) => setCantidad(Math.max(1, Math.min(MAX, Number.parseInt(e.target.value, 10) || 1)))}
           />
-          <button type="button" className="px-2.5 py-2 text-stone-600" aria-label="Sumar" onClick={() => setCantidad((c) => Math.min(MAX, c + 1))}>+</button>
+          <button type="button" className="paso" aria-label="Sumar" onClick={() => setCantidad((c) => Math.min(MAX, c + 1))}>+</button>
         </div>
       )}
       <button
@@ -210,10 +210,10 @@ export function AgregarRapido({ id, nombre }: { id: string; nombre: string }) {
     );
   }
   return (
-    <div className="flex min-h-[44px] items-center justify-between rounded-full bg-acopio-900 text-white">
-      <button type="button" className="h-11 w-12 text-xl" aria-label={`Restar ${nombre}`} onClick={() => fijar("producto", id, n - 1)}>−</button>
+    <div className="flex min-h-[48px] items-center justify-between rounded-full bg-acopio-900 text-white">
+      <button type="button" className="h-12 w-12 text-xl" aria-label={`Restar ${nombre}`} onClick={() => fijar("producto", id, n - 1)}>−</button>
       <span className="text-sm font-bold tabular-nums" aria-live="polite">{n} en tu pedido</span>
-      <button type="button" className="h-11 w-12 text-xl" aria-label={`Sumar ${nombre}`} onClick={() => fijar("producto", id, n + 1)}>+</button>
+      <button type="button" className="h-12 w-12 text-xl" aria-label={`Sumar ${nombre}`} onClick={() => fijar("producto", id, n + 1)}>+</button>
     </div>
   );
 }

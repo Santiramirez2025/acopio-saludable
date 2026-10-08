@@ -8,8 +8,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Bricolage Grotesque"', "ui-sans-serif", "system-ui", "sans-serif"],
-        sans: ["Figtree", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ['"Bricolage Grotesque Variable"', '"Bricolage Grotesque"', "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ['"Figtree Variable"', "Figtree", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       colors: {
         acopio: { 50: "#F1F6F2", 100: "#DCEEE3", 500: "#1B8A63", 600: "#0F6B4F", 700: "#0B5540", 900: "#10251C" },

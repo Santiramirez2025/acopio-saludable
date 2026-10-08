@@ -15,16 +15,16 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
   const sinPeso = await prisma.product.count({ where: { codigo: { in: pedido.items.map((i) => i.codigo) }, pesoBrutoG: null } });
   const wa = linkWhatsapp(pedido.telefono, `Hola ${pedido.nombre}, te escribimos de Acopio Saludable por tu pedido ${numero}.`);
   const fila = (etiqueta: string, valor: string, clase = "") => (
-    <div className={`flex justify-between gap-3 ${clase}`}><dt className="text-stone-500">{etiqueta}</dt><dd className="tabular-nums">{valor}</dd></div>
+    <div className={`flex justify-between gap-3 ${clase}`}><dt className="text-stone-600">{etiqueta}</dt><dd className="tabular-nums">{valor}</dd></div>
   );
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/pedidos" className="text-sm text-stone-500 underline">← Pedidos</Link>
+      <Link href="/admin/pedidos" className="text-sm text-stone-600 underline">← Pedidos</Link>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Pedido {numero} <span className="chip bg-acopio-100 text-acopio-700">{nombreEstado(pedido.estado)}</span></h1>
-          <p className="text-sm text-stone-500">{pedido.createdAt.toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba" })} · {pedido.medioPago === "MERCADOPAGO" ? `Mercado Pago${pedido.mpPaymentId ? ` (pago ${pedido.mpPaymentId})` : ""}` : "Transferencia"}</p>
+          <p className="text-sm text-stone-600">{pedido.createdAt.toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba" })} · {pedido.medioPago === "MERCADOPAGO" ? `Mercado Pago${pedido.mpPaymentId ? ` (pago ${pedido.mpPaymentId})` : ""}` : "Transferencia"}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/admin/pedidos/${pedido.id}/compra`} className="btn">Lista de compra a Distrimay</Link>
@@ -44,8 +44,8 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
               <tbody>
                 {pedido.items.map((i) => (
                   <tr key={i.id} className="border-b border-stone-100">
-                    <td className="py-1.5 pr-2 font-mono text-xs text-stone-500">{i.codigo}</td>
-                    <td className="py-1.5">{i.cantidad} × {i.producto} <span className="text-stone-400">{i.presentacion}</span>{i.comboSlug && <span className="chip ml-1 bg-stone-100 text-stone-600">{i.comboSlug}</span>}</td>
+                    <td className="py-1.5 pr-2 font-mono text-xs text-stone-600">{i.codigo}</td>
+                    <td className="py-1.5">{i.cantidad} × {i.producto} <span className="text-stone-500">{i.presentacion}</span>{i.comboSlug && <span className="chip ml-1 bg-stone-100 text-stone-600">{i.comboSlug}</span>}</td>
                     <td className="py-1.5 text-right tabular-nums">{pesos(Number(i.precioUnitario) * i.cantidad)}</td>
                   </tr>
                 ))}
@@ -57,7 +57,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
             <p className="font-medium">{pedido.nombre}</p>
             <p>{pedido.email} · {pedido.telefono} {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="text-acopio-700 underline">WhatsApp</a>}</p>
             <p className="mt-1">{pedido.calle}, {pedido.ciudad}, {pedido.provincia} ({pedido.cp})</p>
-            <p className="text-stone-500">{pedido.envioNombre} · {pedido.bultos} {pedido.bultos === 1 ? "bulto" : "bultos"} · {(pedido.pesoTotalG / 1000).toFixed(1)} kg · cotizado por {pedido.envioOrigen}{pedido.tracking ? ` · seguimiento ${pedido.tracking}` : ""}</p>
+            <p className="text-stone-600">{pedido.envioNombre} · {pedido.bultos} {pedido.bultos === 1 ? "bulto" : "bultos"} · {(pedido.pesoTotalG / 1000).toFixed(1)} kg · cotizado por {pedido.envioOrigen}{pedido.tracking ? ` · seguimiento ${pedido.tracking}` : ""}</p>
             {pedido.notas && <p className="mt-1 rounded bg-stone-100 px-2 py-1">Nota del cliente: {pedido.notas}</p>}
           </div>
           <div className="tarjeta">
@@ -66,7 +66,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
               {pedido.eventos.map((e) => (
                 <li key={e.id} className="flex justify-between gap-3 border-b border-stone-100 py-1">
                   <span>{nombreEstado(e.estado)}{e.nota ? ` · ${e.nota}` : ""}</span>
-                  <span className="whitespace-nowrap text-stone-500">{e.fecha.toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba", dateStyle: "short", timeStyle: "short" })}</span>
+                  <span className="whitespace-nowrap text-stone-600">{e.fecha.toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba", dateStyle: "short", timeStyle: "short" })}</span>
                 </li>
               ))}
             </ul>
@@ -85,7 +85,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
             <div><label className="etiqueta" htmlFor="tracking">Código de seguimiento</label><input className="campo" id="tracking" name="tracking" defaultValue={pedido.tracking ?? ""} /></div>
             <div><label className="etiqueta" htmlFor="nota">Nota (opcional)</label><input className="campo" id="nota" name="nota" maxLength={300} /></div>
             <button className="btn w-full">Actualizar</button>
-            {pedido.estado === "PENDIENTE_PAGO" && <p className="text-xs text-stone-500">Al pasar a Pagado se confirma el pedido y se le avisa al cliente por email.</p>}
+            {pedido.estado === "PENDIENTE_PAGO" && <p className="text-xs text-stone-600">Al pasar a Pagado se confirma el pedido y se le avisa al cliente por email.</p>}
           </form>
           <dl className="tarjeta space-y-1 text-sm">
             <h2 className="mb-1 text-sm font-semibold">Números del pedido</h2>

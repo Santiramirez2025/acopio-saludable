@@ -33,8 +33,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
               <Link key={href} href={href} className="hover:text-acopio-700">{label}</Link>
             ))}
           </nav>
-          <span className="ml-auto text-xs text-stone-400">{session.user?.email}</span>
-          <Link href="/api/auth/signout" className="text-xs text-stone-500 underline">Salir</Link>
+          <span className="ml-auto text-xs text-stone-500">{session.user?.email}</span>
+          <Link href="/api/auth/signout" className="text-xs text-stone-600 underline">Salir</Link>
         </div>
       </header>
       {!preciosAlDia && (

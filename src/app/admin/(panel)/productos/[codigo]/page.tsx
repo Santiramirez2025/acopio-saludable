@@ -29,10 +29,10 @@ export default async function EditarProducto({
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/productos" className="text-sm text-stone-500 underline">← Productos</Link>
+      <Link href="/admin/productos" className="text-sm text-stone-600 underline">← Productos</Link>
       <div>
         <h1 className="text-xl font-semibold">{p.producto}</h1>
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-stone-600">
           <span className="font-mono">{p.codigo}</span> · {p.marca} · {p.presentacion} · {p.categoria} · {p.formato}
         </p>
       </div>
@@ -64,7 +64,7 @@ export default async function EditarProducto({
               <input className="campo" id="pesoBrutoG" name="pesoBrutoG" inputMode="numeric" defaultValue={p.pesoBrutoG ?? ""} placeholder="Falta cargar" />
             </div>
           </div>
-          <p className="text-xs text-stone-500">
+          <p className="text-xs text-stone-600">
             Margen {margen.toFixed(1)}%{porUnidad ? ` · ${pesos(porUnidad.valor)} ${porUnidad.etiqueta}` : ""}
             {p.contenido ? ` · contenido ${p.contenido} ${p.unidad}` : " · sin contenido en el CSV"}
           </p>
@@ -107,7 +107,7 @@ export default async function EditarProducto({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={p.fotoUrl} alt={p.producto} className="aspect-square w-full rounded object-cover" />
             ) : (
-              <div className="flex aspect-square w-full items-center justify-center rounded bg-stone-100 text-sm text-stone-400">Sin foto</div>
+              <div className="flex aspect-square w-full items-center justify-center rounded bg-stone-100 text-sm text-stone-500">Sin foto</div>
             )}
             {p.fotos.length > 1 && (
               <div className="grid grid-cols-4 gap-1">
@@ -120,7 +120,7 @@ export default async function EditarProducto({
             <div>
               <label className="etiqueta" htmlFor="fotos">Fotos (una dirección por línea; la primera es la principal)</label>
               <textarea className="campo font-mono text-xs" id="fotos" name="fotos" rows={4} defaultValue={(p.fotos.length ? p.fotos : p.fotoUrl ? [p.fotoUrl] : []).join("\n")} placeholder="https://…" />
-              <p className="mt-1 text-xs text-stone-500">Para subir imágenes nuevas usá Panel → Imágenes.</p>
+              <p className="mt-1 text-xs text-stone-600">Para subir imágenes nuevas usá Panel → Imágenes.</p>
             </div>
           </div>
           <div className="tarjeta space-y-3 text-sm">
@@ -146,7 +146,7 @@ export default async function EditarProducto({
           <ul className="mt-3 text-sm">
             {p.historial.slice(0, 12).map((h) => (
               <li key={h.id} className="flex justify-between border-b border-stone-100 py-1 tabular-nums">
-                <span className="text-stone-500">{h.fecha.toLocaleDateString("es-AR")} · {h.origen}</span>
+                <span className="text-stone-600">{h.fecha.toLocaleDateString("es-AR")} · {h.origen}</span>
                 <span>costo {pesos(Number(h.costo))} · precio {pesos(Number(h.precioPublico))}</span>
               </li>
             ))}
@@ -161,7 +161,7 @@ export default async function EditarProducto({
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-stone-500">Ninguno.</p>
+            <p className="text-sm text-stone-600">Ninguno.</p>
           )}
         </div>
       </div>

@@ -9,17 +9,20 @@ export function TarjetaProducto({ p, className = "" }: { p: ProductoTienda; clas
   const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
   const href = `/producto/${encodeURIComponent(p.codigo)}`;
   return (
-    <article className={`flex flex-col rounded-2xl bg-white p-2 shadow-ficha ${className}`}>
-      <Link href={href} className="block">
-        <Foto src={p.fotoUrl} alt={`${p.producto} ${p.presentacion}`} etiqueta={p.categoria} className="aspect-square w-full rounded-xl" />
-      </Link>
-      <div className="flex flex-1 flex-col px-1.5 pb-1.5 pt-2.5">
-        <Link href={href} className="line-clamp-2 text-[15px] font-semibold leading-snug hover:underline">{p.producto}</Link>
-        <p className="mt-0.5 line-clamp-1 text-xs text-stone-500">{p.presentacion}</p>
-        <div className="mt-auto flex items-end justify-between gap-2 pb-2.5 pt-2">
+    <article className={`flex min-w-0 flex-col rounded-2xl bg-white p-2 shadow-ficha ${className}`}>
+      {/* El enlace del nombre se estira sobre la foto y el texto: un solo destino, grande y fácil de tocar. */}
+      <div className="relative flex flex-1 flex-col">
+        <Foto src={p.fotoUrl} alt="" etiqueta={p.categoria} className="aspect-square w-full rounded-xl" />
+        <div className="flex flex-1 flex-col px-1.5 pt-2.5">
+          <h3 className="text-[15px] font-semibold leading-snug"><Link href={href} className="estirado line-clamp-2 after:absolute after:inset-0 after:rounded-xl hover:underline">{p.producto}</Link></h3>
+          <p className="mt-0.5 line-clamp-1 text-xs text-stone-600">{p.presentacion}</p>
+          <div className="mt-auto flex flex-wrap items-end justify-between gap-x-2 gap-y-1 pb-2.5 pt-2">
           <p className="font-display text-xl font-bold leading-none tabular-nums">{pesos(p.precio)}</p>
-          {porUnidad && <p className="text-right text-[11px] leading-tight tabular-nums text-stone-500">{pesos(porUnidad.valor)}<br />{porUnidad.etiqueta}</p>}
+          {porUnidad && <p className="text-right text-[11px] leading-tight tabular-nums text-stone-600">{pesos(porUnidad.valor)}<br />{porUnidad.etiqueta}</p>}
+          </div>
         </div>
+      </div>
+      <div className="px-1.5 pb-1.5">
         <AgregarRapido id={p.codigo} nombre={p.producto} />
       </div>
     </article>
@@ -49,17 +52,19 @@ export function RielProductos({ productos }: { productos: ProductoTienda[] }) {
 
 export function TarjetaCombo({ c, className = "" }: { c: ComboTienda; className?: string }) {
   return (
-    <article className={`flex flex-col rounded-2xl bg-acopio-900 p-3 text-white ${className}`}>
-      <Link href={`/combos/${c.slug}`} className="grid grid-cols-4 gap-1.5">
-        {c.items.slice(0, 4).map((i) => (
-          <Foto key={i.producto.codigo} src={i.producto.fotoUrl} alt="" etiqueta=" " className="aspect-square w-full rounded-lg" />
-        ))}
-      </Link>
-      <Link href={`/combos/${c.slug}`} className="mt-3 font-display text-xl font-bold leading-tight hover:underline">{c.nombre}</Link>
-      <p className="mt-1 line-clamp-2 text-xs text-white/70">{c.items.map((i) => `${i.cantidad > 1 ? `${i.cantidad} × ` : ""}${i.producto.producto}`).join(", ")}</p>
-      <div className="mt-auto flex items-baseline gap-2 pb-3 pt-3">
+    <article className={`fondo-oscuro flex flex-col rounded-2xl bg-acopio-900 p-3 text-white ${className}`}>
+      <div className="relative">
+        <div className="grid grid-cols-4 gap-1.5">
+          {c.items.slice(0, 4).map((i) => (
+            <Foto key={i.producto.codigo} src={i.producto.fotoUrl} alt="" etiqueta=" " className="aspect-square w-full rounded-lg" />
+          ))}
+        </div>
+      <h3 className="mt-3 font-display text-xl font-bold leading-tight"><Link href={`/combos/${c.slug}`} className="estirado after:absolute after:inset-0 after:rounded-xl hover:underline">{c.nombre}</Link></h3>
+      <p className="mt-1 line-clamp-2 text-xs text-white/80">{c.items.map((i) => `${i.cantidad > 1 ? `${i.cantidad} × ` : ""}${i.producto.producto}`).join(", ")}</p>
+      </div>
+      <div className="mt-auto flex flex-wrap items-baseline gap-2 pb-3 pt-3">
         <span className="font-display text-2xl font-bold tabular-nums">{pesos(c.precio)}</span>
-        {c.ahorro > 0 && <span className="text-sm tabular-nums text-white/50 line-through">{pesos(c.precioLista)}</span>}
+        {c.ahorro > 0 && <span className="text-sm tabular-nums text-white/70 line-through">{pesos(c.precioLista)}</span>}
         {c.descuentoPct > 0 && <span className="chip bg-sol text-acopio-900">{c.descuentoPct}% menos</span>}
       </div>
       <BotonAgregar tipo="combo" id={c.slug} etiqueta="Agregar combo" conCantidad={false} />
@@ -85,7 +90,7 @@ export function TituloSeccion({ children, href, enlace }: { children: React.Reac
   return (
     <div className="mb-3 flex items-end justify-between gap-3">
       <h2 className="font-display text-2xl font-extrabold leading-tight tracking-tight text-acopio-900">{children}</h2>
-      {href && <Link href={href} className="whitespace-nowrap text-sm font-semibold text-acopio-600 underline underline-offset-4">{enlace}</Link>}
+      {href && <Link href={href} className="-my-2 flex min-h-[48px] items-center whitespace-nowrap text-sm font-semibold text-acopio-600 underline underline-offset-4">{enlace}</Link>}
     </div>
   );
 }

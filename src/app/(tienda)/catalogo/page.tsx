@@ -8,7 +8,27 @@ import { aTienda } from "@/lib/tienda";
 import { NICHOS, NICHO_IDS, OBJETIVOS, OBJETIVO_IDS } from "@/lib/taxonomia";
 import { GrillaProductos, Titulo } from "@/components/Tienda";
 
-export const metadata: Metadata = { title: "Catálogo", description: "Catálogo completo de productos saludables por volumen." };
+export async function generateMetadata({ searchParams }: { searchParams: Promise<SP> }): Promise<Metadata> {
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim().slice(0, 80);
+  const filtros = Object.entries(sp).filter(([k, v]) => v && k !== "categoria");
+  // Búsquedas y combinaciones de filtros no se indexan: solo el catálogo y cada góndola.
+  if (q) return { title: `Resultados para "${q}"`, robots: { index: false, follow: true } };
+  if (sp.categoria) {
+    return {
+      title: `${sp.categoria} por volumen`,
+      description: `${sp.categoria}: comprá por volumen en Acopio Saludable, con envíos a todo el país.`,
+      alternates: { canonical: `/catalogo?categoria=${encodeURIComponent(sp.categoria)}` },
+      robots: filtros.length ? { index: false, follow: true } : undefined,
+    };
+  }
+  return {
+    title: "Catálogo de productos saludables",
+    description: "Catálogo completo: frutos secos, cereales, suplementos, snacks, especias y más, por volumen y con envíos a todo el país.",
+    alternates: { canonical: "/catalogo" },
+    robots: filtros.length ? { index: false, follow: true } : undefined,
+  };
+}
 
 const POR_PAGINA = 24;
 const ORDENES: Record<string, { nombre: string; orderBy: Prisma.ProductOrderByWithRelationInput[] }> = {
@@ -80,26 +100,28 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
     <div>
       <Titulo>{q ? `Resultados para "${q}"` : sp.categoria || "Todo el catálogo"}</Titulo>
       <nav className="riel mb-3 md:mx-0 md:flex-wrap md:px-0" aria-label="Góndolas">
-        <Link href="/catalogo" className={`chip shrink-0 px-3.5 py-2 text-sm ${!sp.categoria ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>Todo</Link>
+        <Link href="/catalogo" aria-current={!sp.categoria ? "page" : undefined} className={`chip min-h-[48px] shrink-0 snap-start px-4 text-sm ${!sp.categoria ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>Todo</Link>
         {categorias.map((c) => (
-          <Link key={c.categoria} href={`/catalogo?categoria=${encodeURIComponent(c.categoria)}`} className={`chip shrink-0 whitespace-nowrap px-3.5 py-2 text-sm ${sp.categoria === c.categoria ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>{c.categoria}</Link>
+          <Link key={c.categoria} href={`/catalogo?categoria=${encodeURIComponent(c.categoria)}`} className={`chip min-h-[48px] shrink-0 snap-start whitespace-nowrap px-4 text-sm ${sp.categoria === c.categoria ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>{c.categoria}</Link>
         ))}
       </nav>
+      <h2 className="sr-only">Buscar y filtrar productos</h2>
       <form action="/catalogo" className="mb-5 rounded-2xl bg-white p-3 shadow-ficha">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <input name="q" defaultValue={q} placeholder="Buscar" aria-label="Buscar" className="campo col-span-2" />
+          {/* En el celular el buscador ya está arriba, siempre a la vista: acá se oculta para que los productos aparezcan antes. */}
+          <input name="q" defaultValue={q} placeholder="Buscar" aria-label="Buscar en el catálogo" className="campo col-span-2 hidden sm:block" />
           <select name="orden" defaultValue={orden} className="campo" aria-label="Ordenar por">
             {Object.entries(ORDENES).map(([id, o]) => (
               <option key={id} value={id}>{o.nombre}</option>
             ))}
           </select>
-          <div className="flex gap-2">
-            <button className="btn flex-1">Filtrar</button>
-            <Link href="/catalogo" className="btn-sec">Limpiar</Link>
+          <div className="flex min-w-0 gap-2">
+            <button className="btn flex-1 px-3">Filtrar</button>
+            {(filtrosActivos > 0 || q) && <Link href="/catalogo" className="btn-sec px-3" aria-label="Limpiar filtros">Limpiar</Link>}
           </div>
         </div>
         <details className="mt-2" open={filtrosActivos > 0}>
-          <summary className="cursor-pointer py-1 text-sm font-medium text-acopio-700">
+          <summary className="flex min-h-[48px] cursor-pointer items-center text-sm font-medium text-acopio-700">
             Más filtros{filtrosActivos > 0 ? ` (${filtrosActivos} activos)` : ""}
           </summary>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -114,7 +136,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
         </details>
       </form>
 
-      <p className="mb-3 text-sm text-stone-500">{total} productos</p>
+      <p className="mb-3 text-sm text-stone-600">{total} productos</p>
       {filas.length ? (
         <GrillaProductos productos={filas.map(aTienda)} />
       ) : (
@@ -124,7 +146,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
       )}
       {paginas > 1 && (
         <div className="mt-6 flex items-center justify-between text-sm">
-          <span className="text-stone-500">Página {pagina} de {paginas}</span>
+          <span className="text-stone-600">Página {pagina} de {paginas}</span>
           <div className="flex gap-2">
             {pagina > 1 && <Link href={enlace(pagina - 1)} className="btn-sec">Anterior</Link>}
             {pagina < paginas && <Link href={enlace(pagina + 1)} className="btn-sec">Siguiente</Link>}

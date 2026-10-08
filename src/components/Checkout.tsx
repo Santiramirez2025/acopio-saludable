@@ -49,7 +49,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct }
     return () => clearTimeout(t);
   }, [listo, lineas, provincia, cp, cpValido]);
 
-  if (!listo || (lineas.length > 0 && !cotizacion)) return <p className="text-stone-500">Cargando…</p>;
+  if (!listo || (lineas.length > 0 && !cotizacion)) return <p className="text-stone-600">Cargando…</p>;
   if (!cotizacion?.puedePagar) {
     return (
       <div className="rounded-xl border border-tierra-200 bg-white p-6">
@@ -114,20 +114,20 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct }
 
           <div className="mt-4" aria-live="polite">
             {!provincia || !cpValido ? (
-              <p className="text-sm text-stone-500">Completá provincia y código postal para ver las opciones de envío.</p>
+              <p className="text-sm text-stone-600">Completá provincia y código postal para ver las opciones de envío.</p>
             ) : errorEnvio ? (
               <p className="text-sm text-red-700">{errorEnvio}</p>
             ) : !envio ? (
-              <p className="text-sm text-stone-500">Calculando envío…</p>
+              <p className="text-sm text-stone-600">Calculando envío…</p>
             ) : (
               <div className={`space-y-2 ${cotizandoEnvio ? "opacity-60" : ""}`}>
-                <p className="text-xs text-stone-500">{envio.bultos} {envio.bultos === 1 ? "bulto" : "bultos"} · {envio.pesoTotalKg} kg aprox.</p>
+                <p className="text-xs text-stone-600">{envio.bultos} {envio.bultos === 1 ? "bulto" : "bultos"} · {envio.pesoTotalKg} kg aprox.</p>
                 {envio.opciones.map((o) => (
                   <label key={o.id} className={radio(o.id === opcionId)}>
                     <input type="radio" name="envio" className="mt-1" checked={o.id === opcionId} onChange={() => setOpcionId(o.id)} />
                     <span className="flex-1">
                       <span className="block text-sm font-medium">{o.nombre} {o.masBarata && <span className="chip ml-1 bg-acopio-100 text-acopio-700">La más barata</span>}</span>
-                      <span className="block text-xs text-stone-500">{o.plazo}</span>
+                      <span className="block text-xs text-stone-600">{o.plazo}</span>
                     </span>
                     <span className="text-sm font-semibold tabular-nums">{o.precio > 0 ? pesosCliente(o.precio) : "Sin cargo"}</span>
                   </label>
@@ -143,14 +143,14 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct }
             {mpDisponible && (
               <label className={radio(medio === "MERCADOPAGO")}>
                 <input type="radio" name="medio" className="mt-1" checked={medio === "MERCADOPAGO"} onChange={() => setMedio("MERCADOPAGO")} />
-                <span><span className="block text-sm font-medium">Mercado Pago</span><span className="block text-xs text-stone-500">Tarjeta, débito o dinero en cuenta. Te llevamos a Mercado Pago para pagar.</span></span>
+                <span><span className="block text-sm font-medium">Mercado Pago</span><span className="block text-xs text-stone-600">Tarjeta, débito o dinero en cuenta. Te llevamos a Mercado Pago para pagar.</span></span>
               </label>
             )}
             <label className={radio(medio === "TRANSFERENCIA")}>
               <input type="radio" name="medio" className="mt-1" checked={medio === "TRANSFERENCIA"} onChange={() => setMedio("TRANSFERENCIA")} />
               <span>
                 <span className="block text-sm font-medium">Transferencia bancaria {descuentoTransferenciaPct > 0 && <span className="chip ml-1 bg-acopio-100 text-acopio-700">{descuentoTransferenciaPct}% de descuento</span>}</span>
-                <span className="block text-xs text-stone-500">Te mostramos los datos al confirmar y nos mandás el comprobante.</span>
+                <span className="block text-xs text-stone-600">Te mostramos los datos al confirmar y nos mandás el comprobante.</span>
               </span>
             </label>
           </div>
@@ -167,7 +167,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct }
         </dl>
         {error && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         <button className="btn w-full" disabled={enviando || !opcion || cotizandoEnvio}>{enviando ? "Confirmando…" : medio === "MERCADOPAGO" ? "Confirmar y pagar" : "Confirmar pedido"}</button>
-        <Link href="/carrito" className="block text-center text-sm text-stone-500 underline">Volver al carrito</Link>
+        <Link href="/carrito" className="block text-center text-sm text-stone-600 underline">Volver al carrito</Link>
       </aside>
     </form>
   );
