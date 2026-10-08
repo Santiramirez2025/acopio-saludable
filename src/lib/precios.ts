@@ -47,3 +47,15 @@ export function pesos(n: number): string {
   // Sin decimales cuando el importe es redondo ($ 200.000), con dos cuando no ($ 8.983,92).
   return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
 }
+
+/**
+ * Precio sugerido de reventa: el precio de la tienda más un recargo, redondeado hacia arriba a un número
+ * fácil de cobrar. Se calcula siempre sobre el precio vigente, así acompaña cada actualización de la lista.
+ */
+export function precioSugerido(precio: number, recargoPct: number): { sugerido: number; ganancia: number } | null {
+  if (!(precio > 0) || !(recargoPct > 0)) return null;
+  const bruto = precio * (1 + recargoPct / 100);
+  const paso = bruto < 2000 ? 50 : bruto < 20000 ? 100 : 500;
+  const sugerido = Math.ceil(bruto / paso - 1e-9) * paso;
+  return { sugerido, ganancia: redondear2(sugerido - precio) };
+}

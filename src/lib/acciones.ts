@@ -165,6 +165,7 @@ export async function guardarConfig(fd: FormData) {
           min: 0,
           max: 99,
         }),
+        recargoSugeridoPct: numero(fd, "recargoSugeridoPct", { min: 0, max: 300 }),
         comisionPagoPct: numero(fd, "comisionPagoPct", { min: 0, max: 99 }),
         costoPackaging: numero(fd, "costoPackaging", { min: 0 }),
         envioGratisDesde:

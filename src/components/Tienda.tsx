@@ -21,6 +21,7 @@ export function TarjetaProducto({ p, className = "" }: { p: ProductoTienda; clas
           <p className="font-display text-xl font-bold leading-none tabular-nums">{pesos(p.precio)}</p>
           {porUnidad && <p className="text-right text-[11px] leading-tight tabular-nums text-stone-600">{pesos(porUnidad.valor)}<br />{porUnidad.etiqueta}</p>}
           </div>
+          {p.sugerido && <p className="-mt-1 pb-2.5 text-[11px] font-semibold leading-tight text-acopio-600">Venta sugerida {pesos(p.sugerido)}</p>}
         </div>
       </div>
       <div className="px-1.5 pb-1.5">

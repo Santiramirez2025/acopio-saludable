@@ -7,6 +7,7 @@ export async function leerConfig() {
     compraMinima: Number(s.compraMinima),
     margenMinimoPct: Number(s.margenMinimoPct),
     descuentoTransferenciaPct: Number(s.descuentoTransferenciaPct),
+    recargoSugeridoPct: Number(s.recargoSugeridoPct),
     comisionPagoPct: Number(s.comisionPagoPct),
     costoPackaging: Number(s.costoPackaging),
     envioGratisDesde: s.envioGratisDesde === null ? null : Number(s.envioGratisDesde),

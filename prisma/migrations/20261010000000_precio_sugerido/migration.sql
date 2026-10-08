@@ -1,0 +1,1 @@
+ALTER TABLE "Setting" ADD COLUMN "recargoSugeridoPct" DECIMAL(5,2) NOT NULL DEFAULT 40;

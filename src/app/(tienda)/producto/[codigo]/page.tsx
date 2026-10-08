@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
 import { aTienda, combosTienda, estaPublicado, productosTienda } from "@/lib/tienda";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
-import { pesos, precioPorUnidadBase } from "@/lib/precios";
+import { pesos, precioPorUnidadBase, precioSugerido } from "@/lib/precios";
 import { urlSitio } from "@/lib/sitio";
 import { Galeria } from "@/components/Galeria";
 import { BotonAgregar } from "@/components/Carrito";
@@ -35,7 +35,8 @@ export default async function Producto({ params }: Props) {
   const fila = await cargar((await params).codigo);
   if (!fila) notFound();
   const cfg = await leerConfig();
-  const p = aTienda(fila);
+  const p = aTienda(fila, cfg.recargoSugeridoPct);
+  const reventa = precioSugerido(p.precio, cfg.recargoSugeridoPct);
   const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
   const [combos, relacionados] = await Promise.all([
     combosTienda({ tipo: "COMBO", activo: true, items: { some: { codigo: p.codigo } } }),
@@ -61,7 +62,7 @@ export default async function Producto({ params }: Props) {
   return (
     <div className="space-y-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <nav className="-my-3 flex flex-wrap items-center text-sm text-stone-600" aria-label="Ubicación">
+      <nav className="!-mt-3 -mb-3 flex flex-wrap items-center text-sm text-stone-600" aria-label="Ubicación">
         <Link href="/catalogo" className="flex min-h-[48px] items-center underline underline-offset-4">Catálogo</Link>
         <span className="px-1.5">/</span>
         <Link href={`/catalogo?categoria=${encodeURIComponent(p.categoria)}`} className="flex min-h-[48px] items-center underline underline-offset-4">{p.categoria}</Link>
@@ -85,6 +86,12 @@ export default async function Producto({ params }: Props) {
               <p className="font-display text-4xl font-extrabold leading-none tabular-nums">{pesos(p.precio)}</p>
               {porUnidad && <p className="text-right text-sm tabular-nums text-stone-600">{pesos(porUnidad.valor)} {porUnidad.etiqueta}</p>}
             </div>
+            {reventa && (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-acopio-100 px-3.5 py-2.5 text-sm">
+                <span>Venta sugerida <b className="tabular-nums">{pesos(reventa.sugerido)}</b></span>
+                <span className="font-semibold text-acopio-700">Ganás <span className="tabular-nums">{pesos(reventa.ganancia)}</span> por unidad</span>
+              </div>
+            )}
             <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
             <p className="mt-3 text-xs text-stone-600">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras. Envíos a todo el país.</p>
           </div>

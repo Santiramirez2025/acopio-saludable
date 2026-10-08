@@ -12,6 +12,7 @@ const NAV = [
   ["/admin/productos", "Productos"],
   ["/admin/imagenes", "Imágenes"],
   ["/admin/combos", "Combos"],
+  ["/admin/lista-precios", "Lista de precios"],
   ["/admin/actualizaciones", "Actualizaciones"],
   ["/admin/estadisticas", "Estadísticas"],
   ["/admin/envios", "Envíos"],
