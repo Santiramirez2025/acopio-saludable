@@ -18,7 +18,7 @@ export default async function Envios({ searchParams }: { searchParams: Promise<{
       {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">No se guardó: {error}</p>}
       {!cfg.tablaEnviosRevisada && (
         <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          La tabla tiene <b>valores de ejemplo</b>, no tarifas reales. Mientras no haya un correo conectado, esto es lo que se le cobra al cliente: cargá tus tarifas y marcá la tabla como revisada.
+          La tabla es una <b>estimación</b> armada con tarifas publicadas de Correo Argentino (octubre 2026), no las de tu contrato. Mientras no haya un correo conectado, esto es lo que se le cobra al cliente: revisala, ajustala y marcala como revisada.
         </p>
       )}
       <div className="tarjeta text-sm">

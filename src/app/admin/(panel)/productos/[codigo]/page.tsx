@@ -109,9 +109,18 @@ export default async function EditarProducto({
             ) : (
               <div className="flex aspect-square w-full items-center justify-center rounded bg-stone-100 text-sm text-stone-400">Sin foto</div>
             )}
+            {p.fotos.length > 1 && (
+              <div className="grid grid-cols-4 gap-1">
+                {p.fotos.slice(1).map((f) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={f} src={f} alt="" className="aspect-square w-full rounded object-cover" />
+                ))}
+              </div>
+            )}
             <div>
-              <label className="etiqueta" htmlFor="fotoUrl">URL de la foto</label>
-              <input className="campo" id="fotoUrl" name="fotoUrl" type="url" defaultValue={p.fotoUrl ?? ""} placeholder="https://…" />
+              <label className="etiqueta" htmlFor="fotos">Fotos (una dirección por línea; la primera es la principal)</label>
+              <textarea className="campo font-mono text-xs" id="fotos" name="fotos" rows={4} defaultValue={(p.fotos.length ? p.fotos : p.fotoUrl ? [p.fotoUrl] : []).join("\n")} placeholder="https://…" />
+              <p className="mt-1 text-xs text-stone-500">Para subir imágenes nuevas usá Panel → Imágenes.</p>
             </div>
           </div>
           <div className="tarjeta space-y-3 text-sm">

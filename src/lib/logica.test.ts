@@ -304,3 +304,15 @@ test("estadísticas: ventas, ticket, márgenes y rankings por margen en pesos", 
   // el segundo pedido es del 6 a la noche en Córdoba (UTC-3)
   assert.deepEqual(serieDiaria(r.porDia, "2026-10-05", "2026-10-07").map((d) => [d.dia, d.ventas, d.pedidos]), [["2026-10-05", 200000, 1], ["2026-10-06", 95000, 1], ["2026-10-07", 0, 0]]);
 });
+
+test("imágenes: el código sale del nombre del archivo y se mantiene como texto", async () => {
+  const { codigoDesdeArchivo } = await import("./imagenes");
+  const c = new Set(["3622", "00000010", "36"]);
+  assert.equal(codigoDesdeArchivo("3622-1.png", c), "3622");
+  assert.equal(codigoDesdeArchivo("3622_hero.JPG", c), "3622");
+  assert.equal(codigoDesdeArchivo("00000010-2.webp", c), "00000010");
+  assert.equal(codigoDesdeArchivo("3622.png", c), "3622");
+  assert.equal(codigoDesdeArchivo("36-1.png", c), "36");
+  assert.equal(codigoDesdeArchivo("aceite-coco.png", c), null);
+  assert.equal(codigoDesdeArchivo("10-1.png", c), null);
+});

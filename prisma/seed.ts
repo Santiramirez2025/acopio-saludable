@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import bcrypt from "bcryptjs";
 import { crearPrisma } from "../src/lib/prisma";
-import { aplicarFotos, importarCatalogo, leerCatalogoCsv } from "../src/lib/catalogo";
+import { aplicarFotos, completarFotosPorFamilia, importarCatalogo, leerCatalogoCsv } from "../src/lib/catalogo";
 import { leerJsonFotos } from "../src/lib/fotos";
 import { COMBOS_INICIALES, GANCHOS } from "../src/lib/combos-iniciales";
 
@@ -22,6 +22,8 @@ async function main() {
   } else {
     console.log("Fotos: no existe data/distrimay_fotos.json, se omite (se pueden cargar desde el panel).");
   }
+
+  console.log("Fotos por familia:", await completarFotosPorFamilia(db));
 
   const codigos = new Set((await db.product.findMany({ select: { codigo: true } })).map((p) => p.codigo));
   const ganchos = GANCHOS.filter((c) => codigos.has(c));
