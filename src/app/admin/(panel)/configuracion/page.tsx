@@ -28,6 +28,19 @@ export default async function Configuracion({ searchParams }: { searchParams: Pr
           <label className="etiqueta" htmlFor="envioGratisDesde">Envío gratis desde ($)</label>
           <input className="campo" id="envioGratisDesde" name="envioGratisDesde" inputMode="decimal" defaultValue={cfg.envioGratisDesde ?? ""} placeholder="Vacío = sin envío gratis" />
         </div>
+        <hr className="border-stone-200" />
+        <div>
+          <label className="etiqueta" htmlFor="whatsapp">WhatsApp de la tienda (con código de área)</label>
+          <input className="campo" id="whatsapp" name="whatsapp" type="tel" defaultValue={cfg.whatsapp ?? ""} placeholder="Para que el cliente mande el comprobante" />
+        </div>
+        <div>
+          <label className="etiqueta" htmlFor="emailContacto">Email de contacto</label>
+          <input className="campo" id="emailContacto" name="emailContacto" type="email" defaultValue={cfg.emailContacto ?? ""} placeholder="Recibe el aviso de cada pedido nuevo" />
+        </div>
+        <div>
+          <label className="etiqueta" htmlFor="transferenciaDatos">Datos para transferencia</label>
+          <textarea className="campo" id="transferenciaDatos" name="transferenciaDatos" rows={4} defaultValue={cfg.transferenciaDatos ?? ""} placeholder={"Titular, CUIT, banco, CBU y alias. Se muestran al cliente que elige transferencia."} />
+        </div>
         <p className="text-xs text-stone-500">Bajar o subir el margen mínimo cambia al instante qué productos y combos se publican.</p>
         <button className="btn">Guardar</button>
       </form>

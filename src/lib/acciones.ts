@@ -6,6 +6,9 @@ import { prisma } from "./prisma";
 import { requireAdmin } from "./auth";
 import { calcularCombo, descuentoMaximo, margenPct } from "./precios";
 import { leerItemsCombo, slugDesdeNombre } from "./combos";
+import type { EstadoPedido } from "@prisma/client";
+import { ESTADOS, confirmarPago } from "./pedidos";
+import { ZONAS, normalizarCp, validarListaCp } from "./envios/geo";
 import { NICHO_IDS, OBJETIVO_IDS } from "./taxonomia";
 import { aplicarFotos, importarCatalogo, leerCatalogoCsv } from "./catalogo";
 import { leerJsonFotos } from "./fotos";
@@ -35,6 +38,12 @@ function mensaje(e: unknown): string {
 function textoONull(fd: FormData, campo: string): string | null {
   const v = String(fd.get(campo) ?? "").trim();
   return v === "" ? null : v;
+}
+
+function emailONull(v: string | null): string | null {
+  if (v === null) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) throw new Error("El email de contacto no es válido");
+  return v.toLowerCase();
 }
 
 function urlFoto(valor: string | null): string | null {
@@ -156,6 +165,9 @@ export async function guardarConfig(fd: FormData) {
         costoPackaging: numero(fd, "costoPackaging", { min: 0 }),
         envioGratisDesde:
           envio === null ? null : numero(fd, "envioGratisDesde", { min: 0 }),
+        whatsapp: textoONull(fd, "whatsapp")?.slice(0, 40) ?? null,
+        emailContacto: emailONull(textoONull(fd, "emailContacto")),
+        transferenciaDatos: textoONull(fd, "transferenciaDatos")?.slice(0, 800) ?? null,
       },
     });
   } catch (e) {
@@ -328,4 +340,70 @@ export async function eliminarCombo(fd: FormData) {
   await prisma.combo.delete({ where: { id } });
   revalidatePath("/", "layout");
   redirect("/admin/combos?eliminado=1");
+}
+
+// ---------- Pedidos ----------
+
+export async function cambiarEstadoPedido(fd: FormData) {
+  await requireAdmin();
+  const id = Number.parseInt(String(fd.get("id")), 10);
+  const estado = String(fd.get("estado")) as EstadoPedido;
+  let destino = `/admin/pedidos/${id}?ok=1`;
+  try {
+    if (!ESTADOS.some((e) => e.id === estado)) throw new Error("Estado inválido");
+    const pedido = await prisma.order.findUniqueOrThrow({ where: { id } });
+    const nota = textoONull(fd, "nota")?.slice(0, 300) ?? null;
+    const tracking = textoONull(fd, "tracking")?.slice(0, 80) ?? null;
+    if (estado === "PENDIENTE_PAGO" && pedido.estado !== "PENDIENTE_PAGO") throw new Error("Un pedido ya pagado no puede volver a pendiente");
+    if (pedido.estado === "PENDIENTE_PAGO" && estado !== "PENDIENTE_PAGO" && estado !== "CANCELADO") {
+      // Salir de "pendiente" siempre pasa por la confirmación de pago (suma vendidos y avisa al cliente).
+      await confirmarPago(id, nota ?? (pedido.medioPago === "TRANSFERENCIA" ? "Transferencia verificada" : "Pago confirmado a mano"));
+    }
+    if (estado !== "PAGADO" || pedido.estado !== "PENDIENTE_PAGO") {
+      const cambio = estado !== pedido.estado && !(pedido.estado === "PENDIENTE_PAGO" && estado === "PAGADO");
+      await prisma.$transaction([
+        prisma.order.update({ where: { id }, data: { estado, tracking: tracking ?? pedido.tracking } }),
+        ...(cambio || nota ? [prisma.orderEvent.create({ data: { orderId: id, estado, nota } })] : []),
+      ]);
+    } else if (tracking) {
+      await prisma.order.update({ where: { id }, data: { tracking } });
+    }
+  } catch (e) {
+    destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
+  }
+  revalidatePath("/", "layout");
+  redirect(destino);
+}
+
+// ---------- Envíos, contacto y cobro ----------
+
+export async function guardarEnvios(fd: FormData) {
+  await requireAdmin();
+  let destino = "/admin/envios?ok=1";
+  try {
+    const cpOrigen = normalizarCp(String(fd.get("cpOrigen") ?? ""));
+    if (!cpOrigen) throw new Error("El código postal de origen debe tener 4 números");
+    const tramosKg = String(fd.get("tramosKg") ?? "").split(/[,;\s]+/).filter(Boolean).map(Number);
+    if (!tramosKg.length || tramosKg.some((t, i) => !(t > 0) || (i > 0 && t <= tramosKg[i - 1]))) throw new Error("Los tramos de peso deben ser números crecientes, ej. 1, 5, 10, 15, 20, 25");
+    const zonas = Object.fromEntries(
+      ZONAS.map((z) => {
+        const fila = (tipo: string) => tramosKg.map((_, i) => numero(fd, `${z.id}.${tipo}.${i}`, { min: 0 }));
+        return [z.id, { sucursal: fila("sucursal"), domicilio: fila("domicilio"), plazo: String(fd.get(`${z.id}.plazo`) ?? "").trim().slice(0, 60) }];
+      }),
+    );
+    await prisma.setting.update({
+      where: { id: 1 },
+      data: {
+        cpOrigen,
+        entregaPropiaActiva: fd.get("entregaPropiaActiva") === "on",
+        cpEntregaPropia: validarListaCp(String(fd.get("cpEntregaPropia") ?? "")),
+        tablaEnvios: { tramosKg, zonas },
+        tablaEnviosRevisada: fd.get("tablaEnviosRevisada") === "on",
+      },
+    });
+  } catch (e) {
+    destino = `/admin/envios?error=${encodeURIComponent(mensaje(e))}`;
+  }
+  revalidatePath("/", "layout");
+  redirect(destino);
 }

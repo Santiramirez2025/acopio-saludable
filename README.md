@@ -8,7 +8,7 @@ Stack: Next.js (App Router) + TypeScript, Prisma + PostgreSQL (Neon), NextAuth, 
 
 - **Fase 1 (hecha):** modelo de datos, importación del CSV (1.177 productos), fotos del proveedor (1.111), panel de productos, combos iniciales con control de margen, configuración.
 - **Fase 2 (hecha):** sitio público (home, catálogo con filtros, ficha, compra por negocio y por objetivo, combos, armador de pedido), carrito con compra mínima, alta y edición de combos en el panel, SEO básico (metadatos, sitemap, datos estructurados).
-- Fase 3: checkout, Mercado Pago y envíos.
+- **Fase 3 (hecha):** checkout con cálculo de envío automático, Mercado Pago (Checkout Pro) y transferencia, pedidos con estados, lista de compra a Distrimay, etiqueta de envío, margen neto por pedido y configuración de envíos.
 - Fase 4: sincronización diaria de precios y estadísticas.
 
 ## Puesta en marcha
@@ -16,7 +16,7 @@ Stack: Next.js (App Router) + TypeScript, Prisma + PostgreSQL (Neon), NextAuth, 
 ```bash
 cp .env.example .env          # completar DATABASE_URL, NEXTAUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
 npm install
-npx prisma migrate deploy     # crea las tablas
+npx prisma migrate deploy     # crea o actualiza las tablas (correr también después de cada actualización)
 npm run db:seed               # catálogo + fotos + combos + ganchos + usuario admin
 npm run dev                   # http://localhost:3000/admin
 ```
@@ -41,6 +41,15 @@ El seed se puede volver a correr: no duplica nada ni pisa lo editado en el panel
 - Un combo se vende solo si está activo y vigente, todos sus productos están publicados y respeta el margen mínimo.
 - El botón "Continuar con la compra" lleva a un checkout provisorio hasta la Fase 3.
 - En producción, definir `NEXT_PUBLIC_SITE_URL` con el dominio final (sitemap y datos estructurados).
+
+## Pedidos, pagos y envíos
+
+- **Alta del pedido:** el servidor vuelve a cotizar carrito y envío; no acepta precios ni opciones de envío que mande el navegador. Cada pedido guarda precio y costo de cada producto al momento de la compra.
+- **Mercado Pago:** con `MP_ACCESS_TOKEN` se ofrece Checkout Pro. El pago se confirma por el aviso (`/api/mp/webhook`, validado con `MP_WEBHOOK_SECRET`) o al volver el cliente al sitio; en ambos casos se consulta el pago a Mercado Pago y se compara el monto. Sin token solo se ofrece transferencia.
+- **Transferencia:** el pedido queda pendiente y se confirma a mano desde Panel → Pedidos. Los datos de la cuenta se cargan en Configuración.
+- **Envíos:** entrega propia sin cargo por código postal; MiCorreo y Andreani si están sus credenciales; si no, tabla por peso y zona (Panel → Envíos). Bultos de hasta 25 kg, cotizados uno por uno. La tabla viene con **valores de ejemplo**: hay que cargar las tarifas reales.
+- **Confirmaciones:** email por Resend (`RESEND_API_KEY`, `EMAIL_FROM`) al recibir el pedido y al confirmar el pago; botón de WhatsApp con el mensaje armado para el cliente y para la tienda. No hay envío automático de WhatsApp.
+- **Lista de compra a Distrimay:** en cada pedido, con código, producto, cantidad, costo y total; también en CSV.
 
 ## Fotos
 

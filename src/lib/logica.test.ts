@@ -129,3 +129,105 @@ test("combos: lectura de items y slug", () => {
   assert.throws(() => leerItemsCombo("3622 x 0"), /cantidad/);
   assert.equal(slugDesdeNombre("  Dúo Magnesio / Ñandú!  "), "duo-magnesio-nandu");
 });
+
+import { armarBultos } from "./envios/bultos";
+import { cpEnLista, normalizarCp, validarListaCp } from "./envios/geo";
+import { TABLA_EJEMPLO, cotizarConTabla, leerTabla, precioBulto } from "./envios/tabla";
+import { aplicarReglas, cotizarEnvio } from "./envios/cotizar";
+
+test("envíos: bultos de hasta 25 kg", () => {
+  const b = armarBultos([{ pesoG: 3090, cantidad: 10 }, { pesoG: 1030, cantidad: 4 }, { pesoG: 25500, cantidad: 1 }]);
+  assert.equal(b.reduce((s, x) => s + x.pesoG, 0), 30900 + 4120 + 25500);
+  assert.ok(b.filter((x) => !x.excedido).every((x) => x.pesoG <= 25000));
+  assert.equal(b.filter((x) => x.excedido).length, 1);
+  assert.equal(b.length, 3);
+  assert.deepEqual(armarBultos([]), []);
+});
+
+test("envíos: códigos postales", () => {
+  assert.equal(normalizarCp(" x5152abc "), "5152");
+  assert.equal(normalizarCp("5152"), "5152");
+  assert.equal(normalizarCp("515"), null);
+  assert.equal(normalizarCp("0001"), null);
+  assert.ok(cpEnLista("5010", "5152,5000-5022"));
+  assert.ok(cpEnLista("5152", "5152, 5000-5022"));
+  assert.ok(!cpEnLista("5023", "5152,5000-5022"));
+  assert.throws(() => validarListaCp("5152, abc"), /inválido/);
+});
+
+test("envíos: tabla por peso y zona", () => {
+  const t = TABLA_EJEMPLO;
+  assert.equal(precioBulto([10, 20, 30], [1, 5, 10], 900), 10);
+  assert.equal(precioBulto([10, 20, 30], [1, 5, 10], 5000), 20);
+  assert.equal(precioBulto([10, 20, 30], [1, 5, 10], 20000), 60);
+  const r = cotizarConTabla(t, "Mendoza", [{ pesoG: 24000, unidades: 5, excedido: false }, { pesoG: 800, unidades: 1, excedido: false }]);
+  assert.equal(r.find((x) => x.modalidad === "sucursal")!.costo, t.zonas.centro.sucursal[5] + t.zonas.centro.sucursal[0]);
+  assert.deepEqual(cotizarConTabla(t, "Narnia", [{ pesoG: 1, unidades: 1, excedido: false }]), []);
+  assert.equal(leerTabla({ tramosKg: [1], zonas: {} }), TABLA_EJEMPLO);
+});
+
+test("envíos: entrega propia, envío gratis, más barata y respaldo si la API falla", async () => {
+  const cfg = { cpOrigen: "5152", entregaPropiaActiva: true, cpEntregaPropia: "5152,5000-5022", envioGratisDesde: null, tabla: TABLA_EJEMPLO };
+  const bultos = [{ pesoG: 8000, unidades: 4, excedido: false }];
+  const cba = await cotizarEnvio(cfg, { cpDestino: "5000", provincia: "Córdoba", bultos, subtotal: 250000 }, []);
+  assert.deepEqual(cba.map((o) => o.id), ["propia", "tabla-sucursal", "tabla-domicilio"]);
+  assert.ok(cba[0].masBarata && cba[0].precio === 0);
+  const mza = await cotizarEnvio(cfg, { cpDestino: "5500", provincia: "Mendoza", bultos, subtotal: 250000 }, []);
+  assert.deepEqual(mza.map((o) => [o.id, o.masBarata]), [["tabla-sucursal", true], ["tabla-domicilio", false]]);
+  const gratis = aplicarReglas(mza, 250000, 200000);
+  assert.equal(gratis[0].precio, 0);
+  assert.equal(gratis[1].precio, mza[1].costo - mza[0].costo);
+  assert.equal(gratis[0].costo, mza[0].costo); // el costo real se conserva para el margen neto
+  const rota = { id: "micorreo" as const, configurado: () => true, cotizar: async () => { throw new Error("caída"); } };
+  const respaldo = await cotizarEnvio(cfg, { cpDestino: "5500", provincia: "Mendoza", bultos, subtotal: 1 }, [rota]);
+  assert.equal(respaldo[0].proveedor, "tabla");
+  const viva = { id: "micorreo" as const, configurado: () => true, cotizar: async () => [{ id: "micorreo-sucursal", proveedor: "micorreo" as const, modalidad: "sucursal" as const, nombre: "x", costo: 1234, plazo: "" }] };
+  assert.deepEqual((await cotizarEnvio(cfg, { cpDestino: "5500", provincia: "Mendoza", bultos, subtotal: 1 }, [viva])).map((o) => o.id), ["micorreo-sucursal"]);
+});
+
+import { firmaValida } from "./mercadopago";
+import { createHmac } from "node:crypto";
+
+test("mercado pago: firma del aviso", () => {
+  process.env.MP_WEBHOOK_SECRET = "secreto-de-prueba";
+  const v1 = createHmac("sha256", "secreto-de-prueba").update("id:123;request-id:abc;ts:1700000000;").digest("hex");
+  const h = (firma: string) => new Headers({ "x-signature": firma, "x-request-id": "abc" });
+  assert.equal(firmaValida(h(`ts=1700000000,v1=${v1}`), "123"), true);
+  assert.equal(firmaValida(h(`ts=1700000000,v1=${v1}`), "124"), false);
+  assert.equal(firmaValida(h(`ts=1700000001,v1=${v1}`), "123"), false);
+  assert.equal(firmaValida(new Headers(), "123"), false);
+  delete process.env.MP_WEBHOOK_SECRET;
+  assert.equal(firmaValida(new Headers(), "123"), true);
+});
+
+import { linkWhatsapp, listaDeCompra, margenNeto, numeroPedido, validarCliente } from "./pedido-calculos";
+
+test("pedidos: validación de datos del cliente", () => {
+  const ok = { nombre: "Ana Pérez", email: "ANA@Ejemplo.com ", telefono: "3541 555555", calle: "San Martín 123", ciudad: "Villa Carlos Paz", provincia: "Córdoba", cp: "x5152abc", notas: "" };
+  const c = validarCliente(ok);
+  assert.equal(c.cp, "5152");
+  assert.equal(c.email, "ana@ejemplo.com");
+  assert.equal(c.notas, null);
+  for (const [campo, valor, error] of [["email", "ana@", /email/], ["telefono", "123", /teléfono/], ["provincia", "Narnia", /provincia/], ["cp", "99", /postal/], ["nombre", "", /nombre/]] as const) {
+    assert.throws(() => validarCliente({ ...ok, [campo]: valor }), error);
+  }
+  assert.throws(() => validarCliente(null), /nombre/);
+});
+
+test("pedidos: lista de compra, margen neto, número y WhatsApp", () => {
+  const D = (n: number) => n as unknown as never; // Decimal de Prisma se comporta como número para Number()
+  const lista = listaDeCompra([
+    { codigo: "00000010", producto: "Avena", presentacion: "x 3kg", cantidad: 2, costoUnitario: D(6345.5) },
+    { codigo: "706", producto: "Nuez", presentacion: "x 1kg", cantidad: 1, costoUnitario: D(16310) },
+    { codigo: "00000010", producto: "Avena", presentacion: "x 3kg", cantidad: 3, costoUnitario: D(6345.5) },
+  ]);
+  assert.deepEqual(lista.renglones.map((r) => [r.codigo, r.cantidad, r.total]), [["00000010", 5, 31727.5], ["706", 1, 16310]]);
+  assert.equal(lista.total, 48037.5);
+  const m = margenNeto({ subtotal: D(250000), descuento: D(5000), envioCobrado: D(0), total: D(245000), costoProductos: D(192000), costoEnvioReal: D(9500), comisionPago: D(0), costoPackaging: D(1500) });
+  assert.deepEqual([m.venta, m.bruto, m.subsidioEnvio, m.neto], [245000, 53000, 9500, 42000]);
+  assert.equal(m.netoPct, 17.14);
+  assert.equal(numeroPedido(7), "AS-00007");
+  assert.equal(linkWhatsapp("0351 15-555-1234", "hola"), "https://wa.me/549351155551234?text=hola");
+  assert.equal(linkWhatsapp("+54 9 3541 555555", "a b"), "https://wa.me/5493541555555?text=a%20b");
+  assert.equal(linkWhatsapp("123", "x"), null);
+});
