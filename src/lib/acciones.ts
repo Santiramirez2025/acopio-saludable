@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
 import { requireAdmin } from "./auth";
-import { margenPct } from "./precios";
+import { calcularCombo, descuentoMaximo, margenPct } from "./precios";
+import { leerItemsCombo, slugDesdeNombre } from "./combos";
 import { NICHO_IDS, OBJETIVO_IDS } from "./taxonomia";
 import { aplicarFotos, importarCatalogo, leerCatalogoCsv } from "./catalogo";
 import { leerJsonFotos } from "./fotos";
@@ -66,7 +67,7 @@ export async function alternarProducto(fd: FormData) {
           }
         : { gancho: !p.gancho },
   });
-  revalidatePath("/admin", "layout");
+  revalidatePath("/", "layout");
 }
 
 export async function guardarProducto(fd: FormData) {
@@ -133,7 +134,7 @@ export async function guardarProducto(fd: FormData) {
   } catch (e) {
     destino = `${ruta}?error=${encodeURIComponent(mensaje(e))}`;
   }
-  revalidatePath("/admin", "layout");
+  revalidatePath("/", "layout");
   redirect(destino);
 }
 
@@ -160,7 +161,7 @@ export async function guardarConfig(fd: FormData) {
   } catch (e) {
     destino = `/admin/configuracion?error=${encodeURIComponent(mensaje(e))}`;
   }
-  revalidatePath("/admin", "layout");
+  revalidatePath("/", "layout");
   redirect(destino);
 }
 
@@ -188,7 +189,7 @@ export async function importarCsv(fd: FormData) {
   } catch (e) {
     destino = `/admin/importar?error=${encodeURIComponent(mensaje(e))}`;
   }
-  revalidatePath("/admin", "layout");
+  revalidatePath("/", "layout");
   redirect(destino);
 }
 
@@ -205,6 +206,126 @@ export async function importarFotos(fd: FormData) {
   } catch (e) {
     destino = `/admin/importar?error=${encodeURIComponent(mensaje(e))}`;
   }
-  revalidatePath("/admin", "layout");
+  revalidatePath("/", "layout");
   redirect(destino);
+}
+
+// ---------- Combos ----------
+
+function fecha(fd: FormData, campo: string, finDelDia = false): Date | null {
+  const v = textoONull(fd, campo);
+  if (v === null) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) throw new Error(`"${campo}" debe ser una fecha`);
+  // Horario de Argentina (UTC-3): la vigencia incluye el día completo.
+  const d = new Date(`${v}T${finDelDia ? "23:59:59" : "00:00:00"}-03:00`);
+  if (Number.isNaN(d.getTime())) throw new Error(`"${campo}" debe ser una fecha`);
+  return d;
+}
+
+export type ValoresCombo = {
+  nombre: string;
+  slug: string;
+  tipo: string;
+  nicho: string;
+  descuentoPct: string;
+  vigenteDesde: string;
+  vigenteHasta: string;
+  items: string;
+  activo: boolean;
+  destacado: boolean;
+};
+export type EstadoCombo = { error: string; valores: ValoresCombo } | null;
+
+/** Si algo falla devuelve el error junto con lo que se había cargado, para no perder el formulario. */
+export async function guardarCombo(_previo: EstadoCombo, fd: FormData): Promise<EstadoCombo> {
+  await requireAdmin();
+  const idCrudo = String(fd.get("id") ?? "");
+  const id = idCrudo ? Number.parseInt(idCrudo, 10) : null;
+  let destino: string;
+  try {
+    const nombre = String(fd.get("nombre") ?? "").trim();
+    if (nombre.length < 3) throw new Error("Poné un nombre de al menos 3 letras");
+    const slug = slugDesdeNombre(textoONull(fd, "slug") ?? nombre);
+    if (!slug) throw new Error("El nombre no genera una dirección válida");
+    const tipo = String(fd.get("tipo"));
+    if (tipo !== "COMBO" && tipo !== "PEDIDO_NICHO") throw new Error("Tipo inválido");
+    const nicho = textoONull(fd, "nicho");
+    if (nicho !== null && !NICHO_IDS.includes(nicho)) throw new Error("Nicho inválido");
+    if (tipo === "PEDIDO_NICHO" && !nicho) throw new Error("Un pedido tipo necesita un nicho");
+    const descuentoPct = numero(fd, "descuentoPct", { min: 0, max: 90 });
+    const vigenteDesde = fecha(fd, "vigenteDesde");
+    const vigenteHasta = fecha(fd, "vigenteHasta", true);
+    if (vigenteDesde && vigenteHasta && vigenteHasta < vigenteDesde) throw new Error("La vigencia termina antes de empezar");
+
+    const items = leerItemsCombo(String(fd.get("items") ?? ""));
+    if (!items.length) throw new Error("Agregá al menos un producto");
+    const productos = await prisma.product.findMany({ where: { codigo: { in: items.map((i) => i.codigo) } } });
+    const porCodigo = new Map(productos.map((p) => [p.codigo, p]));
+    const faltan = items.filter((i) => !porCodigo.has(i.codigo)).map((i) => i.codigo);
+    if (faltan.length) throw new Error(`Códigos que no existen: ${faltan.join(", ")}`);
+
+    // Regla dura: ningún combo ni promo puede quedar debajo del margen mínimo.
+    const cfg = await prisma.setting.findUniqueOrThrow({ where: { id: 1 } });
+    const margenMinimo = Number(cfg.margenMinimoPct);
+    const lineas = items.map((i) => {
+      const p = porCodigo.get(i.codigo)!;
+      return { precio: Number(p.precioPublico), costo: Number(p.costo), cantidad: i.cantidad };
+    });
+    const calc = calcularCombo(lineas, descuentoPct, margenMinimo);
+    if (calc.bloqueado) {
+      throw new Error(
+        `Bloqueado: con ${descuentoPct}% de descuento el margen queda en ${calc.margenPct.toFixed(1)}%, debajo del mínimo de ${margenMinimo}%. Descuento máximo posible: ${descuentoMaximo(lineas, margenMinimo)}%.`,
+      );
+    }
+
+    const repetido = await prisma.combo.findUnique({ where: { slug } });
+    if (repetido && repetido.id !== id) throw new Error(`Ya existe un combo con la dirección "${slug}"`);
+
+    const datos = {
+      nombre,
+      slug,
+      tipo: tipo as "COMBO" | "PEDIDO_NICHO",
+      nicho,
+      descuentoPct,
+      activo: fd.get("activo") === "on",
+      destacado: fd.get("destacado") === "on",
+      vigenteDesde,
+      vigenteHasta,
+    };
+    const guardado = await prisma.$transaction(async (tx) => {
+      const c = id ? await tx.combo.update({ where: { id }, data: datos }) : await tx.combo.create({ data: datos });
+      await tx.comboItem.deleteMany({ where: { comboId: c.id } });
+      await tx.comboItem.createMany({ data: items.map((i) => ({ comboId: c.id, codigo: i.codigo, cantidad: i.cantidad })) });
+      return c;
+    });
+    destino = `/admin/combos/${guardado.id}?ok=1`;
+  } catch (e) {
+    const t = (campo: string) => String(fd.get(campo) ?? "");
+    return {
+      error: mensaje(e),
+      valores: {
+        nombre: t("nombre"),
+        slug: t("slug"),
+        tipo: t("tipo"),
+        nicho: t("nicho"),
+        descuentoPct: t("descuentoPct"),
+        vigenteDesde: t("vigenteDesde"),
+        vigenteHasta: t("vigenteHasta"),
+        items: t("items"),
+        activo: fd.get("activo") === "on",
+        destacado: fd.get("destacado") === "on",
+      },
+    };
+  }
+  revalidatePath("/", "layout");
+  redirect(destino);
+}
+
+export async function eliminarCombo(fd: FormData) {
+  await requireAdmin();
+  const id = Number.parseInt(String(fd.get("id")), 10);
+  if (fd.get("confirmar") !== "on") redirect(`/admin/combos/${id}?error=${encodeURIComponent("Marcá la casilla para confirmar la eliminación")}`);
+  await prisma.combo.delete({ where: { id } });
+  revalidatePath("/", "layout");
+  redirect("/admin/combos?eliminado=1");
 }
