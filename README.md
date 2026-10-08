@@ -21,7 +21,13 @@ npm run db:seed               # catálogo + fotos + combos + ganchos + usuario a
 npm run dev                   # http://localhost:3000/admin
 ```
 
-En Vercel: cargar `DATABASE_URL`, `NEXTAUTH_SECRET` y `NEXTAUTH_URL`. El seed se corre una vez desde tu máquina apuntando a la base de Neon.
+### Publicar en Vercel
+
+1. Importar el repo en Vercel y conectarle una base Neon (Storage → Neon): eso carga `DATABASE_URL` solo.
+2. Cargar estas variables: `NEXTAUTH_SECRET` (generar con `openssl rand -base64 32`), `NEXTAUTH_URL` y `NEXT_PUBLIC_SITE_URL` (las dos con la dirección pública, con https), `ADMIN_EMAIL` y `ADMIN_PASSWORD` (mínimo 10 caracteres).
+3. Deploy. El build (`vercel-build`) aplica las migraciones, carga el catálogo, las fotos, los combos y el usuario administrador, y compila. En cada deploy posterior vuelve a correr sin duplicar ni pisar lo editado en el panel.
+
+Después, opcionales: Mercado Pago, Resend, MiCorreo y Andreani (ver `.env.example`).
 
 El seed se puede volver a correr: no duplica nada ni pisa lo editado en el panel.
 
