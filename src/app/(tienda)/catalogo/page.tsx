@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
-import { wherePublicado } from "@/lib/filtros-producto";
+import { AVISO_SIN_TACC, WHERE_SIN_TACC, wherePublicado } from "@/lib/filtros-producto";
 import { aTienda } from "@/lib/tienda";
 import { NICHOS, NICHO_IDS, OBJETIVOS, OBJETIVO_IDS } from "@/lib/taxonomia";
 import { GrillaProductos, Titulo } from "@/components/Tienda";
@@ -13,6 +13,15 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const q = (sp.q ?? "").trim().slice(0, 80);
   const filtros = Object.entries(sp).filter(([k, v]) => v && k !== "categoria");
   // Búsquedas y combinaciones de filtros no se indexan: solo el catálogo y cada góndola.
+  if (sp.sintacc === "1" && !q) {
+    const otros = Object.entries(sp).filter(([k, v]) => v && k !== "sintacc");
+    return {
+      title: "Productos sin TACC por volumen",
+      description: "Harinas, galletitas, snacks, cereales y más productos rotulados sin TACC, por volumen y con envíos a todo el país.",
+      alternates: { canonical: "/sin-tacc" },
+      robots: otros.length ? { index: false, follow: true } : undefined,
+    };
+  }
   if (q) return { title: `Resultados para "${q}"`, robots: { index: false, follow: true } };
   if (sp.categoria) {
     return {
@@ -54,11 +63,13 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
   const objetivo = OBJETIVO_IDS.includes(sp.objetivo ?? "") ? sp.objetivo! : "";
   const min = precio(sp.min);
   const max = precio(sp.max);
+  const sinTacc = sp.sintacc === "1";
   const base = wherePublicado(cfg.margenMinimoPct);
 
   const where: Prisma.ProductWhereInput = {
     AND: [
       base,
+      sinTacc ? WHERE_SIN_TACC : {},
       sp.categoria ? { categoria: sp.categoria } : {},
       sp.marca ? { marca: sp.marca } : {},
       sp.formato ? { formato: sp.formato } : {},
@@ -98,15 +109,17 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
 
   return (
     <div>
-      <Titulo>{q ? `Resultados para "${q}"` : sp.categoria || "Todo el catálogo"}</Titulo>
+      <Titulo bajada={sinTacc ? AVISO_SIN_TACC : undefined}>{q ? `Resultados para "${q}"` : sinTacc ? (sp.categoria ? `${sp.categoria} sin TACC` : "Productos sin TACC") : sp.categoria || "Todo el catálogo"}</Titulo>
       <nav className="riel mb-3 md:mx-0 md:flex-wrap md:px-0" aria-label="Góndolas">
-        <Link href="/catalogo" aria-current={!sp.categoria ? "page" : undefined} className={`chip min-h-[48px] shrink-0 snap-start px-4 text-sm ${!sp.categoria ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>Todo</Link>
+        <Link href="/sin-tacc" aria-current={sinTacc ? "page" : undefined} className={`chip min-h-[48px] shrink-0 snap-start whitespace-nowrap px-4 text-sm ${sinTacc ? "bg-acopio-900 text-white" : "bg-acopio-100 text-acopio-900 ring-1 ring-acopio-600"}`}>Sin TACC</Link>
+        <Link href="/catalogo" aria-current={!sp.categoria && !sinTacc ? "page" : undefined} className={`chip min-h-[48px] shrink-0 snap-start px-4 text-sm ${!sp.categoria && !sinTacc ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>Todo</Link>
         {categorias.map((c) => (
-          <Link key={c.categoria} href={`/catalogo?categoria=${encodeURIComponent(c.categoria)}`} className={`chip min-h-[48px] shrink-0 snap-start whitespace-nowrap px-4 text-sm ${sp.categoria === c.categoria ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>{c.categoria}</Link>
+          <Link key={c.categoria} href={`/catalogo?${sinTacc ? "sintacc=1&" : ""}categoria=${encodeURIComponent(c.categoria)}`} className={`chip min-h-[48px] shrink-0 snap-start whitespace-nowrap px-4 text-sm ${sp.categoria === c.categoria ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>{c.categoria}</Link>
         ))}
       </nav>
       <h2 className="sr-only">Buscar y filtrar productos</h2>
       <form action="/catalogo" className="mb-5 rounded-2xl bg-white p-3 shadow-ficha">
+        {sinTacc && <input type="hidden" name="sintacc" value="1" />}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {/* En el celular el buscador ya está arriba, siempre a la vista: acá se oculta para que los productos aparezcan antes. */}
           <input name="q" defaultValue={q} placeholder="Buscar" aria-label="Buscar en el catálogo" className="campo col-span-2 hidden sm:block" />

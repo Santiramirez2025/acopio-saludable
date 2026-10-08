@@ -4,7 +4,7 @@ import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
 import { calcularCombo, redondear2 } from "./precios";
-import { wherePublicado } from "./filtros-producto";
+import { wherePublicado, esSinTacc } from "./filtros-producto";
 
 export type ProductoTienda = {
   codigo: string;
@@ -19,6 +19,7 @@ export type ProductoTienda = {
   fotoUrl: string | null;
   gancho: boolean;
   esSuplemento: boolean;
+  sinTacc: boolean;
 };
 
 export function aTienda(p: Product): ProductoTienda {
@@ -35,6 +36,7 @@ export function aTienda(p: Product): ProductoTienda {
     fotoUrl: p.fotoUrl,
     gancho: p.gancho,
     esSuplemento: p.categoria === "Suplementos",
+    sinTacc: esSinTacc(p),
   };
 }
 

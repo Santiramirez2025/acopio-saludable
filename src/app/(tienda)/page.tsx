@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
-import { wherePublicado } from "@/lib/filtros-producto";
+import { AVISO_SIN_TACC, WHERE_SIN_TACC, wherePublicado } from "@/lib/filtros-producto";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos } from "@/lib/precios";
@@ -15,7 +15,9 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 export default async function Home() {
   const cfg = await leerConfig();
   const publicado = wherePublicado(cfg.margenMinimoPct);
-  const [ganchos, combos, pedidos, portadas, conteos, vendibles] = await Promise.all([
+  const [sinTacc, totalSinTacc, ganchos, combos, pedidos, portadas, conteos, vendibles] = await Promise.all([
+    productosTienda({ where: { AND: [WHERE_SIN_TACC, { fotoUrl: { not: null } }] }, take: 8 }),
+    prisma.product.count({ where: { AND: [publicado, WHERE_SIN_TACC] } }),
     productosTienda({ where: { gancho: true }, take: 8 }),
     combosTienda({ tipo: "COMBO", activo: true }),
     combosTienda({ tipo: "PEDIDO_NICHO", activo: true }),
@@ -51,6 +53,11 @@ export default async function Home() {
                 <Link key={n.id} href={`/nichos/${n.id}`} className="shrink-0 snap-start whitespace-nowrap flex min-h-[48px] items-center rounded-full bg-white/10 px-4 text-sm font-semibold hover:bg-white hover:text-acopio-900">{n.nombre}</Link>
               ))}
             </div>
+            <Link href="/sin-tacc" className="mt-3 flex min-h-[48px] items-center gap-3 rounded-2xl bg-white/10 px-4 text-sm font-semibold hover:bg-white/15">
+              <span className="chip bg-sol text-acopio-900">Sin TACC</span>
+              <span className="min-w-0 flex-1">{totalSinTacc} productos sin gluten</span>
+              <span aria-hidden="true">→</span>
+            </Link>
             <div className="mt-4 flex flex-wrap gap-2.5">
               <Link href="/armador" className="btn-comprar min-w-0 flex-1 whitespace-nowrap sm:flex-none">Armame un pedido</Link>
               <Link href="/catalogo" className="inline-flex min-h-[48px] min-w-0 flex-1 items-center whitespace-nowrap justify-center rounded-full border border-white/30 px-5 text-sm font-semibold hover:bg-white/10 sm:flex-none">Ver catálogo</Link>
@@ -69,6 +76,14 @@ export default async function Home() {
           )}
         </div>
       </section>
+
+      {sinTacc.length > 0 && (
+        <section className="rounded-3xl bg-acopio-100 p-4 sm:p-6">
+          <TituloSeccion href="/sin-tacc" enlace={`Ver los ${totalSinTacc}`}>Góndola sin TACC</TituloSeccion>
+          <p className="-mt-1 mb-3 max-w-2xl text-sm text-stone-700">{AVISO_SIN_TACC}</p>
+          <RielProductos productos={sinTacc} />
+        </section>
+      )}
 
       {pedidos.length > 0 && (
         <section>

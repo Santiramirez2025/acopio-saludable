@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
   },
   // El motor de consultas de Prisma es un .wasm que se lee del disco: hay que incluirlo a mano en las funciones de Vercel.
   outputFileTracingIncludes: { "/**": ["./node_modules/.prisma/client/*.wasm"] },
+  // Dirección corta y propia para la góndola sin TACC.
+  async rewrites() {
+    return [{ source: "/sin-tacc", destination: "/catalogo?sintacc=1" }];
+  },
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
 };
 

@@ -73,6 +73,12 @@ export default async function Producto({ params }: Props) {
             {p.marca && !/^sin /i.test(p.marca) && <p className="text-sm font-semibold text-acopio-600">{p.marca}</p>}
             <h1 className="font-display text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-4xl">{p.producto}</h1>
             <p className="mt-1.5 text-stone-600">{p.presentacion}</p>
+            {p.sinTacc && (
+              <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-stone-600">
+                <Link href="/sin-tacc" className="inline-flex min-h-[48px] items-center"><span className="chip bg-acopio-900 px-3 py-1.5 text-sm text-white">Sin TACC</span></Link>
+                Rotulado por el fabricante. Verificá el logo oficial en el envase.
+              </p>
+            )}
           </div>
           <div className="rounded-2xl bg-white p-4 shadow-ficha">
             <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">

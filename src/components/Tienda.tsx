@@ -13,6 +13,7 @@ export function TarjetaProducto({ p, className = "" }: { p: ProductoTienda; clas
       {/* El enlace del nombre se estira sobre la foto y el texto: un solo destino, grande y fácil de tocar. */}
       <div className="relative flex flex-1 flex-col">
         <Foto src={p.fotoUrl} alt="" etiqueta={p.categoria} className="aspect-square w-full rounded-xl" />
+        {p.sinTacc && <span className="chip absolute left-2 top-2 bg-acopio-900 text-white">Sin TACC</span>}
         <div className="flex flex-1 flex-col px-1.5 pt-2.5">
           <h3 className="text-[15px] font-semibold leading-snug"><Link href={href} className="estirado line-clamp-2 after:absolute after:inset-0 after:rounded-xl hover:underline">{p.producto}</Link></h3>
           <p className="mt-0.5 line-clamp-1 text-xs text-stone-600">{p.presentacion}</p>

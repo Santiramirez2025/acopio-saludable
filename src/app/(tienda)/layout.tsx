@@ -18,6 +18,7 @@ export default function TiendaLayout({ children }: { children: React.ReactNode }
             <div>
               <p className="font-display text-2xl font-extrabold text-white">acopio<span className="text-sol">.</span> saludable</p>
               <p className="mt-1">{SITIO.base}. Envíos a todo el país.</p>
+              <Link href="/sin-tacc" className="flex min-h-[48px] items-center font-semibold text-white underline underline-offset-4">Productos sin TACC</Link>
             </div>
             <div>
               <h2 className="mb-1 font-semibold text-white">Comprá por negocio</h2>
