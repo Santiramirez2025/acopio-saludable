@@ -100,7 +100,8 @@ export async function guardarProducto(fd: FormData) {
     if (estado !== "ACTIVO" && estado !== "BORRADOR" && estado !== "SIN_STOCK")
       throw new Error("Estado inválido");
     const visible = fd.get("visible") === "on";
-    const foto = urlFoto(textoONull(fd, "fotoUrl"));
+    const fotos = [...new Set(String(fd.get("fotos") ?? "").split(/\s+/).filter(Boolean))].slice(0, 12).map((u) => urlFoto(u)!);
+  const foto = fotos[0] ?? null;
     const cambioPrecio =
       Number(previo.costo) !== costo ||
       Number(previo.precioPublico) !== precioPublico;
@@ -116,7 +117,7 @@ export async function guardarProducto(fd: FormData) {
           pesoEstimado:
             pesoBrutoG === previo.pesoBrutoG ? previo.pesoEstimado : false,
           fotoUrl: foto,
-          fotos: foto === previo.fotoUrl ? previo.fotos : foto ? [foto] : [],
+          fotos,
           nichos: fd
             .getAll("nichos")
             .map(String)
@@ -477,4 +478,30 @@ export async function guardarUmbral(fd: FormData) {
     destino = `/admin/actualizaciones?error=${encodeURIComponent(mensaje(e))}`;
   }
   redirect(destino);
+}
+
+// ---------- Imágenes propias ----------
+
+const HOST_BLOB = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//;
+
+/** Suma imágenes recién subidas a sus productos. Las propias van primero: la primera pasa a ser la foto principal. */
+export async function registrarFotos(items: { codigo: string; url: string }[]): Promise<{ asignadas: number; desconocidos: string[] }> {
+  await requireAdmin();
+  const validas = items.filter((i) => typeof i.codigo === "string" && typeof i.url === "string" && HOST_BLOB.test(i.url)).slice(0, 200);
+  const porCodigo = new Map<string, string[]>();
+  for (const i of validas) porCodigo.set(i.codigo, [...(porCodigo.get(i.codigo) ?? []), i.url]);
+  const productos = await prisma.product.findMany({ where: { codigo: { in: [...porCodigo.keys()] } }, select: { codigo: true, fotos: true, fotoUrl: true } });
+  let asignadas = 0;
+  for (const p of productos) {
+    const nuevas = (porCodigo.get(p.codigo) ?? []).sort();
+    const previas = p.fotos.length ? p.fotos : p.fotoUrl ? [p.fotoUrl] : [];
+    const propias = previas.filter((f) => HOST_BLOB.test(f));
+    const deProveedor = previas.filter((f) => !HOST_BLOB.test(f));
+    const fotos = [...new Set([...propias, ...nuevas, ...deProveedor])];
+    await prisma.product.update({ where: { codigo: p.codigo }, data: { fotos, fotoUrl: fotos[0] } });
+    asignadas += nuevas.length;
+  }
+  const conocidos = new Set(productos.map((p) => p.codigo));
+  revalidatePath("/", "layout");
+  return { asignadas, desconocidos: [...porCodigo.keys()].filter((c) => !conocidos.has(c)) };
 }

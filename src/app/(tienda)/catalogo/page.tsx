@@ -78,8 +78,14 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
 
   return (
     <div>
-      <Titulo sobre="Catálogo">{q ? `Resultados para "${q}"` : "Todos los productos"}</Titulo>
-      <form action="/catalogo" className="mb-6 rounded-xl border border-tierra-200 bg-white p-3">
+      <Titulo>{q ? `Resultados para "${q}"` : sp.categoria || "Todo el catálogo"}</Titulo>
+      <nav className="riel mb-3 md:mx-0 md:flex-wrap md:px-0" aria-label="Góndolas">
+        <Link href="/catalogo" className={`chip shrink-0 px-3.5 py-2 text-sm ${!sp.categoria ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>Todo</Link>
+        {categorias.map((c) => (
+          <Link key={c.categoria} href={`/catalogo?categoria=${encodeURIComponent(c.categoria)}`} className={`chip shrink-0 whitespace-nowrap px-3.5 py-2 text-sm ${sp.categoria === c.categoria ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>{c.categoria}</Link>
+        ))}
+      </nav>
+      <form action="/catalogo" className="mb-5 rounded-2xl bg-white p-3 shadow-ficha">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <input name="q" defaultValue={q} placeholder="Buscar" aria-label="Buscar" className="campo col-span-2" />
           <select name="orden" defaultValue={orden} className="campo" aria-label="Ordenar por">
@@ -112,7 +118,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
       {filas.length ? (
         <GrillaProductos productos={filas.map(aTienda)} />
       ) : (
-        <p className="rounded-xl border border-tierra-200 bg-white p-8 text-center text-stone-600">
+        <p className="rounded-2xl bg-white p-8 text-center text-stone-600 shadow-ficha">
           No encontramos productos con esos filtros. <Link href="/catalogo" className="underline">Ver todo el catálogo</Link>
         </p>
       )}

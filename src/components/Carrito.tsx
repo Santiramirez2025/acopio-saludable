@@ -122,7 +122,7 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
         aria-valuemax={100}
         aria-label="Progreso hacia la compra mínima"
       >
-        <div className={`h-full rounded-full transition-all ${falta > 0 ? "bg-tierra-500" : "bg-acopio-500"}`} style={{ width: `${progresoPct}%` }} />
+        <div className={`h-full rounded-full transition-all ${falta > 0 ? "bg-sol-oscuro" : "bg-acopio-500"}`} style={{ width: `${progresoPct}%` }} />
       </div>
     </div>
   );
@@ -147,7 +147,7 @@ export function BotonAgregar({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {conCantidad && (
-        <div className="flex items-center rounded-md border border-stone-300 bg-white">
+        <div className="flex items-center rounded-full border border-tierra-200 bg-white">
           <button type="button" className="px-2.5 py-2 text-stone-600" aria-label="Restar" onClick={() => setCantidad((c) => Math.max(1, c - 1))}>−</button>
           <input
             className="w-10 border-0 bg-transparent p-0 text-center text-sm tabular-nums focus:outline-none"
@@ -161,7 +161,7 @@ export function BotonAgregar({
       )}
       <button
         type="button"
-        className="btn flex-1 whitespace-nowrap"
+        className="btn-comprar flex-1 whitespace-nowrap"
         onClick={() => {
           agregar([{ tipo, id, cantidad }]);
           setAgregado(true);
@@ -175,7 +175,7 @@ export function BotonAgregar({
 }
 
 /** Carga varias líneas de una (pedido tipo, armador). */
-export function BotonCargarPedido({ lineas, etiqueta, className = "btn" }: { lineas: LineaEntrada[]; etiqueta: string; className?: string }) {
+export function BotonCargarPedido({ lineas, etiqueta, className = "btn-comprar" }: { lineas: LineaEntrada[]; etiqueta: string; className?: string }) {
   const { agregar } = useCarrito();
   const [hecho, setHecho] = useState(false);
   return (
@@ -191,5 +191,29 @@ export function BotonCargarPedido({ lineas, etiqueta, className = "btn" }: { lin
     >
       {hecho ? "Cargado ✓" : etiqueta}
     </button>
+  );
+}
+
+
+/**
+ * Botón de la tarjeta de producto. Un toque agrega; una vez en el carrito se convierte en
+ * contador (− n +) para sumar o restar sin salir del listado.
+ */
+export function AgregarRapido({ id, nombre }: { id: string; nombre: string }) {
+  const { lineas, agregar, fijar } = useCarrito();
+  const n = lineas.find((l) => l.tipo === "producto" && l.id === id)?.cantidad ?? 0;
+  if (n === 0) {
+    return (
+      <button type="button" className="btn-comprar w-full" aria-label={`Agregar ${nombre} al pedido`} onClick={() => agregar([{ tipo: "producto", id, cantidad: 1 }])}>
+        Agregar
+      </button>
+    );
+  }
+  return (
+    <div className="flex min-h-[44px] items-center justify-between rounded-full bg-acopio-900 text-white">
+      <button type="button" className="h-11 w-12 text-xl" aria-label={`Restar ${nombre}`} onClick={() => fijar("producto", id, n - 1)}>−</button>
+      <span className="text-sm font-bold tabular-nums" aria-live="polite">{n} en tu pedido</span>
+      <button type="button" className="h-11 w-12 text-xl" aria-label={`Sumar ${nombre}`} onClick={() => fijar("producto", id, n + 1)}>+</button>
+    </div>
   );
 }

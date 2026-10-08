@@ -7,9 +7,9 @@ import { aTienda, combosTienda, estaPublicado, productosTienda } from "@/lib/tie
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadBase } from "@/lib/precios";
 import { urlSitio } from "@/lib/sitio";
-import { Foto } from "@/components/Foto";
+import { Galeria } from "@/components/Galeria";
 import { BotonAgregar } from "@/components/Carrito";
-import { AvisoSuplementos, GrillaProductos, TarjetaCombo } from "@/components/Tienda";
+import { AvisoSuplementos, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 
 type Props = { params: Promise<{ codigo: string }> };
 
@@ -34,11 +34,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Producto({ params }: Props) {
   const fila = await cargar((await params).codigo);
   if (!fila) notFound();
+  const cfg = await leerConfig();
   const p = aTienda(fila);
   const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
   const [combos, relacionados] = await Promise.all([
     combosTienda({ tipo: "COMBO", activo: true, items: { some: { codigo: p.codigo } } }),
-    productosTienda({ where: { categoria: p.categoria, codigo: { not: p.codigo } }, take: 4 }),
+    productosTienda({ where: { categoria: p.categoria, codigo: { not: p.codigo } }, take: 8 }),
   ]);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -60,42 +61,46 @@ export default async function Producto({ params }: Props) {
   return (
     <div className="space-y-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <nav className="text-sm text-stone-500">
-        <Link href="/catalogo" className="underline">Catálogo</Link> ·{" "}
-        <Link href={`/catalogo?categoria=${encodeURIComponent(p.categoria)}`} className="underline">{p.categoria}</Link>
+      <nav className="text-sm text-stone-500" aria-label="Ubicación">
+        <Link href="/catalogo" className="underline underline-offset-4">Catálogo</Link>
+        <span className="px-1.5">/</span>
+        <Link href={`/catalogo?categoria=${encodeURIComponent(p.categoria)}`} className="underline underline-offset-4">{p.categoria}</Link>
       </nav>
-      <div className="grid gap-8 md:grid-cols-2">
-        <Foto src={p.fotoUrl} alt={`${p.producto} ${p.presentacion}`} etiqueta={p.categoria} className="aspect-square w-full rounded-2xl border border-tierra-200" />
-        <div className="space-y-4">
+      <div className="grid gap-6 md:grid-cols-2 md:gap-10">
+        <Galeria fotos={fila.fotos.length ? fila.fotos : fila.fotoUrl ? [fila.fotoUrl] : []} alt={`${p.producto} ${p.presentacion}`} etiqueta={p.categoria} />
+        <div className="space-y-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-tierra-500">{p.marca}</p>
-            <h1 className="font-display text-3xl font-semibold text-acopio-900">{p.producto}</h1>
-            <p className="mt-1 text-stone-600">{p.presentacion}</p>
+            {p.marca && !/^sin /i.test(p.marca) && <p className="text-sm font-semibold text-acopio-600">{p.marca}</p>}
+            <h1 className="font-display text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-4xl">{p.producto}</h1>
+            <p className="mt-1.5 text-stone-600">{p.presentacion}</p>
           </div>
-          <div>
-            <p className="text-3xl font-semibold tabular-nums">{pesos(p.precio)}</p>
-            {porUnidad && <p className="text-sm tabular-nums text-stone-500">{pesos(porUnidad.valor)} {porUnidad.etiqueta}</p>}
+          <div className="rounded-2xl bg-white p-4 shadow-ficha">
+            <div className="flex items-end justify-between gap-3">
+              <p className="font-display text-4xl font-extrabold leading-none tabular-nums">{pesos(p.precio)}</p>
+              {porUnidad && <p className="text-right text-sm tabular-nums text-stone-500">{pesos(porUnidad.valor)} {porUnidad.etiqueta}</p>}
+            </div>
+            <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
+            <p className="mt-3 text-xs text-stone-500">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras. Envíos a todo el país.</p>
           </div>
-          <BotonAgregar id={p.codigo} etiqueta="Agregar al carrito" className="max-w-sm" />
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl border border-tierra-200 bg-white p-4 text-sm">
-            <dt className="text-stone-500">Presentación</dt><dd>{p.presentacion}</dd>
-            <dt className="text-stone-500">Formato</dt><dd>{p.formato}</dd>
-            {p.contenido && (<><dt className="text-stone-500">Contenido</dt><dd>{p.contenido} {p.unidad}</dd></>)}
-            <dt className="text-stone-500">Código</dt><dd className="font-mono text-xs">{p.codigo}</dd>
-          </dl>
           {fila.porQueLoElegimos && (
-            <div className="rounded-xl bg-acopio-50 p-4">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-acopio-600">Por qué lo elegimos</p>
+            <div className="rounded-2xl bg-acopio-100 p-4">
+              <p className="mb-1 text-sm font-semibold text-acopio-700">Por qué lo elegimos</p>
               <p className="text-sm text-stone-700">{fila.porQueLoElegimos}</p>
             </div>
           )}
+          <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+            <dt className="text-stone-500">Presentación</dt><dd>{p.presentacion}</dd>
+            <dt className="text-stone-500">Formato</dt><dd>{p.formato}</dd>
+            {p.contenido && (<><dt className="text-stone-500">Contenido</dt><dd>{p.contenido} {p.unidad}</dd></>)}
+            <dt className="text-stone-500">Código</dt><dd className="tabular-nums">{p.codigo}</dd>
+          </dl>
           {(fila.nichos.length > 0 || fila.objetivos.length > 0) && (
             <div className="flex flex-wrap gap-2 text-xs">
               {NICHOS.filter((n) => fila.nichos.includes(n.id)).map((n) => (
-                <Link key={n.id} href={`/nichos/${n.id}`} className="chip bg-white text-stone-600 ring-1 ring-tierra-200">{n.nombre}</Link>
+                <Link key={n.id} href={`/nichos/${n.id}`} className="chip bg-white py-1 text-stone-600 shadow-ficha">{n.nombre}</Link>
               ))}
               {OBJETIVOS.filter((o) => fila.objetivos.includes(o.id)).map((o) => (
-                <Link key={o.id} href={`/objetivos/${o.id}`} className="chip bg-acopio-100 text-acopio-700">{o.nombre}</Link>
+                <Link key={o.id} href={`/objetivos/${o.id}`} className="chip bg-acopio-100 py-1 text-acopio-700">{o.nombre}</Link>
               ))}
             </div>
           )}
@@ -105,14 +110,14 @@ export default async function Producto({ params }: Props) {
 
       {combos.filter((c) => c.disponible).length > 0 && (
         <section>
-          <h2 className="mb-4 font-display text-2xl font-semibold text-acopio-900">Combos que lo incluyen</h2>
+          <TituloSeccion>Combos que lo incluyen</TituloSeccion>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{combos.filter((c) => c.disponible).map((c) => <TarjetaCombo key={c.slug} c={c} />)}</div>
         </section>
       )}
       {relacionados.length > 0 && (
         <section>
-          <h2 className="mb-4 font-display text-2xl font-semibold text-acopio-900">Productos relacionados</h2>
-          <GrillaProductos productos={relacionados} />
+          <TituloSeccion href={`/catalogo?categoria=${encodeURIComponent(p.categoria)}`} enlace="Ver más">También en {p.categoria}</TituloSeccion>
+          <RielProductos productos={relacionados} />
         </section>
       )}
     </div>

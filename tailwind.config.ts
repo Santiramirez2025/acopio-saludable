@@ -1,13 +1,24 @@
 import type { Config } from "tailwindcss";
 
+// Sistema visual de Acopio Saludable.
+// Tinta verde casi negra, verde hoja para acciones tranquilas, menta para superficies y
+// amarillo "sol" reservado para una sola cosa: comprar.
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
-      fontFamily: { display: ["ui-serif", "Georgia", "Cambria", "Times New Roman", "serif"] },
+      fontFamily: {
+        display: ['"Bricolage Grotesque"', "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["Figtree", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
       colors: {
-        acopio: { 50: "#f4f7f0", 100: "#e6eddc", 500: "#5d7f3a", 600: "#4a672d", 700: "#3a5124", 900: "#1f2c14" },
-        tierra: { 50: "#faf7f0", 100: "#f3ebdd", 200: "#e6d8bf", 500: "#b0793a", 700: "#7c5325" },
+        acopio: { 50: "#F1F6F2", 100: "#DCEEE3", 500: "#1B8A63", 600: "#0F6B4F", 700: "#0B5540", 900: "#10251C" },
+        tierra: { 50: "#F1F6F2", 100: "#E6F0E9", 200: "#D2E2D8", 500: "#A66F00", 700: "#6B4A00" },
+        sol: { DEFAULT: "#FFC83D", claro: "#FFE08A", oscuro: "#E0A800" },
+      },
+      boxShadow: {
+        dock: "0 -6px 24px -8px rgba(16,37,28,.28)",
+        ficha: "0 1px 0 rgba(16,37,28,.04), 0 10px 24px -18px rgba(16,37,28,.45)",
       },
     },
   },

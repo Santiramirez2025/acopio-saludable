@@ -7,16 +7,18 @@ export type FilaZona = { sucursal: number[]; domicilio: number[]; plazo: string 
 export type TablaEnvios = { tramosKg: number[]; zonas: Record<ZonaId, FilaZona> };
 
 /**
- * VALORES DE EJEMPLO, no son tarifas reales de ningún correo.
- * Se editan en Panel → Envíos; el panel avisa hasta que se marquen como revisados.
+ * Tabla de referencia. Armada a partir de tarifas publicadas de Correo Argentino (Clásico, octubre 2026):
+ * a domicilio 1, 5 y 10 kg por zona tarifaria; a sucursal 1 kg. Los tramos de 15 a 25 kg y el resto de
+ * sucursal están proyectados con la misma pendiente y proporción. Es una ESTIMACIÓN: el precio exacto solo
+ * sale de la API del correo (MiCorreo / Andreani) o de las tarifas de tu contrato. Se edita en Panel → Envíos.
  */
 export const TABLA_EJEMPLO: TablaEnvios = {
   tramosKg: [1, 5, 10, 15, 20, 25],
   zonas: {
-    cordoba: { sucursal: [5000, 7000, 9500, 12000, 14500, 17000], domicilio: [6500, 9000, 12000, 15000, 18000, 21000], plazo: "2 a 4 días hábiles" },
-    centro: { sucursal: [6500, 9500, 13000, 16500, 20000, 23500], domicilio: [8500, 12000, 16500, 21000, 25500, 30000], plazo: "3 a 6 días hábiles" },
-    norte: { sucursal: [7500, 11000, 15500, 20000, 24500, 29000], domicilio: [9500, 14000, 19500, 25000, 30500, 36000], plazo: "4 a 8 días hábiles" },
-    patagonia: { sucursal: [9000, 13500, 19000, 24500, 30000, 35500], domicilio: [11500, 17000, 24000, 31000, 38000, 45000], plazo: "5 a 10 días hábiles" },
+    cordoba: { sucursal: [6739, 11170, 14939, 18709, 22478, 26248], domicilio: [9648, 15957, 21342, 26727, 32112, 37497], plazo: "2 a 5 días hábiles" },
+    centro: { sucursal: [7415, 12695, 18050, 23406, 28761, 34117], domicilio: [10509, 17880, 25423, 32966, 40509, 48052], plazo: "2 a 5 días hábiles" },
+    norte: { sucursal: [7745, 14399, 22315, 30231, 38147, 46063], domicilio: [10586, 19724, 30568, 41412, 52256, 63100], plazo: "3 a 7 días hábiles" },
+    patagonia: { sucursal: [7745, 14399, 22315, 30231, 38147, 46063], domicilio: [10586, 19724, 30568, 41412, 52256, 63100], plazo: "3 a 7 días hábiles" },
   },
 };
 
