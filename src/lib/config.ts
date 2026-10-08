@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { leerDiasCorte } from "./corte";
 import { leerTabla } from "./envios/tabla";
 
 export async function leerConfig() {
@@ -8,6 +9,8 @@ export async function leerConfig() {
     margenMinimoPct: Number(s.margenMinimoPct),
     descuentoTransferenciaPct: Number(s.descuentoTransferenciaPct),
     recargoSugeridoPct: Number(s.recargoSugeridoPct),
+    corteDias: leerDiasCorte(s.corteDias),
+    corteHora: s.corteHora,
     comisionPagoPct: Number(s.comisionPagoPct),
     costoPackaging: Number(s.costoPackaging),
     envioGratisDesde: s.envioGratisDesde === null ? null : Number(s.envioGratisDesde),

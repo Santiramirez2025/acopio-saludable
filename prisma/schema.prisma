@@ -122,6 +122,9 @@ model Setting {
   descuentoTransferenciaPct Decimal @default(0) @db.Decimal(5, 2)
   // Recargo para calcular el precio sugerido de reventa que ve el cliente. 0 = no se muestra.
   recargoSugeridoPct       Decimal  @default(40) @db.Decimal(5, 2)
+  // Corte de compra al proveedor: días (0 = domingo … 6 = sábado, separados por coma; vacío = no se muestra) y hora.
+  corteDias                String   @default("1,2,3,4,5")
+  corteHora                Int      @default(14)
   comisionPagoPct          Decimal  @default(0) @db.Decimal(5, 2)
   costoPackaging           Decimal  @default(0) @db.Decimal(12, 2)
   envioGratisDesde         Decimal? @db.Decimal(12, 2)

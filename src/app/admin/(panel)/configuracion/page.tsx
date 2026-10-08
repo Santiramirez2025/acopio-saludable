@@ -30,6 +30,18 @@ export default async function Configuracion({ searchParams }: { searchParams: Pr
           <input className="campo" id="envioGratisDesde" name="envioGratisDesde" inputMode="decimal" defaultValue={cfg.envioGratisDesde ?? ""} placeholder="Vacío = sin envío gratis" />
         </div>
         <hr className="border-stone-200" />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="etiqueta" htmlFor="corteDias">Días de compra al proveedor</label>
+            <input className="campo" id="corteDias" name="corteDias" defaultValue={cfg.corteDias.join(",")} placeholder="1,2,3,4,5" />
+          </div>
+          <div>
+            <label className="etiqueta" htmlFor="corteHora">Hora de cierre (0 a 23)</label>
+            <input className="campo" id="corteHora" name="corteHora" inputMode="numeric" defaultValue={cfg.corteHora} required />
+          </div>
+          <p className="col-span-2 text-xs text-stone-600">La tienda muestra una cuenta regresiva: «Pedí en X h y entra en la compra de hoy». Días: 1 = lunes … 6 = sábado, 0 = domingo, separados por coma. Poné solo los días y la hora que realmente cumplís; vacío = no se muestra.</p>
+        </div>
+        <hr className="border-stone-200" />
         <div>
           <label className="etiqueta" htmlFor="whatsapp">WhatsApp de la tienda (con código de área)</label>
           <input className="campo" id="whatsapp" name="whatsapp" type="tel" defaultValue={cfg.whatsapp ?? ""} placeholder="Para que el cliente mande el comprobante" />
