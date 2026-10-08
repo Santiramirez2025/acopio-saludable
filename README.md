@@ -23,7 +23,7 @@ npm run dev                   # http://localhost:3000/admin
 
 ### Publicar en Vercel
 
-1. Importar el repo en Vercel y conectarle una base Neon (Storage → Neon): eso carga `DATABASE_URL` solo.
+1. Importar el repo en Vercel y conectarle una base desde Storage (Supabase o Neon): las variables de conexión se cargan solas y la app las toma (`DATABASE_URL`, o `POSTGRES_PRISMA_URL` / `POSTGRES_URL_NON_POOLING`).
 2. Cargar estas variables: `NEXTAUTH_SECRET` (generar con `openssl rand -base64 32`), `NEXTAUTH_URL` y `NEXT_PUBLIC_SITE_URL` (las dos con la dirección pública, con https), `ADMIN_EMAIL` y `ADMIN_PASSWORD` (mínimo 10 caracteres).
 3. Deploy. El build (`vercel-build`) aplica las migraciones, carga el catálogo, las fotos, los combos y el usuario administrador, y compila. En cada deploy posterior vuelve a correr sin duplicar ni pisar lo editado en el panel.
 
