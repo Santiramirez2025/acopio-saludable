@@ -5,6 +5,7 @@ const CAMPOS = [
   ["compraMinima", "Compra mínima por pedido ($)"],
   ["margenMinimoPct", "Margen mínimo (%)"],
   ["descuentoTransferenciaPct", "Descuento por transferencia (%)"],
+  ["recargoSugeridoPct", "Recargo para el precio sugerido de reventa (%). 0 = no mostrarlo"],
   ["comisionPagoPct", "Comisión del medio de pago (%)"],
   ["costoPackaging", "Costo de packaging por pedido ($)"],
 ] as const;

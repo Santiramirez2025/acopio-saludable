@@ -3,7 +3,7 @@
 import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
-import { calcularCombo, redondear2 } from "./precios";
+import { calcularCombo, precioSugerido, redondear2 } from "./precios";
 import { wherePublicado, esSinTacc } from "./filtros-producto";
 
 export type ProductoTienda = {
@@ -20,9 +20,11 @@ export type ProductoTienda = {
   gancho: boolean;
   esSuplemento: boolean;
   sinTacc: boolean;
+  /** Precio sugerido de reventa; null si el recargo está en 0. */
+  sugerido: number | null;
 };
 
-export function aTienda(p: Product): ProductoTienda {
+export function aTienda(p: Product, recargoSugeridoPct = 0): ProductoTienda {
   return {
     codigo: p.codigo,
     producto: p.producto,
@@ -37,6 +39,7 @@ export function aTienda(p: Product): ProductoTienda {
     gancho: p.gancho,
     esSuplemento: p.categoria === "Suplementos",
     sinTacc: esSinTacc(p),
+    sugerido: precioSugerido(Number(p.precioPublico), recargoSugeridoPct)?.sugerido ?? null,
   };
 }
 
@@ -108,7 +111,7 @@ export async function productosTienda(args: {
     take: args.take,
     skip: args.skip,
   });
-  return filas.map(aTienda);
+  return filas.map((f) => aTienda(f, cfg.recargoSugeridoPct));
 }
 
 // ---------- Carrito ----------

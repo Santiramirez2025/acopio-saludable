@@ -316,3 +316,14 @@ test("imágenes: el código sale del nombre del archivo y se mantiene como texto
   assert.equal(codigoDesdeArchivo("aceite-coco.png", c), null);
   assert.equal(codigoDesdeArchivo("10-1.png", c), null);
 });
+
+test("precio sugerido: recargo sobre el precio vigente, redondeado hacia arriba a un número fácil", async () => {
+  const { precioSugerido } = await import("./precios");
+  assert.deepEqual(precioSugerido(1000, 40), { sugerido: 1400, ganancia: 400 });
+  assert.deepEqual(precioSugerido(1010, 40), { sugerido: 1450, ganancia: 440 });
+  assert.equal(precioSugerido(9000, 40)?.sugerido, 12600);
+  assert.equal(precioSugerido(9020, 40)?.sugerido, 12700);
+  assert.equal(precioSugerido(100000, 40)?.sugerido, 140000);
+  assert.equal(precioSugerido(100100, 40)?.sugerido, 140500);
+  assert.equal(precioSugerido(1000, 0), null);
+});
