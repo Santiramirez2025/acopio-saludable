@@ -35,6 +35,16 @@ export const COMBOS_INICIALES: {
     items: [["151516121"], ["7798446310144"], ["363626"], ["365562"]],
   },
   {
+    slug: "pedido-familias",
+    nombre: "Pedido Familias",
+    tipo: "PEDIDO_NICHO",
+    nicho: "familias",
+    items: [
+      ["3698712", 2], ["0727373098181"], ["1102"], ["707"], ["736684208707"], ["7798161290219"],
+      ["522054"], ["333568"], ["55598678"], ["201020"], ["571"], ["7792198006645"],
+    ],
+  },
+  {
     slug: "pedido-hoteleria",
     nombre: "Pedido Hotelería",
     tipo: "PEDIDO_NICHO",

@@ -42,14 +42,14 @@ export default async function Home() {
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)]">
           <div className="min-w-0">
             <h1 className="text-balance font-display text-[clamp(30px,9vw,38px)] font-extrabold leading-none tracking-tight sm:text-6xl">
-              Llená la despensa de tu negocio de una sola vez.
+              Llená tu despensa de una sola vez.
             </h1>
             <p className="mt-3 max-w-md text-[15px] text-white/80 sm:text-[17px]">
-              Frutos secos, cereales, suplementos, snacks y especias por volumen. Envíos a todo el país.
+              Frutos secos, cereales, suplementos, snacks y especias por volumen, para tu casa o tu negocio. Desde {pesos(cfg.compraMinima)} por pedido, con envíos a todo el país.
             </p>
             <p className="mt-5 text-sm font-semibold text-sol">¿Para quién comprás?</p>
             <div className="riel mt-2 md:mx-0 md:flex-wrap md:px-0">
-              {NICHOS.map((n) => (
+              {[...NICHOS].sort((a, b) => Number(b.id === "familias") - Number(a.id === "familias")).map((n) => (
                 <Link key={n.id} href={`/nichos/${n.id}`} className="shrink-0 snap-start whitespace-nowrap flex min-h-[48px] items-center rounded-full bg-white/10 px-4 text-sm font-semibold hover:bg-white hover:text-acopio-900">{n.nombre}</Link>
               ))}
             </div>
@@ -89,7 +89,7 @@ export default async function Home() {
         <section>
           <TituloSeccion href="/nichos" enlace="Todos los rubros">Pedidos listos por rubro</TituloSeccion>
           <div className="riel lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
-            {pedidos.map((p) => {
+            {[...pedidos].sort((a, b) => Number(b.nicho === "familias") - Number(a.nicho === "familias")).map((p) => {
               const items = p.items.filter((i) => seVende.has(i.producto.codigo));
               const total = items.reduce((s, i) => s + i.producto.precio * i.cantidad, 0);
               return (
