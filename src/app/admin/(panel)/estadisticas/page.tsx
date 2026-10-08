@@ -36,7 +36,7 @@ export default async function Estadisticas({ searchParams }: { searchParams: Pro
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Estadísticas</h1>
-          <p className="text-sm text-stone-500">Pedidos con pago confirmado. Los pendientes y cancelados no cuentan.</p>
+          <p className="text-sm text-stone-600">Pedidos con pago confirmado. Los pendientes y cancelados no cuentan.</p>
         </div>
         <div className="flex gap-1 text-sm">
           {PERIODOS.map(([d, nombre]) => (
@@ -48,9 +48,9 @@ export default async function Estadisticas({ searchParams }: { searchParams: Pro
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {tiles.map(([titulo, valor, pie]) => (
           <div key={titulo} className="tarjeta">
-            <div className="text-xs uppercase tracking-wide text-stone-500">{titulo}</div>
+            <div className="text-xs uppercase tracking-wide text-stone-600">{titulo}</div>
             <div className="mt-1 text-2xl font-semibold tabular-nums">{valor}</div>
-            <div className="text-xs text-stone-500">{pie}</div>
+            <div className="text-xs text-stone-600">{pie}</div>
           </div>
         ))}
       </div>
@@ -83,7 +83,7 @@ export default async function Estadisticas({ searchParams }: { searchParams: Pro
               <div className="flex justify-between text-stone-600"><dt>Packaging</dt><dd>− {pesos(r.packaging)}</dd></div>
               <div className="flex justify-between border-t border-stone-200 pt-1 font-semibold"><dt>Margen neto</dt><dd>{pesos(r.margenNeto)}</dd></div>
             </dl>
-            <p className="mt-2 text-xs text-stone-500">Los descuentos por transferencia ({pesos(r.descuentos)}) ya están restados de las ventas.</p>
+            <p className="mt-2 text-xs text-stone-600">Los descuentos por transferencia ({pesos(r.descuentos)}) ya están restados de las ventas.</p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -93,7 +93,7 @@ export default async function Estadisticas({ searchParams }: { searchParams: Pro
               <Ranking titulo="Combos por margen en pesos" filas={r.combos} vacio="No se vendieron combos en este período." />
             </div>
           </div>
-          <p className="text-xs text-stone-500">Los rankings usan el margen de cada renglón (precio − costo al momento de la compra), antes de descuentos del pedido, envío, comisiones y packaging.</p>
+          <p className="text-xs text-stone-600">Los rankings usan el margen de cada renglón (precio − costo al momento de la compra), antes de descuentos del pedido, envío, comisiones y packaging.</p>
         </>
       )}
     </div>
@@ -106,11 +106,11 @@ function Ranking({ titulo, filas, enlace, nota, vacio }: { titulo: string; filas
       <h2 className="mb-2 text-sm font-semibold">{titulo}</h2>
       {filas.length ? (
         <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-stone-500"><tr><th className="py-1">#</th><th className="py-1"> </th><th className="py-1 text-right">Unid.</th><th className="py-1 text-right">Ventas</th><th className="py-1 text-right">Margen</th></tr></thead>
+          <thead className="text-left text-xs uppercase tracking-wide text-stone-600"><tr><th className="py-1">#</th><th className="py-1"> </th><th className="py-1 text-right">Unid.</th><th className="py-1 text-right">Ventas</th><th className="py-1 text-right">Margen</th></tr></thead>
           <tbody>
             {filas.map((f, i) => (
               <tr key={f.clave} className="border-t border-stone-100">
-                <td className="py-1 pr-2 text-stone-400">{i + 1}</td>
+                <td className="py-1 pr-2 text-stone-500">{i + 1}</td>
                 <td className="py-1">{enlace ? <Link href={enlace(f)} className="hover:underline">{f.nombre}</Link> : f.nombre}</td>
                 <td className="py-1 text-right tabular-nums">{f.unidades}</td>
                 <td className="py-1 text-right tabular-nums">{pesos(f.ventas)}</td>
@@ -120,9 +120,9 @@ function Ranking({ titulo, filas, enlace, nota, vacio }: { titulo: string; filas
           </tbody>
         </table>
       ) : (
-        <p className="text-sm text-stone-500">{vacio ?? "Sin datos en este período."}</p>
+        <p className="text-sm text-stone-600">{vacio ?? "Sin datos en este período."}</p>
       )}
-      {nota && <p className="mt-2 text-xs text-stone-500">{nota}</p>}
+      {nota && <p className="mt-2 text-xs text-stone-600">{nota}</p>}
     </div>
   );
 }

@@ -13,8 +13,8 @@ export default async function Etiqueta({ params }: { params: Promise<{ id: strin
   return (
     <div className="space-y-4">
       <div className="print:hidden">
-        <Link href={`/admin/pedidos/${pedido.id}`} className="text-sm text-stone-500 underline">← Pedido {numeroPedido(pedido.id)}</Link>
-        <p className="mt-1 text-sm text-stone-500">Una etiqueta por bulto. Para imprimir: Ctrl/Cmd + P.</p>
+        <Link href={`/admin/pedidos/${pedido.id}`} className="text-sm text-stone-600 underline">← Pedido {numeroPedido(pedido.id)}</Link>
+        <p className="mt-1 text-sm text-stone-600">Una etiqueta por bulto. Para imprimir: Ctrl/Cmd + P.</p>
       </div>
       {bultos.map((n) => (
         <div key={n} className="mx-auto max-w-md break-inside-avoid rounded-lg border-2 border-stone-900 bg-white p-5 text-stone-900">
@@ -22,7 +22,7 @@ export default async function Etiqueta({ params }: { params: Promise<{ id: strin
             <span className="font-semibold">{SITIO.nombre}</span>
             <span>Pedido {numeroPedido(pedido.id)} · Bulto {n} de {bultos.length}</span>
           </div>
-          <p className="mt-3 text-xs uppercase tracking-wide text-stone-500">Destinatario</p>
+          <p className="mt-3 text-xs uppercase tracking-wide text-stone-600">Destinatario</p>
           <p className="text-2xl font-bold leading-tight">{pedido.nombre}</p>
           <p className="mt-1 text-lg">{pedido.calle}</p>
           <p className="text-lg">{pedido.ciudad}, {pedido.provincia}</p>

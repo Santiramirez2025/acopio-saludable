@@ -12,7 +12,7 @@ export default async function Importar({ searchParams }: { searchParams: Promise
       <div className="grid gap-4 lg:grid-cols-2">
         <form action={importarCsv} className="tarjeta space-y-3">
           <h2 className="font-semibold">Catálogo (CSV)</h2>
-          <p className="text-sm text-stone-500">
+          <p className="text-sm text-stone-600">
             Columnas: codigo, producto, marca, presentacion, categoria, formato, costo, precio_publico, contenido_g_o_ml. Los productos nuevos quedan en
             borrador; en los existentes solo se actualizan los datos del proveedor y cada cambio de precio queda en el historial. Lo que editaste en el
             panel no se pisa.
@@ -23,7 +23,7 @@ export default async function Importar({ searchParams }: { searchParams: Promise
 
         <form action={importarFotos} className="tarjeta space-y-3">
           <h2 className="font-semibold">Fotos (JSON del proveedor)</h2>
-          <p className="text-sm text-stone-500">
+          <p className="text-sm text-stone-600">
             Lista de <code>{"{ sku, photos }"}</code> tal como la devuelve el sistema de Distrimay. Se asigna la foto por código.
           </p>
           <input className="campo" type="file" name="archivo" accept=".json,application/json" required />

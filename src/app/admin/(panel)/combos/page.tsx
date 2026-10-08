@@ -15,7 +15,7 @@ export default async function Combos({ searchParams }: { searchParams: Promise<{
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Combos y pedidos tipo</h1>
-          <p className="text-sm text-stone-500">Ninguno puede quedar debajo del margen mínimo ({cfg.margenMinimoPct}%).</p>
+          <p className="text-sm text-stone-600">Ninguno puede quedar debajo del margen mínimo ({cfg.margenMinimoPct}%).</p>
         </div>
         <Link href="/admin/combos/nuevo" className="btn">Nuevo combo</Link>
       </div>
@@ -37,7 +37,7 @@ export default async function Combos({ searchParams }: { searchParams: Promise<{
                 <span className={calc.bloqueado ? "font-semibold text-red-600" : "text-acopio-700"}>margen {calc.margenPct.toFixed(1)}%</span>
               </div>
             </div>
-            <p className="mt-1 text-xs text-stone-500">
+            <p className="mt-1 text-xs text-stone-600">
               <Link href={`/admin/combos/${c.id}`} className="text-acopio-700 underline">Editar</Link> · Descuento actual {Number(c.descuentoPct)}% · descuento máximo sin perforar el margen: {descuentoMaximo(lineas, cfg.margenMinimoPct)}%
               {c.tipo === "PEDIDO_NICHO" && calc.precioCombo < cfg.compraMinima ? ` · no llega a la compra mínima de ${pesos(cfg.compraMinima)}` : ""}
             </p>
@@ -51,9 +51,9 @@ export default async function Combos({ searchParams }: { searchParams: Promise<{
               {c.items.map((i) => (
                 <li key={i.codigo} className="flex justify-between border-b border-stone-100 py-1">
                   <Link href={`/admin/productos/${encodeURIComponent(i.codigo)}`} className="hover:underline">
-                    {i.cantidad} × {i.product.producto} <span className="text-stone-400">{i.product.presentacion}</span>
+                    {i.cantidad} × {i.product.producto} <span className="text-stone-500">{i.product.presentacion}</span>
                   </Link>
-                  <span className="tabular-nums text-stone-500">{pesos(Number(i.product.precioPublico) * i.cantidad)}</span>
+                  <span className="tabular-nums text-stone-600">{pesos(Number(i.product.precioPublico) * i.cantidad)}</span>
                 </li>
               ))}
             </ul>

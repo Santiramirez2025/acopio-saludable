@@ -75,7 +75,7 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
         <ul className="divide-y divide-tierra-100">
           {pedido.items.map((i) => (
             <li key={i.id} className="flex justify-between gap-3 p-3 text-sm">
-              <span>{i.cantidad} × {i.producto} <span className="text-stone-500">{i.presentacion}</span></span>
+              <span>{i.cantidad} × {i.producto} <span className="text-stone-600">{i.presentacion}</span></span>
               <span className="tabular-nums">{pesos(Number(i.precioUnitario) * i.cantidad)}</span>
             </li>
           ))}
@@ -90,7 +90,7 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
       <section className="rounded-xl border border-tierra-200 bg-white p-4 text-sm text-stone-700">
         <p className="font-medium text-stone-900">Entrega</p>
         <p>{pedido.nombre} · {pedido.calle}, {pedido.ciudad}, {pedido.provincia} ({pedido.cp})</p>
-        {pedido.envioPlazo && <p className="text-stone-500">{pedido.envioPlazo}</p>}
+        {pedido.envioPlazo && <p className="text-stone-600">{pedido.envioPlazo}</p>}
       </section>
       <Link href="/catalogo" className="text-sm text-acopio-700 underline">Seguir mirando el catálogo</Link>
     </div>

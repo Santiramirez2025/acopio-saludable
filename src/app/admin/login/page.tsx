@@ -23,7 +23,7 @@ export default function Login() {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
       <h1 className="mb-1 text-2xl font-semibold text-acopio-900">Acopio Saludable</h1>
-      <p className="mb-6 text-sm text-stone-500">Panel de control</p>
+      <p className="mb-6 text-sm text-stone-600">Panel de control</p>
       <form onSubmit={onSubmit} className="tarjeta space-y-4">
         <div>
           <label className="etiqueta" htmlFor="email">Email</label>

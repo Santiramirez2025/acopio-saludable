@@ -28,10 +28,10 @@ export default async function DetalleActualizacion({ params, searchParams }: { p
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/actualizaciones" className="text-sm text-stone-500 underline">← Actualizaciones</Link>
+      <Link href="/admin/actualizaciones" className="text-sm text-stone-600 underline">← Actualizaciones</Link>
       <div>
         <h1 className="text-xl font-semibold">Actualización del {sync.createdAt.toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba", dateStyle: "short", timeStyle: "short" })}</h1>
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-stone-600">
           {sync.origen} · {sync.modo === "costos" ? "costos y precios públicos" : "solo precios públicos"} · {sync.recibidos} productos leídos · {sync.completo ? "lectura completa" : "lectura parcial"}
         </p>
       </div>
@@ -44,7 +44,7 @@ export default async function DetalleActualizacion({ params, searchParams }: { p
           ["Subas", subas], ["Bajas", cambios.length - subas], ["Nuevos", items.filter((i) => i.tipo === "NUEVO").length],
           ["Desaparecidos", items.filter((i) => i.tipo === "DESAPARECIDO").length], ["Esperan aprobación", pendientes], ["Quedan sin margen", quedanSinMargen],
         ].map(([t, n]) => (
-          <div key={t} className="tarjeta"><div className="text-2xl font-semibold tabular-nums">{n}</div><div className="text-xs text-stone-500">{t}</div></div>
+          <div key={t} className="tarjeta"><div className="text-2xl font-semibold tabular-nums">{n}</div><div className="text-xs text-stone-600">{t}</div></div>
         ))}
       </div>
 
@@ -63,7 +63,7 @@ export default async function DetalleActualizacion({ params, searchParams }: { p
           )}
           <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white">
             <table className="w-full min-w-[860px] text-sm">
-              <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+              <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-600">
                 <tr><th className="px-3 py-2"> </th><th className="px-3 py-2">Producto</th><th className="px-3 py-2">Tipo</th><th className="px-3 py-2 text-right">Costo</th><th className="px-3 py-2 text-right">Precio público</th><th className="px-3 py-2 text-right">Margen nuevo</th><th className="px-3 py-2">Estado</th></tr>
               </thead>
               <tbody>
@@ -72,10 +72,10 @@ export default async function DetalleActualizacion({ params, searchParams }: { p
                   return (
                     <tr key={i.id} className="border-t border-stone-100 align-top">
                       <td className="px-3 py-2">{i.estado === "PENDIENTE" && <input type="checkbox" name="ids" value={i.id} defaultChecked aria-label={`Marcar ${i.producto}`} />}</td>
-                      <td className="px-3 py-2"><Link href={`/admin/productos/${encodeURIComponent(i.codigo)}`} className="hover:underline">{i.producto}</Link><div className="font-mono text-xs text-stone-400">{i.codigo}</div></td>
+                      <td className="px-3 py-2"><Link href={`/admin/productos/${encodeURIComponent(i.codigo)}`} className="hover:underline">{i.producto}</Link><div className="font-mono text-xs text-stone-500">{i.codigo}</div></td>
                       <td className="px-3 py-2">{TIPOS[i.tipo] ?? i.tipo}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{i.costoAntes !== null && <span className="text-stone-400">{pesos(Number(i.costoAntes))} → </span>}{i.costoNuevo !== null ? pesos(Number(i.costoNuevo)) : "—"}<div className="text-xs">{pct(i.costoAntes, i.costoNuevo)}</div></td>
-                      <td className="px-3 py-2 text-right tabular-nums">{i.precioAntes !== null && <span className="text-stone-400">{pesos(Number(i.precioAntes))} → </span>}{i.precioNuevo !== null ? pesos(Number(i.precioNuevo)) : "—"}<div className="text-xs">{pct(i.precioAntes, i.precioNuevo)}</div></td>
+                      <td className="px-3 py-2 text-right tabular-nums">{i.costoAntes !== null && <span className="text-stone-500">{pesos(Number(i.costoAntes))} → </span>}{i.costoNuevo !== null ? pesos(Number(i.costoNuevo)) : "—"}<div className="text-xs">{pct(i.costoAntes, i.costoNuevo)}</div></td>
+                      <td className="px-3 py-2 text-right tabular-nums">{i.precioAntes !== null && <span className="text-stone-500">{pesos(Number(i.precioAntes))} → </span>}{i.precioNuevo !== null ? pesos(Number(i.precioNuevo)) : "—"}<div className="text-xs">{pct(i.precioAntes, i.precioNuevo)}</div></td>
                       <td className={`px-3 py-2 text-right tabular-nums ${margen !== null && margen < cfg.margenMinimoPct ? "font-semibold text-red-600" : ""}`}>{margen !== null ? `${margen.toFixed(1)}%` : "—"}</td>
                       <td className="px-3 py-2"><span className={`chip ${i.estado === "PENDIENTE" ? "bg-amber-100 text-amber-800" : i.estado === "RECHAZADO" ? "bg-stone-200 text-stone-600" : "bg-acopio-100 text-acopio-700"}`}>{i.estado === "PENDIENTE" ? "Espera aprobación" : i.estado === "RECHAZADO" ? "Rechazado" : "Aplicado"}</span></td>
                     </tr>
@@ -84,7 +84,7 @@ export default async function DetalleActualizacion({ params, searchParams }: { p
               </tbody>
             </table>
           </div>
-          {items.length > 600 && <p className="text-xs text-stone-500">Se muestran los 600 cambios más relevantes de {items.length}.</p>}
+          {items.length > 600 && <p className="text-xs text-stone-600">Se muestran los 600 cambios más relevantes de {items.length}.</p>}
         </form>
       )}
     </div>

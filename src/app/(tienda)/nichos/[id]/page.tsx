@@ -12,7 +12,7 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const n = NICHOS.find((x) => x.id === id);
-  return n ? { title: `${n.nombre}: pedido tipo y productos recomendados`, alternates: { canonical: `/nichos/${n.id}` } } : {};
+  return n ? { title: `${n.nombre}: pedido tipo y productos recomendados`, description: `Pedido tipo para ${n.nombre.toLowerCase()}, listo para ajustar y cargar al carrito, y los productos que más se llevan en el rubro. Envíos a todo el país.`, alternates: { canonical: `/nichos/${n.id}` } } : {};
 }
 
 export default async function Nicho({ params }: Props) {
@@ -51,7 +51,7 @@ export default async function Nicho({ params }: Props) {
         <section>
           <div className="mb-4 flex items-baseline justify-between gap-3">
             <h2 className="font-display text-2xl font-semibold text-acopio-900">Productos recomendados</h2>
-            <Link href={`/catalogo?nicho=${nicho.id}`} className="whitespace-nowrap text-sm text-acopio-700 underline">Ver todos</Link>
+            <Link href={`/catalogo?nicho=${nicho.id}`} className="-my-3 flex min-h-[48px] items-center whitespace-nowrap text-sm font-semibold text-acopio-700 underline underline-offset-4">Ver todos</Link>
           </div>
           <GrillaProductos productos={recomendados} />
         </section>

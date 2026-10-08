@@ -61,12 +61,12 @@ export default async function Producto({ params }: Props) {
   return (
     <div className="space-y-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <nav className="text-sm text-stone-500" aria-label="Ubicación">
-        <Link href="/catalogo" className="underline underline-offset-4">Catálogo</Link>
+      <nav className="-my-3 flex flex-wrap items-center text-sm text-stone-600" aria-label="Ubicación">
+        <Link href="/catalogo" className="flex min-h-[48px] items-center underline underline-offset-4">Catálogo</Link>
         <span className="px-1.5">/</span>
-        <Link href={`/catalogo?categoria=${encodeURIComponent(p.categoria)}`} className="underline underline-offset-4">{p.categoria}</Link>
+        <Link href={`/catalogo?categoria=${encodeURIComponent(p.categoria)}`} className="flex min-h-[48px] items-center underline underline-offset-4">{p.categoria}</Link>
       </nav>
-      <div className="grid gap-6 md:grid-cols-2 md:gap-10">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
         <Galeria fotos={fila.fotos.length ? fila.fotos : fila.fotoUrl ? [fila.fotoUrl] : []} alt={`${p.producto} ${p.presentacion}`} etiqueta={p.categoria} />
         <div className="space-y-5">
           <div>
@@ -75,32 +75,32 @@ export default async function Producto({ params }: Props) {
             <p className="mt-1.5 text-stone-600">{p.presentacion}</p>
           </div>
           <div className="rounded-2xl bg-white p-4 shadow-ficha">
-            <div className="flex items-end justify-between gap-3">
+            <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
               <p className="font-display text-4xl font-extrabold leading-none tabular-nums">{pesos(p.precio)}</p>
-              {porUnidad && <p className="text-right text-sm tabular-nums text-stone-500">{pesos(porUnidad.valor)} {porUnidad.etiqueta}</p>}
+              {porUnidad && <p className="text-right text-sm tabular-nums text-stone-600">{pesos(porUnidad.valor)} {porUnidad.etiqueta}</p>}
             </div>
             <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
-            <p className="mt-3 text-xs text-stone-500">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras. Envíos a todo el país.</p>
+            <p className="mt-3 text-xs text-stone-600">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras. Envíos a todo el país.</p>
           </div>
           {fila.porQueLoElegimos && (
             <div className="rounded-2xl bg-acopio-100 p-4">
-              <p className="mb-1 text-sm font-semibold text-acopio-700">Por qué lo elegimos</p>
+              <h2 className="mb-1 text-sm font-semibold text-acopio-700">Por qué lo elegimos</h2>
               <p className="text-sm text-stone-700">{fila.porQueLoElegimos}</p>
             </div>
           )}
           <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-            <dt className="text-stone-500">Presentación</dt><dd>{p.presentacion}</dd>
-            <dt className="text-stone-500">Formato</dt><dd>{p.formato}</dd>
-            {p.contenido && (<><dt className="text-stone-500">Contenido</dt><dd>{p.contenido} {p.unidad}</dd></>)}
-            <dt className="text-stone-500">Código</dt><dd className="tabular-nums">{p.codigo}</dd>
+            <dt className="text-stone-600">Presentación</dt><dd>{p.presentacion}</dd>
+            <dt className="text-stone-600">Formato</dt><dd>{p.formato}</dd>
+            {p.contenido && (<><dt className="text-stone-600">Contenido</dt><dd>{p.contenido} {p.unidad}</dd></>)}
+            <dt className="text-stone-600">Código</dt><dd className="tabular-nums">{p.codigo}</dd>
           </dl>
           {(fila.nichos.length > 0 || fila.objetivos.length > 0) && (
             <div className="flex flex-wrap gap-2 text-xs">
               {NICHOS.filter((n) => fila.nichos.includes(n.id)).map((n) => (
-                <Link key={n.id} href={`/nichos/${n.id}`} className="chip bg-white py-1 text-stone-600 shadow-ficha">{n.nombre}</Link>
+                <Link key={n.id} href={`/nichos/${n.id}`} className="inline-flex min-h-[48px] items-center rounded-full bg-white px-4 text-sm font-semibold text-acopio-900 shadow-ficha hover:bg-acopio-900 hover:text-white">{n.nombre}</Link>
               ))}
               {OBJETIVOS.filter((o) => fila.objetivos.includes(o.id)).map((o) => (
-                <Link key={o.id} href={`/objetivos/${o.id}`} className="chip bg-acopio-100 py-1 text-acopio-700">{o.nombre}</Link>
+                <Link key={o.id} href={`/objetivos/${o.id}`} className="inline-flex min-h-[48px] items-center rounded-full bg-acopio-100 px-4 text-sm font-semibold text-acopio-700 hover:bg-acopio-600 hover:text-white">{o.nombre}</Link>
               ))}
             </div>
           )}

@@ -28,7 +28,7 @@ export default async function Imagenes() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold">Imágenes</h1>
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-stone-600">
           {todos.length} productos publicados: {conPropias} con imagen propia, {todos.length - conPropias - sinNinguna} solo con la foto del proveedor, {sinNinguna} sin ninguna foto.
         </p>
       </div>
@@ -37,12 +37,12 @@ export default async function Imagenes() {
       )}
       <div className="tarjeta space-y-2">
         <h2 className="font-semibold">Subida masiva</h2>
-        <p className="text-sm text-stone-500">Las imágenes propias pasan a ser las primeras de la galería del producto; la foto del proveedor queda al final. Cuadradas (1:1), de 1.200 px o más, para que se vean bien en la tienda.</p>
+        <p className="text-sm text-stone-600">Las imágenes propias pasan a ser las primeras de la galería del producto; la foto del proveedor queda al final. Cuadradas (1:1), de 1.200 px o más, para que se vean bien en la tienda.</p>
         <SubidorImagenes codigos={codigos.map((c) => c.codigo)} />
       </div>
       <div className="tarjeta">
         <h2 className="mb-1 font-semibold">Por dónde empezar</h2>
-        <p className="mb-3 text-sm text-stone-500">Los {prioridad.length} productos donde una imagen mejor rinde más: ganchos, productos de combos y pedidos tipo, y los que no tienen ninguna foto.</p>
+        <p className="mb-3 text-sm text-stone-600">Los {prioridad.length} productos donde una imagen mejor rinde más: ganchos, productos de combos y pedidos tipo, y los que no tienen ninguna foto.</p>
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {prioridad.map((p) => (
             <li key={p.codigo} className="flex items-center gap-3 rounded-xl border border-stone-200 p-2">
@@ -54,7 +54,7 @@ export default async function Imagenes() {
               )}
               <div className="min-w-0 flex-1">
                 <Link href={`/admin/productos/${encodeURIComponent(p.codigo)}`} className="block truncate text-sm font-medium hover:underline">{p.producto}</Link>
-                <p className="truncate text-xs text-stone-500">{p.presentacion}</p>
+                <p className="truncate text-xs text-stone-600">{p.presentacion}</p>
                 <p className="font-mono text-xs text-stone-600">{p.codigo}-1.png {p.gancho && <span className="chip bg-tierra-100 text-tierra-700">gancho</span>}</p>
               </div>
             </li>
