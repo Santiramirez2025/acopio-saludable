@@ -101,7 +101,8 @@ export async function productosTienda(args: {
   const cfg = await leerConfig();
   const filas = await prisma.product.findMany({
     where: { AND: [wherePublicado(cfg.margenMinimoPct), args.where ?? {}] },
-    orderBy: args.orderBy ?? [{ gancho: "desc" }, { vendidos: "desc" }, { producto: "asc" }, { codigo: "asc" }],
+    // Por defecto: ganchos y más vendidos primero, y los que no tienen foto al final.
+    orderBy: args.orderBy ?? [{ gancho: "desc" }, { fotoUrl: { sort: "asc", nulls: "last" } }, { vendidos: "desc" }, { producto: "asc" }, { codigo: "asc" }],
     take: args.take,
     skip: args.skip,
   });

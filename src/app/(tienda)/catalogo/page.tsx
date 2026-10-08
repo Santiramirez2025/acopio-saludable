@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Catálogo", description: "Catálogo 
 
 const POR_PAGINA = 24;
 const ORDENES: Record<string, { nombre: string; orderBy: Prisma.ProductOrderByWithRelationInput[] }> = {
-  destacados: { nombre: "Destacados", orderBy: [{ gancho: "desc" }, { vendidos: "desc" }, { producto: "asc" }, { codigo: "asc" }] },
+  destacados: { nombre: "Destacados", orderBy: [{ gancho: "desc" }, { vendidos: "desc" }, { fotoUrl: { sort: "asc", nulls: "last" } }, { producto: "asc" }, { codigo: "asc" }] },
   vendidos: { nombre: "Más vendidos", orderBy: [{ vendidos: "desc" }, { producto: "asc" }, { codigo: "asc" }] },
   "precio-asc": { nombre: "Menor precio", orderBy: [{ precioPublico: "asc" }, { codigo: "asc" }] },
   "precio-desc": { nombre: "Mayor precio", orderBy: [{ precioPublico: "desc" }, { codigo: "asc" }] },

@@ -18,6 +18,6 @@
   .etiqueta { @apply mb-1 block text-xs font-semibold text-stone-600; }
   .tarjeta { @apply rounded-2xl border border-tierra-200 bg-white p-4; }
   .chip { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold; }
-  .riel { @apply -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2; scrollbar-width: none; }
+  .riel { @apply -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2; scrollbar-width: none; }
   .riel::-webkit-scrollbar { display: none; }
 }

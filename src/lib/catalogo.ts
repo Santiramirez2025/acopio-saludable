@@ -152,3 +152,27 @@ export async function aplicarFotos(db: PrismaClient, filas: FilaFoto[], opciones
   }
   return r;
 }
+
+/**
+ * Completa en masa las fotos faltantes con la de un producto "hermano": mismo nombre y marca,
+ * otra presentación (por ejemplo el de 150 g toma la foto del de 500 g). Solo toca productos sin foto.
+ */
+export async function completarFotosPorFamilia(db: PrismaClient): Promise<{ completadas: number; siguenSinFoto: number }> {
+  const todos = await db.product.findMany({ select: { codigo: true, producto: true, marca: true, fotoUrl: true, fotos: true } });
+  const clave = (p: { producto: string; marca: string }) => `${p.marca}|${p.producto}`.toLowerCase().replace(/\s+/g, " ").trim();
+  const conFoto = new Map<string, { fotoUrl: string; fotos: string[] }>();
+  for (const p of todos) if (p.fotoUrl && !conFoto.has(clave(p))) conFoto.set(clave(p), { fotoUrl: p.fotoUrl, fotos: p.fotos });
+  let completadas = 0;
+  let siguenSinFoto = 0;
+  for (const p of todos) {
+    if (p.fotoUrl) continue;
+    const hermano = conFoto.get(clave(p));
+    if (!hermano) {
+      siguenSinFoto++;
+      continue;
+    }
+    await db.product.update({ where: { codigo: p.codigo }, data: { fotoUrl: hermano.fotoUrl, fotos: [hermano.fotoUrl] } });
+    completadas++;
+  }
+  return { completadas, siguenSinFoto };
+}

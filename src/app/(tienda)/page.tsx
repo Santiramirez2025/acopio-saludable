@@ -32,25 +32,25 @@ export default async function Home() {
   ];
 
   return (
-    <div className="space-y-12">
-      <section className="-mx-4 -mt-5 bg-acopio-900 px-4 pb-8 pt-6 text-white md:-mt-8 md:mx-0 md:rounded-3xl md:px-10 md:py-12">
+    <div className="space-y-9 md:space-y-12">
+      <section className="-mx-4 -mt-5 bg-acopio-900 px-4 pb-6 pt-4 text-white md:-mt-8 md:mx-0 md:rounded-3xl md:px-10 md:py-12">
         <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_.85fr]">
           <div>
-            <h1 className="font-display text-[42px] font-extrabold leading-[.95] tracking-tight sm:text-6xl">
+            <h1 className="font-display text-[34px] font-extrabold leading-[.98] tracking-tight sm:text-6xl">
               Llená la despensa de tu negocio de una sola vez.
             </h1>
-            <p className="mt-4 max-w-md text-[17px] text-white/80">
-              Frutos secos, cereales, suplementos, snacks y especias por volumen, a precio de lista. Envíos a todo el país desde Villa Carlos Paz.
+            <p className="mt-3 max-w-md text-[15px] text-white/80 sm:text-[17px]">
+              Frutos secos, cereales, suplementos, snacks y especias por volumen. Envíos a todo el país.
             </p>
-            <p className="mt-6 text-sm font-semibold text-sol">¿Para quién comprás?</p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <p className="mt-5 text-sm font-semibold text-sol">¿Para quién comprás?</p>
+            <div className="riel mt-2 md:mx-0 md:flex-wrap md:px-0">
               {NICHOS.map((n) => (
-                <Link key={n.id} href={`/nichos/${n.id}`} className="rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white hover:text-acopio-900">{n.nombre}</Link>
+                <Link key={n.id} href={`/nichos/${n.id}`} className="shrink-0 snap-start whitespace-nowrap rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white hover:text-acopio-900">{n.nombre}</Link>
               ))}
             </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/armador" className="btn-comprar">Armame un pedido</Link>
-              <Link href="/catalogo" className="inline-flex min-h-[44px] items-center rounded-full border border-white/30 px-5 text-sm font-semibold hover:bg-white/10">Ver todo el catálogo</Link>
+            <div className="mt-4 flex gap-2.5">
+              <Link href="/armador" className="btn-comprar flex-1 sm:flex-none">Armame un pedido</Link>
+              <Link href="/catalogo" className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full border border-white/30 px-5 text-sm font-semibold hover:bg-white/10 sm:flex-none">Ver catálogo</Link>
             </div>
           </div>
           {vitrina.length === 3 && (

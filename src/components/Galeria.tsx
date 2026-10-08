@@ -10,14 +10,14 @@ export function Galeria({ fotos, alt, etiqueta }: { fotos: string[]; alt: string
   return (
     <div>
       <div className="rounded-3xl bg-white p-2.5 shadow-ficha">
-        <Foto key={actual ?? "sin"} src={actual} alt={alt} etiqueta={etiqueta} className="aspect-square w-full rounded-2xl" prioridad />
+        <Foto key={actual ?? "sin"} src={actual} alt={alt} etiqueta={etiqueta} className="aspect-square w-full rounded-2xl" prioridad sizes="(max-width: 768px) 100vw, 560px" />
       </div>
       {fotos.length > 1 && (
         <div className="riel mt-3 md:mx-0 md:px-0" role="tablist" aria-label="Fotos del producto">
           {fotos.map((f, i) => (
             <button key={f} type="button" role="tab" aria-selected={i === activa} aria-label={`Foto ${i + 1} de ${fotos.length}`} onClick={() => setActiva(i)}
               className={`w-20 shrink-0 snap-start rounded-xl bg-white p-1 ${i === activa ? "ring-2 ring-acopio-600" : "opacity-70"}`}>
-              <Foto src={f} alt="" className="aspect-square w-full rounded-lg" />
+              <Foto src={f} alt="" className="aspect-square w-full rounded-lg" sizes="96px" />
             </button>
           ))}
         </div>

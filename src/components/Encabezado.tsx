@@ -33,7 +33,7 @@ export function Encabezado() {
           acopio<span className="text-sol">.</span>
         </Link>
         <form action="/catalogo" role="search" className="flex-1">
-          <input name="q" type="search" enterKeyHint="search" className="w-full rounded-full border-0 bg-white/12 px-4 py-2 text-[15px] text-white placeholder:text-white/60 focus:bg-white focus:text-acopio-900 focus:outline-none focus:placeholder:text-stone-400" placeholder="Buscá nueces, avena, magnesio…" aria-label="Buscar productos" />
+          <input name="q" type="search" enterKeyHint="search" className="w-full rounded-full border-0 bg-white/15 px-4 py-2 text-[15px] text-white placeholder:text-white/60 focus:bg-white focus:text-acopio-900 focus:outline-none focus:placeholder:text-stone-400" placeholder="Buscá nueces, avena, magnesio…" aria-label="Buscar productos" />
         </form>
         <Link href="/carrito" className="hidden items-center gap-2 rounded-full bg-sol px-4 py-2 text-sm font-bold text-acopio-900 md:flex">
           Tu pedido
