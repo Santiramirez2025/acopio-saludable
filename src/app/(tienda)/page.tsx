@@ -36,7 +36,7 @@ export default async function Home() {
 
   return (
     <div className="space-y-9 md:space-y-12">
-      <section className="fondo-oscuro -mx-4 -mt-5 bg-acopio-900 px-4 pb-6 pt-4 text-white md:-mt-8 md:mx-0 md:rounded-3xl md:px-10 md:py-12">
+      <section className="fondo-oscuro -mx-4 -mt-5 bg-acopio-900 px-4 pb-6 pt-4 text-white md:mx-0 md:mt-0 md:rounded-3xl md:px-10 md:py-12">
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)]">
           <div className="min-w-0">
             <h1 className="text-balance font-display text-[clamp(30px,9vw,38px)] font-extrabold leading-none tracking-tight sm:text-6xl">
