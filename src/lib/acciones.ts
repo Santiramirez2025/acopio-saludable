@@ -166,6 +166,7 @@ export async function guardarConfig(fd: FormData) {
           min: 0,
           max: 99,
         }),
+        recargoPrecioPct: numero(fd, "recargoPrecioPct", { min: 0, max: 50 }),
         recargoSugeridoPct: numero(fd, "recargoSugeridoPct", { min: 0, max: 300 }),
         corteDias: leerDiasCorte(String(fd.get("corteDias") ?? "")).join(","),
         corteHora: Math.round(numero(fd, "corteHora", { min: 0, max: 23 })),

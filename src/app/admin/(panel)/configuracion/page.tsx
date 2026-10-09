@@ -4,7 +4,8 @@ import { guardarConfig } from "@/lib/acciones";
 const CAMPOS = [
   ["compraMinima", "Compra mínima por pedido ($)"],
   ["margenMinimoPct", "Margen mínimo (%)"],
-  ["descuentoTransferenciaPct", "Descuento por transferencia (%)"],
+  ["recargoPrecioPct", "Recargo sobre el precio base para el precio de lista (%). Cubre la comisión de Mercado Pago"],
+  ["descuentoTransferenciaPct", "Descuento por transferencia (%). Igual al recargo = quien transfiere paga el precio base"],
   ["recargoSugeridoPct", "Recargo para el precio sugerido de reventa (%). 0 = no mostrarlo"],
   ["comisionPagoPct", "Comisión del medio de pago (%)"],
   ["costoPackaging", "Costo de packaging por pedido ($)"],

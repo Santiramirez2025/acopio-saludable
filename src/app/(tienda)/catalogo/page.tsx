@@ -151,7 +151,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
 
       <p className="mb-3 text-sm text-stone-600">{total} productos</p>
       {filas.length ? (
-        <GrillaProductos productos={filas.map((f) => aTienda(f, cfg.recargoSugeridoPct))} />
+        <GrillaProductos productos={filas.map((f) => aTienda(f, cfg))} />
       ) : (
         <p className="rounded-2xl bg-white p-8 text-center text-stone-600 shadow-ficha">
           No encontramos productos con esos filtros. <Link href="/catalogo" className="underline">Ver todo el catálogo</Link>

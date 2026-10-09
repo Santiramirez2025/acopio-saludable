@@ -8,6 +8,7 @@ export async function leerConfig() {
     compraMinima: Number(s.compraMinima),
     margenMinimoPct: Number(s.margenMinimoPct),
     descuentoTransferenciaPct: Number(s.descuentoTransferenciaPct),
+    recargoPrecioPct: Number(s.recargoPrecioPct),
     recargoSugeridoPct: Number(s.recargoSugeridoPct),
     corteDias: leerDiasCorte(s.corteDias),
     corteHora: s.corteHora,

@@ -342,3 +342,13 @@ test("corte de compra: próximo cierre en hora argentina", async () => {
   assert.equal(proximoCorte(new Date("2026-10-08T17:00:01Z"), [4], 14)?.toISOString(), "2026-10-15T17:00:00.000Z");
   assert.equal(proximoCorte(new Date(), [], 14), null);
 });
+
+test("precio de lista y de transferencia: el recargo cubre la comisión y la transferencia vuelve al precio base", async () => {
+  const { precioVenta, precioTransferencia } = await import("./precios");
+  assert.equal(precioVenta(10000, 8), 10800);
+  assert.equal(precioVenta(10000, 0), 10000);
+  assert.equal(precioTransferencia(10800, 8), 9936);
+  assert.equal(precioTransferencia(10800, 0), null);
+  // Cobrado por Mercado Pago al instante (7,61%) queda prácticamente el precio base.
+  assert.ok(Math.abs(10800 * (1 - 0.0761) - 10000) < 30);
+});

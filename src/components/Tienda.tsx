@@ -6,7 +6,7 @@ import { Foto } from "./Foto";
 import { AgregarRapido, BotonAgregar } from "./Carrito";
 
 export function TarjetaProducto({ p, className = "" }: { p: ProductoTienda; className?: string }) {
-  const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
+  const porUnidad = precioPorUnidadBase(p.transferencia ?? p.precio, p.contenido, p.unidad);
   const href = `/producto/${encodeURIComponent(p.codigo)}`;
   return (
     <article className={`flex min-w-0 flex-col rounded-2xl bg-white p-2 shadow-ficha ${className}`}>
@@ -18,10 +18,10 @@ export function TarjetaProducto({ p, className = "" }: { p: ProductoTienda; clas
           <h3 className="text-[15px] font-semibold leading-snug"><Link href={href} className="estirado line-clamp-2 after:absolute after:inset-0 after:rounded-xl hover:underline">{p.producto}</Link></h3>
           <p className="mt-0.5 line-clamp-1 text-xs text-stone-600">{p.presentacion}</p>
           <div className="mt-auto flex flex-wrap items-end justify-between gap-x-2 gap-y-1 pb-2.5 pt-2">
-          <p className="font-display text-xl font-bold leading-none tabular-nums">{pesos(p.precio)}</p>
+          <p className="font-display text-xl font-bold leading-none tabular-nums">{pesos(p.transferencia ?? p.precio)}</p>
           {porUnidad && <p className="text-right text-[11px] leading-tight tabular-nums text-stone-600">{pesos(porUnidad.valor)}<br />{porUnidad.etiqueta}</p>}
           </div>
-          {p.sugerido && <p className="-mt-1 pb-2.5 text-[11px] font-semibold leading-tight text-acopio-600">Venta sugerida {pesos(p.sugerido)}</p>}
+          {p.transferencia && <p className="-mt-1 pb-2.5 text-[11px] leading-tight text-stone-600"><b className="font-semibold text-acopio-600">con transferencia</b> · {pesos(p.precio)} con tarjeta</p>}
         </div>
       </div>
       <div className="px-1.5 pb-1.5">

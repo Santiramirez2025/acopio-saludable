@@ -59,3 +59,13 @@ export function precioSugerido(precio: number, recargoPct: number): { sugerido: 
   const sugerido = Math.ceil(bruto / paso - 1e-9) * paso;
   return { sugerido, ganancia: redondear2(sugerido - precio) };
 }
+
+/** Precio de lista de la tienda: el precio base más el recargo que cubre la comisión del medio de pago, en pesos enteros. */
+export function precioVenta(base: number, recargoPct: number): number {
+  return recargoPct > 0 ? Math.round(base * (1 + recargoPct / 100)) : base;
+}
+
+/** Lo que paga quien transfiere; null si no hay descuento. */
+export function precioTransferencia(precio: number, descuentoPct: number): number | null {
+  return descuentoPct > 0 ? Math.round(precio * (1 - descuentoPct / 100)) : null;
+}
