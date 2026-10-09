@@ -97,6 +97,8 @@ model Combo {
   descuentoPct Decimal   @default(0) @db.Decimal(5, 2)
   activo       Boolean   @default(true)
   destacado    Boolean   @default(false)
+  // Imagen propia del combo (opcional). Sin imagen se muestran las fotos de sus productos.
+  fotoUrl      String?
   vigenteDesde DateTime?
   vigenteHasta DateTime?
   items        ComboItem[]
