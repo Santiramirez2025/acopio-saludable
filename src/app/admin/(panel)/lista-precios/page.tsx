@@ -29,7 +29,7 @@ export default async function ListaPrecios() {
         </p>
       </div>
       <header className="mb-4 rounded-2xl bg-acopio-900 p-6 text-white [print-color-adjust:exact]">
-        <p className="font-display text-4xl font-extrabold leading-none tracking-tight">acopio<span className="text-sol">.</span></p>
+        <p className="font-display text-4xl font-extrabold leading-none tracking-tight">Acopio<span className="text-sol">.</span></p>
         <h1 className="mt-2 font-display text-xl font-bold">Lista de precios</h1>
         <p className="text-sm text-white/80">Productos saludables por volumen · Vigente al {fecha}</p>
         <p className="mt-2 text-sm font-semibold text-sol">{web}{cfg.whatsapp ? ` · WhatsApp ${cfg.whatsapp}` : ""}</p>

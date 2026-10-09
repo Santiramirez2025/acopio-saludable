@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { pesosCliente, useCarrito } from "./Carrito";
+import { Logo } from "./Logo";
 
 const NAV = [
   ["/catalogo", "Catálogo"],
@@ -30,8 +31,8 @@ export function Encabezado() {
   return (
     <header className="fondo-oscuro sticky top-0 z-30 bg-acopio-900 text-white">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
-        <Link href="/" className="flex min-h-[48px] items-center font-display text-[22px] font-extrabold leading-none tracking-tight" aria-label="Acopio Saludable, inicio">
-          acopio<span className="text-sol">.</span>
+        <Link href="/" className="flex min-h-[48px] items-center" aria-label="Acopio Saludable, inicio">
+          <Logo invertido />
         </Link>
         <form action="/catalogo" role="search" className="min-w-0 flex-1">
           <input name="q" type="search" enterKeyHint="search" className="w-full rounded-full border-0 h-12 bg-white/15 px-4 text-base text-white placeholder:text-white/75 focus:bg-white focus:text-acopio-900 focus:outline-none focus:placeholder:text-stone-400" placeholder="Buscá nueces, avena, magnesio…" aria-label="Buscar productos" />
