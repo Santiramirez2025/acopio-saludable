@@ -139,8 +139,8 @@ model Setting {
   // Envíos
   cpOrigen             String  @default("5152")
   entregaPropiaActiva  Boolean @default(true)
-  // Códigos postales con entrega propia sin cargo: lista y rangos, ej. "5152,5000-5022"
-  cpEntregaPropia      String  @default("5152,5000-5022")
+  // Códigos postales con entrega propia sin cargo: lista y rangos, ej. "5152,5153"
+  cpEntregaPropia      String  @default("5152,5153")
   // Tabla de respaldo por peso y zona (JSON). Null = valores de ejemplo del código.
   tablaEnvios          Json?
   tablaEnviosRevisada  Boolean @default(false)

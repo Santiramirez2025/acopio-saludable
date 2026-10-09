@@ -46,7 +46,7 @@ export default async function Envios({ searchParams }: { searchParams: Promise<{
           </div>
           <div className="sm:col-span-2">
             <label className="etiqueta" htmlFor="cpEntregaPropia">Entrega propia sin cargo en estos códigos postales</label>
-            <input className="campo" id="cpEntregaPropia" name="cpEntregaPropia" defaultValue={cfg.cpEntregaPropia} placeholder="5152, 5000-5022" />
+            <input className="campo" id="cpEntregaPropia" name="cpEntregaPropia" defaultValue={cfg.cpEntregaPropia} placeholder="5152, 5153" />
             <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" name="entregaPropiaActiva" defaultChecked={cfg.entregaPropiaActiva} /> Ofrecer entrega propia</label>
           </div>
         </div>
