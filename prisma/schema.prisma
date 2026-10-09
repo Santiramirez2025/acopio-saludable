@@ -120,6 +120,8 @@ model Setting {
   compraMinima             Decimal  @default(60000) @db.Decimal(12, 2)
   margenMinimoPct          Decimal  @default(12) @db.Decimal(5, 2)
   descuentoTransferenciaPct Decimal @default(0) @db.Decimal(5, 2)
+  // Recargo sobre el precio base para formar el precio de lista (cubre la comisión del medio de pago). 0 = sin recargo.
+  recargoPrecioPct         Decimal  @default(0) @db.Decimal(5, 2)
   // Recargo para calcular el precio sugerido de reventa que ve el cliente. 0 = no se muestra.
   recargoSugeridoPct       Decimal  @default(40) @db.Decimal(5, 2)
   // Corte de compra al proveedor: días (0 = domingo … 6 = sábado, separados por coma; vacío = no se muestra) y hora.

@@ -4,7 +4,7 @@ import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
 import { proximoCorte } from "./corte";
-import { calcularCombo, precioSugerido, redondear2 } from "./precios";
+import { calcularCombo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
 import { wherePublicado, esSinTacc } from "./filtros-producto";
 
 export type ProductoTienda = {
@@ -23,9 +23,15 @@ export type ProductoTienda = {
   sinTacc: boolean;
   /** Precio sugerido de reventa; null si el recargo está en 0. */
   sugerido: number | null;
+  /** Precio pagando por transferencia; null si no hay descuento. */
+  transferencia: number | null;
 };
 
-export function aTienda(p: Product, recargoSugeridoPct = 0): ProductoTienda {
+/** Porcentajes de la configuración que forman los precios que ve el cliente. */
+export type ReglasPrecio = { recargoPrecioPct?: number; recargoSugeridoPct?: number; descuentoTransferenciaPct?: number };
+
+export function aTienda(p: Product, reglas: ReglasPrecio = {}): ProductoTienda {
+  const precio = precioVenta(Number(p.precioPublico), reglas.recargoPrecioPct ?? 0);
   return {
     codigo: p.codigo,
     producto: p.producto,
@@ -33,14 +39,15 @@ export function aTienda(p: Product, recargoSugeridoPct = 0): ProductoTienda {
     presentacion: p.presentacion,
     categoria: p.categoria,
     formato: p.formato,
-    precio: Number(p.precioPublico),
+    precio,
     contenido: p.contenido,
     unidad: p.unidad,
     fotoUrl: p.fotoUrl,
     gancho: p.gancho,
     esSuplemento: p.categoria === "Suplementos",
     sinTacc: esSinTacc(p),
-    sugerido: precioSugerido(Number(p.precioPublico), recargoSugeridoPct)?.sugerido ?? null,
+    sugerido: precioSugerido(precio, reglas.recargoSugeridoPct ?? 0)?.sugerido ?? null,
+    transferencia: precioTransferencia(precio, reglas.descuentoTransferenciaPct ?? 0),
   };
 }
 
@@ -69,8 +76,8 @@ export function comboVigente(c: Combo, ahora = new Date()): boolean {
 }
 
 /** Un combo se vende solo si está vigente, todos sus productos están publicados y respeta el margen mínimo. */
-export function aComboTienda(c: ComboConItems, margenMinimoPct: number): ComboTienda {
-  const lineas = c.items.map((i) => ({ precio: Number(i.product.precioPublico), costo: Number(i.product.costo), cantidad: i.cantidad }));
+export function aComboTienda(c: ComboConItems, margenMinimoPct: number, reglas: ReglasPrecio = {}): ComboTienda {
+  const lineas = c.items.map((i) => ({ precio: precioVenta(Number(i.product.precioPublico), reglas.recargoPrecioPct ?? 0), costo: Number(i.product.costo), cantidad: i.cantidad }));
   const calc = calcularCombo(lineas, Number(c.descuentoPct), margenMinimoPct);
   return {
     slug: c.slug,
@@ -84,7 +91,7 @@ export function aComboTienda(c: ComboConItems, margenMinimoPct: number): ComboTi
     ahorro: redondear2(calc.precioLista - calc.precioCombo),
     disponible:
       c.items.length > 0 && comboVigente(c) && !calc.bloqueado && c.items.every((i) => estaPublicado(i.product, margenMinimoPct)),
-    items: c.items.map((i) => ({ producto: aTienda(i.product), cantidad: i.cantidad })),
+    items: c.items.map((i) => ({ producto: aTienda(i.product, reglas), cantidad: i.cantidad })),
   };
 }
 
@@ -95,7 +102,7 @@ export async function combosTienda(where: Prisma.ComboWhereInput = {}): Promise<
     include: { items: { include: { product: true }, orderBy: { codigo: "asc" } } },
     orderBy: [{ destacado: "desc" }, { id: "asc" }],
   });
-  return combos.map((c) => aComboTienda(c, cfg.margenMinimoPct));
+  return combos.map((c) => aComboTienda(c, cfg.margenMinimoPct, cfg));
 }
 
 export async function productosTienda(args: {
@@ -112,7 +119,7 @@ export async function productosTienda(args: {
     take: args.take,
     skip: args.skip,
   });
-  return filas.map((f) => aTienda(f, cfg.recargoSugeridoPct));
+  return filas.map((f) => aTienda(f, cfg));
 }
 
 // ---------- Carrito ----------
@@ -171,7 +178,7 @@ export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
       const p = porCodigo.get(l.id);
       if (!p) continue;
       const disponible = estaPublicado(p, cfg.margenMinimoPct);
-      const precio = Number(p.precioPublico);
+      const precio = precioVenta(Number(p.precioPublico), cfg.recargoPrecioPct);
       lineas.push({
         ...l,
         nombre: p.producto,

@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { MedioPago, Order } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig, type Config } from "./config";
-import { pesos, redondear2 } from "./precios";
+import { pesos, precioVenta, redondear2 } from "./precios";
 import { cotizarCarrito, estaPublicado, comboVigente, sanearLineas, type Cotizacion } from "./tienda";
 import { armarBultos, PESO_POR_DEFECTO_G } from "./envios/bultos";
 import { cotizarEnvio } from "./envios/cotizar";
@@ -35,13 +35,13 @@ export async function expandirCarrito(entrada: unknown, cfg: Config): Promise<Re
     if (l.tipo === "producto") {
       const p = porCodigo.get(l.id);
       if (!p || !estaPublicado(p, cfg.margenMinimoPct)) continue;
-      out.push({ codigo: p.codigo, producto: p.producto, presentacion: p.presentacion, cantidad: l.cantidad, precioUnitario: Number(p.precioPublico), costoUnitario: Number(p.costo), pesoG: p.pesoBrutoG, comboSlug: null });
+      out.push({ codigo: p.codigo, producto: p.producto, presentacion: p.presentacion, cantidad: l.cantidad, precioUnitario: precioVenta(Number(p.precioPublico), cfg.recargoPrecioPct), costoUnitario: Number(p.costo), pesoG: p.pesoBrutoG, comboSlug: null });
     } else {
       const c = porSlug.get(l.id);
       if (!c || !comboVigente(c) || !c.items.length || !c.items.every((i) => estaPublicado(i.product, cfg.margenMinimoPct))) continue;
       const factor = 1 - Number(c.descuentoPct) / 100;
       for (const i of c.items) {
-        out.push({ codigo: i.codigo, producto: i.product.producto, presentacion: i.product.presentacion, cantidad: i.cantidad * l.cantidad, precioUnitario: redondear2(Number(i.product.precioPublico) * factor), costoUnitario: Number(i.product.costo), pesoG: i.product.pesoBrutoG, comboSlug: c.slug });
+        out.push({ codigo: i.codigo, producto: i.product.producto, presentacion: i.product.presentacion, cantidad: i.cantidad * l.cantidad, precioUnitario: redondear2(precioVenta(Number(i.product.precioPublico), cfg.recargoPrecioPct) * factor), costoUnitario: Number(i.product.costo), pesoG: i.product.pesoBrutoG, comboSlug: c.slug });
       }
     }
   }

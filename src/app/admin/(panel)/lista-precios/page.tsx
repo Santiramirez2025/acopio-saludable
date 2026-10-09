@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
 import { esSinTacc, wherePublicado } from "@/lib/filtros-producto";
-import { pesos, precioSugerido } from "@/lib/precios";
+import { pesos, precioSugerido, precioVenta } from "@/lib/precios";
 import { AVISO_SUPLEMENTOS, SITIO, urlSitio } from "@/lib/sitio";
 
 export const metadata = { title: "Lista de precios" };
@@ -49,7 +49,7 @@ export default async function ListaPrecios() {
                 <span className="text-[10px] text-stone-600">Precio{conSugerido ? " · Sugerido" : ""}</span>
               </div>
               {lista.map((p) => {
-                const precio = Number(p.precioPublico);
+                const precio = precioVenta(Number(p.precioPublico), cfg.recargoPrecioPct);
                 const s = precioSugerido(precio, cfg.recargoSugeridoPct);
                 return (
                   <div key={p.codigo} className="flex break-inside-avoid items-baseline gap-2 border-b border-tierra-200 py-[3px]">
