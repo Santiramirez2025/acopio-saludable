@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { ProveedorCarrito } from "@/components/Carrito";
 import { BarraInferior, Encabezado, MedidorPedido } from "@/components/Encabezado";
 import { NICHOS } from "@/lib/taxonomia";
@@ -16,7 +17,7 @@ export default function TiendaLayout({ children }: { children: React.ReactNode }
         <footer className="fondo-oscuro bg-acopio-900 pb-28 text-white/80 md:pb-0">
           <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
             <div>
-              <p className="font-display text-2xl font-extrabold text-white">acopio<span className="text-sol">.</span> saludable</p>
+              <p className="text-white"><Logo invertido conBajada /></p>
               <p className="mt-1">{SITIO.base}. Envíos a todo el país.</p>
               <Link href="/sin-tacc" className="flex min-h-[48px] items-center font-semibold text-white underline underline-offset-4">Productos sin TACC</Link>
             </div>
