@@ -14,6 +14,9 @@ async function cargar(slug: string) {
   return c?.disponible ? c : null;
 }
 
+// Combos con una segunda imagen de ambiente en public/img/combos/<slug>-2.webp.
+const SEGUNDA_FOTO = new Set(["duo-magnesio", "desayuno-30-dias", "alacena-de-frutos-secos", "arranque-gym"]);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const c = await cargar((await params).slug);
   return c ? { title: `Combo ${c.nombre}`, description: `Combo ${c.nombre}: ${c.items.map((i) => i.producto.producto).join(", ")}. Envíos a todo el país.`.slice(0, 155), alternates: { canonical: `/combos/${c.slug}` } } : { title: "Combo no disponible" };
@@ -26,7 +29,12 @@ export default async function ComboPagina({ params }: Props) {
     <div className="space-y-6">
       <Link href="/combos" className="-my-3 inline-flex min-h-[48px] items-center text-sm text-stone-600 underline underline-offset-4">← Combos</Link>
       <Titulo sobre="Combo">{c.nombre}</Titulo>
-      {c.fotoUrl && <Foto src={c.fotoUrl} alt={`Combo ${c.nombre}`} className="aspect-[16/10] w-full rounded-3xl sm:aspect-[21/9]" prioridad sizes="(max-width: 1024px) 100vw, 1100px" />}
+      {c.fotoUrl && (
+        <div className={`grid gap-3 ${SEGUNDA_FOTO.has(c.slug) ? "sm:grid-cols-2" : ""}`}>
+          <Foto src={c.fotoUrl} alt={`Combo ${c.nombre}`} className={`w-full rounded-3xl ${SEGUNDA_FOTO.has(c.slug) ? "aspect-[4/3]" : "aspect-[16/10] sm:aspect-[21/9]"}`} prioridad sizes="(max-width: 640px) 100vw, 550px" />
+          {SEGUNDA_FOTO.has(c.slug) && <Foto src={`/img/combos/${c.slug}-2.webp`} alt="" className="aspect-[4/3] w-full rounded-3xl" sizes="(max-width: 640px) 100vw, 550px" />}
+        </div>
+      )}
       <div className="grid gap-6 lg:grid-cols-3">
         <ul className="divide-y divide-tierra-100 rounded-xl border border-tierra-200 bg-white lg:col-span-2">
           {c.items.map(({ producto: p, cantidad }) => (
