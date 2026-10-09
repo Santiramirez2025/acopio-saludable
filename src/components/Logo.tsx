@@ -10,8 +10,8 @@ export function Isotipo({ className = "h-9 w-9", invertido = false }: { classNam
       <circle cx="50" cy="50" r="50" fill={invertido ? "#F6EFDC" : "#10251C"} />
       <g transform="translate(50 50) scale(.78) translate(-50 -50)">
         <g fill={invertido ? "#10251C" : "#fff"}>
-          <path transform="translate(36 50) rotate(23)" d={GRANO} />
-          <path transform="translate(64 50) rotate(-23)" d={GRANO} />
+          <path transform="translate(36.7 50) rotate(23)" d={GRANO} />
+          <path transform="translate(63.3 50) rotate(-23)" d={GRANO} />
         </g>
         <circle cx="50" cy="68" r="8" fill="#FFC83D" />
       </g>
