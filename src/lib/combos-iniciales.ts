@@ -38,7 +38,7 @@ export const COMBOS_INICIALES: {
   // --- Combos por ocasión de compra. Todos con 5% de descuento sobre la suma de sus productos. ---
   {
     slug: "alacena-sin-tacc", nombre: "Alacena sin TACC", tipo: "COMBO", destacado: true, descuentoPct: 5,
-    items: [["7793323004079"], ["635455"], ["224588541"], ["781718647466"], ["781718647441"], ["7798294150121"], ["7798294150190"], ["7793323025005"], ["7798195940401"]],
+    items: [["7793323004079"], ["635455"], ["224588541"], ["781718647466"], ["781718647441"], ["7798294150121"], ["7793323024992"], ["7793323025005"], ["7798195940401"]],
   },
   {
     slug: "merienda-sin-tacc", nombre: "Merienda sin TACC", tipo: "COMBO", destacado: true, descuentoPct: 5,
