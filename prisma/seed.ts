@@ -41,6 +41,7 @@ async function main() {
         tipo: c.tipo,
         nicho: c.nicho,
         destacado: c.destacado ?? false,
+        descuentoPct: c.descuentoPct ?? 0,
         items: { create: c.items.filter(([codigo]) => codigos.has(codigo)).map(([codigo, cantidad]) => ({ codigo, cantidad: cantidad ?? 1 })) },
       },
     });

@@ -8,7 +8,7 @@ export default async function Combos() {
   const combos = (await combosTienda({ tipo: "COMBO", activo: true })).filter((c) => c.disponible);
   return (
     <div>
-      <Titulo sobre="Combos" bajada="Productos que van bien juntos, listos para sumar al carrito de una.">Combos y promociones</Titulo>
+      <Titulo sobre="Combos" bajada="Productos que van bien juntos, más baratos que comprándolos por separado. Sumá dos o tres y ya llegás a la compra mínima.">Combos y promociones</Titulo>
       {combos.length ? (
         <><h2 className="sr-only">Combos disponibles</h2><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{combos.map((c) => <TarjetaCombo key={c.slug} c={c} />)}</div></>
       ) : (
