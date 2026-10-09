@@ -8,6 +8,7 @@ import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadBase, precioSugerido } from "@/lib/precios";
 import { proximoCorte } from "@/lib/corte";
 import { CuentaRegresiva } from "@/components/CuentaRegresiva";
+import { Plazos } from "@/components/Plazos";
 import { urlSitio } from "@/lib/sitio";
 import { Galeria } from "@/components/Galeria";
 import { BotonAgregar } from "@/components/Carrito";
@@ -96,7 +97,8 @@ export default async function Producto({ params }: Props) {
             )}
             <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
             <CuentaRegresiva corte={proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null} className="mt-3" />
-            <p className="mt-3 text-xs text-stone-600">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras. Envíos a todo el país.</p>
+            <p className="mt-3 text-xs text-stone-600">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras.</p>
+            <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />
           </div>
           {fila.porQueLoElegimos && (
             <div className="rounded-2xl bg-acopio-100 p-4">

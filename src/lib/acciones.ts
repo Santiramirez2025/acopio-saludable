@@ -405,6 +405,7 @@ export async function guardarEnvios(fd: FormData) {
         cpOrigen,
         entregaPropiaActiva: fd.get("entregaPropiaActiva") === "on",
         cpEntregaPropia: validarListaCp(String(fd.get("cpEntregaPropia") ?? "")),
+        plazoEntregaPropia: String(fd.get("plazoEntregaPropia") ?? "").trim().slice(0, 60) || "24 a 48 hs hábiles",
         tablaEnvios: { tramosKg, zonas },
         tablaEnviosRevisada: fd.get("tablaEnviosRevisada") === "on",
       },

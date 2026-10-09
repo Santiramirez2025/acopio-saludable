@@ -19,6 +19,7 @@ export async function leerConfig() {
     transferenciaDatos: s.transferenciaDatos,
     cpOrigen: s.cpOrigen,
     entregaPropiaActiva: s.entregaPropiaActiva,
+    plazoEntregaPropia: s.plazoEntregaPropia,
     cpEntregaPropia: s.cpEntregaPropia,
     tabla: leerTabla(s.tablaEnvios),
     tablaEnviosRevisada: s.tablaEnviosRevisada,

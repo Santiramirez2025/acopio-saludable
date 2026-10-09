@@ -6,10 +6,13 @@ import { proveedorMiCorreo } from "./micorreo";
 import { proveedorTabla, type TablaEnvios } from "./tabla";
 import type { Bulto, OpcionEnvio, ShippingProvider, Tarifa } from "./tipos";
 
+export const DESPACHO = "Despacho en 24 a 48 hs hábiles";
+
 export type ConfigEnvio = {
   cpOrigen: string;
   entregaPropiaActiva: boolean;
   cpEntregaPropia: string;
+  plazoEntregaPropia?: string;
   envioGratisDesde: number | null;
   tabla: TablaEnvios;
 };
@@ -38,7 +41,7 @@ export async function cotizarEnvio(
 ): Promise<OpcionEnvio[]> {
   const tarifas: Tarifa[] = [];
   if (cfg.entregaPropiaActiva && cpEnLista(pedido.cpDestino, cfg.cpEntregaPropia)) {
-    tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Entrega propia sin cargo", costo: 0, plazo: "Coordinamos día y horario" });
+    tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Entrega propia sin cargo", costo: 0, plazo: `Te lo llevamos en ${cfg.plazoEntregaPropia || "24 a 48 hs hábiles"}. Coordinamos el horario por WhatsApp.` });
   }
   const consulta = { cpOrigen: cfg.cpOrigen, cpDestino: pedido.cpDestino, provincia: pedido.provincia, bultos: pedido.bultos, valorDeclarado: pedido.subtotal };
   const deCorreos = (
@@ -54,6 +57,8 @@ export async function cotizarEnvio(
     )
   ).flat();
   // Sin credenciales, o si las APIs no respondieron: tabla por peso y zona.
-  tarifas.push(...(deCorreos.length ? deCorreos : await proveedorTabla(cfg.tabla).cotizar(consulta)));
+  // Al plazo del correo se le suma el despacho: compramos la mercadería para cada pedido.
+  const conDespacho = (t: Tarifa): Tarifa => ({ ...t, plazo: /confirmar/i.test(t.plazo) ? `${DESPACHO}. Plazo del correo a confirmar.` : `${DESPACHO} + ${t.plazo} de correo` });
+  tarifas.push(...(deCorreos.length ? deCorreos : await proveedorTabla(cfg.tabla).cotizar(consulta)).map(conDespacho));
   return aplicarReglas(tarifas, pedido.subtotal, cfg.envioGratisDesde);
 }

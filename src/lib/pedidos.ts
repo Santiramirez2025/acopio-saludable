@@ -60,7 +60,7 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
   if (!renglones.length) throw new ErrorPedido("Tu carrito está vacío");
   const bultos = armarBultos(renglones.map((r) => ({ pesoG: r.pesoG ?? PESO_POR_DEFECTO_G, cantidad: r.cantidad })));
   const opciones = await cotizarEnvio(
-    { cpOrigen: c.cpOrigen, entregaPropiaActiva: c.entregaPropiaActiva, cpEntregaPropia: c.cpEntregaPropia, envioGratisDesde: c.envioGratisDesde, tabla: c.tabla },
+    { cpOrigen: c.cpOrigen, entregaPropiaActiva: c.entregaPropiaActiva, cpEntregaPropia: c.cpEntregaPropia, plazoEntregaPropia: c.plazoEntregaPropia, envioGratisDesde: c.envioGratisDesde, tabla: c.tabla },
     { cpDestino: cp, provincia, bultos, subtotal: cotizacion.subtotal },
   );
   return {
