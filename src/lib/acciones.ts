@@ -52,6 +52,8 @@ function emailONull(v: string | null): string | null {
 
 function urlFoto(valor: string | null): string | null {
   if (!valor) return null;
+  // Imágenes propias del sitio (public/img): ruta local, sin dominio.
+  if (/^\/img\/[\w\-./]+\.(webp|png|jpe?g|avif)$/i.test(valor) && !valor.includes("..")) return valor;
   let u: URL;
   try {
     u = new URL(valor);

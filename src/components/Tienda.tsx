@@ -56,11 +56,15 @@ export function TarjetaCombo({ c, className = "" }: { c: ComboTienda; className?
   return (
     <article className={`fondo-oscuro flex flex-col rounded-2xl bg-acopio-900 p-3 text-white ${className}`}>
       <div className="relative">
-        <div className="grid grid-cols-4 gap-1.5">
-          {c.items.slice(0, 4).map((i) => (
-            <Foto key={i.producto.codigo} src={i.producto.fotoUrl} alt="" etiqueta=" " className="aspect-square w-full rounded-lg" />
-          ))}
-        </div>
+        {c.fotoUrl ? (
+          <Foto src={c.fotoUrl} alt="" etiqueta=" " className="aspect-[4/3] w-full rounded-xl" sizes="(max-width: 640px) 78vw, (max-width: 1024px) 44vw, 300px" />
+        ) : (
+          <div className="grid grid-cols-4 gap-1.5">
+            {c.items.slice(0, 4).map((i) => (
+              <Foto key={i.producto.codigo} src={i.producto.fotoUrl} alt="" etiqueta=" " className="aspect-square w-full rounded-lg" />
+            ))}
+          </div>
+        )}
       <h3 className="mt-3 font-display text-xl font-bold leading-tight"><Link href={`/combos/${c.slug}`} className="estirado after:absolute after:inset-0 after:rounded-xl hover:underline">{c.nombre}</Link></h3>
       <p className="mt-1 line-clamp-2 text-xs text-white/80">{c.items.map((i) => `${i.cantidad > 1 ? `${i.cantidad} × ` : ""}${i.producto.producto}`).join(", ")}</p>
       </div>

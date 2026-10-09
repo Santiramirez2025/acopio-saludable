@@ -63,6 +63,7 @@ export type ComboTienda = {
   tipo: "COMBO" | "PEDIDO_NICHO";
   nicho: string | null;
   destacado: boolean;
+  fotoUrl: string | null;
   descuentoPct: number;
   precioLista: number;
   precio: number;
@@ -85,6 +86,7 @@ export function aComboTienda(c: ComboConItems, margenMinimoPct: number, reglas: 
     tipo: c.tipo,
     nicho: c.nicho,
     destacado: c.destacado,
+    fotoUrl: c.fotoUrl,
     descuentoPct: Number(c.descuentoPct),
     precioLista: calc.precioLista,
     precio: calc.precioCombo,
@@ -198,7 +200,7 @@ export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
         ...l,
         nombre: c.nombre,
         detalle: `Combo · ${c.items.reduce((s, i) => s + i.cantidad, 0)} productos`,
-        fotoUrl: c.items[0]?.producto.fotoUrl ?? null,
+        fotoUrl: c.fotoUrl ?? c.items[0]?.producto.fotoUrl ?? null,
         href: `/combos/${c.slug}`,
         precioUnitario: c.precio,
         precioLista: c.precioLista,

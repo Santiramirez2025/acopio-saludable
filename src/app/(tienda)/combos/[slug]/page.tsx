@@ -26,6 +26,7 @@ export default async function ComboPagina({ params }: Props) {
     <div className="space-y-6">
       <Link href="/combos" className="-my-3 inline-flex min-h-[48px] items-center text-sm text-stone-600 underline underline-offset-4">← Combos</Link>
       <Titulo sobre="Combo">{c.nombre}</Titulo>
+      {c.fotoUrl && <Foto src={c.fotoUrl} alt={`Combo ${c.nombre}`} className="aspect-[16/10] w-full rounded-3xl sm:aspect-[21/9]" prioridad sizes="(max-width: 1024px) 100vw, 1100px" />}
       <div className="grid gap-6 lg:grid-cols-3">
         <ul className="divide-y divide-tierra-100 rounded-xl border border-tierra-200 bg-white lg:col-span-2">
           {c.items.map(({ producto: p, cantidad }) => (

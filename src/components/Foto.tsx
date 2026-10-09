@@ -22,9 +22,11 @@ export function Foto({ src, alt, etiqueta, className = "", prioridad = false, si
       </div>
     );
   }
+  // Las imágenes propias ya vienen producidas: van a sangre, sin fundirlas con la ficha.
+  const propia = src.startsWith("/img/");
   return (
     <div className={`relative overflow-hidden bg-acopio-50 ${className}`}>
-      <Image src={src} alt={alt} fill sizes={sizes} priority={prioridad} quality={72} onError={() => setRota(true)} className="object-contain mix-blend-multiply" />
+      <Image src={src} alt={alt} fill sizes={sizes} priority={prioridad} quality={72} onError={() => setRota(true)} className={propia ? "object-cover" : "object-contain mix-blend-multiply"} />
     </div>
   );
 }
