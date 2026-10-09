@@ -33,7 +33,7 @@ export default async function Home() {
   const pasos = [
     ["Elegí", "Por rubro, por objetivo o buscando lo que necesitás."],
     [`Llegá a ${pesos(cfg.compraMinima)}`, "Es la compra mínima. El medidor te va diciendo cuánto falta."],
-    ["Recibilo", "Lo compramos para vos y te lo enviamos a todo el país."],
+    ["Recibilo", cfg.entregaPropiaActiva ? `En Carlos Paz y Córdoba capital te lo llevamos en ${cfg.plazoEntregaPropia}. Al resto del país, por correo en 3 a 9 días hábiles.` : "Lo compramos para vos y te lo enviamos por correo a todo el país en 3 a 9 días hábiles."],
   ];
 
   return (

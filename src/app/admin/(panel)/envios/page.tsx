@@ -40,6 +40,10 @@ export default async function Envios({ searchParams }: { searchParams: Promise<{
             <label className="etiqueta" htmlFor="cpOrigen">Código postal de origen</label>
             <input className="campo" id="cpOrigen" name="cpOrigen" defaultValue={cfg.cpOrigen} required />
           </div>
+          <div>
+            <label className="etiqueta" htmlFor="plazoEntregaPropia">Plazo de la entrega propia (se muestra en la tienda)</label>
+            <input className="campo" id="plazoEntregaPropia" name="plazoEntregaPropia" defaultValue={cfg.plazoEntregaPropia} placeholder="24 a 48 hs hábiles" />
+          </div>
           <div className="sm:col-span-2">
             <label className="etiqueta" htmlFor="cpEntregaPropia">Entrega propia sin cargo en estos códigos postales</label>
             <input className="campo" id="cpEntregaPropia" name="cpEntregaPropia" defaultValue={cfg.cpEntregaPropia} placeholder="5152, 5000-5022" />
