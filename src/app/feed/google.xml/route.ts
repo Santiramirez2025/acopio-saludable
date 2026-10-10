@@ -12,7 +12,7 @@ const x = (t: string) => t.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;
 export async function GET() {
   const cfg = await leerConfig();
   const base = urlSitio();
-  const filas = await prisma.product.findMany({ where: { AND: [wherePublicado(cfg.margenMinimoPct), { fotoUrl: { not: null } }] }, orderBy: { codigo: "asc" } });
+  const filas = await prisma.product.findMany({ where: { AND: [wherePublicado(cfg.margenMinimoPct), { fotoUrl: { not: null } }, { categoria: { not: "Congelados" } }] }, orderBy: { codigo: "asc" } });
   const items = filas.map((f) => {
     const p = aTienda(f, cfg);
     const foto = p.fotoUrl!.startsWith("/") ? `${base}${p.fotoUrl}` : p.fotoUrl!;

@@ -22,7 +22,7 @@ export const GONDOLAS: Record<string, { img?: string; intro: string; detalle: st
   },
   Congelados: {
     intro: "Congelados y refrigerados: hamburguesas y milanesas de legumbres, pre pizzas, empanadas, yogures y fruta congelada.",
-    detalle: "Por la cadena de frío, estos productos se entregan en la zona de reparto propio de Villa Carlos Paz y sur de Punilla. Consultanos antes de pedirlos por correo.",
+    detalle: "Por la cadena de frío, estos productos solo se entregan en la zona de reparto propio: Villa Carlos Paz y sur de Punilla. No se envían por correo.",
   },
   "Café, yerba e infusiones": {
     img: "/img/gondolas/infusiones.webp",

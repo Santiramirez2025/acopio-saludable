@@ -17,7 +17,7 @@ export * from "./pedido-calculos";
 
 // ---------- Carrito → renglones del pedido ----------
 
-export type Renglon = { codigo: string; producto: string; presentacion: string; cantidad: number; precioUnitario: number; costoUnitario: number; pesoG: number | null; comboSlug: string | null };
+export type Renglon = { codigo: string; producto: string; presentacion: string; cantidad: number; precioUnitario: number; costoUnitario: number; pesoG: number | null; comboSlug: string | null; congelado?: boolean };
 
 /** Abre productos y combos en renglones con precio y costo. Solo entra lo que hoy se vende. */
 export async function expandirCarrito(entrada: unknown, cfg: Config): Promise<Renglon[]> {
@@ -35,13 +35,13 @@ export async function expandirCarrito(entrada: unknown, cfg: Config): Promise<Re
     if (l.tipo === "producto") {
       const p = porCodigo.get(l.id);
       if (!p || !estaPublicado(p, cfg.margenMinimoPct)) continue;
-      out.push({ codigo: p.codigo, producto: p.producto, presentacion: p.presentacion, cantidad: l.cantidad, precioUnitario: precioVenta(Number(p.precioPublico), cfg.recargoPrecioPct), costoUnitario: Number(p.costo), pesoG: p.pesoBrutoG, comboSlug: null });
+      out.push({ codigo: p.codigo, producto: p.producto, presentacion: p.presentacion, cantidad: l.cantidad, precioUnitario: precioVenta(Number(p.precioPublico), cfg.recargoPrecioPct), costoUnitario: Number(p.costo), pesoG: p.pesoBrutoG, comboSlug: null, congelado: p.categoria === "Congelados" });
     } else {
       const c = porSlug.get(l.id);
       if (!c || !comboVigente(c) || !c.items.length || !c.items.every((i) => estaPublicado(i.product, cfg.margenMinimoPct))) continue;
       const factor = 1 - Number(c.descuentoPct) / 100;
       for (const i of c.items) {
-        out.push({ codigo: i.codigo, producto: i.product.producto, presentacion: i.product.presentacion, cantidad: i.cantidad * l.cantidad, precioUnitario: redondear2(precioVenta(Number(i.product.precioPublico), cfg.recargoPrecioPct) * factor), costoUnitario: Number(i.product.costo), pesoG: i.product.pesoBrutoG, comboSlug: c.slug });
+        out.push({ codigo: i.codigo, producto: i.product.producto, presentacion: i.product.presentacion, cantidad: i.cantidad * l.cantidad, precioUnitario: redondear2(precioVenta(Number(i.product.precioPublico), cfg.recargoPrecioPct) * factor), costoUnitario: Number(i.product.costo), pesoG: i.product.pesoBrutoG, comboSlug: c.slug, congelado: i.product.categoria === "Congelados" });
       }
     }
   }
@@ -59,10 +59,14 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
   const [cotizacion, renglones] = await Promise.all([cotizarCarrito(entrada), expandirCarrito(entrada, c)]);
   if (!renglones.length) throw new ErrorPedido("Tu carrito está vacío");
   const bultos = armarBultos(renglones.map((r) => ({ pesoG: r.pesoG ?? PESO_POR_DEFECTO_G, cantidad: r.cantidad })));
-  const opciones = await cotizarEnvio(
+  const todas = await cotizarEnvio(
     { cpOrigen: c.cpOrigen, entregaPropiaActiva: c.entregaPropiaActiva, cpEntregaPropia: c.cpEntregaPropia, plazoEntregaPropia: c.plazoEntregaPropia, envioGratisDesde: c.envioGratisDesde, tabla: c.tabla },
     { cpDestino: cp, provincia, bultos, subtotal: cotizacion.subtotal },
   );
+  // Los congelados necesitan cadena de frío: solo viajan en el reparto propio, nunca por correo.
+  const congelados = [...new Set(renglones.filter((r) => r.congelado).map((r) => r.producto))];
+  const opciones = congelados.length ? todas.filter((o) => o.modalidad === "propia") : todas;
+  if (!opciones.length) throw new ErrorPedido(`Los congelados solo se entregan en Villa Carlos Paz y el sur de Punilla. Para enviar a tu zona, quitá del carrito: ${congelados.join(", ")}.`);
   return {
     cotizacion,
     renglones,
