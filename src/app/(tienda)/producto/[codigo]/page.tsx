@@ -40,7 +40,7 @@ export default async function Producto({ params }: Props) {
   const cfg = await leerConfig();
   const p = aTienda(fila, cfg);
   const reventa = precioSugerido(p.precio, cfg.recargoSugeridoPct);
-  const porUnidad = precioPorUnidadBase(p.transferencia ?? p.precio, p.contenido, p.unidad);
+  const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
   const [combos, relacionados] = await Promise.all([
     combosTienda({ tipo: "COMBO", activo: true, items: { some: { codigo: p.codigo } } }),
     productosTienda({ where: { categoria: p.categoria, codigo: { not: p.codigo } }, take: 8 }),
@@ -85,18 +85,9 @@ export default async function Producto({ params }: Props) {
             )}
           </div>
           <div className="rounded-2xl bg-white p-4 shadow-ficha">
-            <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
-              {p.transferencia ? (
-                <div>
-                  <p className="font-display text-4xl font-extrabold leading-none tabular-nums">{pesos(p.transferencia)}</p>
-                  <p className="mt-1.5 text-sm font-semibold text-acopio-600">pagando por transferencia</p>
-                  <p className="text-sm tabular-nums text-stone-600">{pesos(p.precio)} con tarjeta o Mercado Pago</p>
-                </div>
-              ) : (
-                <p className="font-display text-4xl font-extrabold leading-none tabular-nums">{pesos(p.precio)}</p>
-              )}
-              {porUnidad && <p className="text-right text-sm tabular-nums text-stone-600">{pesos(porUnidad.valor)} {porUnidad.etiqueta}</p>}
-            </div>
+            <p className="font-display text-4xl font-extrabold leading-none tabular-nums">{pesos(p.precio)}</p>
+            {porUnidad && <p className="mt-1.5 text-xs tabular-nums text-stone-500">Equivale a {pesos(porUnidad.valor)} {porUnidad.etiqueta}</p>}
+            {p.transferencia && <p className="mt-2 text-sm font-semibold text-acopio-600">{cfg.descuentoTransferenciaPct}% menos si pagás por transferencia</p>}
             {reventa && (
               <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-acopio-100 px-3.5 py-2.5 text-sm">
                 <span>Venta sugerida <b className="tabular-nums">{pesos(reventa.sugerido)}</b></span>
