@@ -1,3 +1,4 @@
+import { Foto } from "@/components/Foto";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,6 +9,14 @@ import { GrillaProductos, Titulo } from "@/components/Tienda";
 import { PedidoEditable } from "@/components/PedidoEditable";
 
 type Props = { params: Promise<{ id: string }> };
+
+const PORTADAS: Record<string, string> = {
+  familias: "/img/portadas/familias.webp",
+  hoteleria: "/img/portadas/hoteleria.webp",
+  cafeterias: "/img/portadas/hoteleria.webp",
+  gimnasios: "/img/portadas/gimnasios.webp",
+  kioscos: "/img/portadas/gimnasios.webp",
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
@@ -31,6 +40,7 @@ export default async function Nicho({ params }: Props) {
       <Titulo sobre="Por negocio" bajada="Un punto de partida pensado para el rubro. Ajustá las cantidades a tu medida y cargalo al carrito de una.">
         {nicho.nombre}
       </Titulo>
+      {PORTADAS[nicho.id] && <Foto src={PORTADAS[nicho.id]} alt="" className="!mt-0 aspect-[16/10] w-full rounded-3xl sm:aspect-[21/8]" prioridad sizes="(max-width: 1024px) 100vw, 1100px" />}
       {pedidos.map((pedido) => {
         const items = pedido.items.filter((i) => vendibles.has(i.producto.codigo));
         return items.length ? (

@@ -1,3 +1,4 @@
+import { Foto } from "@/components/Foto";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
@@ -110,6 +111,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
   return (
     <div>
       <Titulo bajada={sinTacc ? AVISO_SIN_TACC : undefined}>{q ? `Resultados para "${q}"` : sinTacc ? (sp.categoria ? `${sp.categoria} sin TACC` : "Productos sin TACC") : sp.categoria || "Todo el catálogo"}</Titulo>
+      {sinTacc && !q && pagina === 1 && <Foto src="/img/portadas/sin-tacc.webp" alt="" className="mb-4 aspect-[16/9] w-full rounded-3xl sm:aspect-[21/7]" prioridad sizes="(max-width: 1024px) 100vw, 1100px" />}
       <nav className="riel mb-3 md:mx-0 md:flex-wrap md:px-0" aria-label="Góndolas">
         <Link href="/sin-tacc" aria-current={sinTacc ? "page" : undefined} className={`chip min-h-[48px] shrink-0 snap-start whitespace-nowrap px-4 text-sm ${sinTacc ? "bg-acopio-900 text-white" : "bg-acopio-100 text-acopio-900 ring-1 ring-acopio-600"}`}>Sin TACC</Link>
         <Link href="/catalogo" aria-current={!sp.categoria && !sinTacc ? "page" : undefined} className={`chip min-h-[48px] shrink-0 snap-start px-4 text-sm ${!sp.categoria && !sinTacc ? "bg-acopio-900 text-white" : "bg-white text-acopio-900 shadow-ficha"}`}>Todo</Link>
