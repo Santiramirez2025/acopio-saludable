@@ -5,7 +5,8 @@ import "./globals.css";
 import Script from "next/script";
 import { SITIO, urlSitio } from "@/lib/sitio";
 
-const GA = process.env.NEXT_PUBLIC_GA_ID;
+// El ID de medición es público. Solo se mide en producción.
+const GA = process.env.VERCEL_ENV === "production" ? process.env.NEXT_PUBLIC_GA_ID || "G-0QGL9DGDZY" : undefined;
 
 export const metadata: Metadata = {
   metadataBase: new URL(urlSitio()),
