@@ -37,7 +37,7 @@ export default async function Nicho({ params }: Props) {
   const vendibles = new Set(publicados.map((p) => p.codigo));
   return (
     <div className="space-y-12">
-      <Titulo sobre="Por negocio" bajada="Un punto de partida pensado para el rubro. Ajustá las cantidades a tu medida y cargalo al carrito de una.">
+      <Titulo sobre="Por negocio" bajada="Productos por volumen para tu negocio, con precios al día y entrega sin cargo en Villa Carlos Paz y sur de Punilla.">
         {nicho.nombre}
       </Titulo>
       {PORTADAS[nicho.id] && <Foto src={PORTADAS[nicho.id]} alt="" className="!mt-0 aspect-[16/10] w-full rounded-3xl sm:aspect-[21/8]" prioridad sizes="(max-width: 1024px) 100vw, 1100px" />}
@@ -45,7 +45,13 @@ export default async function Nicho({ params }: Props) {
         const items = pedido.items.filter((i) => vendibles.has(i.producto.codigo));
         return items.length ? (
           <section key={pedido.slug}>
-            <h2 className="mb-3 font-display text-2xl font-semibold text-acopio-900">{pedido.nombre}</h2>
+            <h2 className="font-display text-2xl font-semibold text-acopio-900">Pedido sugerido para {nicho.nombre.toLowerCase()}</h2>
+            <p className="mb-3 mt-1 max-w-2xl text-stone-600">Es una lista de ejemplo con lo que más se lleva en el rubro. No es un paquete cerrado: sirve para arrancar y lo ajustás a tu medida.</p>
+            <ol className="mb-4 grid gap-2 text-sm sm:grid-cols-3">
+              {["Revisá la lista y cambiá las cantidades.", "Cargala al carrito de un toque.", "Pagás online y te lo llevamos."].map((t, i) => (
+                <li key={t} className="flex items-center gap-3 rounded-xl bg-white px-3.5 py-3 shadow-ficha"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-acopio-900 text-xs font-bold text-white">{i + 1}</span>{t}</li>
+              ))}
+            </ol>
             <PedidoEditable items={items} compraMinima={cfg.compraMinima} />
           </section>
         ) : null;

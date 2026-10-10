@@ -11,6 +11,7 @@ import { CuentaRegresiva } from "@/components/CuentaRegresiva";
 import { Plazos } from "@/components/Plazos";
 import { urlSitio } from "@/lib/sitio";
 import { Medir } from "@/components/Medicion";
+import { BotonCompartir } from "@/components/Compartir";
 import { Galeria } from "@/components/Galeria";
 import { BotonAgregar } from "@/components/Carrito";
 import { AvisoSuplementos, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
@@ -111,6 +112,7 @@ export default async function Producto({ params }: Props) {
               </div>
             )}
             <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
+            <BotonCompartir etiqueta="Compartir" texto={`Mirá ${p.producto} ${p.presentacion} en Acopio Saludable:`} ruta={`/producto/${encodeURIComponent(p.codigo)}`} className="btn-sec mt-2 w-full" />
             <CuentaRegresiva corte={proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null} className="mt-3" />
             <p className="mt-3 text-xs text-stone-600">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras.</p>
             {p.categoria === "Congelados" && <p className="mt-3 rounded-xl bg-tierra-100 px-3.5 py-2.5 text-sm text-stone-700"><b>Producto congelado:</b> solo se entrega en Villa Carlos Paz y el sur de Punilla. No se envía por correo.</p>}

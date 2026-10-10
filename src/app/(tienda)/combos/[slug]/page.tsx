@@ -5,6 +5,7 @@ import { combosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
 import { urlSitio } from "@/lib/sitio";
 import { BotonAgregar } from "@/components/Carrito";
+import { BotonCompartir } from "@/components/Compartir";
 import { Foto } from "@/components/Foto";
 import { AvisoSuplementos, Titulo } from "@/components/Tienda";
 
@@ -64,6 +65,7 @@ export default async function ComboPagina({ params }: Props) {
           <p className="text-3xl font-semibold tabular-nums">{pesos(c.precio)}</p>
           {c.ahorro > 0 && <p className="text-sm text-acopio-700">Ahorrás {pesos(c.ahorro)} ({c.descuentoPct}%)</p>}
           <BotonAgregar tipo="combo" id={c.slug} etiqueta="Agregar combo" />
+          <BotonCompartir etiqueta="Compartir combo" texto={`Mirá el combo ${c.nombre} de Acopio Saludable:`} ruta={`/combos/${c.slug}`} className="btn-sec w-full" />
           {c.items.some((i) => i.producto.esSuplemento) && <AvisoSuplementos />}
         </div>
       </div>
