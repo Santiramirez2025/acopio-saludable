@@ -3,14 +3,28 @@ import { Logo } from "@/components/Logo";
 import { ProveedorCarrito } from "@/components/Carrito";
 import { BarraInferior, Encabezado, MedidorPedido } from "@/components/Encabezado";
 import { NICHOS } from "@/lib/taxonomia";
-import { AVISO_SUPLEMENTOS, SITIO } from "@/lib/sitio";
+import { AVISO_SUPLEMENTOS, SITIO, urlSitio } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
+
+// Datos del negocio para buscadores: tienda online con base en Villa Carlos Paz, sin local a la calle.
+const NEGOCIO = {
+  "@context": "https://schema.org",
+  "@type": "OnlineStore",
+  name: SITIO.nombre,
+  url: urlSitio(),
+  logo: `${urlSitio()}/marca/acopio-isotipo.svg`,
+  image: `${urlSitio()}/img/portadas/hero.webp`,
+  description: SITIO.descripcion,
+  address: { "@type": "PostalAddress", addressLocality: "Villa Carlos Paz", addressRegion: "Córdoba", addressCountry: "AR" },
+  areaServed: [{ "@type": "City", name: "Villa Carlos Paz" }, { "@type": "AdministrativeArea", name: "Valle de Punilla" }, { "@type": "Country", name: "Argentina" }],
+};
 
 export default function TiendaLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProveedorCarrito>
       <div className="flex min-h-screen flex-col overflow-x-clip">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(NEGOCIO).replace(/</g, "\\u003c") }} />
         <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-sol focus:px-4 focus:py-3 focus:font-bold focus:text-acopio-900">Saltar al contenido</a>
         <Encabezado />
         <main id="contenido" className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 pb-40 pt-5 md:pb-24 md:pt-8">{children}</main>
