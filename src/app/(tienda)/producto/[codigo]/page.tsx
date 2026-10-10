@@ -38,6 +38,9 @@ export default async function Producto({ params }: Props) {
   const fila = await cargar((await params).codigo);
   if (!fila) notFound();
   const cfg = await leerConfig();
+  // Con imagen propia no se muestra la foto del proveedor.
+  const propias = fila.fotos.filter((x) => x.startsWith("/img/"));
+  if (propias.length) fila.fotos = propias;
   const p = aTienda(fila, cfg);
   const reventa = precioSugerido(p.precio, cfg.recargoSugeridoPct);
   const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
