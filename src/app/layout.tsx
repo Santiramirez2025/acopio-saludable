@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import "@fontsource-variable/bricolage-grotesque/wght.css";
 import "@fontsource-variable/figtree/wght.css";
 import "./globals.css";
+import Script from "next/script";
 import { SITIO, urlSitio } from "@/lib/sitio";
+
+const GA = process.env.NEXT_PUBLIC_GA_ID;
 
 export const metadata: Metadata = {
   metadataBase: new URL(urlSitio()),
@@ -22,7 +25,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://s3-sa-east-1.amazonaws.com" />
       </head>
-      <body className="min-h-screen bg-acopio-50 text-acopio-900 antialiased">{children}</body>
+      <body className="min-h-screen bg-acopio-50 text-acopio-900 antialiased">{children}
+        {GA && (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA}`} strategy="afterInteractive" />
+            <Script id="ga" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA}');`}</Script>
+          </>
+        )}
+      </body>
     </html>
   );
 }

@@ -4,6 +4,7 @@ import { leerConfig } from "@/lib/config";
 import { wherePublicado } from "@/lib/filtros-producto";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { combosTienda } from "@/lib/tienda";
+import { LOCALIDADES } from "@/lib/localidades";
 import { urlSitio } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...["", "/catalogo", "/sin-tacc", "/nichos", "/objetivos", "/combos", "/armador", "/dietetica-villa-carlos-paz"].map((r) => ({ url: `${base}${r}` })),
     ...categorias.filter((c) => c.categoria !== "Sin categoría").map((c) => ({ url: `${base}/catalogo?categoria=${encodeURIComponent(c.categoria)}` })),
+    ...LOCALIDADES.map((l) => ({ url: `${base}/dietetica/${l.slug}` })),
     ...NICHOS.map((n) => ({ url: `${base}/nichos/${n.id}` })),
     ...OBJETIVOS.map((o) => ({ url: `${base}/objetivos/${o.id}` })),
     ...combos.filter((c) => c.disponible).map((c) => ({ url: `${base}/combos/${c.slug}` })),

@@ -38,6 +38,7 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       {sp.nuevo && <VaciarCarrito />}
+      {sp.nuevo && <script dangerouslySetInnerHTML={{ __html: `window.dataLayer=window.dataLayer||[];(function(){window.dataLayer.push(arguments);})("event","purchase",${JSON.stringify({ transaction_id: numero, value: Number(pedido.total), currency: "ARS" })});` }} />}
       <Titulo sobre={`Pedido ${numero}`}>{pendiente ? "Recibimos tu pedido" : pedido.estado === "CANCELADO" ? "Pedido cancelado" : "¡Gracias por tu compra!"}</Titulo>
       <p className="-mt-3 text-stone-600">
         Estado: <span className="font-semibold text-acopio-700">{nombreEstado(pedido.estado)}</span>
