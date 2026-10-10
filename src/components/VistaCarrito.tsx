@@ -31,7 +31,7 @@ export function VistaCarrito() {
             <li key={`${l.tipo}:${l.id}`} className="flex items-center gap-3 p-3">
               <Foto src={l.fotoUrl} alt="" etiqueta=" " className="h-16 w-16 shrink-0 rounded-md" />
               <div className="min-w-0 flex-1">
-                <Link href={l.href} className="block truncate text-sm font-medium hover:underline">{l.nombre}</Link>
+                <Link href={l.href} className="line-clamp-2 text-sm leading-snug font-medium hover:underline">{l.nombre}</Link>
                 <p className="truncate text-xs text-stone-600">{l.detalle}</p>
                 {l.disponible ? (
                   <p className="text-xs tabular-nums text-stone-600">{pesosCliente(l.precioUnitario)} c/u</p>
@@ -60,10 +60,10 @@ export function VistaCarrito() {
           <span className={`text-2xl font-semibold tabular-nums ${cotizando ? "opacity-50" : ""}`}>{pesosCliente(subtotal)}</span>
         </div>
         {conTransferencia !== null && (
-          <p className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-stone-600">Pagando por transferencia</span>
-            <span className="text-right font-semibold tabular-nums text-acopio-600">{pesosCliente(conTransferencia)}<span className="block text-xs font-medium">ahorrás {pesosCliente(subtotal - conTransferencia)}</span></span>
-          </p>
+          <div className="rounded-xl border border-acopio-600/30 bg-acopio-100/60 px-3.5 py-2.5 text-sm">
+            <p className="font-semibold text-acopio-700">Pagando por transferencia ahorrás {pesosCliente(subtotal - conTransferencia)}</p>
+            <p className="mt-0.5 text-stone-700">Te queda en <b className="tabular-nums">{pesosCliente(conTransferencia)}</b>. Elegís cómo pagar en el paso siguiente: transferencia, o tarjeta por Mercado Pago al precio de lista.</p>
+          </div>
         )}
         {gananciaReventa > 0 && (
           <div className="rounded-xl bg-acopio-100 px-3.5 py-2.5 text-sm">
