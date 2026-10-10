@@ -3,10 +3,13 @@ import "@fontsource-variable/bricolage-grotesque/wght.css";
 import "@fontsource-variable/figtree/wght.css";
 import "./globals.css";
 import Script from "next/script";
+import { PaginaVista } from "@/components/Medicion";
 import { SITIO, urlSitio } from "@/lib/sitio";
 
 // El ID de medición es público. Solo se mide en producción.
 const GA = process.env.VERCEL_ENV === "production" ? process.env.NEXT_PUBLIC_GA_ID || "G-0QGL9DGDZY" : undefined;
+const PIXEL = process.env.VERCEL_ENV === "production" ? process.env.NEXT_PUBLIC_META_PIXEL_ID : undefined;
+const VERIF_META = process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION;
 
 export const metadata: Metadata = {
   metadataBase: new URL(urlSitio()),
@@ -15,6 +18,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: SITIO.nombre, statusBarStyle: "default" },
   openGraph: { siteName: SITIO.nombre, locale: "es_AR", type: "website", images: [{ url: "/og.jpg", width: 1200, height: 630, alt: SITIO.nombre }] },
   twitter: { card: "summary_large_image" },
+  other: VERIF_META ? { "facebook-domain-verification": VERIF_META } : undefined,
   robots: { index: true, follow: true, googleBot: { "max-image-preview": "large", "max-snippet": -1 } },
 };
 
@@ -33,6 +37,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Script id="ga" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA}');`}</Script>
           </>
         )}
+        {PIXEL && (
+          <Script id="meta-pixel" strategy="afterInteractive">{`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${PIXEL}');fbq('track','PageView');`}</Script>
+        )}
+        <PaginaVista />
       </body>
     </html>
   );

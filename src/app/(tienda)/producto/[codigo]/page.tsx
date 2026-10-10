@@ -10,6 +10,7 @@ import { proximoCorte } from "@/lib/corte";
 import { CuentaRegresiva } from "@/components/CuentaRegresiva";
 import { Plazos } from "@/components/Plazos";
 import { urlSitio } from "@/lib/sitio";
+import { Medir } from "@/components/Medicion";
 import { Galeria } from "@/components/Galeria";
 import { BotonAgregar } from "@/components/Carrito";
 import { AvisoSuplementos, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
@@ -79,6 +80,7 @@ export default async function Producto({ params }: Props) {
   return (
     <div className="space-y-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, migas]).replace(/</g, "\\u003c") }} />
+      <Medir evento="ver_producto" ids={[p.codigo]} valor={p.precio} />
       <nav className="!-mt-3 -mb-3 flex flex-wrap items-center text-sm text-stone-600" aria-label="Ubicación">
         <Link href="/catalogo" className="flex min-h-[48px] items-center underline underline-offset-4">Catálogo</Link>
         <span className="px-1.5">/</span>
