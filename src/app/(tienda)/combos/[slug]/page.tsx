@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { combosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
+import { urlSitio } from "@/lib/sitio";
 import { BotonAgregar } from "@/components/Carrito";
 import { Foto } from "@/components/Foto";
 import { AvisoSuplementos, Titulo } from "@/components/Tienda";
@@ -25,8 +26,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ComboPagina({ params }: Props) {
   const c = await cargar((await params).slug);
   if (!c) notFound();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: `Combo ${c.nombre}`,
+    sku: `combo-${c.slug}`,
+    image: c.fotoUrl ? `${urlSitio()}${c.fotoUrl}` : undefined,
+    description: c.items.map((i) => `${i.cantidad} × ${i.producto.producto}`).join(", "),
+    offers: { "@type": "Offer", price: c.precio.toFixed(2), priceCurrency: "ARS", availability: "https://schema.org/InStock", url: `${urlSitio()}/combos/${c.slug}` },
+  };
   return (
     <div className="space-y-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Link href="/combos" className="-my-3 inline-flex min-h-[48px] items-center text-sm text-stone-600 underline underline-offset-4">← Combos</Link>
       <Titulo sobre="Combo">{c.nombre}</Titulo>
       {c.fotoUrl && (

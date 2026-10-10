@@ -34,6 +34,7 @@ export default function TiendaLayout({ children }: { children: React.ReactNode }
               <p className="text-white"><Logo invertido conBajada /></p>
               <p className="mt-1">{SITIO.base}. Envíos a todo el país.</p>
               <Link href="/sin-tacc" className="flex min-h-[48px] items-center font-semibold text-white underline underline-offset-4">Productos sin TACC</Link>
+              <Link href="/dietetica-villa-carlos-paz" className="flex min-h-[48px] items-center hover:text-white hover:underline">Dietética en Villa Carlos Paz</Link>
             </div>
             <div>
               <h2 className="mb-1 font-semibold text-white">Comprá por negocio</h2>

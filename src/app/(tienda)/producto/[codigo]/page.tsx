@@ -27,10 +27,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!p) return { title: "Producto no disponible" };
   const titulo = `${p.producto} ${p.presentacion}`;
   return {
-    title: titulo,
-    description: `${titulo} de ${p.marca}. Comprá por volumen en Acopio Saludable, con envíos a todo el país.`,
+    title: `${titulo}: precio y envío`,
+    description: `${titulo} de ${p.marca}, en ${p.categoria.toLowerCase()}. Precio actualizado, entrega sin cargo en Villa Carlos Paz y envíos a todo el país.`.slice(0, 158),
     alternates: { canonical: `/producto/${encodeURIComponent(p.codigo)}` },
-    openGraph: { title: titulo, images: p.fotoUrl ? [p.fotoUrl] : undefined },
+    openGraph: { title: titulo, url: `/producto/${encodeURIComponent(p.codigo)}`, images: p.fotoUrl ? [p.fotoUrl] : undefined },
   };
 }
 
@@ -58,13 +58,24 @@ export default async function Producto({ params }: Props) {
       price: p.precio.toFixed(2),
       priceCurrency: "ARS",
       availability: "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+      seller: { "@type": "Organization", name: "Acopio Saludable" },
       url: `${urlSitio()}/producto/${encodeURIComponent(p.codigo)}`,
     },
+  };
+  const migas = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Catálogo", item: `${urlSitio()}/catalogo` },
+      { "@type": "ListItem", position: 2, name: p.categoria, item: `${urlSitio()}/catalogo?categoria=${encodeURIComponent(p.categoria)}` },
+      { "@type": "ListItem", position: 3, name: p.producto },
+    ],
   };
 
   return (
     <div className="space-y-12">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, migas]).replace(/</g, "\\u003c") }} />
       <nav className="!-mt-3 -mb-3 flex flex-wrap items-center text-sm text-stone-600" aria-label="Ubicación">
         <Link href="/catalogo" className="flex min-h-[48px] items-center underline underline-offset-4">Catálogo</Link>
         <span className="px-1.5">/</span>

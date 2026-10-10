@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [{ source: "/sin-tacc", destination: "/catalogo?sintacc=1" }];
   },
+  // La dirección vieja de Vercel lleva al dominio propio (menos /api, que recibe avisos de pago).
+  async redirects() {
+    return [{ source: "/:path((?!api/).*)", has: [{ type: "host", value: "acopio-saludable.vercel.app" }], destination: "https://www.acopiosaludable.com/:path", permanent: true }];
+  },
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
 };
 
