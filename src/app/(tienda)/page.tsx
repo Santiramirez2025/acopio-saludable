@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
@@ -9,6 +10,16 @@ import { pesos } from "@/lib/precios";
 import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
 import { RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
+
+// Portadas propias de las góndolas; las demás usan la foto de un producto.
+const GONDOLAS: Record<string, string> = {
+  "Cereales y granolas": "/img/gondolas/cereales.webp",
+  Especias: "/img/gondolas/especias.webp",
+  "Harinas y Féculas": "/img/gondolas/harinas.webp",
+  "Café, yerba e infusiones": "/img/gondolas/infusiones.webp",
+  Legumbres: "/img/gondolas/legumbres.webp",
+  "Semillas y granos": "/img/gondolas/semillas.webp",
+};
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -29,7 +40,6 @@ export default async function Home() {
   const disponibles = combos.filter((c) => c.disponible);
   const portada = new Map(portadas.map((p) => [p.categoria, p.fotoUrl]));
   const categorias = conteos.filter((c) => c.categoria !== "Sin categoría");
-  const vitrina = ganchos.filter((g) => g.fotoUrl).slice(0, 3);
   const pasos = [
     ["Elegí", "Por rubro, por objetivo o buscando lo que necesitás."],
     [`Llegá a ${pesos(cfg.compraMinima)}`, "Es la compra mínima. El medidor te va diciendo cuánto falta."],
@@ -38,7 +48,9 @@ export default async function Home() {
 
   return (
     <div className="space-y-9 md:space-y-12">
-      <section className="fondo-oscuro -mx-4 -mt-5 bg-acopio-900 px-4 pb-6 pt-4 text-white md:mx-0 md:mt-0 md:rounded-3xl md:px-10 md:py-12">
+      <section className="fondo-oscuro relative isolate -mx-4 -mt-5 overflow-hidden bg-acopio-900 px-4 pb-6 pt-4 text-white md:mx-0 md:mt-0 md:rounded-3xl md:px-10 md:py-12">
+        {/* En el celular la foto va de fondo, bien oscurecida para que el texto se lea. */}
+        <Image src="/img/portadas/hero.webp" alt="" fill priority sizes="100vw" className="-z-10 object-cover opacity-25 lg:hidden" />
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)]">
           <div className="min-w-0">
             <h1 className="text-balance font-display text-[clamp(30px,9vw,38px)] font-extrabold leading-none tracking-tight sm:text-6xl">
@@ -63,17 +75,9 @@ export default async function Home() {
               <Link href="/catalogo" className="inline-flex min-h-[48px] min-w-0 flex-1 items-center whitespace-nowrap justify-center rounded-full border border-white/30 px-5 text-sm font-semibold hover:bg-white/10 sm:flex-none">Ver catálogo</Link>
             </div>
           </div>
-          {vitrina.length === 3 && (
-            <div className="relative mx-auto hidden h-[340px] w-full max-w-md lg:block" aria-hidden="true">
-              {vitrina.map((p, i) => (
-                <div key={p.codigo} className={`absolute w-44 rounded-2xl bg-white p-2 text-acopio-900 shadow-dock ${["left-0 top-6 -rotate-6", "left-32 top-0 z-10 rotate-2", "right-0 top-24 rotate-6"][i]}`}>
-                  <Foto src={p.fotoUrl} alt="" className="aspect-square w-full rounded-xl" prioridad />
-                  <p className="mt-2 line-clamp-1 px-1 text-xs font-semibold">{p.producto}</p>
-                  <p className="px-1 pb-1 font-display text-lg font-bold tabular-nums">{pesos(p.precio)}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="relative hidden aspect-[4/3] w-full overflow-hidden rounded-3xl lg:block" aria-hidden="true">
+            <Image src="/img/portadas/hero.webp" alt="" fill priority sizes="480px" className="object-cover" />
+          </div>
         </div>
       </section>
 
@@ -127,7 +131,7 @@ export default async function Home() {
           <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 lg:grid-cols-5">
             {categorias.map((c) => (
               <Link key={c.categoria} href={`/catalogo?categoria=${encodeURIComponent(c.categoria)}`} className="group rounded-2xl bg-white p-2 shadow-ficha">
-                <Foto src={portada.get(c.categoria) ?? null} alt="" etiqueta=" " className="aspect-square w-full rounded-xl" />
+                <Foto src={GONDOLAS[c.categoria] ?? portada.get(c.categoria) ?? null} alt="" etiqueta=" " className="aspect-square w-full rounded-xl" />
                 <p className="mt-2 line-clamp-2 px-1 text-[13px] font-semibold leading-tight group-hover:underline">{c.categoria}</p>
                 <p className="px-1 pb-1 text-[11px] text-stone-600">{c._count} productos</p>
               </Link>
