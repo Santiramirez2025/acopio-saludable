@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { InstalarApp } from "@/components/InstalarApp";
 import { GONDOLAS } from "@/lib/gondolas";
 import Image from "next/image";
 import Link from "next/link";
@@ -118,6 +119,7 @@ export default async function Home() {
         </section>
       )}
 
+      <InstalarApp className="md:hidden" />
       {categorias.length > 0 && (
         <section>
           <TituloSeccion>Recorré por góndola</TituloSeccion>
