@@ -1,3 +1,4 @@
+import { Medir } from "@/components/Medicion";
 import type { Metadata } from "next";
 import { leerConfig } from "@/lib/config";
 import { mpConfigurado } from "@/lib/mercadopago";
@@ -12,6 +13,7 @@ export default async function CheckoutPagina() {
   return (
     <div>
       <Titulo sobre="Finalizar compra">Datos, envío y pago</Titulo>
+      <Medir evento="iniciar_compra" />
       <Checkout provincias={PROVINCIAS.map((p) => p.nombre)} mpDisponible={mpConfigurado()} descuentoTransferenciaPct={cfg.descuentoTransferenciaPct} />
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { medir } from "@/lib/medicion";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Cotizacion } from "@/lib/tienda";
 import type { LineaEntrada } from "@/lib/tienda-saneo";
@@ -67,6 +68,7 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
   }, [lineas, listo]);
 
   const agregar = useCallback((nuevas: LineaEntrada[]) => {
+    medir("agregar", { ids: nuevas.map((l) => l.id) });
     setLineas((prev) => {
       const out = prev.map((l) => ({ ...l }));
       for (const n of nuevas) {
