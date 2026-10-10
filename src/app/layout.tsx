@@ -6,10 +6,12 @@ import { SITIO, urlSitio } from "@/lib/sitio";
 
 export const metadata: Metadata = {
   metadataBase: new URL(urlSitio()),
-  title: { default: `${SITIO.nombre}: productos saludables por volumen`, template: `%s · ${SITIO.nombre}` },
+  title: { default: `${SITIO.nombre}: dietética online por volumen, envíos a todo el país`, template: `%s · ${SITIO.nombre}` },
   description: SITIO.descripcion,
   appleWebApp: { capable: true, title: SITIO.nombre, statusBarStyle: "default" },
-  openGraph: { siteName: SITIO.nombre, locale: "es_AR", type: "website" },
+  openGraph: { siteName: SITIO.nombre, locale: "es_AR", type: "website", images: [{ url: "/og.jpg", width: 1200, height: 630, alt: SITIO.nombre }] },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true, googleBot: { "max-image-preview": "large", "max-snippet": -1 } },
 };
 
 export const viewport = { themeColor: "#10251C", width: "device-width", initialScale: 1, viewportFit: "cover" as const };
