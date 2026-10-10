@@ -7,6 +7,7 @@ import { pesos } from "@/lib/precios";
 import { linkWhatsapp, nombreEstado, numeroPedido, procesarPagoMp } from "@/lib/pedidos";
 import { mpConfigurado, obtenerPago } from "@/lib/mercadopago";
 import { Titulo } from "@/components/Tienda";
+import { InstalarApp } from "@/components/InstalarApp";
 import { Medir } from "@/components/Medicion";
 import { VaciarCarrito } from "@/components/VaciarCarrito";
 
@@ -95,6 +96,7 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
         {pedido.envioPlazo && <p className="text-stone-600">{pedido.envioPlazo}</p>}
       </section>
       <Link href="/catalogo" className="text-sm text-acopio-700 underline">Seguir mirando el catálogo</Link>
+      <InstalarApp momento="compra" />
     </div>
   );
 }

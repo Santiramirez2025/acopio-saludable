@@ -45,9 +45,17 @@ export default function TiendaLayout({ children }: { children: React.ReactNode }
               </ul>
             </div>
             <div>
-              <h2 className="mb-1 font-semibold text-white">Importante</h2>
-              <p>{AVISO_SUPLEMENTOS}</p>
+              <h2 className="mb-1 font-semibold text-white">Ayuda</h2>
+              <ul className="grid grid-cols-2 gap-x-4">
+                {[["/envios", "Envíos"], ["/cambios-y-devoluciones", "Cambios y devoluciones"], ["/contacto", "Contacto"], ["/guias", "Guías"], ["/novedades", "Novedades"], ["/app", "Instalar la app"], ["/terminos", "Términos"], ["/privacidad", "Privacidad"]].map(([h, t]) => (
+                  <li key={h}><Link href={h} className="flex min-h-[48px] items-center hover:text-white hover:underline">{t}</Link></li>
+                ))}
+              </ul>
             </div>
+          </div>
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-white/10 px-4 py-4 text-xs">
+            <p>{AVISO_SUPLEMENTOS}</p>
+            <Link href="/cambios-y-devoluciones#arrepentimiento" className="flex min-h-[48px] items-center font-semibold text-white underline underline-offset-4">Botón de arrepentimiento</Link>
           </div>
         </footer>
         <MedidorPedido />
