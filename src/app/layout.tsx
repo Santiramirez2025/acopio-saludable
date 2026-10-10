@@ -8,8 +8,8 @@ import { SITIO, urlSitio } from "@/lib/sitio";
 
 // El ID de medición es público. Solo se mide en producción.
 const GA = process.env.VERCEL_ENV === "production" ? process.env.NEXT_PUBLIC_GA_ID || "G-0QGL9DGDZY" : undefined;
-const PIXEL = process.env.VERCEL_ENV === "production" ? process.env.NEXT_PUBLIC_META_PIXEL_ID : undefined;
-const VERIF_META = process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION;
+const PIXEL = process.env.VERCEL_ENV === "production" ? process.env.NEXT_PUBLIC_META_PIXEL_ID || "1493587689263820" : undefined;
+const VERIF_META = process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION || "nd002kap5du6siv0ttj6p8ra32f71d";
 
 export const metadata: Metadata = {
   metadataBase: new URL(urlSitio()),
