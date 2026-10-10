@@ -19,6 +19,9 @@ const GONDOLAS: Record<string, string> = {
   "Café, yerba e infusiones": "/img/gondolas/infusiones.webp",
   Legumbres: "/img/gondolas/legumbres.webp",
   "Semillas y granos": "/img/gondolas/semillas.webp",
+  "Frutos secos y mix": "/img/combos/alacena-de-frutos-secos.webp",
+  "Repostería": "/img/combos/reposteria-casera.webp",
+  Chocolates: "/img/productos/chocolate-colonial-70.webp",
 };
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
