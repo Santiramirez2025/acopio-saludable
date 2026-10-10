@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { GONDOLAS } from "@/lib/gondolas";
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -12,17 +13,6 @@ import { BotonCargarPedido } from "@/components/Carrito";
 import { RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 
 // Portadas propias de las góndolas; las demás usan la foto de un producto.
-const GONDOLAS: Record<string, string> = {
-  "Cereales y granolas": "/img/gondolas/cereales.webp",
-  Especias: "/img/gondolas/especias.webp",
-  "Harinas y Féculas": "/img/gondolas/harinas.webp",
-  "Café, yerba e infusiones": "/img/gondolas/infusiones.webp",
-  Legumbres: "/img/gondolas/legumbres.webp",
-  "Semillas y granos": "/img/gondolas/semillas.webp",
-  "Frutos secos y mix": "/img/combos/alacena-de-frutos-secos.webp",
-  "Repostería": "/img/combos/reposteria-casera.webp",
-  Chocolates: "/img/productos/chocolate-colonial-70.webp",
-};
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -134,7 +124,7 @@ export default async function Home() {
           <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 lg:grid-cols-5">
             {categorias.map((c) => (
               <Link key={c.categoria} href={`/catalogo?categoria=${encodeURIComponent(c.categoria)}`} className="group rounded-2xl bg-white p-2 shadow-ficha">
-                <Foto src={GONDOLAS[c.categoria] ?? portada.get(c.categoria) ?? null} alt="" etiqueta=" " className="aspect-square w-full rounded-xl" />
+                <Foto src={GONDOLAS[c.categoria]?.img ?? portada.get(c.categoria) ?? null} alt="" etiqueta=" " className="aspect-square w-full rounded-xl" />
                 <p className="mt-2 line-clamp-2 px-1 text-[13px] font-semibold leading-tight group-hover:underline">{c.categoria}</p>
                 <p className="px-1 pb-1 text-[11px] text-stone-600">{c._count} productos</p>
               </Link>

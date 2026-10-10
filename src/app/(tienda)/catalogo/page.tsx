@@ -1,5 +1,7 @@
 import { Foto } from "@/components/Foto";
 import type { Metadata } from "next";
+import { pesos } from "@/lib/precios";
+import { GONDOLAS } from "@/lib/gondolas";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -26,8 +28,8 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   if (q) return { title: `Resultados para "${q}"`, robots: { index: false, follow: true } };
   if (sp.categoria) {
     return {
-      title: `${sp.categoria} por volumen`,
-      description: `${sp.categoria}: comprá por volumen en Acopio Saludable, con envíos a todo el país.`,
+      title: `${sp.categoria} por kilo y por volumen: precios`,
+      description: (GONDOLAS[sp.categoria]?.intro ?? `${sp.categoria}: comprá por volumen en Acopio Saludable.`) + " Envíos a todo el país.",
       alternates: { canonical: `/catalogo?categoria=${encodeURIComponent(sp.categoria)}` },
       robots: filtros.length ? { index: false, follow: true } : undefined,
     };
@@ -66,6 +68,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
   const max = precio(sp.max);
   const sinTacc = sp.sintacc === "1";
   const base = wherePublicado(cfg.margenMinimoPct);
+  const filtrosSeo = ["marca", "formato", "nicho", "objetivo", "min", "max"].filter((k) => sp[k]).length;
 
   const where: Prisma.ProductWhereInput = {
     AND: [
@@ -91,6 +94,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
     distintos("marca"),
     distintos("formato"),
   ]);
+  const gondola = sp.categoria && !q && !sinTacc && filtrosSeo === 0 ? GONDOLAS[sp.categoria] : undefined;
   const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
   const enlace = (p: number) => {
     const u = new URLSearchParams();
@@ -110,7 +114,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
 
   return (
     <div>
-      <Titulo bajada={sinTacc ? AVISO_SIN_TACC : undefined}>{q ? `Resultados para "${q}"` : sinTacc ? (sp.categoria ? `${sp.categoria} sin TACC` : "Productos sin TACC") : sp.categoria || "Todo el catálogo"}</Titulo>
+      <Titulo bajada={sinTacc ? AVISO_SIN_TACC : gondola?.intro}>{q ? `Resultados para "${q}"` : sinTacc ? (sp.categoria ? `${sp.categoria} sin TACC` : "Productos sin TACC") : sp.categoria || "Todo el catálogo"}</Titulo>
       {sinTacc && !q && pagina === 1 && <Foto src="/img/portadas/sin-tacc.webp" alt="" className="mb-4 aspect-[16/9] w-full rounded-3xl sm:aspect-[21/7]" prioridad sizes="(max-width: 1024px) 100vw, 1100px" />}
       <nav className="riel mb-3 md:mx-0 md:flex-wrap md:px-0" aria-label="Góndolas">
         <Link href="/sin-tacc" aria-current={sinTacc ? "page" : undefined} className={`chip min-h-[48px] shrink-0 snap-start whitespace-nowrap px-4 text-sm ${sinTacc ? "bg-acopio-900 text-white" : "bg-acopio-100 text-acopio-900 ring-1 ring-acopio-600"}`}>Sin TACC</Link>
@@ -167,6 +171,13 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
             {pagina < paginas && <Link href={enlace(pagina + 1)} className="btn-sec">Siguiente</Link>}
           </div>
         </div>
+      )}
+      {gondola && pagina === 1 && (
+        <section className="mt-10 rounded-2xl bg-white p-5 shadow-ficha">
+          <h2 className="font-display text-xl font-bold">{sp.categoria} por volumen, con envío</h2>
+          <p className="mt-2 text-sm text-stone-700">{gondola.detalle}</p>
+          <p className="mt-2 text-sm text-stone-700">Entregamos sin cargo en Villa Carlos Paz y el sur de Punilla, y despachamos por correo al resto del país. Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando las góndolas que quieras.</p>
+        </section>
       )}
     </div>
   );
