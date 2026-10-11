@@ -16,7 +16,7 @@ async function token(): Promise<string> {
   if (tokenCache && tokenCache.vence > Date.now()) return tokenCache.token;
   const basic = Buffer.from(`${process.env.MICORREO_USER}:${process.env.MICORREO_PASSWORD}`).toString("base64");
   const r = await fetch(`${base()}/token`, { method: "POST", headers: { Authorization: `Basic ${basic}` }, signal: AbortSignal.timeout(6000) });
-  if (!r.ok) throw new Error(`MiCorreo token: HTTP ${r.status}`);
+  if (!r.ok) throw new Error(`MiCorreo token: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
   const datos = (await r.json()) as { token: string };
   tokenCache = { token: datos.token, vence: Date.now() + 50 * 60 * 1000 };
   return datos.token;
@@ -31,19 +31,29 @@ export const proveedorMiCorreo: ShippingProvider = {
     const porBulto = await Promise.all(
       p.bultos.map(async (b) => {
         const m = medidasEstimadas(b.pesoG);
-        const r = await fetch(`${base()}/rates`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${t}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customerId: process.env.MICORREO_CUSTOMER_ID,
-            postalCodeOrigin: p.cpOrigen,
-            postalCodeDestination: p.cpDestino,
-            dimensions: { weight: b.pesoG, height: m.alto, width: m.ancho, length: m.largo },
-          }),
-          signal: AbortSignal.timeout(8000),
-        });
-        if (!r.ok) throw new Error(`MiCorreo rates: HTTP ${r.status}`);
-        return ((await r.json()) as { rates?: Rate[] }).rates ?? [];
+        const medidas = { weight: b.pesoG, height: m.alto, width: m.ancho, length: m.largo };
+        // `dimensions` viaja como lista: así lo pide la API hoy. La documentación vieja lo manda
+        // como objeto, así que si rechaza la lista por formato reintentamos con el objeto antes de fallar.
+        const formas: unknown[] = [[medidas], medidas];
+        let ultimo = "";
+        for (const dimensions of formas) {
+          const r = await fetch(`${base()}/rates`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${t}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              customerId: process.env.MICORREO_CUSTOMER_ID,
+              postalCodeOrigin: p.cpOrigen,
+              postalCodeDestination: p.cpDestino,
+              dimensions,
+            }),
+            signal: AbortSignal.timeout(8000),
+          });
+          if (r.ok) return ((await r.json()) as { rates?: Rate[] }).rates ?? [];
+          // El cuerpo del error es lo único que dice qué está mal: va entero al diagnóstico del panel.
+          ultimo = `HTTP ${r.status} ${(await r.text()).slice(0, 300)}`;
+          if (r.status >= 500) break;
+        }
+        throw new Error(`MiCorreo rates: ${ultimo}`);
       }),
     );
     const salida: Tarifa[] = [];

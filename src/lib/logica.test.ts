@@ -198,6 +198,58 @@ test("envíos: entrega propia, envío gratis, más barata y respaldo si la API f
   assert.deepEqual((await cotizarEnvio(cfg, { cpDestino: "5500", provincia: "Mendoza", bultos, subtotal: 1 }, [viva])).map((o) => o.id), ["micorreo-sucursal"]);
 });
 
+test("envíos: si el correo no informa días, el plazo sale de la zona", async () => {
+  const cfg = { cpOrigen: "5152", entregaPropiaActiva: false, cpEntregaPropia: "", envioGratisDesde: null, tabla: TABLA_EJEMPLO };
+  const bultos = [{ pesoG: 2000, unidades: 1, excedido: false }];
+  const sinPlazo = { id: "micorreo" as const, configurado: () => true, cotizar: async () => [{ id: "micorreo-domicilio", proveedor: "micorreo" as const, modalidad: "domicilio" as const, nombre: "x", costo: 10, plazo: "Plazo a confirmar" }] };
+  // Tierra del Fuego es zona patagonia: 3 a 7 días hábiles.
+  const [tdf] = await cotizarEnvio(cfg, { cpDestino: "9410", provincia: "Tierra del Fuego", bultos, subtotal: 1 }, [sinPlazo]);
+  assert.match(tdf.plazo, /3 a 7 días hábiles de correo/);
+  assert.doesNotMatch(tdf.plazo, /confirmar/);
+  // Si el correo sí informa días, mandan los suyos, no los de la tabla.
+  const conPlazo = { ...sinPlazo, cotizar: async () => [{ ...(await sinPlazo.cotizar())[0], plazo: "1 a 2 días hábiles" }] };
+  const [rapido] = await cotizarEnvio(cfg, { cpDestino: "9410", provincia: "Tierra del Fuego", bultos, subtotal: 1 }, [conPlazo]);
+  assert.match(rapido.plazo, /1 a 2 días hábiles de correo/);
+  // Provincia desconocida: no inventamos una ventana.
+  const [raro] = await cotizarEnvio(cfg, { cpDestino: "9410", provincia: "Narnia", bultos, subtotal: 1 }, [sinPlazo]);
+  assert.match(raro.plazo, /a confirmar/);
+});
+
+import { proveedorMiCorreo } from "./envios/micorreo";
+
+test("micorreo: si rechaza la lista de medidas reintenta con el objeto, y el error llega entero", async () => {
+  const original = globalThis.fetch;
+  Object.assign(process.env, { MICORREO_USER: "u", MICORREO_PASSWORD: "p", MICORREO_CUSTOMER_ID: "42" });
+  const pedido = { cpOrigen: "5152", cpDestino: "1425", provincia: "Buenos Aires", bultos: [{ pesoG: 2000, unidades: 1, excedido: false }], valorDeclarado: 1000 };
+  const formas: string[] = [];
+  const simular = (responder: (esLista: boolean) => Response) => {
+    globalThis.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
+      if (String(url).endsWith("/token")) return new Response(JSON.stringify({ token: "jwt" }), { status: 200 });
+      const esLista = Array.isArray(JSON.parse(String(init?.body)).dimensions);
+      formas.push(esLista ? "lista" : "objeto");
+      return responder(esLista);
+    }) as typeof fetch;
+  };
+
+  simular((esLista) =>
+    esLista
+      ? new Response("formato invalido", { status: 400 })
+      : new Response(JSON.stringify({ rates: [{ deliveredType: "D", productName: "Paq.ar Clásico", price: 5000, deliveryTimeMin: "2", deliveryTimeMax: "5" }] }), { status: 200 }),
+  );
+  const tarifas = await proveedorMiCorreo.cotizar(pedido);
+  assert.deepEqual(formas, ["lista", "objeto"]);
+  assert.equal(tarifas[0].costo, 5000);
+  assert.equal(tarifas[0].plazo, "2 a 5 días hábiles");
+
+  // Si fallan las dos, el motivo real tiene que viajar en el error: es lo que lee el panel.
+  formas.length = 0;
+  simular(() => new Response("customerId inexistente", { status: 402 }));
+  await assert.rejects(proveedorMiCorreo.cotizar(pedido), /402.*customerId inexistente/);
+
+  globalThis.fetch = original;
+  for (const k of ["MICORREO_USER", "MICORREO_PASSWORD", "MICORREO_CUSTOMER_ID"]) delete process.env[k];
+});
+
 import { firmaValida } from "./mercadopago";
 import { createHmac } from "node:crypto";
 
