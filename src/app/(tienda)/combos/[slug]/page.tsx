@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { combosTienda } from "@/lib/tienda";
+import { leerConfig } from "@/lib/config";
 import { pesos } from "@/lib/precios";
 import { urlSitio } from "@/lib/sitio";
 import { BotonAgregar } from "@/components/Carrito";
 import { BotonCompartir } from "@/components/Compartir";
 import { Foto } from "@/components/Foto";
+import { Medir } from "@/components/Medicion";
 import { AvisoSuplementos, Titulo } from "@/components/Tienda";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -27,6 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ComboPagina({ params }: Props) {
   const c = await cargar((await params).slug);
   if (!c) notFound();
+  const cfg = await leerConfig();
+  const faltaParaMinimo = Math.max(0, cfg.compraMinima - c.precio);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -38,6 +42,7 @@ export default async function ComboPagina({ params }: Props) {
   };
   return (
     <div className="space-y-6">
+      <Medir evento="ver_producto" ids={[`combo-${c.slug}`]} valor={c.precio} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Link href="/combos" className="-my-3 inline-flex min-h-[48px] items-center text-sm text-stone-600 underline underline-offset-4">← Combos</Link>
       <Titulo sobre="Combo">{c.nombre}</Titulo>
@@ -65,6 +70,11 @@ export default async function ComboPagina({ params }: Props) {
           <p className="text-3xl font-semibold tabular-nums">{pesos(c.precio)}</p>
           {c.ahorro > 0 && <p className="text-sm text-acopio-700">Ahorrás {pesos(c.ahorro)} ({c.descuentoPct}%)</p>}
           <BotonAgregar tipo="combo" id={c.slug} etiqueta="Agregar combo" />
+          {faltaParaMinimo > 0 && (
+            <p className="text-xs text-stone-600">
+              La compra mínima es {pesos(cfg.compraMinima)}. Sumá {pesos(faltaParaMinimo)} más y ya podés comprar: <Link href="/catalogo" className="font-semibold text-acopio-700 underline underline-offset-2">elegí del catálogo</Link> o <Link href="/combos" className="font-semibold text-acopio-700 underline underline-offset-2">mirá otro combo</Link>.
+            </p>
+          )}
           <BotonCompartir etiqueta="Compartir combo" texto={`Mirá el combo ${c.nombre} de Acopio Saludable:`} ruta={`/combos/${c.slug}`} className="btn-sec w-full" />
           {c.items.some((i) => i.producto.esSuplemento) && <AvisoSuplementos />}
         </div>
