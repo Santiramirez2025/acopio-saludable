@@ -543,3 +543,23 @@ test("entrega propia con cargo: solo donde corresponde y sin pisar la gratuita",
   assert.equal(conGratis[0].precio, 0);
   assert.equal(conGratis[0].costo, 4000, "el costo real se conserva aunque el cliente no pague");
 });
+
+import { contarUnidades, estimarPesoPorUnidades } from "./clasificar";
+
+test("el peso se estima de cuántas unidades trae, sin inventar kilos", () => {
+  const g = (producto: string, presentacion: string) => estimarPesoPorUnidades({ producto, presentacion });
+  // Un frasco de 100 comprimidos pesa 140 g, no 7 kg: cobrar un envío de 7 kg por esto es perder la venta.
+  assert.equal(g("Modelife Acido Folico Caja", "x100comp Modelife"), 140);
+  assert.equal(g("Te Negro Ensobrado", "x25unid Tucangua"), 115);
+  assert.equal(g("Chocolate al 70% Amargo", "CAJA x 10 tabletas. El Colonial"), 910);
+  assert.equal(g("Alfajores Proteicos con Chocolate", "Caja x12unid Olympic"), 700);
+  assert.equal(g("Caramelo duro de miel", "x unidad"), 35);
+  // Sin saber cuántas trae, no se adivina.
+  assert.equal(g("Pan molde integral", "Aroma"), null);
+  // Sin saber de qué son, hay tope: nunca un bulto inventado de varios kilos.
+  assert.ok((g("Cosa rara", "Caja x 90 piezas") ?? 0) <= 1200);
+  assert.deepEqual(contarUnidades("x100comp Modelife"), { unidades: 100, tipo: "comp" });
+  assert.deepEqual(contarUnidades("Caja x25 sobres"), { unidades: 25, tipo: "sobres" });
+  assert.deepEqual(contarUnidades("x unidad"), { unidades: 1, tipo: "unidad" });
+  assert.equal(contarUnidades("500 G"), null);
+});
