@@ -88,6 +88,29 @@ export default async function Envios({ searchParams }: { searchParams: Promise<{
             <input className="campo" id="cpEntregaPropia" name="cpEntregaPropia" defaultValue={cfg.cpEntregaPropia} placeholder="5152, 5153" />
             <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" name="entregaPropiaActiva" defaultChecked={cfg.entregaPropiaActiva} /> Ofrecer entrega propia</label>
           </div>
+          <div className="sm:col-span-3">
+            <h3 className="mb-1 font-semibold">Entrega propia con cargo</h3>
+            <p className="mb-2 text-xs text-stone-600">Zona a la que llegás vos y cobrás. Los correos cobran lo mismo por 36 km que por 700, así que acá ganás vos. Dejá los códigos postales vacíos para apagarla.</p>
+            <div className="grid gap-3 sm:grid-cols-4">
+              <div className="sm:col-span-2">
+                <label className="etiqueta" htmlFor="propiaPagaCps">Códigos postales</label>
+                <input className="campo" id="propiaPagaCps" name="propiaPagaCps" defaultValue={t.propiaPaga?.cps ?? ""} placeholder="5000-5025" />
+              </div>
+              <div>
+                <label className="etiqueta" htmlFor="propiaPagaPrecio">Precio que cobrás</label>
+                <input className="campo" id="propiaPagaPrecio" name="propiaPagaPrecio" type="number" min="0" step="1" defaultValue={t.propiaPaga?.precio ?? 0} />
+              </div>
+              <div>
+                <label className="etiqueta" htmlFor="propiaPagaCosto">Lo que te cuesta el viaje</label>
+                <input className="campo" id="propiaPagaCosto" name="propiaPagaCosto" type="number" min="0" step="1" defaultValue={t.propiaPaga?.costo ?? 0} />
+                <p className="mt-1 text-xs text-stone-600">Nafta y tiempo. Solo para que el margen del panel sea real; el cliente no lo ve.</p>
+              </div>
+            </div>
+            <div className="mt-3 sm:w-1/2">
+              <label className="etiqueta" htmlFor="propiaPagaPlazo">Plazo de esta zona</label>
+              <input className="campo" id="propiaPagaPlazo" name="propiaPagaPlazo" defaultValue={t.propiaPaga?.plazo ?? ""} placeholder={cfg.plazoEntregaPropia} />
+            </div>
+          </div>
         </div>
 
         <div className="tarjeta space-y-3">

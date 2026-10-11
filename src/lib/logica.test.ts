@@ -472,7 +472,7 @@ test("el seguimiento lleva al rastreo del correo, o a ningún lado si no sabemos
 
 test("la tabla le pone el nombre del correo a la opción que ve el cliente", () => {
   const bultos = [{ pesoG: 5000, unidades: 1, excedido: false }];
-  const generica = cotizarConTabla(TABLA_EJEMPLO, "Mendoza", bultos).map((t) => t.nombre);
+  const generica = cotizarConTabla({ ...TABLA_EJEMPLO, correo: undefined }, "Mendoza", bultos).map((t) => t.nombre);
   assert.deepEqual(generica, ["Retiro en sucursal de correo", "Envío a domicilio"]);
   const andreani = cotizarConTabla({ ...TABLA_EJEMPLO, correo: "andreani" }, "Mendoza", bultos).map((t) => t.nombre);
   assert.deepEqual(andreani, ["Andreani: retiro en sucursal", "Andreani a domicilio"]);
@@ -499,7 +499,7 @@ test("con tarjeta el envío lleva adentro la comisión del pago", () => {
   assert.ok(envioQueSeCobra(35000, "MERCADOPAGO", 150) <= 35000 / 0.05 + 1);
 });
 
-import { MARGEN_FLACO_PCT, margenNeto } from "./pedido-calculos";
+import { MARGEN_FLACO_PCT } from "./pedido-calculos";
 
 test("un pedido que deja casi nada se marca, no solo el que da perdida", () => {
   // El AS-00003 real: cobró $14.939 de envío y Andreani cobró $23.569.
@@ -512,4 +512,34 @@ test("un pedido que deja casi nada se marca, no solo el que da perdida", () => {
   assert.equal(sano.alerta, "ok");
   const perdida = margenNeto({ subtotal: 60000, descuento: 0, total: 60000, costoProductos: 55000, costoEnvioReal: 30000, envioCobrado: 10000, comisionPago: 4800, costoPackaging: 1500 } as never);
   assert.equal(perdida.alerta, "perdida");
+});
+
+test("entrega propia con cargo: solo donde corresponde y sin pisar la gratuita", async () => {
+  const tabla = { ...TABLA_EJEMPLO, propiaPaga: { cps: "5000-5025", precio: 15000, costo: 4000, plazo: "24 a 48 hs hábiles" } };
+  const cfg = { cpOrigen: "5152", entregaPropiaActiva: true, cpEntregaPropia: "5152,5153", envioGratisDesde: null, tabla };
+  const bultos = [{ pesoG: 8000, unidades: 4, excedido: false }];
+  const pedir = (cp: string, provincia = "Córdoba") => cotizarEnvio(cfg, { cpDestino: cp, provincia, bultos, subtotal: 100000 }, []);
+
+  // Córdoba capital: aparece la paga, y es la más barata.
+  const cba = await pedir("5000");
+  const propia = cba.find((o) => o.id === "propia-paga")!;
+  assert.equal(propia.precio, 15000);
+  assert.equal(propia.costo, 4000, "el costo real viaja aparte del precio, para que el margen no mienta");
+  assert.ok(propia.masBarata, "llevarlo nosotros tiene que ser lo más barato: Andreani cobra el doble por ir a 36 km");
+
+  // Carlos Paz ya tiene entrega gratis: no se le cobra por algo que es sin cargo.
+  const cpaz = await pedir("5152");
+  assert.deepEqual(cpaz.filter((o) => o.modalidad === "propia").map((o) => [o.id, o.precio]), [["propia", 0]]);
+
+  // Fuera de la zona no se ofrece.
+  assert.equal((await pedir("1425", "Buenos Aires")).some((o) => o.id === "propia-paga"), false);
+
+  // Apagada si falta el código postal o el precio.
+  const sinZona = { ...cfg, tabla: leerTabla({ ...tabla, propiaPaga: { cps: "", precio: 15000 } }) };
+  assert.equal((await cotizarEnvio(sinZona, { cpDestino: "5000", provincia: "Córdoba", bultos, subtotal: 100000 }, [])).some((o) => o.id === "propia-paga"), false);
+
+  // Con envío gratis desde cierto monto, la más barata queda en cero y el resto paga la diferencia.
+  const conGratis = await cotizarEnvio({ ...cfg, envioGratisDesde: 50000 }, { cpDestino: "5000", provincia: "Córdoba", bultos, subtotal: 100000 }, []);
+  assert.equal(conGratis[0].precio, 0);
+  assert.equal(conGratis[0].costo, 4000, "el costo real se conserva aunque el cliente no pague");
 });

@@ -18,6 +18,12 @@ export type TablaEnvios = {
    * Vacío = correo genérico, sin link.
    */
   correo?: CorreoId;
+  /**
+   * Segunda zona de entrega propia, con precio. La primera (cpEntregaPropia) es sin cargo.
+   * Existe porque los correos cobran lo mismo por 36 km que por 700: donde llegamos nosotros,
+   * llevarlo sale una fracción de lo que cobra cualquiera de ellos.
+   */
+  propiaPaga?: { cps: string; precio: number; costo?: number; plazo?: string };
 };
 
 export const CORREOS = [
@@ -27,20 +33,33 @@ export const CORREOS = [
 export type CorreoId = (typeof CORREOS)[number]["id"];
 
 /**
- * Tabla de referencia. Armada a partir de tarifas publicadas de Correo Argentino (Clásico, octubre 2026):
- * a domicilio 1, 5 y 10 kg por zona tarifaria; a sucursal 1 kg. Los tramos de 15 a 25 kg y el resto de
- * sucursal están proyectados con la misma pendiente y proporción. Es una ESTIMACIÓN: el precio exacto solo
- * sale de la API del correo (MiCorreo / Andreani) o de las tarifas de tu contrato. Se edita en Panel → Envíos.
+ * Tabla de respaldo del código: las tarifas de Andreani (cuenta Emprendedores y PyMEs) desde
+ * Villa Carlos Paz, octubre 2026. Solo se usa si la tabla guardada en la configuración está
+ * rota o vacía, y por eso tiene que ser la real: un respaldo barato significa vender a pérdida.
+ *
+ * Andreani cobra tarifa plana nacional por peso (Córdoba capital sale igual que CABA), y la
+ * Patagonia 1,4535 veces eso. El seguro va aparte, en seguroPct, porque se calcula sobre el
+ * valor declarado y no sobre el peso. Los precios se revisan en Panel → Envíos.
  */
 export const TABLA_EJEMPLO: TablaEnvios = {
   tramosKg: [1, 5, 10, 15, 20, 25],
   zonas: {
-    cordoba: { sucursal: [6739, 11170, 14939, 18709, 22478, 26248], domicilio: [9648, 15957, 21342, 26727, 32112, 37497], plazo: "2 a 5 días hábiles" },
-    centro: { sucursal: [7415, 12695, 18050, 23406, 28761, 34117], domicilio: [10509, 17880, 25423, 32966, 40509, 48052], plazo: "2 a 5 días hábiles" },
-    norte: { sucursal: [7745, 14399, 22315, 30231, 38147, 46063], domicilio: [10586, 19724, 30568, 41412, 52256, 63100], plazo: "3 a 7 días hábiles" },
-    patagonia: { sucursal: [7745, 14399, 22315, 30231, 38147, 46063], domicilio: [10586, 19724, 30568, 41412, 52256, 63100], plazo: "3 a 7 días hábiles" },
+    cordoba: { sucursal: [9250, 23750, 34400, 43600, 69750, 69750], domicilio: [11400, 24050, 34750, 43900, 70700, 70700], plazo: "2 a 5 días hábiles" },
+    centro: { sucursal: [9250, 23750, 34400, 43600, 69750, 69750], domicilio: [11400, 24050, 34750, 43900, 70700, 70700], plazo: "2 a 5 días hábiles" },
+    norte: { sucursal: [9250, 23750, 34400, 43600, 69750, 69750], domicilio: [11400, 24050, 34750, 43900, 70700, 70700], plazo: "3 a 7 días hábiles" },
+    patagonia: { sucursal: [13450, 34500, 50000, 63350, 101350, 101350], domicilio: [16550, 34950, 50500, 63850, 102750, 102750], plazo: "3 a 7 días hábiles" },
   },
+  seguroPct: 1.21,
+  correo: "andreani",
 };
+
+/** Sin códigos postales o sin precio no hay zona paga: antes de ofrecerla tiene que estar bien cargada. */
+function leerPropiaPaga(p: TablaEnvios["propiaPaga"]): TablaEnvios["propiaPaga"] {
+  const precio = Number(p?.precio);
+  const costo = Number(p?.costo);
+  if (!p?.cps?.trim() || !Number.isFinite(precio) || precio < 0) return undefined;
+  return { cps: p.cps.trim(), precio, costo: Number.isFinite(costo) && costo >= 0 ? costo : 0, plazo: p.plazo?.trim() || undefined };
+}
 
 export function leerTabla(json: unknown): TablaEnvios {
   const t = json as TablaEnvios | null;
@@ -59,6 +78,7 @@ export function leerTabla(json: unknown): TablaEnvios {
     ...t,
     seguroPct: Number.isFinite(pct) && pct >= 0 && pct <= 100 ? pct : 0,
     correo: CORREOS.some((c) => c.id === t.correo) ? t.correo : undefined,
+    propiaPaga: leerPropiaPaga(t.propiaPaga),
   };
 }
 

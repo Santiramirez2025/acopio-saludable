@@ -404,6 +404,7 @@ export async function guardarEnvios(fd: FormData) {
         return [z.id, { sucursal: fila("sucursal"), domicilio: fila("domicilio"), plazo: String(fd.get(`${z.id}.plazo`) ?? "").trim().slice(0, 60) }];
       }),
     );
+    const propiaPagaCps = validarListaCp(String(fd.get("propiaPagaCps") ?? ""));
     await prisma.setting.update({
       where: { id: 1 },
       data: {
@@ -411,7 +412,15 @@ export async function guardarEnvios(fd: FormData) {
         entregaPropiaActiva: fd.get("entregaPropiaActiva") === "on",
         cpEntregaPropia: validarListaCp(String(fd.get("cpEntregaPropia") ?? "")),
         plazoEntregaPropia: String(fd.get("plazoEntregaPropia") ?? "").trim().slice(0, 60) || "24 a 48 hs hábiles",
-        tablaEnvios: { tramosKg, zonas, seguroPct: numero(fd, "seguroPct", { min: 0, max: 100 }), correo: String(fd.get("correo") ?? "") || undefined },
+        tablaEnvios: {
+          tramosKg,
+          zonas,
+          seguroPct: numero(fd, "seguroPct", { min: 0, max: 100 }),
+          correo: String(fd.get("correo") ?? "") || undefined,
+          propiaPaga: propiaPagaCps
+            ? { cps: propiaPagaCps, precio: numero(fd, "propiaPagaPrecio", { min: 0 }), costo: numero(fd, "propiaPagaCosto", { min: 0 }), plazo: String(fd.get("propiaPagaPlazo") ?? "").trim().slice(0, 60) || undefined }
+            : undefined,
+        },
         tablaEnviosRevisada: fd.get("tablaEnviosRevisada") === "on",
       },
     });
