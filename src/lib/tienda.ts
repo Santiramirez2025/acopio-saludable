@@ -4,7 +4,7 @@ import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
 import { proximoCorte } from "./corte";
-import { calcularCombo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
+import { calcularCombo, renglonCombo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
 import { wherePublicado, esSinTacc } from "./filtros-producto";
 
 export type ProductoTienda = {
@@ -142,6 +142,8 @@ export type LineaCotizada = {
   precioLista: number;
   subtotal: number;
   disponible: boolean;
+  /** Qué trae, para los combos: una línea por producto. Vacío en los productos sueltos. */
+  contenido: string[];
 };
 
 export type Cotizacion = {
@@ -185,6 +187,7 @@ export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
         ...l,
         nombre: p.producto,
         detalle: `${p.marca} · ${p.presentacion}`,
+        contenido: [],
         fotoUrl: p.fotoUrl,
         href: `/producto/${encodeURIComponent(p.codigo)}`,
         precioUnitario: precio,
@@ -200,6 +203,7 @@ export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
         ...l,
         nombre: c.nombre,
         detalle: `Combo · ${c.items.reduce((s, i) => s + i.cantidad, 0)} productos`,
+        contenido: c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)),
         fotoUrl: c.fotoUrl ?? c.items[0]?.producto.fotoUrl ?? null,
         href: `/combos/${c.slug}`,
         precioUnitario: c.precio,

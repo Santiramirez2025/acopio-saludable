@@ -28,11 +28,13 @@ export function VistaCarrito() {
         </div>
         <ul className="divide-y divide-tierra-100 rounded-xl border border-tierra-200 bg-white">
           {cotizacion.lineas.map((l) => (
-            <li key={`${l.tipo}:${l.id}`} className="flex items-center gap-3 p-3">
+            <li key={`${l.tipo}:${l.id}`} className="p-3">
+              <div className="flex items-center gap-3">
               <Foto src={l.fotoUrl} alt="" etiqueta=" " className="h-16 w-16 shrink-0 rounded-md" />
               <div className="min-w-0 flex-1">
                 <Link href={l.href} className="line-clamp-2 text-sm leading-snug font-medium hover:underline">{l.nombre}</Link>
-                <p className="truncate text-xs text-stone-600">{l.detalle}</p>
+                {l.contenido.length === 0 && <p className="truncate text-xs text-stone-600">{l.detalle}</p>}
+
                 {l.disponible ? (
                   <p className="text-xs tabular-nums text-stone-600">{pesosCliente(l.precioUnitario)} c/u</p>
                 ) : (
@@ -47,7 +49,13 @@ export function VistaCarrito() {
                 </div>
                 <span className="text-sm font-medium tabular-nums">{pesosCliente(l.subtotal)}</span>
                 <button type="button" className="text-xs text-stone-600 underline" onClick={() => fijar(l.tipo, l.id, 0)}>Quitar</button>
+                </div>
               </div>
+              {l.contenido.length > 0 && (
+                <p className="mt-2 rounded-lg bg-acopio-50 px-3 py-2 text-xs leading-snug text-stone-700">
+                  <b className="font-semibold text-acopio-900">Trae:</b> {l.contenido.join(" · ")}
+                </p>
+              )}
             </li>
           ))}
         </ul>
