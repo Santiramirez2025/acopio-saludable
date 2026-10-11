@@ -3,6 +3,8 @@ import { Logo } from "@/components/Logo";
 import { ProveedorCarrito } from "@/components/Carrito";
 import { BarraInferior, Encabezado, MedidorPedido } from "@/components/Encabezado";
 import { NICHOS } from "@/lib/taxonomia";
+import { leerConfig } from "@/lib/config";
+import { pesos } from "@/lib/precios";
 import { AVISO_SUPLEMENTOS, SITIO, urlSitio } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
@@ -20,12 +22,18 @@ const NEGOCIO = {
   areaServed: [{ "@type": "City", name: "Villa Carlos Paz" }, { "@type": "AdministrativeArea", name: "Valle de Punilla" }, { "@type": "Country", name: "Argentina" }],
 };
 
-export default function TiendaLayout({ children }: { children: React.ReactNode }) {
+export default async function TiendaLayout({ children }: { children: React.ReactNode }) {
+  const cfg = await leerConfig();
   return (
     <ProveedorCarrito>
       <div className="flex min-h-screen flex-col overflow-x-clip">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(NEGOCIO).replace(/</g, "\\u003c") }} />
         <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-sol focus:px-4 focus:py-3 focus:font-bold focus:text-acopio-900">Saltar al contenido</a>
+        {/* La compra mínima tiene que saberse antes de elegir, no al llegar al checkout. Va arriba de todo, en cada página. */}
+        <p className="bg-acopio-700 px-4 py-2 text-center text-[13px] leading-snug text-white">
+          Compra mínima <b className="font-bold text-sol">{pesos(cfg.compraMinima)}</b> por pedido
+          <span className="hidden sm:inline"> · {cfg.entregaPropiaActiva ? "Entrega sin cargo en Villa Carlos Paz y el sur de Punilla · " : ""}Envíos a todo el país</span>
+        </p>
         <Encabezado />
         <main id="contenido" className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 pb-40 pt-5 md:pb-24 md:pt-8">{children}</main>
         <footer className="fondo-oscuro bg-acopio-900 pb-28 text-white/80 md:pb-0">
