@@ -11,7 +11,7 @@ import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadSuelta } from "@/lib/precios";
 import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
-import { RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
+import { ListaCombo, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 
 // Portadas propias de las góndolas; las demás usan la foto de un producto.
 
@@ -121,8 +121,8 @@ export default async function Home() {
                     ))}
                   </div>
                   <h3 className="mt-3 font-display text-xl font-bold leading-tight"><Link href={`/nichos/${p.nicho}`} className="hover:underline">{p.nombre.replace(/^Pedido /, "")}</Link></h3>
-                  <p className="text-xs text-stone-600">{items.length} productos, {items.reduce((s, i) => s + i.cantidad, 0)} unidades</p>
-                  <p className="mt-2 font-display text-2xl font-bold tabular-nums">{pesos(total)}</p>
+                  <ListaCombo items={items} />
+                  <p className="mt-3 font-display text-2xl font-bold tabular-nums">{pesos(total)}</p>
                   <p className="mb-3 text-xs text-stone-600">{total >= cfg.compraMinima ? "Ya llega a la compra mínima" : `Te quedan ${pesos(cfg.compraMinima - total)} para completar el mínimo`}</p>
                   <div className="mt-auto flex gap-2">
                     <BotonCargarPedido etiqueta="Cargar pedido" className="btn-comprar flex-1" lineas={items.map((i) => ({ tipo: "producto" as const, id: i.producto.codigo, cantidad: i.cantidad }))} />

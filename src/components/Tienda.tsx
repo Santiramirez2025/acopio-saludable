@@ -52,6 +52,27 @@ export function RielProductos({ productos }: { productos: ProductoTienda[] }) {
   );
 }
 
+/**
+ * Qué trae un combo, entero y sin recortar.
+ * Donde aparece un combo el cliente tiene que ver de un vistazo todo lo que se lleva:
+ * una lista cortada en "…" obliga a entrar a la ficha para saber qué está comprando.
+ */
+export function ListaCombo({ items, oscuro = false }: { items: { producto: ProductoTienda; cantidad: number }[]; oscuro?: boolean }) {
+  const unidades = items.reduce((s, i) => s + i.cantidad, 0);
+  return (
+    <div className="mt-2">
+      <p className={`text-[11px] font-bold uppercase tracking-wide ${oscuro ? "text-sol" : "text-acopio-700"}`}>
+        Trae {items.length} productos{unidades !== items.length ? `, ${unidades} unidades` : ""}
+      </p>
+      <ul className={`mt-1 space-y-px text-xs leading-snug ${oscuro ? "text-white/85" : "text-stone-700"}`}>
+        {items.map(({ producto, cantidad }) => (
+          <li key={producto.codigo}>{renglonCombo(producto, cantidad)}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function TarjetaCombo({ c, className = "" }: { c: ComboTienda; className?: string }) {
   return (
     <article className={`fondo-oscuro flex flex-col rounded-2xl bg-acopio-900 p-3 text-white ${className}`}>
@@ -66,7 +87,7 @@ export function TarjetaCombo({ c, className = "" }: { c: ComboTienda; className?
           </div>
         )}
       <h3 className="mt-3 font-display text-xl font-bold leading-tight"><Link href={`/combos/${c.slug}`} className="estirado after:absolute after:inset-0 after:rounded-xl hover:underline">{c.nombre}</Link></h3>
-      <p className="mt-1 line-clamp-2 text-xs text-white/80">{c.items.map((i) => renglonCombo(i.producto, i.cantidad)).join(" · ")}</p>
+      <ListaCombo items={c.items} oscuro />
       </div>
       <div className="mt-auto flex flex-wrap items-baseline gap-2 pb-3 pt-3">
         <span className="font-display text-2xl font-bold tabular-nums">{pesos(c.precio)}</span>

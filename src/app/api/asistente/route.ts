@@ -3,7 +3,7 @@ import { leerConfig } from "@/lib/config";
 import { detectar, normalizar, palabrasClave } from "@/lib/asistente";
 import { combosTienda, productosTienda, type ProductoTienda } from "@/lib/tienda";
 import { linkWhatsapp } from "@/lib/pedidos";
-import { pesos } from "@/lib/precios";
+import { pesos, renglonCombo } from "@/lib/precios";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +38,8 @@ async function buscar(texto: string, soloSinTacc = false): Promise<Respuesta> {
     return { texto: `No encontré «${consulta}»${soloSinTacc ? " sin TACC" : ""} en el catálogo. Probá con otra palabra o mirá las góndolas.`, enlaces: [{ href: "/catalogo", texto: "Ver el catálogo" }, { href: "/combos", texto: "Ver combos" }] };
   }
   const fichas: Ficha[] = [
-    ...combos.map((c) => ({ href: `/combos/${c.slug}`, nombre: `Combo ${c.nombre}`, detalle: `${c.items.length} productos, ${c.descuentoPct}% de descuento`, precio: pesos(Math.round(c.precio)), foto: c.fotoUrl })),
+    // El detalle de un combo es todo lo que trae: saber qué se lleva no puede depender de entrar a la ficha.
+    ...combos.map((c) => ({ href: `/combos/${c.slug}`, nombre: `Combo ${c.nombre}`, detalle: `Trae: ${c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)).join(" · ")}`, precio: pesos(Math.round(c.precio)), foto: c.fotoUrl })),
     ...hallados.slice(0, 4 - combos.length).map((p) => ({ href: `/producto/${p.codigo}`, nombre: p.producto, detalle: [p.marca.startsWith("Sin marca") ? "" : p.marca, p.presentacion].filter(Boolean).join(" · "), precio: pesos(p.precio), foto: p.fotoUrl })),
   ];
   const total = hallados.length + combos.length;
