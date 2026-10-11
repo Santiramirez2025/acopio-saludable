@@ -6,6 +6,7 @@ import { leerConfig } from "@/lib/config";
 import { pesos } from "@/lib/precios";
 import { linkWhatsapp, nombreEstado, numeroPedido, procesarPagoMp } from "@/lib/pedidos";
 import { mpConfigurado, obtenerPago } from "@/lib/mercadopago";
+import { linkSeguimiento } from "@/lib/envios/seguimiento";
 import { Titulo } from "@/components/Tienda";
 import { InstalarApp } from "@/components/InstalarApp";
 import { Medir } from "@/components/Medicion";
@@ -35,6 +36,7 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
   const cfg = await leerConfig();
   const numero = numeroPedido(pedido.id);
   const pendiente = pedido.estado === "PENDIENTE_PAGO";
+  const rastreo = linkSeguimiento(cfg.tabla.correo, pedido.tracking);
   const wa = cfg.whatsapp ? linkWhatsapp(cfg.whatsapp, `Hola, hice el pedido ${numero} en Acopio Saludable por ${pesos(Number(pedido.total))}.${pedido.medioPago === "TRANSFERENCIA" && pendiente ? " Te envío el comprobante de la transferencia." : ""}`) : null;
 
   return (
@@ -44,7 +46,17 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
       <Titulo sobre={`Pedido ${numero}`}>{pendiente ? "Recibimos tu pedido" : pedido.estado === "CANCELADO" ? "Pedido cancelado" : "¡Gracias por tu compra!"}</Titulo>
       <p className="-mt-3 text-stone-600">
         Estado: <span className="font-semibold text-acopio-700">{nombreEstado(pedido.estado)}</span>
-        {pedido.tracking ? ` · Seguimiento: ${pedido.tracking}` : ""}
+        {pedido.tracking && (
+          <>
+            {" · Seguimiento: "}
+            {/* Con link el cliente ve dónde está su paquete de un toque; sin él tendría que copiar el número a mano. */}
+            {rastreo ? (
+              <a href={rastreo} target="_blank" rel="noopener noreferrer" className="font-semibold text-acopio-700 underline underline-offset-4">{pedido.tracking}</a>
+            ) : (
+              <span className="font-semibold text-acopio-700">{pedido.tracking}</span>
+            )}
+          </>
+        )}
       </p>
 
       {pendiente && pedido.medioPago === "TRANSFERENCIA" && (

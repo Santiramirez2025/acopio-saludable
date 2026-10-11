@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
 import { ESTADOS, linkWhatsapp, margenNeto, nombreEstado, numeroPedido } from "@/lib/pedidos";
 import { cambiarEstadoPedido } from "@/lib/acciones";
+import { leerConfig } from "@/lib/config";
+import { linkSeguimiento } from "@/lib/envios/seguimiento";
 
 export default async function PedidoAdmin({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string }> }) {
   const { id } = await params;
@@ -13,6 +15,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
   const numero = numeroPedido(pedido.id);
   const m = margenNeto(pedido);
   const sinPeso = await prisma.product.count({ where: { codigo: { in: pedido.items.map((i) => i.codigo) }, pesoBrutoG: null } });
+  const rastreo = linkSeguimiento((await leerConfig()).tabla.correo, pedido.tracking);
   const wa = linkWhatsapp(pedido.telefono, `Hola ${pedido.nombre}, te escribimos de Acopio Saludable por tu pedido ${numero}.`);
   const fila = (etiqueta: string, valor: string, clase = "") => (
     <div className={`flex justify-between gap-3 ${clase}`}><dt className="text-stone-600">{etiqueta}</dt><dd className="tabular-nums">{valor}</dd></div>
@@ -57,7 +60,12 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
             <p className="font-medium">{pedido.nombre}</p>
             <p>{pedido.email} · {pedido.telefono} {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="text-acopio-700 underline">WhatsApp</a>}</p>
             <p className="mt-1">{pedido.calle}, {pedido.ciudad}, {pedido.provincia} ({pedido.cp})</p>
-            <p className="text-stone-600">{pedido.envioNombre} · {pedido.bultos} {pedido.bultos === 1 ? "bulto" : "bultos"} · {(pedido.pesoTotalG / 1000).toFixed(1)} kg · cotizado por {pedido.envioOrigen}{pedido.tracking ? ` · seguimiento ${pedido.tracking}` : ""}</p>
+            <p className="text-stone-600">{pedido.envioNombre} · {pedido.bultos} {pedido.bultos === 1 ? "bulto" : "bultos"} · {(pedido.pesoTotalG / 1000).toFixed(1)} kg · cotizado por {pedido.envioOrigen}{pedido.tracking && (
+              <>
+                {" · seguimiento "}
+                {rastreo ? <a href={rastreo} target="_blank" rel="noopener noreferrer" className="underline">{pedido.tracking}</a> : pedido.tracking}
+              </>
+            )}</p>
             {pedido.notas && <p className="mt-1 rounded bg-stone-100 px-2 py-1">Nota del cliente: {pedido.notas}</p>}
           </div>
           <div className="tarjeta">
