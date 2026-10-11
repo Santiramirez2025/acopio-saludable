@@ -127,8 +127,8 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
       <form action="/catalogo" className="mb-5 rounded-2xl bg-white p-3 shadow-ficha">
         {sinTacc && <input type="hidden" name="sintacc" value="1" />}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {/* En el celular el buscador ya está arriba, siempre a la vista: acá se oculta para que los productos aparezcan antes. */}
-          <input name="q" defaultValue={q} placeholder="Buscar" aria-label="Buscar en el catálogo" className="campo col-span-2 hidden sm:block" />
+          {/* También en el celular: con el catálogo paginado, buscar acá es la salida rápida y no obliga a subir hasta el encabezado. */}
+          <input name="q" type="search" enterKeyHint="search" defaultValue={q} placeholder="Buscar en el catálogo" aria-label="Buscar en el catálogo" className="campo col-span-2 sm:col-span-2" />
           <select name="orden" defaultValue={orden} className="campo" aria-label="Ordenar por">
             {Object.entries(ORDENES).map(([id, o]) => (
               <option key={id} value={id}>{o.nombre}</option>

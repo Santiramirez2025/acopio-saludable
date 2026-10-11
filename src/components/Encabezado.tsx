@@ -35,8 +35,12 @@ export function Encabezado() {
         <Link href="/" className="flex min-h-[48px] items-center" aria-label="Acopio Saludable, inicio">
           <Logo invertido />
         </Link>
-        <form action="/catalogo" role="search" className="min-w-0 flex-1">
-          <input name="q" type="search" enterKeyHint="search" className="w-full rounded-full border-0 h-12 bg-white/15 px-4 text-base text-white placeholder:text-white/75 focus:bg-white focus:text-acopio-900 focus:outline-none focus:placeholder:text-stone-400" placeholder="Buscá nueces, avena, magnesio…" aria-label="Buscar productos" />
+        {/* La lupa no es decoración: sin ella el campo se lee como un cartel y la gente no busca. */}
+        <form action="/catalogo" role="search" className="relative min-w-0 flex-1">
+          <input name="q" type="search" enterKeyHint="search" className="peer w-full rounded-full border-0 h-12 bg-white/20 pl-11 pr-4 text-base text-white ring-1 ring-inset ring-white/25 placeholder:text-white/80 focus:bg-white focus:text-acopio-900 focus:outline-none focus:placeholder:text-stone-400" placeholder="Buscar" aria-label="Buscar productos" />
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/85 peer-focus:text-stone-500" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+          </svg>
         </form>
         <Asistente />
         <Link href="/carrito" className="hidden min-h-[48px] items-center gap-2 rounded-full bg-sol px-5 text-sm font-bold text-acopio-900 md:flex">
