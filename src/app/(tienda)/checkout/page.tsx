@@ -14,7 +14,7 @@ export default async function CheckoutPagina() {
     <div>
       <Titulo sobre="Finalizar compra">Datos, envío y pago</Titulo>
       <Medir evento="iniciar_compra" />
-      <Checkout provincias={PROVINCIAS.map((p) => p.nombre)} mpDisponible={mpConfigurado()} descuentoTransferenciaPct={cfg.descuentoTransferenciaPct} />
+      <Checkout provincias={PROVINCIAS.map((p) => p.nombre)} mpDisponible={mpConfigurado()} descuentoTransferenciaPct={cfg.descuentoTransferenciaPct} comisionPagoPct={cfg.comisionPagoPct} />
     </div>
   );
 }
