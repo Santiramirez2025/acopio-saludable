@@ -5,7 +5,7 @@ export function Plazos({ propia, plazoPropia, className = "" }: { propia: boolea
       {propia && (
         <li className="flex gap-2">
           <Icono d="M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 100-4 2 2 0 000 4zM17 19a2 2 0 100-4 2 2 0 000 4z" />
-          <span><b>Villa Carlos Paz y sur de Punilla</b> (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca): te lo llevamos en {plazoPropia}, sin cargo.</span>
+          <span><b>Villa Carlos Paz y sur de Punilla</b> (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca): te lo llevamos en {plazoPropia}, sin cargo. Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.</span>
         </li>
       )}
       <li className="flex gap-2">
