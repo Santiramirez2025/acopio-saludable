@@ -265,7 +265,17 @@ test("mercado pago: firma del aviso", () => {
   assert.equal(firmaValida(new Headers(), "123"), true);
 });
 
-import { linkWhatsapp, listaDeCompra, margenNeto, numeroPedido, validarCliente } from "./pedido-calculos";
+import { aItemDePedido, linkWhatsapp, listaDeCompra, margenNeto, numeroPedido, validarCliente } from "./pedido-calculos";
+import { readFileSync } from "node:fs";
+
+test("el renglón guardado tiene exactamente las columnas de OrderItem", () => {
+  // Pasó en producción: `congelado` viajaba a Prisma y tiraba el alta de todos los pedidos con un 500.
+  const modelo = /model OrderItem \{([\s\S]*?)\n\}/.exec(readFileSync("prisma/schema.prisma", "utf8"))![1];
+  const columnas = new Set(modelo.split("\n").map((l) => l.trim().split(/\s+/)[0]).filter(Boolean));
+  const guardado = aItemDePedido({ codigo: "1", producto: "Avena", presentacion: "1 kg", cantidad: 2, precioUnitario: 10, costoUnitario: 5, pesoG: 1000, comboSlug: null, congelado: true });
+  for (const campo of Object.keys(guardado)) assert.ok(columnas.has(campo), `OrderItem no tiene la columna "${campo}": el alta del pedido va a fallar`);
+  assert.deepEqual(Object.keys(guardado).filter((k) => k === "pesoG" || k === "congelado"), []);
+});
 
 test("pedidos: validación de datos del cliente", () => {
   const ok = { nombre: "Ana Pérez", email: "ANA@Ejemplo.com ", telefono: "3541 555555", calle: "San Martín 123", ciudad: "Villa Carlos Paz", provincia: "Córdoba", cp: "x5152abc", notas: "" };

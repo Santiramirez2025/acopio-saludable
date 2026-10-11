@@ -4,6 +4,27 @@ import type { EstadoPedido, Order, OrderItem } from "@prisma/client";
 import { redondear2 } from "./precios";
 import { normalizarCp, zonaDeProvincia } from "./envios/geo";
 
+/** Una línea del pedido ya resuelta: incluye datos que solo sirven para calcular (peso, congelado). */
+export type Renglon = { codigo: string; producto: string; presentacion: string; cantidad: number; precioUnitario: number; costoUnitario: number; pesoG: number | null; comboSlug: string | null; congelado?: boolean };
+
+/**
+ * El renglón, recortado a las columnas de OrderItem.
+ * Campo por campo y no con spread: el spread le cuela a Prisma los campos de cálculo sin que
+ * TypeScript lo vea, y Prisma rechaza la fila entera. Pasó con `congelado` y tiró el alta de
+ * TODOS los pedidos. Si agregás un campo a Renglón, acá no entra salvo que lo pongas a mano.
+ */
+export function aItemDePedido(r: Renglon) {
+  return {
+    codigo: r.codigo,
+    producto: r.producto,
+    presentacion: r.presentacion,
+    cantidad: r.cantidad,
+    precioUnitario: r.precioUnitario,
+    costoUnitario: r.costoUnitario,
+    comboSlug: r.comboSlug,
+  };
+}
+
 export const ESTADOS: { id: EstadoPedido; nombre: string }[] = [
   { id: "PENDIENTE_PAGO", nombre: "Pendiente de pago" },
   { id: "PAGADO", nombre: "Pagado" },
