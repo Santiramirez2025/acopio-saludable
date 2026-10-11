@@ -23,7 +23,7 @@ export type TablaEnvios = {
    * Existe porque los correos cobran lo mismo por 36 km que por 700: donde llegamos nosotros,
    * llevarlo sale una fracción de lo que cobra cualquiera de ellos.
    */
-  propiaPaga?: { cps: string; precio: number; costo?: number; plazo?: string };
+  propiaPaga?: { cps: string; precio: number; costo?: number; plazo?: string; nombre?: string };
 };
 
 export const CORREOS = [
@@ -58,7 +58,13 @@ function leerPropiaPaga(p: TablaEnvios["propiaPaga"]): TablaEnvios["propiaPaga"]
   const precio = Number(p?.precio);
   const costo = Number(p?.costo);
   if (!p?.cps?.trim() || !Number.isFinite(precio) || precio < 0) return undefined;
-  return { cps: p.cps.trim(), precio, costo: Number.isFinite(costo) && costo >= 0 ? costo : 0, plazo: p.plazo?.trim() || undefined };
+  return { cps: p.cps.trim(), precio, costo: Number.isFinite(costo) && costo >= 0 ? costo : 0, plazo: p.plazo?.trim() || undefined, nombre: p.nombre?.trim() || undefined };
+}
+
+/** La zona de entrega propia con cargo, lista para mostrar. null si no está configurada. */
+export function zonaPagaDe(tabla: TablaEnvios): { nombre: string; precio: number; plazo?: string } | null {
+  const z = tabla.propiaPaga;
+  return z ? { nombre: z.nombre || "Córdoba capital", precio: z.precio, plazo: z.plazo } : null;
 }
 
 export function leerTabla(json: unknown): TablaEnvios {

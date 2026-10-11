@@ -4,6 +4,7 @@ import { detectar, normalizar, palabrasClave } from "@/lib/asistente";
 import { combosTienda, productosTienda, type ProductoTienda } from "@/lib/tienda";
 import { linkWhatsapp } from "@/lib/pedidos";
 import { pesos, renglonCombo } from "@/lib/precios";
+import { zonaPagaDe } from "@/lib/envios/tabla";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
     ? { href: linkWhatsapp(cfg.whatsapp, "Hola, tengo una consulta sobre Acopio Saludable.") ?? "/contacto", texto: "Escribir por WhatsApp", externo: true }
     : { href: "/contacto", texto: "Ver datos de contacto" };
   const propia = cfg.entregaPropiaActiva;
+  const zonaPaga = propia ? zonaPagaDe(cfg.tabla) : null;
   const dto = cfg.descuentoTransferenciaPct;
 
   let r: Respuesta;
@@ -79,7 +81,7 @@ export async function POST(req: Request) {
     case "envio":
       r = {
         texto: [
-          propia ? `En Villa Carlos Paz y sur de Punilla (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca) te lo llevamos nosotros en ${cfg.plazoEntregaPropia}, sin cargo. Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.` : "",
+          propia ? `En Villa Carlos Paz y sur de Punilla (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca) te lo llevamos nosotros en ${cfg.plazoEntregaPropia}, sin cargo. Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.${zonaPaga ? ` A ${zonaPaga.nombre} también te lo llevamos nosotros, por ${pesos(zonaPaga.precio)}.` : ""}` : "",
           `${propia ? "Al resto del país" : "A todo el país"} enviamos por correo: despacho en 24 a 48 hs hábiles y de 2 a 7 días hábiles de correo según la zona. El costo lo ves en el carrito con tu código postal, antes de pagar.`,
           cfg.envioGratisDesde ? `Desde ${pesos(cfg.envioGratisDesde)} el envío es gratis.` : "",
         ].filter(Boolean).join("\n\n"),
