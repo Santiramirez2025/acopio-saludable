@@ -498,3 +498,18 @@ test("con tarjeta el envío lleva adentro la comisión del pago", () => {
   // Un porcentaje absurdo no puede hacer explotar el precio.
   assert.ok(envioQueSeCobra(35000, "MERCADOPAGO", 150) <= 35000 / 0.05 + 1);
 });
+
+import { MARGEN_FLACO_PCT, margenNeto } from "./pedido-calculos";
+
+test("un pedido que deja casi nada se marca, no solo el que da perdida", () => {
+  // El AS-00003 real: cobró $14.939 de envío y Andreani cobró $23.569.
+  const flaco = margenNeto({ subtotal: 61214.44, descuento: 0, total: 76153, costoProductos: 43546.86, costoEnvioReal: 23568.84, envioCobrado: 14939, comisionPago: 6084.66, costoPackaging: 1500 } as never);
+  assert.equal(flaco.alerta, "flaco");
+  assert.ok(flaco.neto > 0 && flaco.netoPct < MARGEN_FLACO_PCT, "positivo pero flaco");
+  assert.equal(flaco.subsidioEnvio, 8629.84);
+  // El mismo pedido con el envío bien cobrado.
+  const sano = margenNeto({ ...{ subtotal: 61214.44, descuento: 0, total: 85705, costoProductos: 43546.86, costoEnvioReal: 23568.84, comisionPago: 6847.84, costoPackaging: 1500 }, envioCobrado: 24490.69 } as never);
+  assert.equal(sano.alerta, "ok");
+  const perdida = margenNeto({ subtotal: 60000, descuento: 0, total: 60000, costoProductos: 55000, costoEnvioReal: 30000, envioCobrado: 10000, comisionPago: 4800, costoPackaging: 1500 } as never);
+  assert.equal(perdida.alerta, "perdida");
+});

@@ -42,7 +42,7 @@ export default async function Pedidos({ searchParams }: { searchParams: Promise<
                   <td className="px-3 py-2">{p.medioPago === "MERCADOPAGO" ? "Mercado Pago" : "Transferencia"}</td>
                   <td className="px-3 py-2">{p.envioNombre}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{pesos(Number(p.total))}</td>
-                  <td className={`px-3 py-2 text-right tabular-nums ${m.neto < 0 ? "font-semibold text-red-600" : ""}`}>{pesos(m.neto)} <span className="text-xs text-stone-600">({m.netoPct.toFixed(1)}%)</span></td>
+                  <td className={`px-3 py-2 text-right tabular-nums ${m.alerta === "perdida" ? "font-semibold text-red-600" : m.alerta === "flaco" ? "font-semibold text-amber-700" : ""}`}>{pesos(m.neto)} <span className="text-xs text-stone-600">({m.netoPct.toFixed(1)}%)</span></td>
                 </tr>
               );
             })}
