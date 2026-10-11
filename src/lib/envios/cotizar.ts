@@ -19,13 +19,15 @@ export type ConfigEnvio = {
 
 /** Reglas comerciales sobre las tarifas: envío gratis desde $X y marca de la más barata. */
 export function aplicarReglas(tarifas: Tarifa[], subtotal: number, envioGratisDesde: number | null): OpcionEnvio[] {
-  const pagas = tarifas.filter((t) => t.modalidad !== "propia");
-  const minimoPago = pagas.length ? Math.min(...pagas.map((t) => t.costo)) : 0;
+  // Lo que vale cada opción para el cliente: el precio de lista si lo tiene, si no lo que nos cuesta.
+  const lista = (t: Tarifa) => t.precioFijo ?? t.costo;
+  const pagas = tarifas.filter((t) => lista(t) > 0);
+  const minimoPago = pagas.length ? Math.min(...pagas.map(lista)) : 0;
   const gratis = envioGratisDesde !== null && subtotal >= envioGratisDesde;
   const opciones = tarifas.map((t) => ({
     ...t,
     // Con envío gratis, la opción paga más barata sale $0 y las demás pagan solo la diferencia.
-    precio: t.modalidad === "propia" ? 0 : gratis ? Math.round((t.costo - minimoPago) * 100) / 100 : t.costo,
+    precio: gratis && lista(t) > 0 ? Math.max(0, Math.round((lista(t) - minimoPago) * 100) / 100) : lista(t),
     masBarata: false,
   }));
   const minimo = Math.min(...opciones.map((o) => o.precio));
@@ -40,8 +42,23 @@ export async function cotizarEnvio(
   proveedores: ShippingProvider[] = [proveedorMiCorreo, proveedorAndreani],
 ): Promise<OpcionEnvio[]> {
   const tarifas: Tarifa[] = [];
-  if (cfg.entregaPropiaActiva && cpEnLista(pedido.cpDestino, cfg.cpEntregaPropia)) {
-    tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Entrega propia sin cargo", costo: 0, plazo: `Te lo llevamos en ${cfg.plazoEntregaPropia || "24 a 48 hs hábiles"}. Coordinamos el horario por WhatsApp.` });
+  const plazoPropia = cfg.plazoEntregaPropia || "24 a 48 hs hábiles";
+  const sinCargo = cfg.entregaPropiaActiva && cpEnLista(pedido.cpDestino, cfg.cpEntregaPropia);
+  if (sinCargo) {
+    tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Entrega propia sin cargo", costo: 0, plazo: `Te lo llevamos en ${plazoPropia}. Coordinamos el horario por WhatsApp.` });
+  }
+  // La zona paga solo si no entró en la gratuita: nadie tiene que pagar por algo que le damos sin cargo.
+  const paga = cfg.tabla.propiaPaga;
+  if (cfg.entregaPropiaActiva && !sinCargo && paga && cpEnLista(pedido.cpDestino, paga.cps)) {
+    tarifas.push({
+      id: "propia-paga",
+      proveedor: "propia",
+      modalidad: "propia",
+      nombre: "Te lo llevamos nosotros",
+      costo: paga.costo ?? 0,
+      precioFijo: paga.precio,
+      plazo: `Te lo llevamos en ${paga.plazo || plazoPropia}. Coordinamos el horario por WhatsApp.`,
+    });
   }
   const consulta = { cpOrigen: cfg.cpOrigen, cpDestino: pedido.cpDestino, provincia: pedido.provincia, bultos: pedido.bultos, valorDeclarado: pedido.subtotal };
   const deCorreos = (

@@ -14,7 +14,8 @@ export async function POST(req: Request) {
     const p = await prepararEnvio(cuerpo.lineas, String(cuerpo.cp ?? ""), String(cuerpo.provincia ?? ""));
     // Al cliente no le mandamos el costo real, solo lo que paga.
     return NextResponse.json({
-      opciones: p.opciones.map(({ costo: _costo, ...o }) => o),
+      // Ni el costo real ni el precio de lista interno salen al navegador.
+      opciones: p.opciones.map(({ costo: _costo, precioFijo: _fijo, ...o }) => o),
       pesoTotalKg: Math.round(p.pesoTotalG / 100) / 10,
       bultos: p.bultos.length,
       subtotal: p.cotizacion.subtotal,
