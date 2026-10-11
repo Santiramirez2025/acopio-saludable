@@ -43,6 +43,20 @@ export function precioPorUnidadBase(precio: number, contenido: number | null, un
   return { valor: redondear2((precio / contenido) * 1000), etiqueta: unidad === "ml" ? "por litro" : "por kilo" };
 }
 
+/** Medida legible de un envase: "500 g", "1,5 kg", "250 ml", "1 L". null si no se conoce. */
+export function medida(contenido: number | null, unidad: string | null): string | null {
+  if (!contenido || contenido <= 0 || !unidad) return null;
+  const liquido = unidad === "ml";
+  if (contenido >= 1000) return `${(contenido / 1000).toLocaleString("es-AR", { maximumFractionDigits: 2 })} ${liquido ? "L" : "kg"}`;
+  return `${contenido.toLocaleString("es-AR", { maximumFractionDigits: 0 })} ${liquido ? "ml" : "g"}`;
+}
+
+/** "2 × Nuez Mariposa (500 g)": cómo se nombra un producto dentro de un combo. */
+export function renglonCombo(p: { producto: string; contenido: number | null; unidad: string | null }, cantidad: number): string {
+  const m = medida(p.contenido, p.unidad);
+  return `${cantidad > 1 ? `${cantidad} × ` : ""}${p.producto}${m ? ` (${m})` : ""}`;
+}
+
 export function pesos(n: number): string {
   // Sin decimales cuando el importe es redondo ($ 200.000), con dos cuando no ($ 8.983,92).
   return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });

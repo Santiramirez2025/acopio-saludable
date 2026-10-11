@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComboTienda, ProductoTienda } from "@/lib/tienda";
-import { pesos } from "@/lib/precios";
+import { pesos, renglonCombo } from "@/lib/precios";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
 import { Foto } from "./Foto";
 import { AgregarRapido, BotonAgregar } from "./Carrito";
@@ -61,7 +61,7 @@ export function TarjetaCombo({ c, className = "" }: { c: ComboTienda; className?
           </div>
         )}
       <h3 className="mt-3 font-display text-xl font-bold leading-tight"><Link href={`/combos/${c.slug}`} className="estirado after:absolute after:inset-0 after:rounded-xl hover:underline">{c.nombre}</Link></h3>
-      <p className="mt-1 line-clamp-2 text-xs text-white/80">{c.items.map((i) => `${i.cantidad > 1 ? `${i.cantidad} × ` : ""}${i.producto.producto}`).join(", ")}</p>
+      <p className="mt-1 line-clamp-2 text-xs text-white/80">{c.items.map((i) => renglonCombo(i.producto, i.cantidad)).join(" · ")}</p>
       </div>
       <div className="mt-auto flex flex-wrap items-baseline gap-2 pb-3 pt-3">
         <span className="font-display text-2xl font-bold tabular-nums">{pesos(c.precio)}</span>

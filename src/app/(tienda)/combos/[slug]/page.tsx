@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { combosTienda } from "@/lib/tienda";
 import { leerConfig } from "@/lib/config";
-import { pesos } from "@/lib/precios";
+import { medida, pesos, renglonCombo } from "@/lib/precios";
 import { urlSitio } from "@/lib/sitio";
 import { BotonAgregar } from "@/components/Carrito";
 import { BotonCompartir } from "@/components/Compartir";
@@ -31,6 +31,11 @@ export default async function ComboPagina({ params }: Props) {
   if (!c) notFound();
   const cfg = await leerConfig();
   const faltaParaMinimo = Math.max(0, cfg.compraMinima - c.precio);
+  const unidades = c.items.reduce((s, i) => s + i.cantidad, 0);
+  // Peso total: solo si todos los productos se venden por peso, para no mezclar gramos con mililitros.
+  const gramos = c.items.every((i) => i.producto.unidad === "g" && i.producto.contenido)
+    ? c.items.reduce((s, i) => s + (i.producto.contenido ?? 0) * i.cantidad, 0)
+    : 0;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -46,6 +51,10 @@ export default async function ComboPagina({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Link href="/combos" className="-my-3 inline-flex min-h-[48px] items-center text-sm text-stone-600 underline underline-offset-4">← Combos</Link>
       <Titulo sobre="Combo">{c.nombre}</Titulo>
+      <p className="-mt-3 text-[15px] leading-relaxed text-stone-700">
+        <b className="font-semibold text-acopio-900">Trae {unidades} productos{gramos ? `, ${medida(gramos, "g")} en total` : ""}:</b>{" "}
+        {c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)).join(" · ")}.
+      </p>
       {c.fotoUrl && (
         <div className={`grid gap-3 ${SEGUNDA_FOTO.has(c.slug) ? "sm:grid-cols-2" : ""}`}>
           <Foto src={c.fotoUrl} alt={`Combo ${c.nombre}`} className={`w-full rounded-3xl ${SEGUNDA_FOTO.has(c.slug) ? "aspect-[4/3]" : "aspect-[16/10] sm:aspect-[21/9]"}`} prioridad sizes="(max-width: 640px) 100vw, 550px" />
@@ -53,18 +62,24 @@ export default async function ComboPagina({ params }: Props) {
         </div>
       )}
       <div className="grid gap-6 lg:grid-cols-3">
-        <ul className="divide-y divide-tierra-100 rounded-xl border border-tierra-200 bg-white lg:col-span-2">
+        <div className="lg:col-span-2">
+        <h2 className="mb-2 font-display text-lg font-bold">Qué trae el combo</h2>
+        <ul className="divide-y divide-tierra-100 rounded-xl border border-tierra-200 bg-white">
           {c.items.map(({ producto: p, cantidad }) => (
             <li key={p.codigo} className="flex items-center gap-3 p-3">
               <Foto src={p.fotoUrl} alt="" etiqueta=" " className="h-16 w-16 shrink-0 rounded-md" />
               <div className="min-w-0 flex-1">
-                <Link href={`/producto/${encodeURIComponent(p.codigo)}`} className="flex min-h-[48px] items-center text-sm font-medium hover:underline">{cantidad} × {p.producto}</Link>
-                <p className="text-xs text-stone-600">{p.marca} · {p.presentacion}</p>
+                <Link href={`/producto/${encodeURIComponent(p.codigo)}`} className="flex min-h-[48px] items-center text-sm font-medium hover:underline">
+                  {cantidad > 1 && <span className="mr-1.5 shrink-0 rounded-md bg-acopio-100 px-1.5 py-0.5 text-xs font-bold tabular-nums text-acopio-700">{cantidad}×</span>}
+                  {p.producto}
+                </Link>
+                <p className="text-xs text-stone-600">{medida(p.contenido, p.unidad) ?? p.presentacion}{p.marca.startsWith("Sin marca") ? "" : ` · ${p.marca}`}</p>
               </div>
               <span className="shrink-0 text-sm tabular-nums text-stone-600">{pesos(p.precio * cantidad)}</span>
             </li>
           ))}
         </ul>
+        </div>
         <div className="h-fit space-y-3 rounded-xl border border-tierra-200 bg-white p-5">
           {c.ahorro > 0 && <p className="text-sm tabular-nums text-stone-600 line-through">{pesos(c.precioLista)}</p>}
           <p className="text-3xl font-semibold tabular-nums">{pesos(c.precio)}</p>
