@@ -17,7 +17,8 @@ export * from "./pedido-calculos";
 
 // ---------- Carrito → renglones del pedido ----------
 
-export type Renglon = { codigo: string; producto: string; presentacion: string; cantidad: number; precioUnitario: number; costoUnitario: number; pesoG: number | null; comboSlug: string | null; congelado?: boolean };
+// Renglon y aItemDePedido viven en pedido-calculos (sin base de datos) y ya salen por el `export *` de arriba.
+import { aItemDePedido, type Renglon } from "./pedido-calculos";
 
 /** Abre productos y combos en renglones con precio y costo. Solo entra lo que hoy se vende. */
 export async function expandirCarrito(entrada: unknown, cfg: Config): Promise<Renglon[]> {
@@ -48,7 +49,8 @@ export async function expandirCarrito(entrada: unknown, cfg: Config): Promise<Re
   return out;
 }
 
-export type EnvioPreparado = { cotizacion: Cotizacion; renglones: Renglon[]; bultos: Bulto[]; pesoTotalG: number; unidadesSinPeso: number; opciones: OpcionEnvio[] };
+
+export type EnvioPreparado ={ cotizacion: Cotizacion; renglones: Renglon[]; bultos: Bulto[]; pesoTotalG: number; unidadesSinPeso: number; opciones: OpcionEnvio[] };
 
 /** Cotiza carrito y envío juntos. Lo usan el checkout (para mostrar) y la creación del pedido (para cobrar). */
 export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia: string, cfg?: Config): Promise<EnvioPreparado> {
@@ -118,7 +120,7 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
       envioOrigen: opcion.proveedor,
       pesoTotalG: prep.pesoTotalG,
       bultos: prep.bultos.length,
-      items: { create: prep.renglones.map(({ pesoG: _peso, ...r }) => r) },
+      items: { create: prep.renglones.map(aItemDePedido) },
       eventos: { create: { estado: "PENDIENTE_PAGO", nota: "Pedido recibido" } },
     },
   });
