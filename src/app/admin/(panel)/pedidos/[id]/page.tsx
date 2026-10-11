@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
-import { ESTADOS, linkWhatsapp, margenNeto, nombreEstado, numeroPedido } from "@/lib/pedidos";
+import { ESTADOS, MARGEN_FLACO_PCT, linkWhatsapp, margenNeto, nombreEstado, numeroPedido } from "@/lib/pedidos";
 import { cambiarEstadoPedido } from "@/lib/acciones";
 import { leerConfig } from "@/lib/config";
 import { linkSeguimiento } from "@/lib/envios/seguimiento";
@@ -108,7 +108,13 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
             {fila("Subsidio de envío", `− ${pesos(m.subsidioEnvio)}`)}
             {fila("Comisión de pago", `− ${pesos(Number(pedido.comisionPago))}`)}
             {fila("Packaging", `− ${pesos(Number(pedido.costoPackaging))}`)}
-            {fila("Margen neto", `${pesos(m.neto)} (${m.netoPct.toFixed(1)}%)`, `font-semibold ${m.neto < 0 ? "text-red-600" : "text-acopio-700"}`)}
+            {fila("Margen neto", `${pesos(m.neto)} (${m.netoPct.toFixed(1)}%)`, `font-semibold ${m.alerta === "perdida" ? "text-red-600" : m.alerta === "flaco" ? "text-amber-700" : "text-acopio-700"}`)}
+            {m.alerta !== "ok" && (
+              <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                {m.alerta === "perdida" ? "Este pedido da pérdida." : `Este pedido deja menos del ${MARGEN_FLACO_PCT}%.`}
+                {m.subsidioEnvio > 0 ? ` Le estás poniendo ${pesos(m.subsidioEnvio)} al envío: cobraste ${pesos(Number(pedido.envioCobrado))} y costó ${pesos(Number(pedido.costoEnvioReal))}.` : " Revisá el precio de los productos y el peso cargado."}
+              </p>
+            )}
           </dl>
         </div>
       </div>

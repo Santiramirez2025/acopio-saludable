@@ -100,10 +100,17 @@ export function listaDeCompra(items: Pick<OrderItem, "codigo" | "producto" | "pr
 }
 
 /** Margen neto exacto del pedido: lo cobrado menos productos, envío real, comisión y packaging. */
+/** Debajo de este porcentaje un pedido no paga el trabajo que cuesta prepararlo. */
+export const MARGEN_FLACO_PCT = 10;
+
 export function margenNeto(p: Pick<Order, "total" | "costoProductos" | "costoEnvioReal" | "comisionPago" | "costoPackaging" | "subtotal" | "descuento" | "envioCobrado">) {
   const venta = Number(p.subtotal) - Number(p.descuento);
   const bruto = redondear2(venta - Number(p.costoProductos));
   const subsidioEnvio = redondear2(Number(p.costoEnvioReal) - Number(p.envioCobrado));
   const neto = redondear2(bruto - subsidioEnvio - Number(p.comisionPago) - Number(p.costoPackaging));
-  return { venta: redondear2(venta), bruto, brutoPct: venta > 0 ? redondear2((bruto / venta) * 100) : 0, subsidioEnvio, neto, netoPct: venta > 0 ? redondear2((neto / venta) * 100) : 0 };
+  const netoPct = venta > 0 ? redondear2((neto / venta) * 100) : 0;
+  // Un pedido que deja 1% no se ve mal en verde, y es trabajar gratis: pasó con el AS-00003.
+  // La señal tiene que saltar sola, no depender de que alguien mire la columna.
+  const alerta = neto < 0 ? "perdida" : netoPct < MARGEN_FLACO_PCT ? "flaco" : "ok";
+  return { venta: redondear2(venta), bruto, brutoPct: venta > 0 ? redondear2((bruto / venta) * 100) : 0, subsidioEnvio, neto, netoPct, alerta };
 }
