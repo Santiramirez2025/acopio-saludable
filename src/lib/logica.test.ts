@@ -481,3 +481,20 @@ test("la tabla le pone el nombre del correo a la opción que ve el cliente", () 
   assert.equal(leerTabla({ ...TABLA_EJEMPLO, correo: "andreani" }).correo, "andreani");
   assert.equal(leerTabla({ ...TABLA_EJEMPLO, seguroPct: 999 }).seguroPct, 0);
 });
+
+import { envioQueSeCobra } from "./pedido-calculos";
+
+test("con tarjeta el envío lleva adentro la comisión del pago", () => {
+  // Se divide, no se multiplica: 35.000 / 0,92 = 38.043,48, y el 8% de eso deja los 35.000 del correo.
+  const cobrado = envioQueSeCobra(35000, "MERCADOPAGO", 8);
+  assert.equal(cobrado, 38043.48);
+  assert.ok(Math.abs(cobrado * 0.92 - 35000) < 0.01, "después de la comisión tiene que quedar el costo del correo");
+  // Por transferencia no hay comisión que cubrir.
+  assert.equal(envioQueSeCobra(35000, "TRANSFERENCIA", 8), 35000);
+  // La entrega propia sin cargo sigue sin cargo.
+  assert.equal(envioQueSeCobra(0, "MERCADOPAGO", 8), 0);
+  // Sin comisión configurada no cambia nada.
+  assert.equal(envioQueSeCobra(35000, "MERCADOPAGO", 0), 35000);
+  // Un porcentaje absurdo no puede hacer explotar el precio.
+  assert.ok(envioQueSeCobra(35000, "MERCADOPAGO", 150) <= 35000 / 0.05 + 1);
+});

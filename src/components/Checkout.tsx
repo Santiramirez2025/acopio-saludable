@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { pesosCliente, useCarrito } from "./Carrito";
+import { envioQueSeCobra } from "@/lib/pedido-calculos";
 
 type Opcion = { id: string; nombre: string; modalidad: string; precio: number; plazo: string; masBarata: boolean };
 type Envio = { opciones: Opcion[]; pesoTotalKg: number; bultos: number };
 
-export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct }: { provincias: string[]; mpDisponible: boolean; descuentoTransferenciaPct: number }) {
+export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, comisionPagoPct }: { provincias: string[]; mpDisponible: boolean; descuentoTransferenciaPct: number; comisionPagoPct: number }) {
   const { lineas, listo, cotizacion } = useCarrito();
   const [provincia, setProvincia] = useState("");
   const [cp, setCp] = useState("");
@@ -62,7 +63,10 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct }
   const opcion = envio?.opciones.find((o) => o.id === opcionId);
   const subtotal = cotizacion.subtotal;
   const descuento = medio === "TRANSFERENCIA" ? Math.round(subtotal * descuentoTransferenciaPct) / 100 : 0;
-  const total = subtotal - descuento + (opcion?.precio ?? 0);
+  // Mismo cálculo que el servidor: con tarjeta el envío lleva la comisión adentro.
+  const precioEnvio = (p: number) => envioQueSeCobra(p, medio === "MERCADOPAGO" ? "MERCADOPAGO" : "TRANSFERENCIA", comisionPagoPct);
+  const envioCobrado = precioEnvio(opcion?.precio ?? 0);
+  const total = subtotal - descuento + envioCobrado;
 
   async function confirmar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -129,7 +133,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct }
                       <span className="block text-sm font-medium">{o.nombre} {o.masBarata && <span className="chip ml-1 bg-acopio-100 text-acopio-700">La más barata</span>}</span>
                       <span className="block text-xs text-stone-600">{o.plazo}</span>
                     </span>
-                    <span className="text-sm font-semibold tabular-nums">{o.precio > 0 ? pesosCliente(o.precio) : "Sin cargo"}</span>
+                    <span className="text-sm font-semibold tabular-nums">{o.precio > 0 ? pesosCliente(precioEnvio(o.precio)) : "Sin cargo"}</span>
                   </label>
                 ))}
               </div>
@@ -150,10 +154,16 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct }
               <input type="radio" name="medio" className="mt-1" checked={medio === "TRANSFERENCIA"} onChange={() => setMedio("TRANSFERENCIA")} />
               <span>
                 <span className="block text-sm font-medium">Transferencia bancaria {descuentoTransferenciaPct > 0 && <span className="chip ml-1 bg-acopio-100 text-acopio-700">{descuentoTransferenciaPct}% de descuento</span>}</span>
-                <span className="block text-xs text-stone-600">Te mostramos los datos al confirmar y nos mandás el comprobante.</span>
+                <span className="block text-xs text-stone-600">Te mostramos los datos al confirmar y nos mandás el comprobante.{comisionPagoPct > 0 && " Además, el envío te sale más barato."}</span>
               </span>
             </label>
           </div>
+          {/* El envío cambia según cómo pague: si no se dice, parece un cargo escondido. */}
+          {comisionPagoPct > 0 && opcion && opcion.precio > 0 && (
+            <p className="mt-3 text-xs text-stone-600">
+              Pagando por transferencia el envío sale {pesosCliente(opcion.precio)} en vez de {pesosCliente(precioEnvio(opcion.precio))}: con tarjeta se suma el costo de la operación.
+            </p>
+          )}
         </fieldset>
       </div>
 
@@ -162,7 +172,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct }
         <dl className="space-y-1 text-sm">
           <div className="flex justify-between"><dt>Productos ({cotizacion.unidades})</dt><dd className="tabular-nums">{pesosCliente(subtotal)}</dd></div>
           {descuento > 0 && <div className="flex justify-between text-acopio-700"><dt>Descuento por transferencia</dt><dd className="tabular-nums">− {pesosCliente(descuento)}</dd></div>}
-          <div className="flex justify-between"><dt>Envío</dt><dd className="tabular-nums">{opcion ? (opcion.precio > 0 ? pesosCliente(opcion.precio) : "Sin cargo") : "A calcular"}</dd></div>
+          <div className="flex justify-between"><dt>Envío</dt><dd className="tabular-nums">{opcion ? (envioCobrado > 0 ? pesosCliente(envioCobrado) : "Sin cargo") : "A calcular"}</dd></div>
           <div className="flex justify-between border-t border-tierra-200 pt-2 text-xl font-semibold"><dt>Total</dt><dd className="tabular-nums">{pesosCliente(total)}</dd></div>
         </dl>
         {error && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}

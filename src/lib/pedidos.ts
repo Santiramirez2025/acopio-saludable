@@ -11,7 +11,7 @@ import type { Bulto, OpcionEnvio } from "./envios/tipos";
 import { enviarEmail, escaparHtml } from "./email";
 import { SITIO, urlSitio } from "./sitio";
 import { linkSeguimiento } from "./envios/seguimiento";
-import { ErrorPedido, numeroPedido, validarCliente } from "./pedido-calculos";
+import { ErrorPedido, envioQueSeCobra, numeroPedido, validarCliente } from "./pedido-calculos";
 
 export * from "./pedido-calculos";
 
@@ -82,9 +82,11 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
 
 export function totales(subtotal: number, envio: number, medioPago: MedioPago, cfg: Config) {
   const descuento = medioPago === "TRANSFERENCIA" ? redondear2((subtotal * cfg.descuentoTransferenciaPct) / 100) : 0;
-  const total = redondear2(subtotal - descuento + envio);
+  // Con tarjeta el envío va con la comisión adentro; por transferencia sale lo que cuesta.
+  const envioCobrado = envioQueSeCobra(envio, medioPago, cfg.comisionPagoPct);
+  const total = redondear2(subtotal - descuento + envioCobrado);
   const comisionPago = medioPago === "MERCADOPAGO" ? redondear2((total * cfg.comisionPagoPct) / 100) : 0;
-  return { descuento, total, comisionPago };
+  return { descuento, envioCobrado, total, comisionPago };
 }
 
 // ---------- Alta ----------
@@ -101,7 +103,7 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
   if (!opcion) throw new ErrorPedido("Esa opción de envío ya no está disponible. Volvé a elegir el envío.");
 
   const subtotal = prep.cotizacion.subtotal;
-  const { descuento, total, comisionPago } = totales(subtotal, opcion.precio, medioPago, cfg);
+  const { descuento, envioCobrado, total, comisionPago } = totales(subtotal, opcion.precio, medioPago, cfg);
   const pedido = await prisma.order.create({
     data: {
       token: randomBytes(18).toString("base64url"),
@@ -109,7 +111,7 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
       ...cliente,
       subtotal,
       descuento,
-      envioCobrado: opcion.precio,
+      envioCobrado,
       total,
       costoProductos: redondear2(prep.renglones.reduce((s, r) => s + r.costoUnitario * r.cantidad, 0)),
       costoEnvioReal: opcion.costo,

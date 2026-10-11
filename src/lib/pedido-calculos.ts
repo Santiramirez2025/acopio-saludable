@@ -4,6 +4,22 @@ import type { EstadoPedido, Order, OrderItem } from "@prisma/client";
 import { redondear2 } from "./precios";
 import { normalizarCp, zonaDeProvincia } from "./envios/geo";
 
+/**
+ * El envío que paga el cliente, según cómo paga.
+ *
+ * El precio de lista de los productos ya lleva el recargo que cubre la comisión de la tarjeta,
+ * pero el envío no llevaba nada: Mercado Pago cobra su porcentaje sobre el total, envío incluido,
+ * y esa parte salía del bolsillo nuestro. Con envíos de $35.000 eran casi $3.000 por pedido.
+ *
+ * Se divide, no se multiplica: para que después de que el pago se lleve su 8% queden los $35.000
+ * del correo, hay que cobrar 35.000 / 0,92, no 35.000 × 1,08.
+ */
+export function envioQueSeCobra(envio: number, medioPago: "MERCADOPAGO" | "TRANSFERENCIA", comisionPagoPct: number): number {
+  if (medioPago !== "MERCADOPAGO" || !(envio > 0)) return redondear2(envio);
+  const pct = Math.min(Math.max(comisionPagoPct, 0), 95);
+  return redondear2(envio / (1 - pct / 100));
+}
+
 /** Una línea del pedido ya resuelta: incluye datos que solo sirven para calcular (peso, congelado). */
 export type Renglon = { codigo: string; producto: string; presentacion: string; cantidad: number; precioUnitario: number; costoUnitario: number; pesoG: number | null; comboSlug: string | null; congelado?: boolean };
 
