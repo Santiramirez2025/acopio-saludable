@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { ComboTienda, ProductoTienda } from "@/lib/tienda";
-import { pesos, renglonCombo } from "@/lib/precios";
+import { pesos, precioPorUnidadSuelta, renglonCombo } from "@/lib/precios";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
 import { Foto } from "./Foto";
 import { AgregarRapido, BotonAgregar } from "./Carrito";
 
 export function TarjetaProducto({ p, className = "" }: { p: ProductoTienda; className?: string }) {
   const href = `/producto/${encodeURIComponent(p.codigo)}`;
+  // Si el envase trae varias unidades, mostramos cuánto sale cada una: es lo que el cliente compara.
+  const cadaUna = precioPorUnidadSuelta(p.precio, p.presentacion);
   return (
     <article className={`flex min-w-0 flex-col rounded-2xl bg-white p-2 shadow-ficha ${className}`}>
       {/* El enlace del nombre se estira sobre la foto y el texto: un solo destino, grande y fácil de tocar. */}
@@ -16,7 +18,10 @@ export function TarjetaProducto({ p, className = "" }: { p: ProductoTienda; clas
         <div className="flex flex-1 flex-col px-1.5 pt-2.5">
           <h3 className="text-[15px] font-semibold leading-snug"><Link href={href} className="estirado line-clamp-2 after:absolute after:inset-0 after:rounded-xl hover:underline">{p.producto}</Link></h3>
           <p className="mt-0.5 line-clamp-1 text-xs text-stone-600">{p.presentacion}</p>
-          <p className="mt-auto pb-2.5 pt-2 font-display text-xl font-bold leading-none tabular-nums">{pesos(p.precio)}</p>
+          <div className="mt-auto pb-2.5 pt-2">
+            <p className="font-display text-xl font-bold leading-none tabular-nums">{pesos(p.precio)}</p>
+            {cadaUna && <p className="mt-1 text-[11px] leading-none tabular-nums text-stone-600">{pesos(cadaUna)} por unidad</p>}
+          </div>
         </div>
       </div>
       <div className="px-1.5 pb-1.5">

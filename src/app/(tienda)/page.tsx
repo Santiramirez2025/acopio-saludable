@@ -8,7 +8,7 @@ import { leerConfig } from "@/lib/config";
 import { AVISO_SIN_TACC, WHERE_SIN_TACC, wherePublicado } from "@/lib/filtros-producto";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
-import { pesos } from "@/lib/precios";
+import { pesos, precioPorUnidadSuelta } from "@/lib/precios";
 import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
 import { RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
@@ -20,7 +20,9 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 export default async function Home() {
   const cfg = await leerConfig();
   const publicado = wherePublicado(cfg.margenMinimoPct);
-  const [sinTacc, totalSinTacc, ganchos, combos, pedidos, portadas, conteos, vendibles] = await Promise.all([
+  const [alfajores, sinTacc, totalSinTacc, ganchos, combos, pedidos, portadas, conteos, vendibles] = await Promise.all([
+    // Las cajas primero y las más baratas adelante: el gancho es cuánto sale el alfajor suelto.
+    productosTienda({ where: { AND: [WHERE_SIN_TACC, { producto: { contains: "alfajor", mode: "insensitive" } }, { fotoUrl: { not: null } }] }, orderBy: [{ precioPublico: "asc" }], take: 4 }),
     productosTienda({ where: { AND: [WHERE_SIN_TACC, { fotoUrl: { not: null } }] }, take: 8 }),
     prisma.product.count({ where: { AND: [publicado, WHERE_SIN_TACC] } }),
     productosTienda({ where: { gancho: true }, take: 8 }),
@@ -31,6 +33,8 @@ export default async function Home() {
     prisma.product.findMany({ where: { AND: [publicado, { comboItems: { some: { combo: { tipo: "PEDIDO_NICHO" } } } }] }, select: { codigo: true } }),
   ]);
   const seVende = new Set(vendibles.map((v) => v.codigo));
+  // El precio más bajo por alfajor suelto entre las cajas: es el número del aviso de la promo.
+  const alfajorDesde = Math.min(...alfajores.map((p) => precioPorUnidadSuelta(p.precio, p.presentacion) ?? p.precio));
   const disponibles = combos.filter((c) => c.disponible);
   const portada = new Map(portadas.map((p) => [p.categoria, p.fotoUrl]));
   const categorias = conteos.filter((c) => c.categoria !== "Sin categoría");
@@ -74,6 +78,25 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {alfajores.length > 0 && (
+        <section className="rounded-3xl bg-acopio-900 p-4 sm:p-6">
+          {/* El blanco va solo en el encabezado y el aviso: adentro del riel las fichas son blancas y el texto tiene que seguir oscuro. */}
+          <div className="fondo-oscuro mb-3 flex flex-wrap items-end justify-between gap-x-3 gap-y-1 text-white">
+            <div className="min-w-0">
+              <span className="chip bg-sol text-acopio-900">Súper promo</span>
+              <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight tracking-tight">Alfajores sin TACC, por caja</h2>
+              <p className="mt-1 text-[15px] text-white/80">
+                Llevando la caja te quedan desde <b className="font-semibold text-sol tabular-nums">{pesos(alfajorDesde)} el alfajor</b>
+                {cfg.descuentoTransferenciaPct > 0 ? `, y pagando por transferencia ${cfg.descuentoTransferenciaPct}% menos.` : "."}
+              </p>
+            </div>
+            <Link href="/catalogo?q=alfajor&sintacc=1" className="-my-2 flex min-h-[48px] items-center whitespace-nowrap text-sm font-semibold text-sol underline underline-offset-4">Ver todos</Link>
+          </div>
+          <RielProductos productos={alfajores} />
+          <p className="mt-1 text-xs text-white/60">{AVISO_SIN_TACC}</p>
+        </section>
+      )}
 
       {sinTacc.length > 0 && (
         <section className="rounded-3xl bg-acopio-100 p-4 sm:p-6">
