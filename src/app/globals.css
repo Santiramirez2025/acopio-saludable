@@ -27,3 +27,12 @@
   .riel { @apply -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2; scrollbar-width: none; }
   .riel::-webkit-scrollbar { display: none; }
 }
+
+/* En iOS, un campo con letra menor a 16px hace que Safari acerque la pantalla al tocarlo.
+   En pantallas táctiles todos los campos van a 16px y se escribe sin ese salto molesto.
+   Va fuera de @layer a propósito: tiene que ganarle a las utilidades de tamaño de Tailwind. */
+@media (pointer: coarse) {
+  /* !important a propósito: las clases de Tailwind pesan más que un selector de etiqueta
+     y acá no queremos que ningún campo vuelva a quedar por debajo de 16px. */
+  input, select, textarea { font-size: 16px !important; }
+}
