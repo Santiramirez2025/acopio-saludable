@@ -1,6 +1,6 @@
 // Orquestador de envíos: entrega propia + correos con credenciales; la tabla entra como respaldo.
 
-import { cpEnLista } from "./geo";
+import { cpEnLista, zonaDeProvincia } from "./geo";
 import { proveedorAndreani } from "./andreani";
 import { proveedorMiCorreo } from "./micorreo";
 import { proveedorTabla, type TablaEnvios } from "./tabla";
@@ -58,7 +58,14 @@ export async function cotizarEnvio(
   ).flat();
   // Sin credenciales, o si las APIs no respondieron: tabla por peso y zona.
   // Al plazo del correo se le suma el despacho: compramos la mercadería para cada pedido.
-  const conDespacho = (t: Tarifa): Tarifa => ({ ...t, plazo: /confirmar/i.test(t.plazo) ? `${DESPACHO}. Plazo del correo a confirmar.` : `${DESPACHO} + ${t.plazo} de correo` });
+  // Si el correo no informa días, usamos el plazo de la zona: el cliente siempre tiene que ver una ventana,
+  // no un "a confirmar" que lo deja sin saber cuándo llega.
+  const zona = zonaDeProvincia(pedido.provincia);
+  const plazoZona = zona ? cfg.tabla.zonas[zona]?.plazo : null;
+  const conDespacho = (t: Tarifa): Tarifa => {
+    const dias = /confirmar/i.test(t.plazo) ? plazoZona : t.plazo;
+    return { ...t, plazo: dias ? `${DESPACHO} + ${dias} de correo` : `${DESPACHO}. Plazo del correo a confirmar.` };
+  };
   tarifas.push(...(deCorreos.length ? deCorreos : await proveedorTabla(cfg.tabla).cotizar(consulta)).map(conDespacho));
   return aplicarReglas(tarifas, pedido.subtotal, cfg.envioGratisDesde);
 }

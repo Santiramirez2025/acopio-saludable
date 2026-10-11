@@ -1,16 +1,20 @@
+import Link from "next/link";
 import { leerConfig } from "@/lib/config";
+import { probarCorreos } from "@/lib/envios/diagnostico";
 import { ZONAS } from "@/lib/envios/geo";
 import { proveedorMiCorreo } from "@/lib/envios/micorreo";
 import { proveedorAndreani } from "@/lib/envios/andreani";
 import { guardarEnvios } from "@/lib/acciones";
 
-export default async function Envios({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
-  const [cfg, { ok, error }] = await Promise.all([leerConfig(), searchParams]);
+export default async function Envios({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string; probar?: string }> }) {
+  const [cfg, { ok, error, probar }] = await Promise.all([leerConfig(), searchParams]);
   const t = cfg.tabla;
   const correos = [
     ["MiCorreo (Correo Argentino)", proveedorMiCorreo.configurado(), "MICORREO_USER, MICORREO_PASSWORD, MICORREO_CUSTOMER_ID"],
     ["Andreani", proveedorAndreani.configurado(), "ANDREANI_USER, ANDREANI_PASSWORD, ANDREANI_CLIENTE y un contrato"],
   ] as const;
+  const hayCredenciales = correos.some(([, activo]) => activo);
+  const pruebas = probar === "1" && hayCredenciales ? await probarCorreos() : null;
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Envíos</h1>
@@ -32,6 +36,25 @@ export default async function Envios({ searchParams }: { searchParams: Promise<{
           ))}
         </ul>
         <p className="mt-2 text-stone-600">Con un correo conectado se usa su cotización en vivo. La tabla de abajo queda como respaldo si no hay credenciales o la API no responde.</p>
+        {hayCredenciales ? (
+          <>
+            {/* La tienda se cae a la tabla sin avisar: esta prueba es la única forma de saber si el correo contesta. */}
+            <Link href="/admin/envios?probar=1" prefetch={false} className="btn-sec mt-3">Probar la conexión</Link>
+            {pruebas && (
+              <ul className="mt-3 space-y-2">
+                {pruebas.length === 0 && <li className="text-stone-600">No hay ningún correo con credenciales para probar.</li>}
+                {pruebas.map((p) => (
+                  <li key={`${p.proveedor}-${p.destino}`} className={`rounded-md px-3 py-2 ${p.ok ? "bg-acopio-100 text-acopio-700" : "bg-red-50 text-red-700"}`}>
+                    <b>{p.ok ? "Cotiza" : "Falla"} · {p.proveedor} · {p.destino}</b>
+                    <span className="mt-0.5 block break-words font-mono text-xs">{p.detalle}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : (
+          <p className="mt-2 text-stone-600">Cargá las variables en Vercel (Settings → Environment Variables, entorno Production) y volvé a desplegar: las variables de entorno no se leen hasta el despliegue siguiente.</p>
+        )}
       </div>
 
       <form action={guardarEnvios} className="space-y-4">
