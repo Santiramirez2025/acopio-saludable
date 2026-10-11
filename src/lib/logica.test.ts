@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseCsv } from "./csv";
 import { leerCatalogoCsv } from "./catalogo";
-import { calcularCombo, descuentoMaximo, margenPct, precioPorUnidadBase } from "./precios";
+import { calcularCombo, descuentoMaximo, margenPct, precioPorUnidadBase, precioPorUnidadSuelta, unidadesPorEnvase } from "./precios";
 import { clasificarObjetivos, detectarUnidad, estimarPesoBruto, motivoOculto } from "./clasificar";
 import { urlsDesdeCampoPhotos, BASE_FOTOS } from "./fotos";
 
@@ -48,6 +48,19 @@ test("un combo no puede perforar el margen mínimo", () => {
 test("precio por kilo y por litro", () => {
   assert.deepEqual(precioPorUnidadBase(3772, 250, "ml"), { valor: 15088, etiqueta: "por litro" });
   assert.equal(precioPorUnidadBase(100, null, null), null);
+});
+
+test("las unidades del envase salen del rótulo del proveedor", () => {
+  assert.equal(unidadesPorEnvase("Caja x 6 unidades YUKA"), 6);
+  assert.equal(unidadesPorEnvase("x12 unid Sin TACC Angiola"), 12);
+  assert.equal(unidadesPorEnvase("Sobre x10 Unidades"), 10);
+  assert.equal(unidadesPorEnvase("x 12 Unid. Caja Zanna s"), 12);
+  // Un envase de a uno, o uno que solo informa peso, no tiene precio por unidad suelta.
+  assert.equal(unidadesPorEnvase("x Unidad 50G"), null);
+  assert.equal(unidadesPorEnvase("x1unid 50mts"), null);
+  assert.equal(unidadesPorEnvase("500 G"), null);
+  assert.equal(precioPorUnidadSuelta(5979.57, "Caja x 6 unidades YUKA"), 996.59);
+  assert.equal(precioPorUnidadSuelta(1094.47, "x Unidad 50G"), null);
 });
 
 test("tinturas madre y congelados quedan ocultos por defecto", () => {

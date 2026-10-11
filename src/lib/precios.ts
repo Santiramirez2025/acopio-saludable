@@ -51,6 +51,19 @@ export function medida(contenido: number | null, unidad: string | null): string 
   return `${contenido.toLocaleString("es-AR", { maximumFractionDigits: 0 })} ${liquido ? "ml" : "g"}`;
 }
 
+/** Unidades que trae un envase, leídas del rótulo del proveedor ("Caja x 6 unidades" → 6). null si trae una sola. */
+export function unidadesPorEnvase(presentacion: string): number | null {
+  const m = /x\s*(\d{1,3})\s*unid/i.exec(presentacion);
+  const n = m ? Number(m[1]) : 0;
+  return n > 1 ? n : null;
+}
+
+/** Cuánto sale cada unidad dentro del envase; null si el envase trae una sola. */
+export function precioPorUnidadSuelta(precio: number, presentacion: string): number | null {
+  const unidades = unidadesPorEnvase(presentacion);
+  return unidades ? redondear2(precio / unidades) : null;
+}
+
 /** "2 × Nuez Mariposa (500 g)": cómo se nombra un producto dentro de un combo. */
 export function renglonCombo(p: { producto: string; contenido: number | null; unidad: string | null }, cantidad: number): string {
   const m = medida(p.contenido, p.unidad);
