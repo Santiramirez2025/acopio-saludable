@@ -352,3 +352,19 @@ test("precio de lista y de transferencia: el recargo cubre la comisión y la tra
   // Cobrado por Mercado Pago al instante (7,61%) queda prácticamente el precio base.
   assert.ok(Math.abs(10800 * (1 - 0.0761) - 10000) < 30);
 });
+
+import { detectar, palabrasClave } from "./asistente";
+
+test("el asistente reconoce la intención y nunca responde consultas de salud con un producto", () => {
+  assert.equal(detectar("¿Cuánto tarda el envío?"), "envio");
+  assert.equal(detectar("como puedo pagar"), "pago");
+  assert.equal(detectar("¿Hay compra mínima?"), "minimo");
+  assert.equal(detectar("entregan los domingos?"), "domingo");
+  assert.equal(detectar("Hablar con una persona"), "humano");
+  assert.equal(detectar("el magnesio sirve para dormir?"), "salud");
+  assert.equal(detectar("cuanto tomo de creatina"), "salud");
+  assert.equal(detectar("almendras"), "buscar");
+  assert.equal(detectar("tenés maní sin sal?"), "buscar");
+  assert.deepEqual(palabrasClave("¿Tenés nueces peladas?").map((g) => g[0]), ["nueces", "peladas"]);
+  assert.ok(palabrasClave("nueces")[0].includes("nuez"));
+});
