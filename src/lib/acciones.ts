@@ -7,7 +7,7 @@ import { requireAdmin } from "./auth";
 import { calcularCombo, descuentoMaximo, margenPct } from "./precios";
 import { leerItemsCombo, slugDesdeNombre } from "./combos";
 import type { EstadoPedido } from "@prisma/client";
-import { ESTADOS, confirmarPago } from "./pedidos";
+import { ESTADOS, avisarDespachado, confirmarPago } from "./pedidos";
 import { ZONAS, normalizarCp, validarListaCp } from "./envios/geo";
 import { generarTokenSync, registrarSync, resolverPendientes, textoResumen } from "./sync";
 import { codigoMarcador } from "./marcador";
@@ -379,6 +379,8 @@ export async function cambiarEstadoPedido(fd: FormData) {
     } else if (tracking) {
       await prisma.order.update({ where: { id }, data: { tracking } });
     }
+    // Al despachar, el cliente tiene que enterarse solo: si no, el seguimiento vive únicamente en el panel.
+    if (estado === "ENVIADO" && pedido.estado !== "ENVIADO") await avisarDespachado(id);
   } catch (e) {
     destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
   }
@@ -409,7 +411,7 @@ export async function guardarEnvios(fd: FormData) {
         entregaPropiaActiva: fd.get("entregaPropiaActiva") === "on",
         cpEntregaPropia: validarListaCp(String(fd.get("cpEntregaPropia") ?? "")),
         plazoEntregaPropia: String(fd.get("plazoEntregaPropia") ?? "").trim().slice(0, 60) || "24 a 48 hs hábiles",
-        tablaEnvios: { tramosKg, zonas },
+        tablaEnvios: { tramosKg, zonas, seguroPct: numero(fd, "seguroPct", { min: 0, max: 100 }), correo: String(fd.get("correo") ?? "") || undefined },
         tablaEnviosRevisada: fd.get("tablaEnviosRevisada") === "on",
       },
     });

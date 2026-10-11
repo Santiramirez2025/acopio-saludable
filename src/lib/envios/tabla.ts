@@ -4,7 +4,27 @@ import { ZONAS, zonaDeProvincia, type ZonaId } from "./geo";
 import type { Bulto, PedidoCotizacion, ShippingProvider, Tarifa } from "./tipos";
 
 export type FilaZona = { sucursal: number[]; domicilio: number[]; plazo: string };
-export type TablaEnvios = { tramosKg: number[]; zonas: Record<ZonaId, FilaZona> };
+export type TablaEnvios = {
+  tramosKg: number[];
+  zonas: Record<ZonaId, FilaZona>;
+  /**
+   * Seguro del correo: % del valor declarado que se suma al envío.
+   * Va acá y no en una columna porque la tabla ya viaja como JSON en la configuración.
+   * Andreani cobra ~1,21% del valor declarado. 0 o ausente = la tabla ya lo incluye.
+   */
+  seguroPct?: number;
+  /**
+   * Qué correo hace estos envíos. Da el nombre que ve el cliente y el link de seguimiento.
+   * Vacío = correo genérico, sin link.
+   */
+  correo?: CorreoId;
+};
+
+export const CORREOS = [
+  { id: "andreani", nombre: "Andreani" },
+  { id: "micorreo", nombre: "Correo Argentino" },
+] as const;
+export type CorreoId = (typeof CORREOS)[number]["id"];
 
 /**
  * Tabla de referencia. Armada a partir de tarifas publicadas de Correo Argentino (Clásico, octubre 2026):
@@ -32,7 +52,14 @@ export function leerTabla(json: unknown): TablaEnvios {
       const f = t.zonas?.[z.id];
       return f && [f.sucursal, f.domicilio].every((a) => Array.isArray(a) && a.length === t.tramosKg.length && a.every((n) => typeof n === "number" && n >= 0));
     });
-  return valida ? t : TABLA_EJEMPLO;
+  if (!valida) return TABLA_EJEMPLO;
+  // Un seguro mal cargado no puede inflarle el envío al cliente: fuera de 0-100 se ignora.
+  const pct = Number(t.seguroPct);
+  return {
+    ...t,
+    seguroPct: Number.isFinite(pct) && pct >= 0 && pct <= 100 ? pct : 0,
+    correo: CORREOS.some((c) => c.id === t.correo) ? t.correo : undefined,
+  };
 }
 
 /** Precio de un bulto: el del primer tramo que lo contiene; si supera el último, proporcional al último tramo. */
@@ -44,17 +71,29 @@ export function precioBulto(precios: number[], tramosKg: number[], pesoG: number
   return Math.round(precios[ultimo] * (kg / tramosKg[ultimo]));
 }
 
-export function cotizarConTabla(tabla: TablaEnvios, provincia: string, bultos: Bulto[]): Tarifa[] {
+/**
+ * El seguro no entra en la tabla: los correos lo cobran como % del valor declarado, no por peso.
+ * Se suma una sola vez por envío, no por bulto, porque se declara el pedido entero.
+ */
+export function seguroDeclarado(valorDeclarado: number, seguroPct: number): number {
+  if (!(valorDeclarado > 0) || !(seguroPct > 0)) return 0;
+  return Math.round(((valorDeclarado * seguroPct) / 100) * 100) / 100;
+}
+
+export function cotizarConTabla(tabla: TablaEnvios, provincia: string, bultos: Bulto[], valorDeclarado = 0): Tarifa[] {
   const zona = zonaDeProvincia(provincia);
   if (!zona || !bultos.length) return [];
   const fila = tabla.zonas[zona];
-  const suma = (precios: number[]) => bultos.reduce((s, b) => s + precioBulto(precios, tabla.tramosKg, b.pesoG), 0);
+  const seguro = seguroDeclarado(valorDeclarado, tabla.seguroPct ?? 0);
+  const suma = (precios: number[]) => Math.round((bultos.reduce((s, b) => s + precioBulto(precios, tabla.tramosKg, b.pesoG), 0) + seguro) * 100) / 100;
+  // Con el correo elegido el cliente ve de quién es el envío; sin él, el nombre genérico de siempre.
+  const correo = CORREOS.find((c) => c.id === tabla.correo)?.nombre;
   return [
-    { id: "tabla-sucursal", proveedor: "tabla", modalidad: "sucursal", nombre: "Retiro en sucursal de correo", costo: suma(fila.sucursal), plazo: fila.plazo },
-    { id: "tabla-domicilio", proveedor: "tabla", modalidad: "domicilio", nombre: "Envío a domicilio", costo: suma(fila.domicilio), plazo: fila.plazo },
+    { id: "tabla-sucursal", proveedor: "tabla", modalidad: "sucursal", nombre: correo ? `${correo}: retiro en sucursal` : "Retiro en sucursal de correo", costo: suma(fila.sucursal), plazo: fila.plazo },
+    { id: "tabla-domicilio", proveedor: "tabla", modalidad: "domicilio", nombre: correo ? `${correo} a domicilio` : "Envío a domicilio", costo: suma(fila.domicilio), plazo: fila.plazo },
   ];
 }
 
 export function proveedorTabla(tabla: TablaEnvios): ShippingProvider {
-  return { id: "tabla", configurado: () => true, cotizar: async (p: PedidoCotizacion) => cotizarConTabla(tabla, p.provincia, p.bultos) };
+  return { id: "tabla", configurado: () => true, cotizar: async (p: PedidoCotizacion) => cotizarConTabla(tabla, p.provincia, p.bultos, p.valorDeclarado) };
 }

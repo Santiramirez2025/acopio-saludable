@@ -145,7 +145,7 @@ test("combos: lectura de items y slug", () => {
 
 import { armarBultos } from "./envios/bultos";
 import { cpEnLista, normalizarCp, validarListaCp } from "./envios/geo";
-import { TABLA_EJEMPLO, cotizarConTabla, leerTabla, precioBulto } from "./envios/tabla";
+import { TABLA_EJEMPLO, cotizarConTabla, leerTabla, precioBulto, seguroDeclarado } from "./envios/tabla";
 import { aplicarReglas, cotizarEnvio } from "./envios/cotizar";
 
 test("envíos: bultos de hasta 25 kg", () => {
@@ -196,6 +196,18 @@ test("envíos: entrega propia, envío gratis, más barata y respaldo si la API f
   assert.equal(respaldo[0].proveedor, "tabla");
   const viva = { id: "micorreo" as const, configurado: () => true, cotizar: async () => [{ id: "micorreo-sucursal", proveedor: "micorreo" as const, modalidad: "sucursal" as const, nombre: "x", costo: 1234, plazo: "" }] };
   assert.deepEqual((await cotizarEnvio(cfg, { cpDestino: "5500", provincia: "Mendoza", bultos, subtotal: 1 }, [viva])).map((o) => o.id), ["micorreo-sucursal"]);
+});
+
+test("envíos: el seguro se cobra sobre el valor declarado, una vez por envío", async () => {
+  const bultos = [{ pesoG: 8000, unidades: 4, excedido: false }, { pesoG: 3000, unidades: 1, excedido: false }];
+  const sinSeguro = cotizarConTabla(TABLA_EJEMPLO, "Mendoza", bultos);
+  const conSeguro = cotizarConTabla({ ...TABLA_EJEMPLO, seguroPct: 1.21 }, "Mendoza", bultos, 100000);
+  // 1,21% de 100.000 = 1.210, y se suma una sola vez aunque viajen dos bultos.
+  assert.equal(conSeguro[0].costo - sinSeguro[0].costo, 1210);
+  assert.equal(conSeguro[1].costo - sinSeguro[1].costo, 1210);
+  assert.equal(seguroDeclarado(0, 1.21), 0);
+  assert.equal(seguroDeclarado(100000, 0), 0);
+  assert.equal(seguroDeclarado(99256, 1.21), 1201.0);
 });
 
 test("envíos: si el correo no informa días, el plazo sale de la zona", async () => {
@@ -442,4 +454,30 @@ test("el asistente reconoce la intención y nunca responde consultas de salud co
   assert.equal(detectar("tenés maní sin sal?"), "buscar");
   assert.deepEqual(palabrasClave("¿Tenés nueces peladas?").map((g) => g[0]), ["nueces", "peladas"]);
   assert.ok(palabrasClave("nueces")[0].includes("nuez"));
+});
+
+import { linkSeguimiento } from "./envios/seguimiento";
+
+test("el seguimiento lleva al rastreo del correo, o a ningún lado si no sabemos cuál es", () => {
+  assert.equal(linkSeguimiento("andreani", "360000000000000"), "https://www.andreani.com/#!/informacionEnvio/360000000000000");
+  // Andreani lo pide sin guiones ni puntos.
+  assert.equal(linkSeguimiento("andreani", " 3600-0000.0000000 "), "https://www.andreani.com/#!/informacionEnvio/360000000000000");
+  assert.equal(linkSeguimiento("andreani", null), null);
+  assert.equal(linkSeguimiento("andreani", "   "), null);
+  // Un número sospechoso no se convierte en link: mejor mostrarlo suelto que mandar a una página rota.
+  assert.equal(linkSeguimiento("andreani", "abc"), null);
+  assert.equal(linkSeguimiento("andreani", "<script>"), null);
+  assert.equal(linkSeguimiento(undefined, "360000000000000"), null);
+});
+
+test("la tabla le pone el nombre del correo a la opción que ve el cliente", () => {
+  const bultos = [{ pesoG: 5000, unidades: 1, excedido: false }];
+  const generica = cotizarConTabla(TABLA_EJEMPLO, "Mendoza", bultos).map((t) => t.nombre);
+  assert.deepEqual(generica, ["Retiro en sucursal de correo", "Envío a domicilio"]);
+  const andreani = cotizarConTabla({ ...TABLA_EJEMPLO, correo: "andreani" }, "Mendoza", bultos).map((t) => t.nombre);
+  assert.deepEqual(andreani, ["Andreani: retiro en sucursal", "Andreani a domicilio"]);
+  // Un correo que no existe no ensucia el nombre.
+  assert.equal(leerTabla({ ...TABLA_EJEMPLO, correo: "fedex" }).correo, undefined);
+  assert.equal(leerTabla({ ...TABLA_EJEMPLO, correo: "andreani" }).correo, "andreani");
+  assert.equal(leerTabla({ ...TABLA_EJEMPLO, seguroPct: 999 }).seguroPct, 0);
 });

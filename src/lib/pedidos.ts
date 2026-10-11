@@ -10,6 +10,7 @@ import { normalizarCp, zonaDeProvincia } from "./envios/geo";
 import type { Bulto, OpcionEnvio } from "./envios/tipos";
 import { enviarEmail, escaparHtml } from "./email";
 import { SITIO, urlSitio } from "./sitio";
+import { linkSeguimiento } from "./envios/seguimiento";
 import { ErrorPedido, numeroPedido, validarCliente } from "./pedido-calculos";
 
 export * from "./pedido-calculos";
@@ -193,3 +194,26 @@ async function avisarPedidoRecibido(pedido: Order, cfg: Config) {
   }
 }
 
+
+/**
+ * Aviso al cliente cuando el pedido sale.
+ * El número de seguimiento solo sirve si llega a quien espera el paquete: en el panel no lo ve nadie.
+ */
+export async function avisarDespachado(orderId: number): Promise<boolean> {
+  const [pedido, cfg] = await Promise.all([prisma.order.findUnique({ where: { id: orderId } }), leerConfig()]);
+  if (!pedido) return false;
+  const rastreo = linkSeguimiento(cfg.tabla.correo, pedido.tracking);
+  const seguimiento = pedido.tracking
+    ? `<p>Número de seguimiento: <b>${escaparHtml(pedido.tracking)}</b>${rastreo ? ` · <a href="${rastreo}">seguí tu envío</a>` : ""}</p>`
+    : "";
+  return enviarEmail({
+    para: pedido.email,
+    asunto: `Tu pedido ${numeroPedido(pedido.id)} ya salió`,
+    html: plantilla(
+      `Tu pedido ${numeroPedido(pedido.id)} está en camino`,
+      `<p>Lo despachamos por <b>${escaparHtml(pedido.envioNombre)}</b>.${pedido.envioPlazo ? ` ${escaparHtml(pedido.envioPlazo)}.` : ""}</p>${seguimiento}`,
+      pedido.token,
+    ),
+    responderA: cfg.emailContacto,
+  });
+}

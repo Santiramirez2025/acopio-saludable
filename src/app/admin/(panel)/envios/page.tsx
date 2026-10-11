@@ -2,6 +2,7 @@ import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { probarCorreos } from "@/lib/envios/diagnostico";
 import { ZONAS } from "@/lib/envios/geo";
+import { CORREOS } from "@/lib/envios/tabla";
 import { proveedorMiCorreo } from "@/lib/envios/micorreo";
 import { proveedorAndreani } from "@/lib/envios/andreani";
 import { guardarEnvios } from "@/lib/acciones";
@@ -66,6 +67,21 @@ export default async function Envios({ searchParams }: { searchParams: Promise<{
           <div>
             <label className="etiqueta" htmlFor="plazoEntregaPropia">Plazo de la entrega propia (se muestra en la tienda)</label>
             <input className="campo" id="plazoEntregaPropia" name="plazoEntregaPropia" defaultValue={cfg.plazoEntregaPropia} placeholder="24 a 48 hs hábiles" />
+          </div>
+          <div>
+            <label className="etiqueta" htmlFor="correo">Correo que hace estos envíos</label>
+            <select className="campo" id="correo" name="correo" defaultValue={t.correo ?? ""}>
+              <option value="">Sin especificar</option>
+              {CORREOS.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-stone-600">Le pone nombre a la opción que ve el cliente y arma el link de seguimiento.</p>
+          </div>
+          <div>
+            <label className="etiqueta" htmlFor="seguroEnvioPct">Seguro del correo (% del valor del pedido)</label>
+            <input className="campo" id="seguroEnvioPct" name="seguroPct" type="number" step="0.01" min="0" max="100" defaultValue={t.seguroPct ?? 0} />
+            <p className="mt-1 text-xs text-stone-600">Se suma al envío porque depende del precio del pedido, no del peso. Andreani cobra ~1,21%. Dejalo en 0 si la tabla ya lo incluye.</p>
           </div>
           <div className="sm:col-span-2">
             <label className="etiqueta" htmlFor="cpEntregaPropia">Entrega propia sin cargo en estos códigos postales</label>
