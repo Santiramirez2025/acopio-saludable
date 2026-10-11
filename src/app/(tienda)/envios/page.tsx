@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { leerConfig } from "@/lib/config";
+import { zonaPagaDe } from "@/lib/envios/tabla";
 import { pesos } from "@/lib/precios";
 import { Prosa } from "@/components/Prosa";
 import { DatosContacto } from "@/components/Contacto";
@@ -10,13 +11,20 @@ export const metadata: Metadata = { title: "Envíos y entregas", description: "Z
 
 export default async function Pagina() {
   const cfg = await leerConfig();
-  void cfg; void pesos; void Link; void DatosContacto;
+  const zonaPaga = zonaPagaDe(cfg.tabla);
+  void Link; void DatosContacto;
   return (
     <div>
       <Titulo sobre="Envíos" bajada="Compramos la mercadería para cada pedido, por eso siempre hay un plazo de preparación antes de la entrega.">Envíos y entregas</Titulo>
       <Prosa>
         <h2>Entrega propia, sin cargo</h2>
         <p>Llevamos el pedido a tu casa o a tu negocio en Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca. El plazo es de {cfg.plazoEntregaPropia} desde que se confirma el pago, y coordinamos el horario por WhatsApp. Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.</p>
+        {zonaPaga && (
+          <>
+            <h2>{zonaPaga.nombre}, con cargo</h2>
+            <p>También llegamos nosotros hasta {zonaPaga.nombre}: {pesos(zonaPaga.precio)} por pedido, en {zonaPaga.plazo || cfg.plazoEntregaPropia}, y coordinamos el horario por WhatsApp. Sale bastante menos que despacharlo por correo.</p>
+          </>
+        )}
         <h2>Resto del país, por correo</h2>
         <p>Despachamos en 24 a 48 hs hábiles y después corre el plazo del correo, que suele ser de 2 a 7 días hábiles según la zona. El costo se calcula en el carrito con tu código postal, antes de pagar, según el peso del pedido.</p>
         <h2>Día de corte</h2>
