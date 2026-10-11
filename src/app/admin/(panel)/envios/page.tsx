@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { leerConfig } from "@/lib/config";
+import { prisma } from "@/lib/prisma";
+import { wherePublicado } from "@/lib/filtros-producto";
+import { PESO_POR_DEFECTO_G } from "@/lib/envios/bultos";
 import { probarCorreos } from "@/lib/envios/diagnostico";
 import { ZONAS } from "@/lib/envios/geo";
 import { CORREOS } from "@/lib/envios/tabla";
@@ -16,11 +19,19 @@ export default async function Envios({ searchParams }: { searchParams: Promise<{
   ] as const;
   const hayCredenciales = correos.some(([, activo]) => activo);
   const pruebas = probar === "1" && hayCredenciales ? await probarCorreos() : null;
+  // Un producto sin peso cotiza con el peso por defecto: si pesa mas, la diferencia la pagamos nosotros.
+  const sinPeso = await prisma.product.count({ where: { AND: [wherePublicado(cfg.margenMinimoPct), { pesoBrutoG: null }] } });
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Envíos</h1>
       {ok && <p className="rounded-md bg-acopio-100 px-3 py-2 text-sm text-acopio-700">Envíos guardados.</p>}
       {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">No se guardó: {error}</p>}
+      {sinPeso > 0 && (
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Hay <b>{sinPeso} productos publicados sin peso cargado</b>. El envío se les cotiza asumiendo {PESO_POR_DEFECTO_G / 1000} kg por unidad: si pesan más, la diferencia la pagás vos.{" "}
+          <Link href="/admin/productos?vista=sin-peso" className="underline">Cargarles el peso</Link>
+        </p>
+      )}
       {!cfg.tablaEnviosRevisada && (
         <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
           La tabla es una <b>estimación</b> armada con tarifas publicadas de Correo Argentino (octubre 2026), no las de tu contrato. Mientras no haya un correo conectado, esto es lo que se le cobra al cliente: revisala, ajustala y marcala como revisada.

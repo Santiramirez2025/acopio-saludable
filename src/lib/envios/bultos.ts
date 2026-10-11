@@ -1,8 +1,13 @@
 import type { Bulto } from "./tipos";
 
 export const MAX_BULTO_G = 25000;
-/** Peso que se asume para un producto sin peso cargado (se avisa en el pedido). */
-export const PESO_POR_DEFECTO_G = 500;
+/**
+ * Peso que se asume para un producto sin peso cargado.
+ * 1 kg y no 500 g porque el que falta suele ser una caja (10 tabletas, 100 comprimidos, 18 barritas),
+ * no un sobre: subestimar el peso baja el tramo de la tarifa y la diferencia la pagamos nosotros.
+ * Es un parche: lo que corresponde es cargar el peso real en Panel → Productos → Sin peso.
+ */
+export const PESO_POR_DEFECTO_G = 1000;
 
 /**
  * Arma bultos de hasta 25 kg (first-fit decreciente).
