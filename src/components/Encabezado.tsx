@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { pesosCliente, useCarrito } from "./Carrito";
 import { Logo } from "./Logo";
+import { Asistente } from "./Asistente";
 
 const NAV = [
   ["/catalogo", "Catálogo"],
@@ -37,6 +38,7 @@ export function Encabezado() {
         <form action="/catalogo" role="search" className="min-w-0 flex-1">
           <input name="q" type="search" enterKeyHint="search" className="w-full rounded-full border-0 h-12 bg-white/15 px-4 text-base text-white placeholder:text-white/75 focus:bg-white focus:text-acopio-900 focus:outline-none focus:placeholder:text-stone-400" placeholder="Buscá nueces, avena, magnesio…" aria-label="Buscar productos" />
         </form>
+        <Asistente />
         <Link href="/carrito" className="hidden min-h-[48px] items-center gap-2 rounded-full bg-sol px-5 text-sm font-bold text-acopio-900 md:flex">
           Tu pedido
           {unidades > 0 && <span className="tabular-nums">{cotizacion ? pesosCliente(cotizacion.subtotal) : unidades}</span>}
