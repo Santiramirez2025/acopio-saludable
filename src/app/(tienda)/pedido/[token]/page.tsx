@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
 import { pesos } from "@/lib/precios";
 import { linkWhatsapp, nombreEstado, numeroPedido, procesarPagoMp } from "@/lib/pedidos";
+import { compraReportable } from "@/lib/pedido-calculos";
 import { mpConfigurado, obtenerPago } from "@/lib/mercadopago";
 import { linkSeguimiento } from "@/lib/envios/seguimiento";
 import { Titulo } from "@/components/Tienda";
@@ -42,7 +43,11 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       {sp.nuevo && <VaciarCarrito />}
-      {sp.nuevo && <Medir evento="compra" pedido={numero} valor={Number(pedido.total)} ids={pedido.items.map((i) => i.codigo)} />}
+      {/* No depende de `?nuevo=1`: si el pago se confirma después, la compra se cuenta cuando el
+          cliente vuelve a abrir su pedido, y la clave impide que se cuente dos veces. */}
+      {compraReportable(pedido.estado, pedido.medioPago) && (
+        <Medir evento="compra" clave={`compra-${numero}`} pedido={numero} valor={Number(pedido.total)} ids={pedido.items.map((i) => i.codigo)} />
+      )}
       <Titulo sobre={`Pedido ${numero}`}>{pendiente ? "Recibimos tu pedido" : pedido.estado === "CANCELADO" ? "Pedido cancelado" : "¡Gracias por tu compra!"}</Titulo>
       <p className="-mt-3 text-stone-600">
         Estado: <span className="font-semibold text-acopio-700">{nombreEstado(pedido.estado)}</span>

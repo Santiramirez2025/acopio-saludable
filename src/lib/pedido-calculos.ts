@@ -114,3 +114,20 @@ export function margenNeto(p: Pick<Order, "total" | "costoProductos" | "costoEnv
   const alerta = neto < 0 ? "perdida" : netoPct < MARGEN_FLACO_PCT ? "flaco" : "ok";
   return { venta: redondear2(venta), bruto, brutoPct: venta > 0 ? redondear2((bruto / venta) * 100) : 0, subsidioEnvio, neto, netoPct, alerta };
 }
+
+/**
+ * Si el pedido se le puede contar a Meta como compra.
+ *
+ * El Purchase viajaba con solo ver la página del pedido con `?nuevo=1`, y eso pasa dos veces
+ * de más: cuando el cliente vuelve a abrir el link de su confirmación (mail, historial, WhatsApp)
+ * y cuando Mercado Pago lo devuelve al sitio aunque la tarjeta haya sido rechazada — las tres
+ * back_urls (success, pending, failure) apuntan al mismo lado. Resultado: Meta aprende a buscar
+ * gente que no compra, con la plata del anuncio.
+ *
+ * Por transferencia el pedido alta es la compra: el cliente eligió, dejó sus datos y nos debe
+ * la plata. Por tarjeta no: hasta que Mercado Pago no confirme, no hubo compra.
+ */
+export function compraReportable(estado: EstadoPedido, medioPago: "MERCADOPAGO" | "TRANSFERENCIA"): boolean {
+  if (estado === "CANCELADO") return false;
+  return medioPago === "TRANSFERENCIA" || estado !== "PENDIENTE_PAGO";
+}
