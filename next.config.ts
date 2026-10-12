@@ -16,8 +16,14 @@ const nextConfig: NextConfig = {
   // El motor de consultas de Prisma es un .wasm que se lee del disco: hay que incluirlo a mano en las funciones de Vercel.
   outputFileTracingIncludes: { "/**": ["./node_modules/.prisma/client/*.wasm"] },
   // Dirección corta y propia para la góndola sin TACC.
+  // Direcciones cortas y propias para mandar por WhatsApp cuando visitamos un comercio:
+  // la del catálogo lleva la categoría en la query y queda impresentable en un mensaje.
   async rewrites() {
-    return [{ source: "/sin-tacc", destination: "/catalogo?sintacc=1" }];
+    return [
+      { source: "/sin-tacc", destination: "/catalogo?sintacc=1" },
+      { source: "/hierbas", destination: "/catalogo?categoria=Caf%C3%A9%2C%20yerba%20e%20infusiones" },
+      { source: "/miel", destination: "/catalogo?q=miel" },
+    ];
   },
   // La dirección vieja de Vercel lleva al dominio propio (menos /api, que recibe avisos de pago).
   async redirects() {
