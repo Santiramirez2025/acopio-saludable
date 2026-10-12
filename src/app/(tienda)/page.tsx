@@ -11,7 +11,8 @@ import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadSuelta } from "@/lib/precios";
 import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
-import { ListaCombo, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
+import { ListaCombo, RielOfertas, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
+import { ofertasDelProveedor } from "@/lib/ofertas";
 
 // Portadas propias de las góndolas; las demás usan la foto de un producto.
 
@@ -20,7 +21,7 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 export default async function Home() {
   const cfg = await leerConfig();
   const publicado = wherePublicado(cfg.margenMinimoPct);
-  const [alfajores, sinTacc, totalSinTacc, ganchos, combos, pedidos, portadas, conteos, vendibles] = await Promise.all([
+  const [alfajores, sinTacc, totalSinTacc, ganchos, combos, pedidos, portadas, conteos, vendibles, ofertas] = await Promise.all([
     // Las cajas primero y las más baratas adelante: el gancho es cuánto sale el alfajor suelto.
     productosTienda({ where: { AND: [WHERE_SIN_TACC, { producto: { contains: "alfajor", mode: "insensitive" } }, { fotoUrl: { not: null } }] }, orderBy: [{ precioPublico: "asc" }], take: 4 }),
     productosTienda({ where: { AND: [WHERE_SIN_TACC, { fotoUrl: { not: null } }] }, take: 8 }),
@@ -31,6 +32,7 @@ export default async function Home() {
     prisma.product.findMany({ where: { AND: [publicado, { fotoUrl: { not: null } }] }, distinct: ["categoria"], orderBy: [{ categoria: "asc" }, { gancho: "desc" }, { vendidos: "desc" }, { precioPublico: "desc" }], select: { categoria: true, fotoUrl: true } }),
     prisma.product.groupBy({ by: ["categoria"], where: publicado, _count: true, orderBy: { _count: { categoria: "desc" } } }),
     prisma.product.findMany({ where: { AND: [publicado, { comboItems: { some: { combo: { tipo: "PEDIDO_NICHO" } } } }] }, select: { codigo: true } }),
+    ofertasDelProveedor(8),
   ]);
   const seVende = new Set(vendibles.map((v) => v.codigo));
   // El precio más bajo por alfajor suelto entre las cajas: es el número del aviso de la promo.
@@ -95,6 +97,16 @@ export default async function Home() {
           </div>
           <RielProductos productos={alfajores} />
           <p className="mt-1 text-xs text-white/60">{AVISO_SIN_TACC}</p>
+        </section>
+      )}
+
+      {ofertas.length > 0 && (
+        <section>
+          {/* Las bajas las manda el proveedor y duran lo que duran: por eso no hay fecha de
+              vencimiento inventada, solo cuánto bajó respecto del precio anterior. */}
+          <TituloSeccion href="/ofertas" enlace="Ver todas">Bajaron de precio</TituloSeccion>
+          <p className="-mt-1 mb-3 max-w-2xl text-sm text-stone-700">Lo que el proveedor bajó en la última lista. Los precios se mueven todos los días: hoy están a este valor.</p>
+          <RielOfertas ofertas={ofertas} />
         </section>
       )}
 

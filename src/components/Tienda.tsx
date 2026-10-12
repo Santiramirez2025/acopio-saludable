@@ -5,7 +5,7 @@ import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
 import { Foto } from "./Foto";
 import { AgregarRapido, BotonAgregar } from "./Carrito";
 
-export function TarjetaProducto({ p, className = "" }: { p: ProductoTienda; className?: string }) {
+export function TarjetaProducto({ p, className = "", antes, bajoPct }: { p: ProductoTienda; className?: string; antes?: number; bajoPct?: number }) {
   const href = `/producto/${encodeURIComponent(p.codigo)}`;
   // Si el envase trae varias unidades, mostramos cuánto sale cada una: es lo que el cliente compara.
   const cadaUna = precioPorUnidadSuelta(p.precio, p.presentacion);
@@ -15,11 +15,17 @@ export function TarjetaProducto({ p, className = "" }: { p: ProductoTienda; clas
       <div className="relative flex flex-1 flex-col">
         <Foto src={p.fotoUrl} alt="" etiqueta={p.categoria} className="aspect-square w-full rounded-xl" />
         {p.sinTacc && <span className="chip absolute left-2 top-2 bg-acopio-900 text-white">Sin TACC</span>}
+        {/* La baja la decide el proveedor y dura lo que dure: por eso se muestra cuánto bajó,
+            no una promo nuestra con fecha. */}
+        {bajoPct ? <span className="chip absolute right-2 top-2 bg-sol font-bold text-acopio-900">−{bajoPct}%</span> : null}
         <div className="flex flex-1 flex-col px-1.5 pt-2.5">
           <h3 className="text-[15px] font-semibold leading-snug"><Link href={href} className="estirado line-clamp-2 after:absolute after:inset-0 after:rounded-xl hover:underline">{p.producto}</Link></h3>
           <p className="mt-0.5 line-clamp-1 text-xs text-stone-600">{p.presentacion}</p>
           <div className="mt-auto pb-2.5 pt-2">
-            <p className="font-display text-xl font-bold leading-none tabular-nums">{pesos(p.precio)}</p>
+            <p className="flex flex-wrap items-baseline gap-x-2 font-display text-xl font-bold leading-none tabular-nums">
+              {pesos(p.precio)}
+              {antes && antes > p.precio ? <span className="text-sm font-semibold text-stone-500 line-through">{pesos(antes)}</span> : null}
+            </p>
             {cadaUna && <p className="mt-1 text-[11px] leading-none tabular-nums text-stone-600">{pesos(cadaUna)} por unidad</p>}
           </div>
         </div>
@@ -47,6 +53,17 @@ export function RielProductos({ productos }: { productos: ProductoTienda[] }) {
     <div className="riel lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
       {productos.map((p) => (
         <TarjetaProducto key={p.codigo} p={p} className="w-[46%] shrink-0 snap-start sm:w-[30%] lg:w-auto" />
+      ))}
+    </div>
+  );
+}
+
+/** El riel de los que bajaron: misma tarjeta, con el precio de antes y cuánto bajó. */
+export function RielOfertas({ ofertas }: { ofertas: (ProductoTienda & { precioAntes: number; bajoPct: number })[] }) {
+  return (
+    <div className="riel lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
+      {ofertas.map((o) => (
+        <TarjetaProducto key={o.codigo} p={o} antes={o.precioAntes} bajoPct={o.bajoPct} className="w-[46%] shrink-0 snap-start sm:w-[30%] lg:w-auto" />
       ))}
     </div>
   );
