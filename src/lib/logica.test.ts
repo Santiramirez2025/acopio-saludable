@@ -563,3 +563,18 @@ test("el peso se estima de cuántas unidades trae, sin inventar kilos", () => {
   assert.deepEqual(contarUnidades("x unidad"), { unidades: 1, tipo: "unidad" });
   assert.equal(contarUnidades("500 G"), null);
 });
+
+import { compraReportable } from "./pedido-calculos";
+
+test("a Meta solo le contamos compras que existen", () => {
+  // Pasó en producción: Meta marcó una compra a las 20:30 del 11/10 y no había ningún pedido nuevo.
+  // Mercado Pago devuelve al cliente a la misma URL con éxito, pendiente o rechazo.
+  assert.equal(compraReportable("PENDIENTE_PAGO", "MERCADOPAGO"), false);
+  assert.equal(compraReportable("PAGADO", "MERCADOPAGO"), true);
+  assert.equal(compraReportable("ENVIADO", "MERCADOPAGO"), true);
+  // Por transferencia el pedido ya es la compra: eligió, dejó los datos y nos debe la plata.
+  assert.equal(compraReportable("PENDIENTE_PAGO", "TRANSFERENCIA"), true);
+  // Un pedido cancelado no es una compra por ningún medio.
+  assert.equal(compraReportable("CANCELADO", "TRANSFERENCIA"), false);
+  assert.equal(compraReportable("CANCELADO", "MERCADOPAGO"), false);
+});
