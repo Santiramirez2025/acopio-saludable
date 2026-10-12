@@ -162,9 +162,20 @@ export default async function Home() {
         <section>
           <TituloSeccion href="/combos" enlace="Todos los combos">Combos armados</TituloSeccion>
           <div className="riel lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
-            {[...disponibles].sort((a, b) => b.descuentoPct - a.descuentoPct || Number(b.destacado) - Number(a.destacado)).slice(0, 4).map((c) => (
-              <TarjetaCombo key={c.slug} c={c} className="w-[78%] shrink-0 snap-start sm:w-[44%] lg:w-auto" />
-            ))}
+            {/* Primero los combos que por sí solos llegan a la compra mínima: son los únicos que el
+                cliente puede pagar sin sumar nada más. Con un combo barato arriba, el que viene de un
+                anuncio agrega, descubre el mínimo en el checkout y se va. */}
+            {[...disponibles]
+              .sort(
+                (a, b) =>
+                  Number(b.precio >= cfg.compraMinima) - Number(a.precio >= cfg.compraMinima) ||
+                  Number(b.destacado) - Number(a.destacado) ||
+                  b.descuentoPct - a.descuentoPct,
+              )
+              .slice(0, 4)
+              .map((c) => (
+                <TarjetaCombo key={c.slug} c={c} llegaAlMinimo={c.precio >= cfg.compraMinima} className="w-[78%] shrink-0 snap-start sm:w-[44%] lg:w-auto" />
+              ))}
           </div>
         </section>
       )}

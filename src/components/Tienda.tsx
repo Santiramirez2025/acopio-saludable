@@ -73,7 +73,7 @@ export function ListaCombo({ items, oscuro = false }: { items: { producto: Produ
   );
 }
 
-export function TarjetaCombo({ c, className = "" }: { c: ComboTienda; className?: string }) {
+export function TarjetaCombo({ c, className = "", llegaAlMinimo = false }: { c: ComboTienda; className?: string; llegaAlMinimo?: boolean }) {
   return (
     <article className={`fondo-oscuro flex flex-col rounded-2xl bg-acopio-900 p-3 text-white ${className}`}>
       <div className="relative">
@@ -93,6 +93,9 @@ export function TarjetaCombo({ c, className = "" }: { c: ComboTienda; className?
         <span className="font-display text-2xl font-bold tabular-nums">{pesos(c.precio)}</span>
         {c.ahorro > 0 && <span className="text-sm tabular-nums text-white/70 line-through">{pesos(c.precioLista)}</span>}
         {c.descuentoPct > 0 && <span className="chip bg-sol text-acopio-900">{c.descuentoPct}% menos</span>}
+        {/* El freno de la tienda es la compra mínima: 174 carritos y 10 checkouts el 11/10.
+            Decirle al cliente cuál se puede pagar solo le ahorra la sorpresa en el checkout. */}
+        {llegaAlMinimo && <span className="w-full text-sm font-semibold text-sol">Con este combo ya llegás a la compra mínima</span>}
       </div>
       <BotonAgregar tipo="combo" id={c.slug} etiqueta="Agregar combo" conCantidad={false} />
     </article>
