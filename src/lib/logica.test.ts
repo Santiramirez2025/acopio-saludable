@@ -578,3 +578,20 @@ test("a Meta solo le contamos compras que existen", () => {
   assert.equal(compraReportable("CANCELADO", "TRANSFERENCIA"), false);
   assert.equal(compraReportable("CANCELADO", "MERCADOPAGO"), false);
 });
+
+import { bajaPct, BAJA_MINIMA_PCT } from "./precios";
+
+test("una baja de precio se mide contra el precio anterior", () => {
+  assert.equal(bajaPct(10000, 9000), 10);
+  assert.equal(bajaPct(5980, 5500), 8);
+  // Redondeo a un decimal, para no mostrar "-7.142857%".
+  assert.equal(bajaPct(7000, 6500), 7.1);
+  // Subió, quedó igual o los números no sirven: no es oferta.
+  assert.equal(bajaPct(9000, 10000), 0);
+  assert.equal(bajaPct(9000, 9000), 0);
+  assert.equal(bajaPct(0, 500), 0);
+  assert.equal(bajaPct(500, 0), 0);
+  // El proveedor mueve centavos todos los días: eso no se muestra como oferta.
+  assert.ok(bajaPct(10000, 9900) < BAJA_MINIMA_PCT, "1% no llega al mínimo");
+  assert.ok(bajaPct(10000, 9500) >= BAJA_MINIMA_PCT, "5% sí");
+});

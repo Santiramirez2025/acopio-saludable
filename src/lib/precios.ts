@@ -96,3 +96,18 @@ export function precioVenta(base: number, recargoPct: number): number {
 export function precioTransferencia(precio: number, descuentoPct: number): number | null {
   return descuentoPct > 0 ? Math.round(precio * (1 - descuentoPct / 100)) : null;
 }
+
+/**
+ * Una baja menor es ruido: el proveedor mueve centavos todos los días y, con el redondeo,
+ * el cliente ni la nota. Abajo de este porcentaje no se muestra como oferta.
+ */
+export const BAJA_MINIMA_PCT = 4;
+
+/** Cuántos días atrás se mira el historial. Más que esto ya no es "bajó", es el precio de siempre. */
+export const DIAS_DE_OFERTA = 21;
+
+/** Cuánto bajó un precio respecto del anterior, en porcentaje. 0 si no bajó o si los números no sirven. */
+export function bajaPct(anterior: number, actual: number): number {
+  if (!(anterior > 0) || !(actual > 0) || actual >= anterior) return 0;
+  return Math.round(((anterior - actual) / anterior) * 1000) / 10;
+}
