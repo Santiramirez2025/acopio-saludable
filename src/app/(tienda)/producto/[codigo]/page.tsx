@@ -16,6 +16,7 @@ import { BotonCompartir } from "@/components/Compartir";
 import { Galeria } from "@/components/Galeria";
 import { BotonAgregar } from "@/components/Carrito";
 import { AvisoSuplementos, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
+import { EnlaceWhatsapp } from "@/components/Whatsapp";
 
 type Props = { params: Promise<{ codigo: string }> };
 
@@ -116,6 +117,13 @@ export default async function Producto({ params }: Props) {
             <BotonCompartir etiqueta="Compartir" texto={`Mirá ${p.producto} ${p.presentacion} en Acopio Saludable:`} ruta={`/producto/${encodeURIComponent(p.codigo)}`} className="btn-sec mt-2 w-full" />
             <CuentaRegresiva corte={proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null} className="mt-3" />
             <p className="mt-3 text-xs text-stone-600">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras.</p>
+            {/* La consulta llega con el producto adentro: así no hay que preguntar «¿cuál?» y se contesta de una. */}
+            <EnlaceWhatsapp
+              mensaje={`Hola! Tengo una consulta sobre ${p.producto} ${p.presentacion} (${p.codigo}).`}
+              className="mt-2 text-sm font-semibold text-acopio-700 underline underline-offset-4"
+            >
+              Preguntar por este producto
+            </EnlaceWhatsapp>
             {p.categoria === "Congelados" && <p className="mt-3 rounded-xl bg-tierra-100 px-3.5 py-2.5 text-sm text-stone-700"><b>Producto congelado:</b> solo se entrega en Villa Carlos Paz y el sur de Punilla. No se envía por correo.</p>}
             <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} zonaPaga={zonaPagaDe(cfg.tabla)} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />
           </div>

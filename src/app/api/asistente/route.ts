@@ -1,65 +1,32 @@
 import { NextResponse } from "next/server";
 import { leerConfig } from "@/lib/config";
-import { detectar, normalizar, palabrasClave } from "@/lib/asistente";
-import { combosTienda, productosTienda, type ProductoTienda } from "@/lib/tienda";
+import { detectar, palabrasClave } from "@/lib/asistente";
+import { buscarEnCatalogo, type Enlace, type Respuesta } from "@/lib/asistente-catalogo";
 import { linkWhatsapp } from "@/lib/pedidos";
-import { pesos, renglonCombo } from "@/lib/precios";
+import { pesos } from "@/lib/precios";
 import { zonaPagaDe } from "@/lib/envios/tabla";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
+import { responderComoVendedor, vendedorActivo, type Turno } from "@/lib/vendedor";
 
 export const dynamic = "force-dynamic";
 
-type Enlace = { href: string; texto: string; externo?: boolean };
-type Ficha = { href: string; nombre: string; detalle: string; precio: string; foto: string | null };
-type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; aviso?: string };
-
-// El catálogo publicado cambia pocas veces al día: se guarda unos minutos para no leerlo en cada mensaje.
-let cache: { hasta: number; productos: (ProductoTienda & { nombre: string; indice: string })[] } | null = null;
-async function catalogo() {
-  if (cache && cache.hasta > Date.now()) return cache.productos;
-  const productos = (await productosTienda({})).map((p) => ({ ...p, nombre: ` ${normalizar(p.producto)} `, indice: ` ${normalizar(`${p.producto} ${p.marca} ${p.presentacion} ${p.categoria}`)} ` }));
-  cache = { hasta: Date.now() + 5 * 60 * 1000, productos };
-  return productos;
-}
-
-async function buscar(texto: string, soloSinTacc = false): Promise<Respuesta> {
-  const grupos = palabrasClave(texto);
-  if (!grupos.length) return { texto: "Contame qué estás buscando, por ejemplo «almendras» o «harina sin TACC», o elegí una de las opciones." };
-  const productos = (await catalogo()).filter((p) => !soloSinTacc || p.sinTacc);
-  // Vale más que la palabra sea el comienzo del nombre que una mención en la marca o la categoría.
-  const puntosDe = (p: { nombre: string; indice: string }) => grupos.reduce((s, g) => s + (g.some((v) => p.nombre.startsWith(` ${v}`)) ? 4 : g.some((v) => p.nombre.includes(` ${v}`)) ? 3 : g.some((v) => p.indice.includes(` ${v}`)) ? 2 : g.some((v) => p.indice.includes(v)) ? 1 : 0), 0);
-  const coincide = (indice: string) => grupos.every((g) => g.some((v) => indice.includes(v)));
-  let hallados = productos.filter((p) => coincide(p.indice));
-  if (!hallados.length && grupos.length > 1) hallados = productos.filter((p) => puntosDe(p) > 0);
-  hallados = hallados.map((p, i) => ({ p, i, s: puntosDe(p) })).sort((a, b) => b.s - a.s || a.i - b.i).map((x) => x.p);
-
-  const consulta = grupos.map((g) => g[0]).join(" ");
-  const combos = soloSinTacc ? [] : (await combosTienda({ activo: true, tipo: "COMBO" })).filter((c) => c.disponible && grupos.some((g) => g.some((v) => normalizar(c.nombre).includes(v)))).slice(0, 1);
-  if (!hallados.length && !combos.length) {
-    return { texto: `No encontré «${consulta}»${soloSinTacc ? " sin TACC" : ""} en el catálogo. Probá con otra palabra o mirá las góndolas.`, enlaces: [{ href: "/catalogo", texto: "Ver el catálogo" }, { href: "/combos", texto: "Ver combos" }] };
-  }
-  const fichas: Ficha[] = [
-    // El detalle de un combo es todo lo que trae: saber qué se lleva no puede depender de entrar a la ficha.
-    ...combos.map((c) => ({ href: `/combos/${c.slug}`, nombre: `Combo ${c.nombre}`, detalle: `Trae: ${c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)).join(" · ")}`, precio: pesos(Math.round(c.precio)), foto: c.fotoUrl })),
-    ...hallados.slice(0, 4 - combos.length).map((p) => ({ href: `/producto/${p.codigo}`, nombre: p.producto, detalle: [p.marca.startsWith("Sin marca") ? "" : p.marca, p.presentacion].filter(Boolean).join(" · "), precio: pesos(p.precio), foto: p.fotoUrl })),
-  ];
-  const total = hallados.length + combos.length;
-  return {
-    texto: total > fichas.length ? `Encontré ${total} opciones. Estas son las primeras:` : total === 1 ? "Encontré esto:" : "Encontré estas opciones:",
-    fichas,
-    enlaces: total > fichas.length ? [{ href: `/catalogo?q=${encodeURIComponent(consulta)}`, texto: "Ver todos los resultados" }] : undefined,
-    aviso: hallados.slice(0, 4).some((p) => p.esSuplemento) ? AVISO_SUPLEMENTOS : undefined,
-  };
+function historialDe(valor: unknown): Turno[] {
+  if (!Array.isArray(valor)) return [];
+  return valor
+    .filter((t): t is { de: unknown; texto: unknown } => typeof t === "object" && t !== null)
+    .map((t) => ({ de: t.de === "yo" ? ("yo" as const) : ("acopio" as const), texto: String(t.texto ?? "").slice(0, 400) }))
+    .filter((t) => t.texto)
+    .slice(-8);
 }
 
 export async function POST(req: Request) {
-  let cuerpo: { mensaje?: unknown };
+  let cuerpo: { mensaje?: unknown; historial?: unknown };
   try {
     cuerpo = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
-  const mensaje = typeof cuerpo?.mensaje === "string" ? cuerpo.mensaje.trim().slice(0, 200) : "";
+  const mensaje = typeof cuerpo?.mensaje === "string" ? cuerpo.mensaje.trim().slice(0, 400) : "";
   if (!mensaje) return NextResponse.json({ error: "Mensaje vacío" }, { status: 400 });
 
   const cfg = await leerConfig();
@@ -69,9 +36,28 @@ export async function POST(req: Request) {
   const propia = cfg.entregaPropiaActiva;
   const zonaPaga = propia ? zonaPagaDe(cfg.tabla) : null;
   const dto = cfg.descuentoTransferenciaPct;
+  const intencion = detectar(mensaje);
+
+  // Las consultas de salud no pasan por la IA: esta respuesta tiene que ser siempre la misma.
+  if (intencion === "salud") {
+    return NextResponse.json({
+      texto: "Eso no te lo puedo responder: no damos indicaciones de salud ni de consumo. Para eso consultá a tu médico o nutricionista. Si querés, te muestro el producto con su presentación y precio.",
+      aviso: AVISO_SUPLEMENTOS,
+    } satisfies Respuesta);
+  }
+
+  // El vendedor con IA atiende todo lo demás. Si no hay clave cargada, falla o tarda,
+  // sigue contestando el asistente de reglas de abajo: la tienda nunca queda muda.
+  if (vendedorActivo()) {
+    const r = await responderComoVendedor(mensaje, historialDe(cuerpo.historial));
+    if (r) {
+      const enlaces = r.fichas?.length ? undefined : [{ href: "/catalogo", texto: "Ver el catálogo" }, persona];
+      return NextResponse.json({ ...r, enlaces: r.enlaces ?? enlaces });
+    }
+  }
 
   let r: Respuesta;
-  switch (detectar(mensaje)) {
+  switch (intencion) {
     case "saludo":
       r = { texto: "Hola. Puedo buscarte un producto o contarte sobre envíos, pagos y la compra mínima. ¿Qué necesitás?" };
       break;
@@ -109,7 +95,7 @@ export async function POST(req: Request) {
     case "sintacc": {
       const resto = mensaje.replace(/sin\s+tacc|sin\s+gluten|gluten|cel[ií]ac\w*|apto\w*|para/gi, " ");
       if (palabrasClave(resto).length) {
-        r = await buscar(resto, true);
+        r = await buscarEnCatalogo(resto, true);
         r.aviso = "Productos marcados sin TACC en el catálogo. Revisá siempre el rotulado del envase.";
         break;
       }
@@ -128,11 +114,8 @@ export async function POST(req: Request) {
     case "humano":
       r = { texto: "Te atiende una persona de lunes a sábado, de 8 a 20 h.", enlaces: [persona] };
       break;
-    case "salud":
-      r = { texto: "Eso no te lo puedo responder: no damos indicaciones de salud ni de consumo. Para eso consultá a tu médico o nutricionista. Si querés, te muestro el producto con su presentación y precio.", aviso: AVISO_SUPLEMENTOS };
-      break;
     default:
-      r = await buscar(mensaje);
+      r = await buscarEnCatalogo(mensaje);
   }
   return NextResponse.json(r);
 }
