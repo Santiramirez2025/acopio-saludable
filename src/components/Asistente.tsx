@@ -53,13 +53,15 @@ export function Asistente() {
   }, [abierto]);
 
   async function enviar(pregunta: string) {
-    const mensaje = pregunta.trim().slice(0, 200);
+    const mensaje = pregunta.trim().slice(0, 400);
     if (!mensaje || esperando) return;
     setTexto("");
     setMensajes((m) => [...m, { de: "yo", texto: mensaje }]);
     setEsperando(true);
     try {
-      const r = await fetch("/api/asistente", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mensaje }) });
+      // Va el historial: un vendedor que no se acuerda de lo que le dijiste hace dos mensajes no vende.
+      const historial = mensajes.slice(-8).map((m) => ({ de: m.de, texto: m.texto }));
+      const r = await fetch("/api/asistente", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mensaje, historial }) });
       if (!r.ok) throw new Error();
       const datos = await r.json();
       setMensajes((m) => [...m, { de: "acopio", ...datos }]);

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { ProveedorCarrito } from "@/components/Carrito";
 import { BarraInferior, Encabezado, MedidorPedido } from "@/components/Encabezado";
+import { BotonWhatsapp, EnlaceWhatsapp } from "@/components/Whatsapp";
 import { NICHOS } from "@/lib/taxonomia";
 import { leerConfig } from "@/lib/config";
 import { pesos } from "@/lib/precios";
@@ -54,6 +55,10 @@ export default async function TiendaLayout({ children }: { children: React.React
             </div>
             <div>
               <h2 className="mb-1 font-semibold text-white">Ayuda</h2>
+              {/* El WhatsApp arriba de los enlaces: es la vía por la que la gente pregunta de verdad. */}
+              <EnlaceWhatsapp mensaje="Hola! Tengo una consulta sobre Acopio Saludable." className="min-h-[48px] font-semibold text-white underline underline-offset-4">
+                Escribinos por WhatsApp
+              </EnlaceWhatsapp>
               <ul className="grid grid-cols-2 gap-x-4">
                 {[["/envios", "Envíos"], ["/cambios-y-devoluciones", "Cambios y devoluciones"], ["/contacto", "Contacto"], ["/guias", "Guías"], ["/novedades", "Novedades"], ["/app", "Instalar la app"], ["/terminos", "Términos"], ["/privacidad", "Privacidad"]].map(([h, t]) => (
                   <li key={h}><Link href={h} className="flex min-h-[48px] items-center hover:text-white hover:underline">{t}</Link></li>
@@ -67,6 +72,7 @@ export default async function TiendaLayout({ children }: { children: React.React
           </div>
         </footer>
         <MedidorPedido />
+        <BotonWhatsapp />
         <BarraInferior />
       </div>
     </ProveedorCarrito>
