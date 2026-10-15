@@ -99,7 +99,10 @@ export function paraWhatsapp(r: Respuesta): string {
     partes.push(r.acciones.map((a) => `• ${a.cantidad > 1 ? `${a.cantidad} x ` : ""}${a.nombre} — ${a.precio}`).join("\n"));
     partes.push(`Tocá acá y te queda el pedido armado, listo para pagar:\n${abs(enlacePedido(lineas))}`);
   } else {
-    const productos = (r.fichas ?? []).slice(0, 3).map((f) => `${f.nombre}${f.detalle ? ` · ${f.detalle}` : ""} — ${f.precio}\n${abs(f.href)}`);
+    // El detalle de un combo es la lista entera de lo que trae: en WhatsApp es un ladrillo.
+    // Lo ve tocando el link.
+    const detalle = (d?: string) => (d && !d.startsWith("Trae:") ? ` · ${d}` : "");
+    const productos = (r.fichas ?? []).slice(0, 3).map((f) => `${f.nombre}${detalle(f.detalle)} — ${f.precio}\n${abs(f.href)}`);
     if (productos.length) partes.push(productos.join("\n\n"));
   }
 
