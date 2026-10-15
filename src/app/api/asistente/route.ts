@@ -6,9 +6,31 @@ import { linkWhatsapp } from "@/lib/pedidos";
 import { pesos } from "@/lib/precios";
 import { zonaPagaDe } from "@/lib/envios/tabla";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
-import { responderComoVendedor, vendedorActivo, type Turno } from "@/lib/vendedor";
+import { cotizarCarrito } from "@/lib/tienda";
+import { responderComoVendedor, vendedorActivo, type CarritoVisto, type Turno } from "@/lib/vendedor";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * El carrito que ve el vendedor lo cotiza el servidor, no el navegador.
+ * Si el precio que mira el vendedor saliera del cliente, alcanzaría con editar
+ * el localStorage para que te ofrezca pagar un pedido que no llega al mínimo.
+ */
+async function carritoDe(valor: unknown): Promise<CarritoVisto | null> {
+  if (!Array.isArray(valor) || !valor.length) return null;
+  try {
+    const c = await cotizarCarrito(valor);
+    if (!c.lineas.length) return null;
+    return {
+      renglones: c.lineas.map((l) => ({ nombre: l.nombre, cantidad: l.cantidad, subtotal: l.subtotal })),
+      subtotal: c.subtotal,
+      falta: c.falta,
+      compraMinima: c.compraMinima,
+    };
+  } catch {
+    return null; // sin carrito el vendedor sigue atendiendo igual
+  }
+}
 
 function historialDe(valor: unknown): Turno[] {
   if (!Array.isArray(valor)) return [];
@@ -20,7 +42,7 @@ function historialDe(valor: unknown): Turno[] {
 }
 
 export async function POST(req: Request) {
-  let cuerpo: { mensaje?: unknown; historial?: unknown };
+  let cuerpo: { mensaje?: unknown; historial?: unknown; carrito?: unknown };
   try {
     cuerpo = await req.json();
   } catch {
@@ -49,10 +71,12 @@ export async function POST(req: Request) {
   // El vendedor con IA atiende todo lo demás. Si no hay clave cargada, falla o tarda,
   // sigue contestando el asistente de reglas de abajo: la tienda nunca queda muda.
   if (vendedorActivo()) {
-    const r = await responderComoVendedor(mensaje, historialDe(cuerpo.historial));
+    const r = await responderComoVendedor(mensaje, historialDe(cuerpo.historial), await carritoDe(cuerpo.carrito));
     if (r) {
-      const enlaces = r.fichas?.length ? undefined : [{ href: "/catalogo", texto: "Ver el catálogo" }, persona];
-      return NextResponse.json({ ...r, enlaces: r.enlaces ?? enlaces });
+      // Los atajos de abajo solo si la respuesta quedó sin nada para tocar: con tarjetas
+      // o con botones de agregar, sumar «Ver el catálogo» le saca el foco a la acción que importa.
+      const vacia = !r.fichas?.length && !r.acciones?.length;
+      return NextResponse.json({ ...r, enlaces: r.enlaces ?? (vacia ? [{ href: "/catalogo", texto: "Ver el catálogo" }, persona] : undefined) });
     }
   }
 
