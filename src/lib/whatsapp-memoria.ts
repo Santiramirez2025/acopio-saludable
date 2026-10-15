@@ -97,9 +97,30 @@ export async function historialDe(telefono: string, cantidad = 8): Promise<Turno
   return filas.reverse().map((f) => ({ de: f.de === "cliente" ? ("yo" as const) : ("acopio" as const), texto: f.texto }));
 }
 
+/** Si una persona tomó la charla y no escribe en este tiempo, el vendedor la retoma solo. */
+export const RETOMA_HORAS = 2;
+
+/**
+ * Quién atiende ahora. Una charla en manos de una persona vuelve sola al vendedor si nadie
+ * del equipo escribió en las últimas RETOMA_HORAS: tomar la charla y olvidarse de devolverla
+ * deja al cliente hablando solo, que es peor que un bot.
+ *
+ * La referencia es el último mensaje que no es del cliente: o la respuesta de la persona, o
+ * el aviso del bot "te contesta una persona", si nadie llegó a contestar.
+ */
 export async function estadoDe(telefono: string): Promise<EstadoConversacion> {
-  const filas = await prisma.$queryRaw<{ estado: string }[]>`SELECT "estado" FROM "WhatsappConversacion" WHERE "telefono" = ${telefono}`;
-  return filas[0]?.estado === "persona" ? "persona" : "bot";
+  const filas = await prisma.$queryRaw<{ estado: string; ultimo: Date | null }[]>`
+    SELECT c."estado",
+           (SELECT MAX(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" <> 'cliente') AS "ultimo"
+    FROM "WhatsappConversacion" c WHERE c."telefono" = ${telefono}
+  `;
+  const f = filas[0];
+  if (f?.estado !== "persona") return "bot";
+  if (f.ultimo && Date.now() - new Date(f.ultimo).getTime() > RETOMA_HORAS * 3_600_000) {
+    await cambiarEstado(telefono, "bot");
+    return "bot";
+  }
+  return "persona";
 }
 
 export async function cambiarEstado(telefono: string, estado: EstadoConversacion): Promise<void> {
