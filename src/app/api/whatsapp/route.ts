@@ -21,7 +21,7 @@ import { detectar } from "@/lib/asistente";
 import { buscarEnCatalogo } from "@/lib/asistente-catalogo";
 import { responderComoVendedor, vendedorActivo } from "@/lib/vendedor";
 import { cloudActivo, enviarTexto, marcarLeido, paraWhatsapp } from "@/lib/whatsapp-cloud";
-import { cambiarEstado, estadoDe, historialDe, registrarEntrante, registrarSalida } from "@/lib/whatsapp-memoria";
+import { cambiarEstado, estadoDe, historialDe, registrarAnuncio, registrarEntrante, registrarSalida } from "@/lib/whatsapp-memoria";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +54,9 @@ export async function GET(req: Request) {
   return new Response("no", { status: 403 });
 }
 
-type Entrante = { from: string; id: string; type: string; text?: { body?: string } };
+// "referral" llega en el primer mensaje cuando la persona tocó un anuncio "clic a WhatsApp".
+type Referral = { source_id?: string; source_type?: string; source_url?: string; headline?: string; body?: string; ctwa_clid?: string };
+type Entrante = { from: string; id: string; type: string; text?: { body?: string }; referral?: Referral };
 type Contacto = { wa_id?: string; profile?: { name?: string } };
 type Cambio = { field?: string; value?: { messages?: Entrante[]; contacts?: Contacto[] } };
 
@@ -121,6 +123,12 @@ async function atender(m: Entrante, nombre: string | null): Promise<void> {
   }
   await marcarLeido(m.id);
 
+  const ref = m.referral;
+  if (ref && (ref.source_id || ref.ctwa_clid)) {
+    await registrarAnuncio(m.from, { anuncioId: ref.source_id ?? null, titulo: ref.headline ?? ref.body?.slice(0, 120) ?? null, ctwaClid: ref.ctwa_clid ?? null });
+    console.log("whatsapp: viene de un anuncio", { de: cola(m.from), anuncio: ref.source_id ?? null, tipo: ref.source_type ?? null });
+  }
+
   // Una persona tomó la charla: el bot no se mete. El mensaje queda guardado y suma no leídos.
   if ((await estadoDe(m.from)) === "persona") {
     console.log("whatsapp: en manos de una persona, el bot se calla", cola(m.from));
@@ -141,7 +149,11 @@ async function atender(m: Entrante, nombre: string | null): Promise<void> {
   // El historial se lee sin el mensaje recién guardado: el vendedor lo recibe aparte.
   const historial = (await historialDe(m.from, 9)).slice(0, -1);
   const inicio = Date.now();
-  const r = vendedorActivo() ? await responderComoVendedor(texto, historial, null, "whatsapp") : null;
+  // Si vino de un anuncio, el vendedor tiene que saber qué le prometió el anuncio: es lo que
+  // la persona espera leer en la primera respuesta. Va pegado al mensaje, no a las instrucciones,
+  // para no romper el caché del prompt.
+  const anuncio = ref && (ref.headline || ref.body) ? `<anuncio>La persona tocó un anuncio que decía: ${[ref.headline, ref.body].filter(Boolean).join(" — ").slice(0, 300)}. Arrancá por ahí.</anuncio>\n\n` : "";
+  const r = vendedorActivo() ? await responderComoVendedor(`${anuncio}${texto}`, historial, null, "whatsapp") : null;
   const respuesta = r ?? (await buscarEnCatalogo(texto));
   // Pedir una persona deriva siempre, conteste la IA o el motor de reglas. Y el texto es fijo:
   // el modelo tiende a prometer "el link de arriba" u otras cosas que acá no existen.
