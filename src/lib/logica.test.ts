@@ -601,3 +601,19 @@ test("una baja de precio se mide contra el precio anterior", () => {
   assert.ok(bajaPct(10000, 9900) < BAJA_MINIMA_PCT, "1% no llega al mínimo");
   assert.ok(bajaPct(10000, 9500) >= BAJA_MINIMA_PCT, "5% sí");
 });
+
+import { esBaja, plantillaDe, textoPlantilla } from "./whatsapp-plantillas";
+
+test("prospección: bajas, plantilla por rubro y texto guardado", () => {
+  assert.equal(esBaja("No, gracias"), true);
+  assert.equal(esBaja("no me interesa por ahora"), true);
+  assert.equal(esBaja("Sí, pasame precios"), false);
+  assert.equal(esBaja("no sé, cuánto sale la granola?"), false);
+  assert.equal(plantillaDe("hotel"), "desayuno");
+  assert.equal(plantillaDe("hostel"), "desayuno");
+  assert.equal(plantillaDe("cabañas / complejo"), "kit");
+  assert.equal(plantillaDe("departamentos / alquiler temporario"), "kit");
+  const t = textoPlantilla("desayuno", "Hotel Capri");
+  assert.ok(t.startsWith("Hola, Hotel Capri."));
+  assert.ok(!t.includes("{{1}}"));
+});

@@ -23,6 +23,8 @@ export type Conversacion = {
   creado: Date;
   anuncioId: string | null;
   anuncioTitulo: string | null;
+  prospecto: string | null;
+  baja: boolean;
 };
 
 export type Mensaje = { id: string; telefono: string; de: "cliente" | "bot" | "persona"; texto: string; fecha: Date };
@@ -133,7 +135,7 @@ export async function marcarLeida(telefono: string): Promise<void> {
 
 export async function listarConversaciones(limite = 100): Promise<(Conversacion & { ultimoTexto: string | null })[]> {
   return prisma.$queryRaw<(Conversacion & { ultimoTexto: string | null })[]>`
-    SELECT c."telefono", c."nombre", c."estado", c."noLeidos", c."ultimoMensaje", c."creado", c."anuncioId", c."anuncioTitulo",
+    SELECT c."telefono", c."nombre", c."estado", c."noLeidos", c."ultimoMensaje", c."creado", c."anuncioId", c."anuncioTitulo", c."prospecto", c."baja",
            (SELECT m."texto" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1) AS "ultimoTexto"
     FROM "WhatsappConversacion" c
     ORDER BY (c."estado" = 'persona') DESC, c."ultimoMensaje" DESC
@@ -143,7 +145,7 @@ export async function listarConversaciones(limite = 100): Promise<(Conversacion 
 
 export async function conversacionDe(telefono: string): Promise<Conversacion | null> {
   const filas = await prisma.$queryRaw<Conversacion[]>`
-    SELECT "telefono", "nombre", "estado", "noLeidos", "ultimoMensaje", "creado", "anuncioId", "anuncioTitulo"
+    SELECT "telefono", "nombre", "estado", "noLeidos", "ultimoMensaje", "creado", "anuncioId", "anuncioTitulo", "prospecto", "baja"
     FROM "WhatsappConversacion" WHERE "telefono" = ${telefono}
   `;
   return filas[0] ?? null;

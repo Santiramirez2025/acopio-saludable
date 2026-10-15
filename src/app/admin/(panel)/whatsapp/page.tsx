@@ -44,6 +44,7 @@ export default async function WhatsappPanel() {
                 <td className="px-3 py-2">
                   <Link href={`/admin/whatsapp/${c.telefono}`} className="font-medium text-acopio-700 underline">{c.nombre || bonito(c.telefono)}</Link>
                   {c.nombre && <div className="text-xs text-stone-600">{bonito(c.telefono)}</div>}
+                  {c.prospecto && <div className="mt-0.5 text-xs font-medium text-tierra-700">Le escribimos nosotros · {c.prospecto}{c.baja ? " · pidió no recibir más" : ""}</div>}
                   {c.anuncioId && <div className="mt-0.5 text-xs font-medium text-sky-700" title={c.anuncioTitulo ?? undefined}>Vino de un anuncio{c.anuncioTitulo ? `: ${c.anuncioTitulo.slice(0, 40)}` : ""}</div>}
                 </td>
                 <td className="max-w-[420px] truncate px-3 py-2 text-stone-700">
