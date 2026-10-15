@@ -13,10 +13,12 @@ export function cloudActivo(): boolean {
   return Boolean(process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID);
 }
 
-async function graph(camino: string, cuerpo: unknown): Promise<boolean> {
+type Resultado = { ok: boolean; codigo?: number };
+
+async function graph(camino: string, cuerpo: unknown, etiqueta: string): Promise<Resultado> {
   const token = process.env.WHATSAPP_TOKEN;
   const id = process.env.WHATSAPP_PHONE_ID;
-  if (!token || !id) return false;
+  if (!token || !id) return { ok: false };
   try {
     const res = await fetch(`${GRAPH}/${id}/${camino}`, {
       method: "POST",
@@ -27,31 +29,56 @@ async function graph(camino: string, cuerpo: unknown): Promise<boolean> {
     if (!res.ok) {
       // El cuerpo del error de Meta dice exactamente qué falta (token vencido, número sin registrar,
       // ventana de 24 hs cerrada). Sin esto, depurar un webhook es adivinar.
-      console.error("whatsapp: envío rechazado", res.status, (await res.text()).slice(0, 400));
-      return false;
+      const texto = await res.text();
+      let codigo: number | undefined;
+      try {
+        codigo = (JSON.parse(texto) as { error?: { code?: number } }).error?.code;
+      } catch {
+        /* no era JSON */
+      }
+      console.error(`whatsapp: ${etiqueta} rechazado`, res.status, texto.slice(0, 400));
+      return { ok: false, codigo };
     }
-    return true;
+    return { ok: true };
   } catch (e) {
-    console.error("whatsapp: envío falló", e);
-    return false;
+    console.error(`whatsapp: ${etiqueta} falló`, e);
+    return { ok: false };
   }
+}
+
+/**
+ * Los celulares argentinos tienen dos escrituras: 549 + área + número (la que usa WhatsApp)
+ * y 54 + área + número. Meta guarda una u otra según cómo se cargó, y en el modo de prueba
+ * compara literal. Si rechaza una, se prueba la otra antes de darse por vencido.
+ */
+function variantesArgentinas(a: string): string[] {
+  if (/^549\d{10}$/.test(a)) return [a, `54${a.slice(3)}`];
+  if (/^54[1-9]\d{9}$/.test(a)) return [a, `549${a.slice(2)}`];
+  return [a];
 }
 
 /** Un mensaje de texto. Los links van sin preview para que no tape la respuesta. */
 export async function enviarTexto(a: string, texto: string): Promise<boolean> {
   if (!texto.trim()) return false;
-  return graph("messages", {
+  const cuerpo = (to: string) => ({
     messaging_product: "whatsapp",
     recipient_type: "individual",
-    to: a,
+    to,
     type: "text",
     text: { body: texto.slice(0, 4000), preview_url: false },
   });
+  for (const destino of variantesArgentinas(a)) {
+    const r = await graph("messages", cuerpo(destino), "envío");
+    if (r.ok) return true;
+    // 131030: "destinatario no está en la lista de prueba". Solo ahí vale probar la otra escritura.
+    if (r.codigo !== 131030) return false;
+  }
+  return false;
 }
 
-/** El tilde azul. Barato y hace que no parezca un robot que ignora. */
+/** El tilde azul. Barato y hace que no parezca un robot que ignora. Si falla, no importa. */
 export async function marcarLeido(idMensaje: string): Promise<boolean> {
-  return graph("messages", { messaging_product: "whatsapp", status: "read", message_id: idMensaje });
+  return (await graph("messages", { messaging_product: "whatsapp", status: "read", message_id: idMensaje }, "marcar leído")).ok;
 }
 
 /**
