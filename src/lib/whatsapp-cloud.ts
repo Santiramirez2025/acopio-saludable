@@ -7,6 +7,7 @@
 import { urlSitio } from "./sitio";
 import { enlacePedido } from "./pedido-enlace";
 import type { Respuesta } from "./asistente-catalogo";
+import { comoTexto, cuerpoGraph, type Saliente } from "./whatsapp-interactivo";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 
@@ -75,6 +76,21 @@ export async function enviarTexto(a: string, texto: string): Promise<boolean> {
     if (r.codigo !== 131030) return false;
   }
   return false;
+}
+
+/**
+ * Un mensaje con botones, lista, foto o botón con link. Si Meta lo rechaza (un tope mal medido,
+ * una foto que no carga), se manda como texto: nunca se deja a nadie sin respuesta.
+ */
+export async function enviarSaliente(a: string, s: Saliente): Promise<boolean> {
+  if (s.tipo === "texto") return enviarTexto(a, s.texto);
+  for (const destino of variantesArgentinas(a)) {
+    const r = await graph("messages", cuerpoGraph(s, destino), `envío ${s.tipo}`);
+    if (r.ok) return true;
+    if (r.codigo !== 131030) break;
+  }
+  if (s.tipo === "imagen") return false; // la foto es un extra: si no sale, sigue lo demás
+  return enviarTexto(a, comoTexto(s));
 }
 
 /** El tilde azul. Barato y hace que no parezca un robot que ignora. Si falla, no importa. */

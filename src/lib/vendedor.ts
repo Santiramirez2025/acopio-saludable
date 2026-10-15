@@ -10,13 +10,14 @@
 //    así que se cobran una vez cada cinco minutos en lugar de una vez por mensaje.
 
 import { leerConfig } from "./config";
-import { catalogo, hallarProductos } from "./asistente-catalogo";
+import { catalogo, hallarCombos, hallarProductos } from "./asistente-catalogo";
 import { combosTienda } from "./tienda";
 import { ofertasDelProveedor } from "./ofertas";
 import { pesos, renglonCombo } from "./precios";
 import { zonaPagaDe } from "./envios/tabla";
 import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
+import { separarOpciones } from "./whatsapp-interactivo";
 import type { Accion, Enlace, Ficha, Respuesta } from "./asistente-catalogo";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
@@ -32,7 +33,7 @@ export type CarritoVisto = {
 };
 
 const MODELO = process.env.VENDEDOR_MODELO || "claude-haiku-5-5";
-const MAX_VUELTAS = 4;
+const MAX_VUELTAS = 5;
 
 export function vendedorActivo(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
@@ -42,7 +43,7 @@ const HERRAMIENTAS = [
   {
     name: "buscar_productos",
     description:
-      "Busca productos en el catálogo real de la tienda y devuelve código, nombre, presentación, precio y si es sin TACC. " +
+      "Busca productos y combos en el catálogo real de la tienda y devuelve código (o slug si es combo), nombre, presentación, precio y si es sin TACC. " +
       "Usala SIEMPRE antes de nombrar un producto, decir un precio o agregar algo al pedido.",
     input_schema: {
       type: "object" as const,
@@ -93,7 +94,7 @@ const HERRAMIENTAS = [
     description:
       "Le deja botones para sumar productos o combos al pedido con un toque, sin salir del chat. " +
       "Usá los códigos exactos que te dio buscar_productos o los slugs de ver_combos: si inventás uno, se descarta. " +
-      "Usala siempre que la persona acepte una sugerencia o diga que quiere algo.",
+      "Usala siempre que la persona acepte una sugerencia o elija algo. Arma el pedido COMPLETO: incluí todo lo que ya eligió antes en la charla, no solo lo nuevo.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -150,25 +151,37 @@ type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: 
 export async function correrHerramienta(nombre: string, entrada: Record<string, unknown>, canal: Canal = "web"): Promise<Salida> {
   if (nombre === "buscar_productos") {
     const consulta = String(entrada.consulta ?? "");
-    const productos = (await hallarProductos(consulta, entrada.solo_sin_tacc === true)).slice(0, 6);
-    if (!productos.length) return { texto: `Sin resultados para «${consulta}». No ofrezcas este producto: no lo tenemos.` };
-    const fichas: Ficha[] = productos.slice(0, 4).map((p) => ({
+    const soloSinTacc = entrada.solo_sin_tacc === true;
+    const [productos, combos] = await Promise.all([
+      hallarProductos(consulta, soloSinTacc).then((x) => x.slice(0, 6)),
+      soloSinTacc ? Promise.resolve([]) : hallarCombos(consulta).then((x) => x.slice(0, 2)),
+    ]);
+    if (!productos.length && !combos.length) return { texto: `Sin resultados para «${consulta}». No ofrezcas este producto: no lo tenemos. Ofrecé lo más parecido que sí haya.` };
+    const fichasCombo: Ficha[] = combos.map((c) => ({
+      href: `/combos/${c.slug}`,
+      nombre: `Combo ${c.nombre}`,
+      detalle: `Trae: ${c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)).join(" · ")}`,
+      precio: pesos(Math.round(c.precio)),
+      foto: c.fotoUrl,
+    }));
+    const fichas: Ficha[] = [...fichasCombo, ...productos.slice(0, 4 - fichasCombo.length).map((p) => ({
       href: `/producto/${encodeURIComponent(p.codigo)}`,
       nombre: p.producto,
       detalle: [p.marca.startsWith("Sin marca") ? "" : p.marca, p.presentacion].filter(Boolean).join(" · "),
       precio: pesos(p.precio),
       foto: p.fotoUrl,
-    }));
+    }))];
     // El código va primero porque es lo que necesita para agregar_al_pedido.
-    const texto = productos
-      .map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}${p.esSuplemento ? " · suplemento" : ""}`)
-      .join("\n");
+    const texto = [
+      ...combos.map((c) => `- combo slug ${c.slug} · ${c.nombre} · trae ${c.items.map(({ producto, cantidad }) => `${cantidad} x ${producto.producto} ${producto.presentacion}`).join(", ")} · ${pesos(Math.round(c.precio))} (lista ${pesos(Math.round(c.precioLista))})`),
+      ...productos.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}${p.esSuplemento ? " · suplemento" : ""}`),
+    ].join("\n");
     return { texto, fichas };
   }
 
   if (nombre === "ver_combos") {
     const cfg = await leerConfig();
-    const combos = (await combosTienda({ activo: true, tipo: "COMBO" })).filter((c) => c.disponible).slice(0, 8);
+    const combos = (await combosTienda({ activo: true, tipo: "COMBO" })).filter((c) => c.disponible).slice(0, 20);
     if (!combos.length) return { texto: "No hay combos disponibles ahora." };
     const fichas: Ficha[] = combos.slice(0, 3).map((c) => ({
       href: `/combos/${c.slug}`,
@@ -178,7 +191,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       foto: c.fotoUrl,
     }));
     const texto = combos
-      .map((c) => `- slug ${c.slug} · ${c.nombre} · ${c.items.length} productos · ${pesos(Math.round(c.precio))}${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""}`)
+      .map((c) => `- slug ${c.slug} · ${c.nombre} · ${c.items.length} productos · ${pesos(Math.round(c.precio))} (ahorra ${pesos(Math.round(c.ahorro))})${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""}`)
       .join("\n");
     return { texto, fichas };
   }
@@ -334,34 +347,39 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
 
 function instrucciones(compraMinima: string): string {
   return [
-    "Sos el vendedor de Acopio Saludable, una tienda de productos saludables a granel y sin TACC de Villa Carlos Paz, Córdoba. Atendés el chat de la web y el WhatsApp.",
+    "Sos Santiago, el vendedor de Acopio Saludable: productos saludables a granel y sin TACC, desde Villa Carlos Paz, Córdoba. Atendés el chat de la web, WhatsApp, Messenger e Instagram.",
+    "La persona tiene que sentir que le escribe alguien de verdad que sabe del tema y la quiere ayudar, no un sistema.",
     "",
     "CÓMO HABLÁS",
-    "- Español rioplatense, de vos. Cálido y simple, como el almacenero de confianza del barrio: amable, rápido y sin vueltas. Que lo entienda cualquiera.",
-    "- Corto: hasta tres frases y como mucho una pregunta. Nada de listas largas ni párrafos.",
-    "- Saludá solo en el primer mensaje. No repitas lo que ya dijiste. Como mucho un emoji, y solo si suma.",
+    "- Rioplatense, de vos, cálido y natural, como por WhatsApp con un cliente de confianza. Frases cortas, nada de lenguaje de sistema.",
+    "- Nunca digas «encontré N opciones», «según el catálogo», «no coincide con el anuncio», «soy un asistente» ni nada que suene a robot.",
+    "- Hasta tres frases y como mucho una pregunta por mensaje. Saludá solo al principio, y si sabés el nombre, usalo una vez.",
+    "- Como mucho un emoji y solo si suma.",
     "",
-    "CÓMO VENDÉS",
-    "- Primero resolvé lo que pidió, con el producto y el precio real. Después, si viene al caso, una sola recomendación: un complemento, una presentación más conveniente o el combo que ya lo trae.",
-    "- Los combos son tu mejor oferta: tienen 5% de descuento y casi todos llegan solos a la compra mínima. Ofrecelos con ver_combos cuando no sabe qué llevar, cuando le falta para el mínimo o cuando lo que pide viene en un combo.",
-    "- Entendé si es para la casa o para un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería, oficina). Preguntalo una sola vez y solo si cambia lo que le ofrecés. Si es un negocio, usá pedido_para_negocio y hablale de reventa: precio sugerido y cuánto gana por unidad.",
-    `- La compra mínima es ${compraMinima}. Si no llega, usá completar_el_minimo y ofrecé algo concreto con su precio. Nunca lo dejes en «te falta plata».`,
-    "- Cuando acepta algo, agregalo con agregar_al_pedido en ese mismo mensaje.",
-    "- Cuando ya tiene lo que buscaba, preguntá una sola vez si le sumás algo más o se lo dejás listo para pagar. Si dice que no, no insistas: cerrá con el pedido listo y agradecé.",
-    "- Si duda por el precio, nombrá el descuento por transferencia, un combo o una baja real de ver_ofertas. Nada más.",
-    "- No regatees ni inventes descuentos ni plazos: los únicos que existen son los que te dan las herramientas.",
+    "CÓMO ASESORÁS (esto es lo que vende)",
+    "- Antes de ofrecer, entendé qué necesita: para qué lo quiere, si es para la casa o un negocio, cuánto consume. Una pregunta a la vez, y solo si cambia lo que le ofrecés.",
+    "- Respondé lo que preguntó con producto y precio real, y decile lo que le importa escuchar, siempre con datos verdaderos: cuánto ahorra, que le rinde, que se arma a pedido y llega fresco, que el combo ya le resuelve todo.",
+    "- Recomendá UNA cosa concreta y por qué le conviene a él. No tires listas: elegí vos lo mejor para su caso.",
+    "- Los combos son tu mejor oferta: 5% de descuento y casi todos llegan solos a la compra mínima. Buscalos con buscar_productos o ver_combos.",
+    "- Si vino de un anuncio, arrancá por lo que prometía el anuncio, con su precio real, y ofrecéselo directo. Si el precio cambió, dalo sin hacer ruido.",
+    "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería), usá pedido_para_negocio y hablale de reventa: precio sugerido y cuánto gana.",
+    `- La compra mínima es ${compraMinima}. Si no llega, usá completar_el_minimo y ofrecé algo concreto con su precio, nunca «te falta plata».`,
+    "- Cuando acepta algo o elige un producto, agregalo con agregar_al_pedido en ese mismo mensaje. Ahí se le muestran solos los botones para pagar.",
+    "- Cuando ya tiene lo que buscaba, preguntá una sola vez si le sumás algo más o se lo dejás listo. Si dice que no, cerrá cálido y agradecé.",
+    "- Si duda o desconfía: contale que somos de Carlos Paz, que puede pagar por transferencia con descuento y que lo atiende una persona. Si duda por el precio, nombrá el descuento por transferencia, un combo o una baja real de ver_ofertas.",
+    "- No regatees ni inventes descuentos ni plazos.",
     "",
     "LO QUE NO HACÉS NUNCA",
-    "- No inventes productos, códigos, precios, plazos ni condiciones. Todo número sale de las herramientas. Si no aparece, decí que no lo tenemos y ofrecé una alternativa que sí esté.",
-    "- No digas que un producto cura, trata, previene ni mejora ninguna condición de salud. No nombres enfermedades. Si preguntan eso, decí que no das indicaciones de salud y que consulten a su médico o nutricionista.",
-    "- No prometas resultados físicos, de rendimiento ni de peso. No des cantidades a consumir ni armes dietas.",
+    "- No inventes productos, códigos, precios, plazos ni condiciones: todo número sale de las herramientas. Si algo no está, decilo simple y ofrecé lo más parecido.",
+    "- No digas que un producto cura, trata, previene ni mejora ninguna condición de salud. No nombres enfermedades. No des cantidades a consumir ni armes dietas.",
     "- No inventes testimonios, certificaciones ni cantidades de clientes.",
-    "- No pidas datos personales: ni DNI, ni dirección, ni teléfono, ni mail. Los datos se cargan en el checkout.",
-    "- Si preguntan por un pedido ya hecho, hay un reclamo, o te piden algo que no sabés, usá pasar_a_whatsapp.",
+    "- No pidas DNI, dirección, teléfono ni mail: eso se carga al pagar.",
+    "- Si pregunta por un pedido ya hecho, hay un reclamo o pide hablar con una persona, usá pasar_a_whatsapp.",
     "",
-    "FORMATO DE LA RESPUESTA",
-    "- Texto plano, sin markdown, sin asteriscos, sin encabezados y sin links.",
-    "- Debajo de tu texto se le muestran solos los productos que buscaste (con precio y link) o el pedido armado para pagar: no los repitas uno por uno, nombrá uno o dos y seguí.",
+    "FORMATO",
+    "- Texto plano, sin markdown, sin asteriscos y sin links: los productos que buscaste y el pedido armado se le muestran solos con botones debajo de tu texto. No los repitas uno por uno.",
+    "- Terminá SIEMPRE con una última línea así: OPCIONES: opción 1 | opción 2 | opción 3",
+    "  Son hasta 3 respuestas que la persona tocaría como botón, escritas como las diría ella, de hasta 20 caracteres cada una. Ejemplos: «Quiero la Despensa», «Para un negocio», «Ver otros combos», «Sí, agregalo», «Nada más, gracias».",
   ].join("\n");
 }
 
@@ -408,26 +426,37 @@ export async function responderComoVendedor(
         body: JSON.stringify({
           model: MODELO,
           // Las respuestas son de tres frases: un techo bajo corta las que se van de largo.
-          max_tokens: 400,
+          max_tokens: 700,
           // El cache_control al final del system cubre las herramientas y las instrucciones:
           // son el 90% de lo que se manda y no cambian entre mensajes.
           system: [{ type: "text", text: instrucciones(pesos(cfg.compraMinima)), cache_control: { type: "ephemeral" } }],
           tools: HERRAMIENTAS,
+          // En la última vuelta ya no puede pedir más herramientas: tiene que contestar con lo que tiene.
+          // Antes, si se quedaba sin vueltas, devolvía null y contestaba el buscador viejo.
+          ...(vuelta === MAX_VUELTAS - 1 ? { tool_choice: { type: "none" } } : {}),
           messages: mensajes,
         }),
         signal: AbortSignal.timeout(25_000),
       });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.error("vendedor: la API rechazó", res.status, (await res.text()).slice(0, 300));
+        return null;
+      }
       const data = (await res.json()) as { content?: Bloque[] };
       const bloques = data.content ?? [];
       mensajes.push({ role: "assistant", content: bloques });
 
       const usos = bloques.filter((b) => b.type === "tool_use");
       if (!usos.length) {
-        const texto = bloques.filter((b) => b.type === "text").map((b) => b.text ?? "").join("").trim();
-        if (!texto) return null;
+        const crudo = bloques.filter((b) => b.type === "text").map((b) => b.text ?? "").join("").trim();
+        const { texto, opciones } = separarOpciones(crudo);
+        if (!texto) {
+          console.error("vendedor: respuesta sin texto", { vuelta });
+          return null;
+        }
         return {
           texto,
+          opciones: opciones.length ? opciones : undefined,
           fichas: fichas.length ? fichas : undefined,
           acciones: acciones.length ? acciones : undefined,
           enlaces: enlaces.length ? enlaces : undefined,
@@ -446,8 +475,10 @@ export async function responderComoVendedor(
       }
       mensajes.push({ role: "user", content: resultados });
     }
-  } catch {
+  } catch (e) {
+    console.error("vendedor: falló", e);
     return null;
   }
+  console.error("vendedor: se quedó sin vueltas");
   return null;
 }

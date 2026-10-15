@@ -658,3 +658,56 @@ test("bandeja: filtros, búsqueda, iniciales y fechas", () => {
   assert.equal(cuando(new Date("2026-10-15T17:45:00Z"), ahora), "hace 15 min");
   assert.equal(cuando(new Date("2026-10-14T15:00:00Z"), ahora), "ayer");
 });
+
+import { separarOpciones, leerToque, planWhatsapp, cuerpoGraph, textoParaPanel } from "./whatsapp-interactivo";
+import { pidePersona } from "./asistente";
+
+test("vendedor: la línea OPCIONES se separa del texto y se recorta a botones válidos", () => {
+  const r = separarOpciones("Te recomiendo la Despensa.\nOPCIONES: Quiero la Despensa | Ver otros combos | «Una opción demasiado larga para botón» | ver otros combos");
+  assert.equal(r.texto, "Te recomiendo la Despensa.");
+  assert.deepEqual(r.opciones, ["Quiero la Despensa", "Ver otros combos"]);
+  assert.deepEqual(separarOpciones("Hola").opciones, []);
+});
+
+test("whatsapp: los ids de botones y filas dicen qué tocó", () => {
+  assert.deepEqual(leerToque("quiero|c|despensa-de-4-kilos"), { tipo: "quiero", clase: "combo", id: "despensa-de-4-kilos" });
+  assert.deepEqual(leerToque("quiero|p|00123"), { tipo: "quiero", clase: "producto", id: "00123" });
+  assert.deepEqual(leerToque("pagar|/carrito?p=c-x*1"), { tipo: "pagar", camino: "/carrito?p=c-x*1" });
+  assert.deepEqual(leerToque("transf|/carrito?p=5*2"), { tipo: "transferencia", camino: "/carrito?p=5*2" });
+  assert.equal(leerToque(null), null);
+  assert.equal(leerToque("cualquier cosa"), null);
+});
+
+test("whatsapp: productos van en lista para tocar, pedido con botones de pago, sin links sueltos", () => {
+  const fichas = [
+    { href: "/combos/despensa", nombre: "Combo Despensa de 4 kilos", detalle: "Trae: muchas cosas", precio: "$ 35.268", foto: "https://x/f.jpg" },
+  ];
+  const plan = planWhatsapp({ texto: "Te conviene la Despensa.", fichas, opciones: ["Quiero la Despensa"] }, null);
+  assert.equal(plan[0].tipo, "imagen");
+  assert.equal(plan[1].tipo, "lista");
+  const lista = plan[1] as Extract<(typeof plan)[number], { tipo: "lista" }>;
+  assert.equal(lista.secciones[0].filas[0].id, "quiero|c|despensa");
+  assert.ok(!lista.cuerpo.includes("http"));
+  const cuerpo = cuerpoGraph(lista, "549351") as { interactive: { action: { sections: { rows: { title: string }[] }[] } } };
+  assert.ok(cuerpo.interactive.action.sections[0].rows.every((r) => r.title.length <= 24));
+
+  const pedido = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null });
+  assert.equal(pedido[0].tipo, "botones");
+  const b = pedido[0] as Extract<(typeof pedido)[number], { tipo: "botones" }>;
+  assert.deepEqual(b.botones.map((x) => x.titulo), ["Mercado Pago", "Transferencia", "Sumar algo más"]);
+  assert.equal(b.botones[0].id, "pagar|/carrito?p=c-despensa*1");
+  assert.match(textoParaPanel(b), /\[Botones: Mercado Pago · Transferencia · Sumar algo más\]/);
+
+  const corto = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=1*1", renglones: ["Algo — $ 5.000"], total: "$ 5.000", conTransferencia: null, falta: "$ 30.000" });
+  assert.match((corto[0] as { cuerpo: string }).cuerpo, /Te faltan \$ 30\.000/);
+
+  assert.deepEqual(planWhatsapp({ texto: "Hola" }, null), [{ tipo: "texto", texto: "Hola" }]);
+});
+
+test("whatsapp: pedir una persona es pedirla de verdad, no nombrar whatsapp", () => {
+  assert.ok(pidePersona("quiero hablar con una persona"));
+  assert.ok(pidePersona("Hablar con Santiago"));
+  assert.ok(!pidePersona("te escribo por whatsapp por las almendras"));
+  assert.ok(!pidePersona("sos vendedor?"));
+  assert.ok(!pidePersona("¡Hola! Quiero precios de frutos secos por kilo"));
+});

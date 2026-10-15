@@ -2,7 +2,7 @@
 // el asistente de reglas y el vendedor con IA, que necesita los mismos precios reales.
 
 import { normalizar, palabrasClave } from "./asistente";
-import { combosTienda, productosTienda, type ProductoTienda } from "./tienda";
+import { combosTienda, productosTienda, type ComboTienda, type ProductoTienda } from "./tienda";
 import { pesos, renglonCombo } from "./precios";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 
@@ -11,7 +11,8 @@ export type Ficha = { href: string; nombre: string; detalle: string; precio: str
 /** Un botón que suma algo al pedido desde el chat. El id lo valida el servidor contra el catálogo. */
 export type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string; nombre: string; cantidad: number; precio: string };
 /** `derivar`: el vendedor pidió que siga una persona (en WhatsApp, el bot se calla a partir de acá). */
-export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean };
+/** `opciones`: respuestas cortas para tocar (en WhatsApp son botones; en la web, chips). */
+export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean; opciones?: string[] };
 
 type Indexado = ProductoTienda & { nombre: string; indice: string };
 
@@ -57,6 +58,34 @@ export async function hallarProductos(texto: string, soloSinTacc = false): Promi
     .map((p, i) => ({ p, i, s: puntosDe(p) }))
     .sort((a, b) => b.s - a.s || a.i - b.i)
     .map((x) => x.p);
+}
+
+/**
+ * Los combos que coinciden con lo que se busca, por su nombre o por lo que traen.
+ * Sin esto, «despensa de 4 kilos» no aparecía en ninguna búsqueda y el vendedor decía que no existía.
+ */
+export async function hallarCombos(texto: string): Promise<ComboTienda[]> {
+  const grupos = palabrasClave(texto);
+  if (!grupos.length) return [];
+  const combos = (await combosTienda({ activo: true, tipo: "COMBO" })).filter((c) => c.disponible);
+  const indice = (c: ComboTienda) => ` ${normalizar(`${c.nombre} ${c.items.map((i) => i.producto.producto).join(" ")}`)} `;
+  const puntos = (c: ComboTienda) => {
+    const n = ` ${normalizar(c.nombre)} `;
+    const i = indice(c);
+    return grupos.reduce((s, g) => s + (g.some((v) => n.includes(v)) ? 3 : g.some((v) => i.includes(v)) ? 1 : 0), 0);
+  };
+  return combos
+    .map((c) => ({ c, s: puntos(c) }))
+    .filter((x) => x.s >= Math.max(1, grupos.length))
+    .sort((a, b) => b.s - a.s)
+    .map((x) => x.c);
+}
+
+/** El combo que nombra un anuncio («Despensa de 4 kilos a $35.268»), si hay uno. */
+export async function comboDelAnuncio(texto: string): Promise<ComboTienda | null> {
+  const t = ` ${normalizar(texto)} `;
+  const combos = (await combosTienda({ activo: true, tipo: "COMBO" })).filter((c) => c.disponible);
+  return combos.filter((c) => t.includes(` ${normalizar(c.nombre)} `)).sort((a, b) => b.nombre.length - a.nombre.length)[0] ?? null;
 }
 
 export async function buscarEnCatalogo(texto: string, soloSinTacc = false): Promise<Respuesta> {

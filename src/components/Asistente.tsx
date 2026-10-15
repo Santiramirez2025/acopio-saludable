@@ -10,7 +10,7 @@ import { useCarrito } from "./Carrito";
 type Enlace = { href: string; texto: string; externo?: boolean };
 type Ficha = { href: string; nombre: string; detalle: string; precio: string; foto: string | null };
 type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string; nombre: string; cantidad: number; precio: string };
-type Mensaje = { de: "yo" | "acopio"; texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string };
+type Mensaje = { de: "yo" | "acopio"; texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; opciones?: string[] };
 
 const BIENVENIDA: Mensaje = { de: "acopio", texto: "Hola. Te busco un producto o te cuento sobre envíos, pagos y la compra mínima. ¿Qué necesitás?" };
 const ATAJOS = ["¿Cuánto tarda el envío?", "¿Cómo puedo pagar?", "¿Hay compra mínima?", "Productos sin TACC", "Hablar con una persona"];
@@ -166,7 +166,8 @@ export function Asistente() {
 
             <div className="border-t border-tierra-200 px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3">
               <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
-                {ATAJOS.map((a) => (
+                {/* Las respuestas que sugirió el vendedor para su último mensaje; si no hay, los atajos de siempre. */}
+                {(mensajes.at(-1)?.de === "acopio" && mensajes.at(-1)?.opciones?.length ? mensajes.at(-1)!.opciones! : ATAJOS).map((a) => (
                   <button key={a} type="button" onClick={() => enviar(a)} disabled={esperando} className="flex min-h-[40px] shrink-0 items-center rounded-full bg-acopio-50 px-3.5 text-sm font-medium text-acopio-700 hover:bg-acopio-100 disabled:opacity-50">{a}</button>
                 ))}
               </div>
