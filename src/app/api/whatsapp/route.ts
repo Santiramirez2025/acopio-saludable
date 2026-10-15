@@ -31,6 +31,8 @@ const SALUD =
   "Eso no te lo puedo responder: no damos indicaciones de salud ni de consumo. Para eso consultá a tu médico o nutricionista. " +
   "Si querés, te paso el producto con su presentación y precio.";
 
+const DERIVADO = "Dale, te contesta una persona del equipo por acá mismo. Atendemos de lunes a sábado, de 8 a 20 h. Mientras tanto, si querés, contame qué necesitás así ya lo tiene a mano.";
+
 // Un número de teléfono no va entero a los logs: con los últimos cuatro alcanza para seguir una charla.
 const cola = (n: string) => `…${n.slice(-4)}`;
 
@@ -141,9 +143,10 @@ async function atender(m: Entrante, nombre: string | null): Promise<void> {
   const inicio = Date.now();
   const r = vendedorActivo() ? await responderComoVendedor(texto, historial, null, "whatsapp") : null;
   const respuesta = r ?? (await buscarEnCatalogo(texto));
-  // Pedir una persona deriva siempre, conteste la IA o el motor de reglas.
+  // Pedir una persona deriva siempre, conteste la IA o el motor de reglas. Y el texto es fijo:
+  // el modelo tiende a prometer "el link de arriba" u otras cosas que acá no existen.
   const derivar = Boolean(respuesta.derivar) || detectar(texto) === "humano";
-  const salida = derivar && !r ? "Te contesta una persona del equipo de lunes a sábado, de 8 a 20 h." : paraWhatsapp(respuesta);
+  const salida = derivar ? DERIVADO : paraWhatsapp(respuesta);
   console.log("whatsapp: respuesta armada", { de: cola(m.from), conIA: Boolean(r), ms: Date.now() - inicio, largo: salida.length, derivar });
   if (!salida) return;
 
