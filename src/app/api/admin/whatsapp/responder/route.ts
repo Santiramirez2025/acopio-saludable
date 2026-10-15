@@ -7,7 +7,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { enviarTexto } from "@/lib/whatsapp-cloud";
+import { enviarPorCanal } from "@/lib/atencion";
+import { claveValida } from "@/lib/meta-mensajes";
 import { cambiarEstado, marcarLeida, registrarSalida } from "@/lib/whatsapp-memoria";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
-  const telefono = typeof cuerpo.telefono === "string" ? cuerpo.telefono.replace(/\D/g, "") : "";
+  const telefono = typeof cuerpo.telefono === "string" ? (claveValida(cuerpo.telefono) ?? "") : "";
   if (!telefono) return NextResponse.json({ error: "Falta el teléfono" }, { status: 400 });
 
   if (cuerpo.accion === "bot" || cuerpo.accion === "persona") {
@@ -34,10 +35,10 @@ export async function POST(req: Request) {
 
   // Contestar a mano toma la charla: el bot no se mete hasta que se la devuelvan.
   await cambiarEstado(telefono, "persona");
-  const enviado = await enviarTexto(telefono, texto);
+  const enviado = await enviarPorCanal(telefono, texto);
   if (!enviado) {
     return NextResponse.json(
-      { error: "Meta rechazó el envío. Si pasaron más de 24 horas del último mensaje del cliente, hace falta una plantilla aprobada." },
+      { error: "Meta rechazó el envío. Si pasaron más de 24 horas del último mensaje del cliente, hace falta una plantilla aprobada (en Messenger e Instagram, no se puede contestar hasta que vuelva a escribir)." },
       { status: 502 },
     );
   }

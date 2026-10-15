@@ -617,3 +617,20 @@ test("prospección: bajas, plantilla por rubro y texto guardado", () => {
   assert.ok(t.startsWith("Hola, Hotel Capri."));
   assert.ok(!t.includes("{{1}}"));
 });
+
+import { canalDe, claveValida, partir } from "./meta-mensajes";
+
+test("canales: clave por canal, validación y corte de textos largos", () => {
+  assert.equal(canalDe("5493541519630"), "whatsapp");
+  assert.equal(canalDe("fb.123456789"), "messenger");
+  assert.equal(canalDe("ig.17841400000000"), "instagram");
+  assert.equal(claveValida("fb.123456789"), "fb.123456789");
+  assert.equal(claveValida("5493541519630"), "5493541519630");
+  assert.equal(claveValida("x.1234567"), null);
+  assert.equal(claveValida("fb.12; drop"), null);
+  const largo = Array.from({ length: 60 }, (_, i) => `Línea ${i} con un link https://acopiosaludable.com/producto/${i}`).join("\n");
+  const partes = partir(largo, 990);
+  assert.ok(partes.length > 1);
+  assert.ok(partes.every((p) => p.length <= 990));
+  assert.equal(partes.join("\n").replace(/\s+/g, " "), largo.replace(/\s+/g, " "));
+});

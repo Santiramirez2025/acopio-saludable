@@ -17,25 +17,11 @@
 
 import { after, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { detectar } from "@/lib/asistente";
-import { buscarEnCatalogo } from "@/lib/asistente-catalogo";
-import { responderComoVendedor, vendedorActivo } from "@/lib/vendedor";
-import { cloudActivo, enviarTexto, marcarLeido, paraWhatsapp } from "@/lib/whatsapp-cloud";
-import { cambiarEstado, estadoDe, historialDe, registrarAnuncio, registrarEntrante, registrarSalida } from "@/lib/whatsapp-memoria";
-import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
-import { contextoProspecto, darDeBaja, datosProspecto, esBaja } from "@/lib/whatsapp-prospectos";
+import { atender, cola } from "@/lib/atencion";
+import { cloudActivo } from "@/lib/whatsapp-cloud";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs"; // hace falta crypto y after()
-
-const SALUD =
-  "Eso no te lo puedo responder: no damos indicaciones de salud ni de consumo. Para eso consultá a tu médico o nutricionista. " +
-  "Si querés, te paso el producto con su presentación y precio.";
-
-const DERIVADO = "Dale, te contesta una persona del equipo por acá mismo. Atendemos de lunes a sábado, de 8 a 20 h. Mientras tanto, si querés, contame qué necesitás así ya lo tiene a mano.";
-
-// Un número de teléfono no va entero a los logs: con los últimos cuatro alcanza para seguir una charla.
-const cola = (n: string) => `…${n.slice(-4)}`;
 
 function firmaValida(crudo: string, cabecera: string | null): boolean {
   const secreto = process.env.WHATSAPP_APP_SECRET;
@@ -110,7 +96,7 @@ export async function POST(req: Request) {
     for (const { m, nombre } of mensajes) {
       if (!m?.from || !m.id) continue;
       try {
-        await atender(m, nombre);
+        await atenderWhatsapp(m, nombre);
       } catch (e) {
         console.error("whatsapp: atender falló", cola(m.from), e);
       }
@@ -120,80 +106,18 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true });
 }
 
-async function responder(telefono: string, texto: string, de: "bot" = "bot"): Promise<boolean> {
-  const enviado = await enviarTexto(telefono, texto);
-  console.log("whatsapp: envío", { de: cola(telefono), enviado });
-  if (enviado) await registrarSalida(telefono, de, texto);
-  return enviado;
-}
-
-async function atender(m: Entrante, nombre: string | null): Promise<void> {
+async function atenderWhatsapp(m: Entrante, nombre: string | null): Promise<void> {
   if (!cloudActivo()) {
     console.error("whatsapp: faltan WHATSAPP_TOKEN o WHATSAPP_PHONE_ID, no se contesta");
     return;
   }
-
-  const leido = textoDe(m);
-  const texto = leido !== null ? leido.trim().slice(0, 400) : `[${m.type}]`;
-  const nuevo = await registrarEntrante(m.id, m.from, nombre, texto);
-  if (!nuevo) {
-    console.log("whatsapp: repetido, se ignora", m.id);
-    return;
-  }
-  await marcarLeido(m.id);
-
   const ref = m.referral;
-  if (ref && (ref.source_id || ref.ctwa_clid)) {
-    await registrarAnuncio(m.from, { anuncioId: ref.source_id ?? null, titulo: ref.headline ?? ref.body?.slice(0, 120) ?? null, ctwaClid: ref.ctwa_clid ?? null });
-    console.log("whatsapp: viene de un anuncio", { de: cola(m.from), anuncio: ref.source_id ?? null, tipo: ref.source_type ?? null });
-  }
-
-  // Una persona tomó la charla: el bot no se mete. El mensaje queda guardado y suma no leídos.
-  if ((await estadoDe(m.from)) === "persona") {
-    console.log("whatsapp: en manos de una persona, el bot se calla", cola(m.from));
-    return;
-  }
-
-  // Prospecto que dice que no: se le da de baja, se le agradece una vez y nunca más.
-  const prospecto = await datosProspecto(m.from);
-  if (prospecto.baja) {
-    console.log("whatsapp: dado de baja, no se contesta", cola(m.from));
-    return;
-  }
-  if (prospecto.prospecto && leido !== null && esBaja(texto)) {
-    await darDeBaja(m.from);
-    await responder(m.from, "Perfecto, no le escribimos más. ¡Gracias por responder y que tengan una buena temporada!");
-    return;
-  }
-
-  if (leido === null) {
-    await responder(m.from, "Por ahora te leo solo mensajes de texto. Escribime qué estás buscando y te paso precio y link.");
-    return;
-  }
-  if (!texto) return;
-
-  if (detectar(texto) === "salud") {
-    await responder(m.from, `${SALUD}\n\n${AVISO_SUPLEMENTOS}`);
-    return;
-  }
-
-  // El historial se lee sin el mensaje recién guardado: el vendedor lo recibe aparte.
-  const historial = (await historialDe(m.from, 9)).slice(0, -1);
-  const inicio = Date.now();
-  // Si vino de un anuncio, el vendedor tiene que saber qué le prometió el anuncio: es lo que
-  // la persona espera leer en la primera respuesta. Va pegado al mensaje, no a las instrucciones,
-  // para no romper el caché del prompt.
-  const anuncio = ref && (ref.headline || ref.body) ? `<anuncio>La persona tocó un anuncio que decía: ${[ref.headline, ref.body].filter(Boolean).join(" — ").slice(0, 300)}. Arrancá por ahí.</anuncio>\n\n` : "";
-  const negocio = prospecto.prospecto ? contextoProspecto(prospecto.prospecto, prospecto.negocio) : "";
-  const r = vendedorActivo() ? await responderComoVendedor(`${negocio}${anuncio}${texto}`, historial, null, "whatsapp") : null;
-  const respuesta = r ?? (await buscarEnCatalogo(texto));
-  // Pedir una persona deriva siempre, conteste la IA o el motor de reglas. Y el texto es fijo:
-  // el modelo tiende a prometer "el link de arriba" u otras cosas que acá no existen.
-  const derivar = Boolean(respuesta.derivar) || detectar(texto) === "humano";
-  const salida = derivar ? DERIVADO : paraWhatsapp(respuesta);
-  console.log("whatsapp: respuesta armada", { de: cola(m.from), conIA: Boolean(r), ms: Date.now() - inicio, largo: salida.length, derivar });
-  if (!salida) return;
-
-  await responder(m.from, salida);
-  if (derivar) await cambiarEstado(m.from, "persona");
+  await atender({
+    clave: m.from,
+    idMensaje: m.id,
+    nombre,
+    texto: textoDe(m),
+    tipo: m.type,
+    anuncio: ref ? { id: ref.source_id ?? null, titulo: ref.headline ?? null, texto: ref.body ?? null, ctwaClid: ref.ctwa_clid ?? null } : null,
+  });
 }
