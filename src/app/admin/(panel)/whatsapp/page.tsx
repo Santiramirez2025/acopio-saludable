@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listarConversaciones } from "@/lib/whatsapp-memoria";
+import { listarConversaciones, RETOMA_HORAS } from "@/lib/whatsapp-memoria";
 import { cloudActivo } from "@/lib/whatsapp-cloud";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,8 @@ export default async function WhatsappPanel() {
         </p>
       </div>
       <p className="text-sm text-stone-600">
-        El vendedor contesta solo. Cuando alguien pide hablar con una persona, o cuando contestás a mano, la charla queda en tus manos y el bot se calla hasta que se la devolvés.
+        El vendedor contesta solo. Cuando alguien pide hablar con una persona, o cuando contestás a mano, la charla queda en tus manos y el bot se calla.
+        Si no escribís en {RETOMA_HORAS} horas, el vendedor la retoma solo para que nadie quede hablando sin respuesta.
       </p>
       <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white">
         <table className="w-full min-w-[720px] text-sm">

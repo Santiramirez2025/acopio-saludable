@@ -450,6 +450,12 @@ test("el asistente reconoce la intención y nunca responde consultas de salud co
   assert.equal(detectar("Hablar con una persona"), "humano");
   assert.equal(detectar("el magnesio sirve para dormir?"), "salud");
   assert.equal(detectar("cuanto tomo de creatina"), "salud");
+  assert.equal(detectar("las nueces son buenas para el corazon?"), "salud");
+  assert.equal(detectar("sirve para la piel?"), "salud");
+  // Falsos positivos que costaban ventas: "sirve para" sin nada del cuerpo es una compra.
+  assert.equal(detectar("Me sirve para casa"), "buscar");
+  assert.equal(detectar("me sirven para el kiosco"), "negocio");
+  assert.equal(detectar("es para regalar"), "buscar");
   assert.equal(detectar("almendras"), "buscar");
   assert.equal(detectar("tenés maní sin sal?"), "buscar");
   assert.deepEqual(palabrasClave("¿Tenés nueces peladas?").map((g) => g[0]), ["nueces", "peladas"]);

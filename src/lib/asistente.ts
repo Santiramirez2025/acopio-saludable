@@ -9,7 +9,9 @@ export function normalizar(texto: string): string {
 
 // El orden importa: salud va primero para no contestar nunca una consulta médica con un producto.
 const REGLAS: [Intencion, RegExp][] = [
-  ["salud", /\b(sirve para|sirven para|es bueno para|cura|curar|dolor|dolores|enfermedad|diabet|presion|colesterol|ansiedad|insomnio|dormir|adelgaz|bajar de peso|engorda|embaraz|dosis|cuanto tomo|como se toma|como tomar|contraindic|efectos|medic|artritis|calambre|estrenimiento|depres|tiroides|cancer|inflama)/],
+  // "sirve para" solo cuenta si lo que sigue es del cuerpo: "me sirve para casa" es una compra,
+  // no una consulta de salud, y contestarle "consultá a tu médico" es perder la venta.
+  ["salud", /\b(cura|curar|dolor|dolores|enfermedad|diabet|presion|colesterol|ansiedad|insomnio|dormir|adelgaz|bajar de peso|engorda|embaraz|dosis|cuanto tomo|como se toma|como tomar|contraindic|efectos secundarios|efecto secundario|medic|artritis|calambre|estrenimiento|depres|tiroides|cancer|inflama|corazon|higado|rinon|intestin|digest|defensas|inmun|hormon|glucemia|azucar en sangre|(sirve|sirven|es bueno|son buenos|es buena|son buenas) para (el|la|los|las|mi|tu|su)? ?(salud|cuerpo|piel|pelo|cabello|huesos|articulac|muscul|cerebro|memoria|vista|sangre|estomago|panza|energia|rendimiento|recuperar))/],
   ["humano", /\b(humano|persona|asesor|vendedor|alguien|hablar con|whatsapp|wasap|telefono|llamar|contacto|contactar|mail|correo)/],
   ["pedido", /\b(mi pedido|mi compra|seguimiento|donde esta|estado del pedido|numero de pedido|ya pague|no me llego|no llego)/],
   ["domingo", /\b(domingo|domingos|feriado|feriados|fin de semana|sabado|sabados|horario|horarios|atienden|abren)/],
