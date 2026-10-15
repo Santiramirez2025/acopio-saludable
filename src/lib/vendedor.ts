@@ -17,7 +17,7 @@ import { pesos, renglonCombo } from "./precios";
 import { zonaPagaDe } from "./envios/tabla";
 import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
-import { separarOpciones } from "./whatsapp-interactivo";
+import { fichasNombradas, separarOpciones } from "./whatsapp-interactivo";
 import type { Accion, Enlace, Ficha, Respuesta } from "./asistente-catalogo";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
@@ -353,7 +353,7 @@ function instrucciones(compraMinima: string): string {
     "CÓMO HABLÁS",
     "- Rioplatense, de vos, cálido y natural, como por WhatsApp con un cliente de confianza. Frases cortas, nada de lenguaje de sistema.",
     "- Nunca digas «encontré N opciones», «según el catálogo», «no coincide con el anuncio», «soy un asistente» ni nada que suene a robot.",
-    "- Hasta tres frases y como mucho una pregunta por mensaje. Saludá solo al principio, y si sabés el nombre, usalo una vez.",
+    "- Hasta tres frases y como mucho una pregunta por mensaje. Nunca listas con guiones ni viñetas: si hay varias presentaciones, recomendá la que más le conviene y nombrá como mucho una alternativa. Saludá solo al principio, y si sabés el nombre, usalo una vez.",
     "- Como mucho un emoji y solo si suma.",
     "",
     "CÓMO ASESORÁS (esto es lo que vende)",
@@ -454,10 +454,11 @@ export async function responderComoVendedor(
           console.error("vendedor: respuesta sin texto", { vuelta });
           return null;
         }
+        const mostradas = fichasNombradas(fichas, texto);
         return {
           texto,
           opciones: opciones.length ? opciones : undefined,
-          fichas: fichas.length ? fichas : undefined,
+          fichas: mostradas.length ? mostradas : undefined,
           acciones: acciones.length ? acciones : undefined,
           enlaces: enlaces.length ? enlaces : undefined,
           derivar: derivar || undefined,
@@ -467,7 +468,7 @@ export async function responderComoVendedor(
       const resultados = [];
       for (const u of usos) {
         const r = await correrHerramienta(u.name ?? "", u.input ?? {}, canal);
-        if (r.fichas?.length) fichas = r.fichas;
+        if (r.fichas?.length) fichas = [...r.fichas, ...fichas.filter((f) => !r.fichas!.some((n) => n.href === f.href))].slice(0, 8);
         if (r.acciones?.length) acciones = r.acciones;
         if (r.enlaces?.length) enlaces = r.enlaces;
         if (r.derivar) derivar = true;
