@@ -277,3 +277,32 @@ model PriceSyncItem {
 
   @@index([syncId, estado])
 }
+
+// Conversaciones de WhatsApp (Cloud API). El codigo les habla por SQL directo en
+// lib/whatsapp-memoria.ts; los modelos estan para que el esquema y la base digan lo mismo.
+model WhatsappConversacion {
+  telefono      String            @id
+  nombre        String?
+  // bot: contesta el vendedor. persona: pidio hablar con alguien y el bot se calla.
+  estado        String            @default("bot")
+  noLeidos      Int               @default(0)
+  ultimoMensaje DateTime          @default(now()) @db.Timestamptz(6)
+  creado        DateTime          @default(now()) @db.Timestamptz(6)
+  mensajes      WhatsappMensaje[]
+
+  @@index([ultimoMensaje(sort: Desc)])
+  @@index([estado])
+}
+
+model WhatsappMensaje {
+  // El wamid de Meta en los entrantes: una reentrega del webhook no inserta nada.
+  id           String               @id
+  telefono     String
+  conversacion WhatsappConversacion @relation(fields: [telefono], references: [telefono], onDelete: Cascade)
+  // cliente | bot | persona
+  de           String
+  texto        String
+  fecha        DateTime             @default(now()) @db.Timestamptz(6)
+
+  @@index([telefono, fecha])
+}
