@@ -20,6 +20,8 @@ import { NICHOS } from "./taxonomia";
 import type { Accion, Enlace, Ficha, Respuesta } from "./asistente-catalogo";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
+/** Dónde atiende: cambia qué pasa cuando pide que siga una persona. */
+export type Canal = "web" | "whatsapp";
 
 /** Lo que la persona tiene en el carrito ahora, ya cotizado por el servidor. */
 export type CarritoVisto = {
@@ -142,10 +144,10 @@ const HERRAMIENTAS = [
   },
 ];
 
-type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[] };
+type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[]; derivar?: boolean };
 
 /** Exportada para poder probar cada herramienta sin pegarle a la API ni gastar tokens. */
-export async function correrHerramienta(nombre: string, entrada: Record<string, unknown>): Promise<Salida> {
+export async function correrHerramienta(nombre: string, entrada: Record<string, unknown>, canal: Canal = "web"): Promise<Salida> {
   if (nombre === "buscar_productos") {
     const consulta = String(entrada.consulta ?? "");
     const productos = (await hallarProductos(consulta, entrada.solo_sin_tacc === true)).slice(0, 6);
@@ -309,6 +311,14 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
   }
 
   if (nombre === "pasar_a_whatsapp") {
+    // En WhatsApp ya estamos en WhatsApp: no hay link que dar. Se marca la charla para que
+    // la siga una persona desde el panel y el bot se calla hasta que la devuelvan.
+    if (canal === "whatsapp") {
+      return {
+        texto: "Listo: la charla queda marcada para que la siga una persona. Decile en una frase que le contesta alguien del equipo de lunes a sábado de 8 a 20, y no prometas nada más.",
+        derivar: true,
+      };
+    }
     const cfg = await leerConfig();
     const resumen = String(entrada.resumen ?? "").trim().slice(0, 400);
     const href = cfg.whatsapp ? linkWhatsapp(cfg.whatsapp, `Hola! ${resumen || "Tengo una consulta sobre Acopio Saludable."}`) : null;
@@ -371,6 +381,7 @@ export async function responderComoVendedor(
   mensaje: string,
   historial: Turno[] = [],
   carrito: CarritoVisto | null = null,
+  canal: Canal = "web",
 ): Promise<Respuesta | null> {
   const clave = process.env.ANTHROPIC_API_KEY;
   if (!clave) return null;
@@ -387,6 +398,7 @@ export async function responderComoVendedor(
   let fichas: Ficha[] = [];
   let acciones: Accion[] = [];
   let enlaces: Enlace[] = [];
+  let derivar = false;
   try {
     for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -417,15 +429,17 @@ export async function responderComoVendedor(
           fichas: fichas.length ? fichas : undefined,
           acciones: acciones.length ? acciones : undefined,
           enlaces: enlaces.length ? enlaces : undefined,
+          derivar: derivar || undefined,
         };
       }
 
       const resultados = [];
       for (const u of usos) {
-        const r = await correrHerramienta(u.name ?? "", u.input ?? {});
+        const r = await correrHerramienta(u.name ?? "", u.input ?? {}, canal);
         if (r.fichas?.length) fichas = r.fichas;
         if (r.acciones?.length) acciones = r.acciones;
         if (r.enlaces?.length) enlaces = r.enlaces;
+        if (r.derivar) derivar = true;
         resultados.push({ type: "tool_result", tool_use_id: u.id, content: r.texto });
       }
       mensajes.push({ role: "user", content: resultados });

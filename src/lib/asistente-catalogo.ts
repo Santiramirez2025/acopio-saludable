@@ -10,7 +10,8 @@ export type Enlace = { href: string; texto: string; externo?: boolean };
 export type Ficha = { href: string; nombre: string; detalle: string; precio: string; foto: string | null };
 /** Un botón que suma algo al pedido desde el chat. El id lo valida el servidor contra el catálogo. */
 export type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string; nombre: string; cantidad: number; precio: string };
-export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string };
+/** `derivar`: el vendedor pidió que siga una persona (en WhatsApp, el bot se calla a partir de acá). */
+export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean };
 
 type Indexado = ProductoTienda & { nombre: string; indice: string };
 
