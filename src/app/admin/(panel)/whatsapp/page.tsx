@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { listarConversaciones, RETOMA_HORAS } from "@/lib/whatsapp-memoria";
 import { cloudActivo } from "@/lib/whatsapp-cloud";
+import { canalDe, metaActivo, NOMBRE_CANAL } from "@/lib/meta-mensajes";
 
 export const dynamic = "force-dynamic";
 
 const FECHA = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Cordoba", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 function bonito(telefono: string): string {
+  const canal = canalDe(telefono);
+  if (canal !== "whatsapp") return NOMBRE_CANAL[canal];
   // 5493541519630 → +54 9 3541 51-9630. Si no es argentino, se muestra como viene.
   const m = /^549(\d{2,4})(\d{2,4})(\d{4})$/.exec(telefono);
   return m ? `+54 9 ${m[1]} ${m[2]}-${m[3]}` : `+${telefono}`;
@@ -18,9 +21,9 @@ export default async function WhatsappPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <h1 className="text-xl font-semibold">WhatsApp</h1>
+        <h1 className="text-xl font-semibold">Mensajes</h1>
         <p className="text-sm text-stone-600">
-          {cloudActivo() ? "Conectado a la Cloud API." : "Falta configurar la Cloud API."}{" "}
+          {cloudActivo() ? "WhatsApp conectado." : "Falta configurar WhatsApp."} {metaActivo() ? "Messenger e Instagram conectados." : "Messenger e Instagram sin conectar."}{" "}
           {esperando > 0 && <span className="chip bg-amber-100 text-amber-800">{esperando} esperando una persona</span>}
         </p>
       </div>
@@ -42,7 +45,7 @@ export default async function WhatsappPanel() {
             {charlas.map((c) => (
               <tr key={c.telefono} className={`border-t border-stone-100 ${c.noLeidos > 0 ? "bg-amber-50/60" : ""}`}>
                 <td className="px-3 py-2">
-                  <Link href={`/admin/whatsapp/${c.telefono}`} className="font-medium text-acopio-700 underline">{c.nombre || bonito(c.telefono)}</Link>
+                  <Link href={`/admin/whatsapp/${encodeURIComponent(c.telefono)}`} className="font-medium text-acopio-700 underline">{c.nombre || bonito(c.telefono)}</Link>
                   {c.nombre && <div className="text-xs text-stone-600">{bonito(c.telefono)}</div>}
                   {c.prospecto && <div className="mt-0.5 text-xs font-medium text-tierra-700">Le escribimos nosotros · {c.prospecto}{c.baja ? " · pidió no recibir más" : ""}</div>}
                   {c.anuncioId && <div className="mt-0.5 text-xs font-medium text-sky-700" title={c.anuncioTitulo ?? undefined}>Vino de un anuncio{c.anuncioTitulo ? `: ${c.anuncioTitulo.slice(0, 40)}` : ""}</div>}

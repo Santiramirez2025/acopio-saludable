@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 const NAV = [
   ["/admin", "Resumen"],
   ["/admin/pedidos", "Pedidos"],
-  ["/admin/whatsapp", "WhatsApp"],
+  ["/admin/whatsapp", "Mensajes"],
   ["/admin/productos", "Productos"],
   ["/admin/imagenes", "Imágenes"],
   ["/admin/combos", "Combos"],
