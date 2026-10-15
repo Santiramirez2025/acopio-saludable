@@ -50,7 +50,7 @@ type Entrante = {
   type: string;
   text?: { body?: string };
   button?: { text?: string };
-  interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } };
+  interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { id?: string; title?: string } };
   referral?: Referral;
 };
 
@@ -60,6 +60,11 @@ function textoDe(m: Entrante): string | null {
   if (m.type === "button") return m.button?.text ?? "";
   if (m.type === "interactive") return m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? "";
   return null;
+}
+/** El id del botón o la fila que tocó: dice qué eligió sin depender del texto del botón. */
+function toqueDe(m: Entrante): string | null {
+  if (m.type !== "interactive") return null;
+  return m.interactive?.button_reply?.id ?? m.interactive?.list_reply?.id ?? null;
 }
 type Contacto = { wa_id?: string; profile?: { name?: string } };
 type Cambio = { field?: string; value?: { messages?: Entrante[]; contacts?: Contacto[] } };
@@ -117,6 +122,7 @@ async function atenderWhatsapp(m: Entrante, nombre: string | null): Promise<void
     idMensaje: m.id,
     nombre,
     texto: textoDe(m),
+    toque: toqueDe(m),
     tipo: m.type,
     anuncio: ref ? { id: ref.source_id ?? null, titulo: ref.headline ?? null, texto: ref.body ?? null, ctwaClid: ref.ctwa_clid ?? null } : null,
   });

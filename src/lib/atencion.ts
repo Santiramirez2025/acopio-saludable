@@ -5,10 +5,16 @@
 // una persona tomó la charla o si el prospecto pidió la baja, y contesta el mismo vendedor.
 // Lo único que cambia por canal es cómo se manda la respuesta.
 
-import { detectar } from "./asistente";
-import { buscarEnCatalogo } from "./asistente-catalogo";
+import { detectar, pidePersona } from "./asistente";
+import { buscarEnCatalogo, comboDelAnuncio, type Accion, type Respuesta } from "./asistente-catalogo";
 import { responderComoVendedor, vendedorActivo } from "./vendedor";
-import { enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
+import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
+import { leerToque, planWhatsapp, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
+import { enlacePedido, leerPedido } from "./pedido-enlace";
+import { cotizarCarrito } from "./tienda";
+import { leerConfig } from "./config";
+import { pesos } from "./precios";
+import { urlSitio } from "./sitio";
 import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
 import { cambiarEstado, estadoDe, historialDe, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
 import { contextoProspecto, darDeBaja, datosProspecto, esBaja } from "./whatsapp-prospectos";
@@ -18,7 +24,7 @@ const SALUD =
   "Eso no te lo puedo responder: no damos indicaciones de salud ni de consumo. Para eso consultá a tu médico o nutricionista. " +
   "Si querés, te paso el producto con su presentación y precio.";
 
-const DERIVADO = "Dale, te contesta una persona del equipo por acá mismo. Atendemos de lunes a sábado, de 8 a 20 h. Mientras tanto, si querés, contame qué necesitás así ya lo tiene a mano.";
+const DERIVADO = "Dale, ya te escribo yo personalmente por acá. Atiendo de lunes a sábado, de 8 a 20 h. Mientras tanto contame qué necesitás así lo tengo a mano.";
 
 // Un identificador no va entero a los logs: con los últimos cuatro alcanza para seguir una charla.
 export const cola = (n: string) => `…${n.slice(-4)}`;
@@ -33,6 +39,7 @@ export type Entrada = {
   idMensaje: string;
   nombre: string | null;
   texto: string | null; // null: no es texto ni botón (audio, foto, sticker...)
+  toque?: string | null; // id del botón o fila que tocó, en WhatsApp
   tipo: string;
   anuncio?: { id: string | null; titulo: string | null; texto: string | null; ctwaClid: string | null } | null;
 };
@@ -42,6 +49,59 @@ async function responder(clave: string, texto: string): Promise<boolean> {
   console.log("chat: envío", { canal: canalDe(clave), de: cola(clave), enviado });
   if (enviado) await registrarSalida(clave, "bot", texto);
   return enviado;
+}
+
+/** Manda una tanda de mensajes de WhatsApp en orden y deja cada uno en el panel. */
+async function responderWhatsapp(clave: string, salientes: Saliente[]): Promise<void> {
+  for (const m of salientes) {
+    const enviado = await enviarSaliente(clave, m);
+    console.log("chat: envío", { canal: "whatsapp", tipo: m.tipo, de: cola(clave), enviado });
+    if (enviado) await registrarSalida(clave, "bot", textoParaPanel(m));
+  }
+}
+
+/** El pedido que armó el vendedor, cotizado por el servidor: los precios nunca salen del modelo. */
+async function pedidoDe(acciones: Accion[] | undefined): Promise<PedidoArmado | null> {
+  if (!acciones?.length) return null;
+  const lineas = acciones.map((a) => ({ tipo: a.clase, id: a.id, cantidad: a.cantidad }));
+  const cot = await cotizarCarrito(lineas);
+  if (!cot.lineas.length) return null;
+  return {
+    camino: enlacePedido(lineas),
+    renglones: cot.lineas.filter((l) => l.disponible).map((l) => `${l.cantidad > 1 ? `${l.cantidad} x ` : ""}${l.nombre} — ${pesos(l.subtotal)}`),
+    total: pesos(cot.subtotal),
+    conTransferencia: cot.conTransferencia ? pesos(cot.conTransferencia) : null,
+    falta: cot.falta > 0 ? pesos(cot.falta) : null,
+  };
+}
+
+/** Tocó «Mercado Pago»: recién ahí va el link, dentro de un botón y explicado. Sin pasar por el modelo. */
+async function cobrarConLink(clave: string, camino: string): Promise<void> {
+  const cot = await cotizarCarrito(leerPedido(camino.replace(/^\/carrito\?p=/, "")));
+  await responderWhatsapp(clave, [
+    {
+      tipo: "cta",
+      cuerpo: `¡Buenísimo! 🙌 Te dejo el pedido armado${cot.subtotal ? ` (${pesos(cot.subtotal)})` : ""} en nuestra web. Ahí ponés el código postal, ves el envío y pagás con Mercado Pago, que es seguro. Cualquier duda me escribís por acá.`,
+      texto: "Pagar mi pedido",
+      url: `${urlSitio()}${camino}`,
+      pie: "acopiosaludable.com",
+    },
+  ]);
+}
+
+/** Tocó «Transferencia»: total con descuento, datos para transferir y la charla pasa a una persona. */
+async function cobrarPorTransferencia(clave: string, camino: string): Promise<void> {
+  const [cot, cfg] = await Promise.all([cotizarCarrito(leerPedido(camino.replace(/^\/carrito\?p=/, ""))), leerConfig()]);
+  const total = cot.conTransferencia ?? cot.subtotal;
+  const partes = [
+    `Perfecto${cfg.descuentoTransferenciaPct > 0 ? `, por transferencia tenés ${cfg.descuentoTransferenciaPct}% de descuento` : ""}: el pedido te queda en ${pesos(total)} más el envío.`,
+    cfg.transferenciaDatos ? `Los datos para transferir:\n${cfg.transferenciaDatos}` : "",
+    "Pasame tu dirección o barrio así te confirmo el envío, y cuando transfieras mandame el comprobante por acá. Lo sigo yo personalmente.",
+  ].filter(Boolean);
+  await responderWhatsapp(clave, [{ tipo: "texto", texto: partes.join("\n\n") }]);
+  // Para que en el panel se vea qué pidió sin abrir nada.
+  await registrarSalida(clave, "bot", `[Pedido por transferencia: ${cot.lineas.map((l) => `${l.cantidad} x ${l.nombre}`).join(", ")} · ${pesos(total)}]`);
+  await cambiarEstado(clave, "persona");
 }
 
 export async function atender(e: Entrada): Promise<void> {
@@ -90,22 +150,54 @@ export async function atender(e: Entrada): Promise<void> {
     return;
   }
 
+  // Botones que no necesitan al modelo: cobrar es un paso fijo, no una charla.
+  const toque = canal === "whatsapp" ? leerToque(e.toque) : null;
+  if (toque?.tipo === "pagar") return cobrarConLink(e.clave, toque.camino);
+  if (toque?.tipo === "transferencia") return cobrarPorTransferencia(e.clave, toque.camino);
+
   // El historial se lee sin el mensaje recién guardado: el vendedor lo recibe aparte.
   const historial = (await historialDe(e.clave, 9)).slice(0, -1);
   const inicio = Date.now();
-  // Lo que prometió el anuncio y quién es el negocio van pegados al mensaje y no a las
+  // Lo que prometió el anuncio, quién es y qué tocó van pegados al mensaje y no a las
   // instrucciones, para no romper el caché del prompt.
-  const anuncio = ref && (ref.titulo || ref.texto) ? `<anuncio>La persona tocó un anuncio que decía: ${[ref.titulo, ref.texto].filter(Boolean).join(" — ").slice(0, 300)}. Arrancá por ahí.</anuncio>\n\n` : "";
+  const textoAnuncio = ref ? [ref.titulo, ref.texto].filter(Boolean).join(" — ").slice(0, 300) : "";
+  const combo = textoAnuncio ? await comboDelAnuncio(textoAnuncio) : null;
+  const anuncio = textoAnuncio
+    ? `<anuncio>Tocó un anuncio que decía: ${textoAnuncio}.${
+        combo
+          ? ` Es el combo slug ${combo.slug} «${combo.nombre}», hoy a ${pesos(Math.round(combo.precio))} (lista ${pesos(Math.round(combo.precioLista))}), trae: ${combo.items.map((i) => `${i.cantidad} x ${i.producto.producto} ${i.producto.presentacion}`).join(", ")}.`
+          : ""
+      } Arrancá por eso aunque su mensaje pregunte otra cosa: contale qué trae y por qué conviene, y ofrecé dejárselo listo.</anuncio>\n\n`
+    : "";
+  const cliente = !historial.length && e.nombre ? `<cliente>Se llama ${e.nombre.slice(0, 40)}.</cliente>\n` : "";
+  const eligio = toque?.tipo === "quiero" ? `<eligio>Tocó en la lista el ${toque.clase} ${toque.clase === "combo" ? "slug" : "codigo"} ${toque.id}. Agregalo con agregar_al_pedido, junto con lo que ya había elegido antes en la charla.</eligio>\n` : "";
   const negocio = prospecto.prospecto ? contextoProspecto(prospecto.prospecto, prospecto.negocio) : "";
-  const r = vendedorActivo() ? await responderComoVendedor(`${negocio}${anuncio}${texto}`, historial, null, "whatsapp") : null;
-  const respuesta = r ?? (await buscarEnCatalogo(texto));
-  // Pedir una persona deriva siempre, conteste la IA o el motor de reglas. Y el texto es fijo:
-  // el modelo tiende a prometer "el link de arriba" u otras cosas que acá no existen.
-  const derivar = Boolean(respuesta.derivar) || detectar(texto) === "humano";
-  const salida = derivar ? DERIVADO : paraWhatsapp(respuesta);
-  console.log("chat: respuesta armada", { canal, de: cola(e.clave), conIA: Boolean(r), ms: Date.now() - inicio, largo: salida.length, derivar });
-  if (!salida) return;
+  const r = vendedorActivo() ? await responderComoVendedor(`${negocio}${cliente}${anuncio}${eligio}${texto}`, historial, null, "whatsapp") : null;
 
-  await responder(e.clave, salida);
-  if (derivar) await cambiarEstado(e.clave, "persona");
+  let respuesta: Respuesta;
+  if (r) respuesta = r;
+  else {
+    // Sin IA (caída o sin clave): el buscador, pero dicho como lo diría una persona.
+    const b = await buscarEnCatalogo(texto);
+    respuesta = b.fichas?.length
+      ? { ...b, texto: "¡Hola! Te paso lo que tengo de eso, tocá el que te interese y te lo dejo listo 👇", enlaces: undefined, opciones: ["Ver combos", "Hablar con Santiago"] }
+      : { texto: "¡Hola! Contame qué estás buscando y te paso precio al toque. Tenemos frutos secos, semillas, harinas sin TACC, cereales y combos armados.", opciones: ["Frutos secos", "Ver combos", "Sin TACC"] };
+  }
+
+  // Pedir una persona deriva siempre, conteste la IA o el buscador. Y el texto es fijo:
+  // el modelo tiende a prometer cosas que acá no existen.
+  const derivar = Boolean(respuesta.derivar) || pidePersona(texto);
+  console.log("chat: respuesta armada", { canal, de: cola(e.clave), conIA: Boolean(r), ms: Date.now() - inicio, derivar, acciones: respuesta.acciones?.length ?? 0, fichas: respuesta.fichas?.length ?? 0 });
+
+  if (derivar) {
+    await responder(e.clave, DERIVADO);
+    await cambiarEstado(e.clave, "persona");
+    return;
+  }
+  if (canal === "whatsapp") {
+    await responderWhatsapp(e.clave, planWhatsapp(respuesta, await pedidoDe(respuesta.acciones)));
+    return;
+  }
+  const salida = paraWhatsapp(respuesta);
+  if (salida) await responder(e.clave, salida);
 }

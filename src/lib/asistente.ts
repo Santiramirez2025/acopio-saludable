@@ -27,6 +27,15 @@ const REGLAS: [Intencion, RegExp][] = [
   ["saludo", /^(hola|holis|buenas|buen dia|buenos dias|buenas tardes|buenas noches|que tal|hey)\b/],
 ];
 
+/**
+ * Pide hablar con una persona, dicho de verdad. Más estricto que la intención «humano» de la web:
+ * en WhatsApp «te escribo por whatsapp», «sos vendedor?» o «mandame el contacto» no son pedir una persona,
+ * y derivar ahí deja la venta tirada.
+ */
+export function pidePersona(texto: string): boolean {
+  return /\b(humano|una persona|persona real|un asesor|una asesora|hablar con|atencion personalizada|llamame|me llaman|me podes llamar|quiero que me llamen)\b/.test(normalizar(texto));
+}
+
 export function detectar(texto: string): Intencion {
   const t = normalizar(texto);
   for (const [intencion, re] of REGLAS) if (re.test(t)) return intencion;
