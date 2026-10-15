@@ -288,10 +288,17 @@ model WhatsappConversacion {
   noLeidos      Int               @default(0)
   ultimoMensaje DateTime          @default(now()) @db.Timestamptz(6)
   creado        DateTime          @default(now()) @db.Timestamptz(6)
+  // Anuncio "clic a WhatsApp" que trajo la charla (el último) y el primero que la trajo.
+  anuncioId       String?
+  anuncioTitulo   String?
+  ctwaClid        String?
+  primerAnuncioId String?
+  anuncioFecha    DateTime?         @db.Timestamptz(6)
   mensajes      WhatsappMensaje[]
 
   @@index([ultimoMensaje(sort: Desc)])
   @@index([estado])
+  @@index([anuncioId])
 }
 
 model WhatsappMensaje {
