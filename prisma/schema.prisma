@@ -294,6 +294,12 @@ model WhatsappConversacion {
   ctwaClid        String?
   primerAnuncioId String?
   anuncioFecha    DateTime?         @db.Timestamptz(6)
+  // Prospección: rubro al que le escribimos primero (hotel, cabañas...), nombre del negocio,
+  // cuándo se le mandó la plantilla y si pidió que no le escribamos más.
+  prospecto       String?
+  negocio         String?
+  contactado      DateTime?         @db.Timestamptz(6)
+  baja            Boolean           @default(false)
   mensajes      WhatsappMensaje[]
 
   @@index([ultimoMensaje(sort: Desc)])

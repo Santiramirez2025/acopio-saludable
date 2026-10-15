@@ -23,6 +23,7 @@ import { responderComoVendedor, vendedorActivo } from "@/lib/vendedor";
 import { cloudActivo, enviarTexto, marcarLeido, paraWhatsapp } from "@/lib/whatsapp-cloud";
 import { cambiarEstado, estadoDe, historialDe, registrarAnuncio, registrarEntrante, registrarSalida } from "@/lib/whatsapp-memoria";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
+import { contextoProspecto, darDeBaja, datosProspecto, esBaja } from "@/lib/whatsapp-prospectos";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs"; // hace falta crypto y after()
@@ -56,7 +57,24 @@ export async function GET(req: Request) {
 
 // "referral" llega en el primer mensaje cuando la persona tocó un anuncio "clic a WhatsApp".
 type Referral = { source_id?: string; source_type?: string; source_url?: string; headline?: string; body?: string; ctwa_clid?: string };
-type Entrante = { from: string; id: string; type: string; text?: { body?: string }; referral?: Referral };
+// "button" es el toque en un botón de plantilla; "interactive", en un botón de mensaje interactivo.
+type Entrante = {
+  from: string;
+  id: string;
+  type: string;
+  text?: { body?: string };
+  button?: { text?: string };
+  interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } };
+  referral?: Referral;
+};
+
+/** Lo que dijo la persona, sea texto o el botón que tocó. null si no es nada de eso (audio, foto...). */
+function textoDe(m: Entrante): string | null {
+  if (m.type === "text") return m.text?.body ?? "";
+  if (m.type === "button") return m.button?.text ?? "";
+  if (m.type === "interactive") return m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? "";
+  return null;
+}
 type Contacto = { wa_id?: string; profile?: { name?: string } };
 type Cambio = { field?: string; value?: { messages?: Entrante[]; contacts?: Contacto[] } };
 
@@ -115,7 +133,8 @@ async function atender(m: Entrante, nombre: string | null): Promise<void> {
     return;
   }
 
-  const texto = m.type === "text" ? (m.text?.body ?? "").trim().slice(0, 400) : `[${m.type}]`;
+  const leido = textoDe(m);
+  const texto = leido !== null ? leido.trim().slice(0, 400) : `[${m.type}]`;
   const nuevo = await registrarEntrante(m.id, m.from, nombre, texto);
   if (!nuevo) {
     console.log("whatsapp: repetido, se ignora", m.id);
@@ -135,7 +154,19 @@ async function atender(m: Entrante, nombre: string | null): Promise<void> {
     return;
   }
 
-  if (m.type !== "text") {
+  // Prospecto que dice que no: se le da de baja, se le agradece una vez y nunca más.
+  const prospecto = await datosProspecto(m.from);
+  if (prospecto.baja) {
+    console.log("whatsapp: dado de baja, no se contesta", cola(m.from));
+    return;
+  }
+  if (prospecto.prospecto && leido !== null && esBaja(texto)) {
+    await darDeBaja(m.from);
+    await responder(m.from, "Perfecto, no le escribimos más. ¡Gracias por responder y que tengan una buena temporada!");
+    return;
+  }
+
+  if (leido === null) {
     await responder(m.from, "Por ahora te leo solo mensajes de texto. Escribime qué estás buscando y te paso precio y link.");
     return;
   }
@@ -153,7 +184,8 @@ async function atender(m: Entrante, nombre: string | null): Promise<void> {
   // la persona espera leer en la primera respuesta. Va pegado al mensaje, no a las instrucciones,
   // para no romper el caché del prompt.
   const anuncio = ref && (ref.headline || ref.body) ? `<anuncio>La persona tocó un anuncio que decía: ${[ref.headline, ref.body].filter(Boolean).join(" — ").slice(0, 300)}. Arrancá por ahí.</anuncio>\n\n` : "";
-  const r = vendedorActivo() ? await responderComoVendedor(`${anuncio}${texto}`, historial, null, "whatsapp") : null;
+  const negocio = prospecto.prospecto ? contextoProspecto(prospecto.prospecto, prospecto.negocio) : "";
+  const r = vendedorActivo() ? await responderComoVendedor(`${negocio}${anuncio}${texto}`, historial, null, "whatsapp") : null;
   const respuesta = r ?? (await buscarEnCatalogo(texto));
   // Pedir una persona deriva siempre, conteste la IA o el motor de reglas. Y el texto es fijo:
   // el modelo tiende a prometer "el link de arriba" u otras cosas que acá no existen.
