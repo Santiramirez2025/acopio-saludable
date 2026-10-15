@@ -5,6 +5,7 @@
 // que es lo más cerca que se puede estar de un toque para comprar.
 
 import { urlSitio } from "./sitio";
+import { enlacePedido } from "./pedido-enlace";
 import type { Respuesta } from "./asistente-catalogo";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -83,6 +84,9 @@ export async function marcarLeido(idMensaje: string): Promise<boolean> {
 
 /**
  * La respuesta del vendedor, en texto plano para WhatsApp.
+ *
+ * Cuando el vendedor armó un pedido (acciones), no se manda un link por producto: se manda
+ * UNO que abre el carrito con todo cargado. "Cerrar" tiene que ser un toque, no tres.
  * Se saca el link de wa.me: mandarle a alguien un link de WhatsApp dentro de WhatsApp no tiene sentido.
  */
 export function paraWhatsapp(r: Respuesta): string {
@@ -90,10 +94,14 @@ export function paraWhatsapp(r: Respuesta): string {
   const abs = (href: string) => (href.startsWith("http") ? href : `${base}${href}`);
   const partes = [r.texto.trim()];
 
-  const productos = r.acciones?.length
-    ? r.acciones.map((a) => `${a.cantidad > 1 ? `${a.cantidad} x ` : ""}${a.nombre} — ${a.precio}\n${abs(`/${a.clase === "combo" ? "combos" : "producto"}/${encodeURIComponent(a.id)}`)}`)
-    : (r.fichas ?? []).slice(0, 3).map((f) => `${f.nombre}${f.detalle ? ` · ${f.detalle}` : ""} — ${f.precio}\n${abs(f.href)}`);
-  if (productos.length) partes.push(productos.join("\n\n"));
+  if (r.acciones?.length) {
+    const lineas = r.acciones.map((a) => ({ tipo: a.clase, id: a.id, cantidad: a.cantidad }));
+    partes.push(r.acciones.map((a) => `• ${a.cantidad > 1 ? `${a.cantidad} x ` : ""}${a.nombre} — ${a.precio}`).join("\n"));
+    partes.push(`Tocá acá y te queda el pedido armado, listo para pagar:\n${abs(enlacePedido(lineas))}`);
+  } else {
+    const productos = (r.fichas ?? []).slice(0, 3).map((f) => `${f.nombre}${f.detalle ? ` · ${f.detalle}` : ""} — ${f.precio}\n${abs(f.href)}`);
+    if (productos.length) partes.push(productos.join("\n\n"));
+  }
 
   const enlaces = (r.enlaces ?? []).filter((e) => !e.href.includes("wa.me")).map((e) => `${e.texto}: ${abs(e.href)}`);
   if (enlaces.length) partes.push(enlaces.join("\n"));
