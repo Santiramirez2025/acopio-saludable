@@ -276,7 +276,8 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const total = acciones.reduce((s, a) => s + (Number(a.precio.replace(/[^\d]/g, "")) || 0), 0);
     return {
       texto: [
-        `Listo: le aparecen los botones para sumar ${acciones.map((a) => `${a.cantidad} x ${a.nombre} (${a.precio})`).join(", ")}. Suma ${pesos(total)}.`,
+        // Neutro a propósito: en la web esto es un botón y en WhatsApp es un link.
+        `Listo: le queda a mano para sumar al pedido ${acciones.map((a) => `${a.cantidad} x ${a.nombre} (${a.precio})`).join(", ")}. Suma ${pesos(total)}.`,
         rechazados.length ? `No existen y quedaron afuera: ${rechazados.join(", ")}.` : "",
         "Decile en una frase qué le dejaste para agregar y qué le queda por hacer. No repitas la lista entera.",
       ]
@@ -349,7 +350,7 @@ function instrucciones(compraMinima: string): string {
     "",
     "FORMATO DE LA RESPUESTA",
     "- Texto plano, sin markdown, sin asteriscos, sin encabezados, sin emojis.",
-    "- Los productos que buscaste se le muestran aparte en tarjetas con foto y precio, y lo que agregás aparece como botón: no repitas la lista entera, nombrá uno o dos y seguí.",
+    "- Los productos que buscaste se le muestran aparte, con precio y con la forma de sumarlos al pedido: no repitas la lista entera ni los precios uno por uno, nombrá uno o dos y seguí.",
   ].join("\n");
 }
 
