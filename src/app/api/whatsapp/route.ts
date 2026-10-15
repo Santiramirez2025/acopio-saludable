@@ -73,9 +73,16 @@ export async function GET(req: Request) {
 
 type Entrante = { from: string; id: string; type: string; text?: { body?: string } };
 
+// Un número de teléfono no va entero a los logs: con los últimos cuatro alcanza para seguir una charla.
+const cola = (n: string) => `…${n.slice(-4)}`;
+
 export async function POST(req: Request) {
   const crudo = await req.text();
-  if (!firmaValida(crudo, req.headers.get("x-hub-signature-256"))) {
+  const firma = req.headers.get("x-hub-signature-256");
+  if (!firmaValida(crudo, firma)) {
+    // Esto es lo primero que hay que mirar cuando "no contesta": si el app secret está mal
+    // pegado, todos los webhooks mueren acá y sin este log no se ve.
+    console.error("whatsapp: firma inválida", { conFirma: Boolean(firma), conSecreto: Boolean(process.env.WHATSAPP_APP_SECRET), bytes: crudo.length });
     return NextResponse.json({ error: "firma inválida" }, { status: 401 });
   }
 
@@ -83,19 +90,29 @@ export async function POST(req: Request) {
   try {
     cuerpo = JSON.parse(crudo);
   } catch {
+    console.error("whatsapp: cuerpo no es JSON");
     return NextResponse.json({ ok: true }); // nunca devolver error: Meta reintenta
   }
 
   const mensajes: Entrante[] = [];
-  for (const e of (cuerpo.entry as { changes?: { value?: { messages?: Entrante[] } }[] }[]) ?? []) {
+  for (const e of (cuerpo.entry as { changes?: { field?: string; value?: { messages?: Entrante[] } }[] }[]) ?? []) {
     for (const c of e.changes ?? []) for (const m of c.value?.messages ?? []) mensajes.push(m);
   }
+  console.log("whatsapp: webhook recibido", { mensajes: mensajes.length, tipos: mensajes.map((m) => m.type) });
 
   // El 200 sale ahora; contestar puede tardar varios segundos y Meta no espera.
   after(async () => {
     for (const m of mensajes) {
-      if (!m?.from || !m.id || yaVisto(m.id)) continue;
-      await atender(m);
+      if (!m?.from || !m.id) continue;
+      if (yaVisto(m.id)) {
+        console.log("whatsapp: repetido, se ignora", m.id);
+        continue;
+      }
+      try {
+        await atender(m);
+      } catch (e) {
+        console.error("whatsapp: atender falló", cola(m.from), e);
+      }
     }
   });
 
@@ -103,7 +120,10 @@ export async function POST(req: Request) {
 }
 
 async function atender(m: Entrante): Promise<void> {
-  if (!cloudActivo()) return;
+  if (!cloudActivo()) {
+    console.error("whatsapp: faltan WHATSAPP_TOKEN o WHATSAPP_PHONE_ID, no se contesta");
+    return;
+  }
   await marcarLeido(m.id);
 
   if (m.type !== "text") {
@@ -119,12 +139,16 @@ async function atender(m: Entrante): Promise<void> {
   }
 
   const historial = recordar(m.from);
+  const inicio = Date.now();
   const r = vendedorActivo() ? await responderComoVendedor(texto, historial) : null;
   const respuesta = r ?? (await buscarEnCatalogo(texto));
   const salida = paraWhatsapp(respuesta);
+  console.log("whatsapp: respuesta armada", { de: cola(m.from), conIA: Boolean(r), ms: Date.now() - inicio, largo: salida.length });
   if (!salida) return;
 
-  if (await enviarTexto(m.from, salida)) {
+  const enviado = await enviarTexto(m.from, salida);
+  console.log("whatsapp: envío", { de: cola(m.from), enviado });
+  if (enviado) {
     guardar(m.from, [...historial, { de: "yo", texto }, { de: "acopio", texto: respuesta.texto }]);
   }
 }
