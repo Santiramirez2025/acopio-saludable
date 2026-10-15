@@ -8,19 +8,9 @@ const IconoWa = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.700-5.100A8.5 8.5 0 1 1 21 11.5Z" /><path d="M9 8.700c-.200 1.500.700 3.300 2.200 4.700s3 2 4.300 1.700" /></svg>
 );
 
-/** Carrito o pedido como enlace: `p=3622*2,c-desayuno-30-dias*1`. Los precios nunca viajan: se calculan al abrir. */
-export function enlacePedido(lineas: LineaEntrada[]): string {
-  return `/carrito?p=${lineas.filter((l) => l.cantidad > 0).map((l) => `${l.tipo === "combo" ? "c-" : ""}${encodeURIComponent(l.id)}*${l.cantidad}`).join(",")}`;
-}
-export function leerPedido(p: string): LineaEntrada[] {
-  return p.split(",").slice(0, 80).flatMap((t) => {
-    const [crudo, n] = t.split("*");
-    const cantidad = Math.min(999, Number.parseInt(n ?? "1", 10) || 0);
-    if (!crudo || cantidad <= 0) return [];
-    const combo = crudo.startsWith("c-");
-    return [{ tipo: combo ? ("combo" as const) : ("producto" as const), id: decodeURIComponent(combo ? crudo.slice(2) : crudo), cantidad }];
-  });
-}
+// El formato del enlace vive en lib/pedido-enlace.ts: también lo usa el vendedor de WhatsApp desde el servidor.
+import { enlacePedido, leerPedido } from "@/lib/pedido-enlace";
+export { enlacePedido, leerPedido };
 
 /** Comparte por el menú del celular si existe; si no, abre WhatsApp con el mensaje armado. */
 export function BotonCompartir({ texto, ruta, etiqueta = "Compartir", className = "btn-sec" }: { texto: string; ruta: string; etiqueta?: string; className?: string }) {
