@@ -8,7 +8,9 @@ import { AVISO_SUPLEMENTOS } from "./sitio";
 
 export type Enlace = { href: string; texto: string; externo?: boolean };
 export type Ficha = { href: string; nombre: string; detalle: string; precio: string; foto: string | null };
-export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; aviso?: string };
+/** Un botón que suma algo al pedido desde el chat. El id lo valida el servidor contra el catálogo. */
+export type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string; nombre: string; cantidad: number; precio: string };
+export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string };
 
 type Indexado = ProductoTienda & { nombre: string; indice: string };
 

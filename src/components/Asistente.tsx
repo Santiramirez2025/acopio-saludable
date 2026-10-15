@@ -5,10 +5,12 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Foto } from "./Foto";
+import { useCarrito } from "./Carrito";
 
 type Enlace = { href: string; texto: string; externo?: boolean };
 type Ficha = { href: string; nombre: string; detalle: string; precio: string; foto: string | null };
-type Mensaje = { de: "yo" | "acopio"; texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; aviso?: string };
+type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string; nombre: string; cantidad: number; precio: string };
+type Mensaje = { de: "yo" | "acopio"; texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string };
 
 const BIENVENIDA: Mensaje = { de: "acopio", texto: "Hola. Te busco un producto o te cuento sobre envíos, pagos y la compra mínima. ¿Qué necesitás?" };
 const ATAJOS = ["¿Cuánto tarda el envío?", "¿Cómo puedo pagar?", "¿Hay compra mínima?", "Productos sin TACC", "Hablar con una persona"];
@@ -17,10 +19,12 @@ const CLAVE = "acopio-asistente";
 /** Ayuda de la tienda: un botón en el encabezado que abre una conversación. Nunca se abre sola ni tapa la compra. */
 export function Asistente() {
   const ruta = usePathname();
+  const { lineas, agregar } = useCarrito();
   const [abierto, setAbierto] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>([BIENVENIDA]);
   const [texto, setTexto] = useState("");
   const [esperando, setEsperando] = useState(false);
+  const [sumadas, setSumadas] = useState<string[]>([]);
   const fin = useRef<HTMLDivElement>(null);
   const campo = useRef<HTMLInputElement>(null);
   const boton = useRef<HTMLButtonElement>(null);
@@ -60,8 +64,9 @@ export function Asistente() {
     setEsperando(true);
     try {
       // Va el historial: un vendedor que no se acuerda de lo que le dijiste hace dos mensajes no vende.
+      // Y va el carrito: sin saber qué lleva y cuánto le falta para el mínimo, no puede cerrar.
       const historial = mensajes.slice(-8).map((m) => ({ de: m.de, texto: m.texto }));
-      const r = await fetch("/api/asistente", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mensaje, historial }) });
+      const r = await fetch("/api/asistente", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mensaje, historial, carrito: lineas }) });
       if (!r.ok) throw new Error();
       const datos = await r.json();
       setMensajes((m) => [...m, { de: "acopio", ...datos }]);
@@ -112,6 +117,34 @@ export function Asistente() {
                         <span className="shrink-0 text-sm font-bold tabular-nums">{f.precio}</span>
                       </Link>
                     ))}
+                    {/* Lo que el vendedor ofreció se suma acá mismo: hacerlo ir a buscarlo al catálogo es perder la venta. */}
+                    {m.acciones?.map((a) => {
+                      const clave = `${i}-${a.clase}-${a.id}`;
+                      const ya = sumadas.includes(clave);
+                      return (
+                        <button
+                          key={clave}
+                          type="button"
+                          disabled={ya}
+                          onClick={() => {
+                            agregar([{ tipo: a.clase, id: a.id, cantidad: a.cantidad }]);
+                            setSumadas((s) => [...s, clave]);
+                          }}
+                          className="flex min-h-[48px] w-full items-center gap-2 rounded-2xl bg-acopio-900 px-4 text-left text-sm font-semibold text-white hover:bg-acopio-700 disabled:bg-acopio-100 disabled:text-acopio-700"
+                        >
+                          {ya ? (
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                          )}
+                          <span className="min-w-0 flex-1 truncate">{ya ? "Agregado: " : "Agregar "}{a.cantidad > 1 ? `${a.cantidad} x ` : ""}{a.nombre}</span>
+                          <span className="shrink-0 tabular-nums">{a.precio}</span>
+                        </button>
+                      );
+                    })}
+                    {m.acciones?.length && sumadas.some((s) => s.startsWith(`${i}-`)) ? (
+                      <Link href="/carrito" className="flex min-h-[44px] w-fit items-center rounded-full border border-acopio-600 px-4 text-sm font-semibold text-acopio-700 hover:bg-acopio-50">Ver mi pedido</Link>
+                    ) : null}
                     {m.enlaces && (
                       <div className="flex flex-wrap gap-2">
                         {m.enlaces.map((e) =>
