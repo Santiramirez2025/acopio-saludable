@@ -141,6 +141,21 @@ export function separarOpciones(crudo: string): { texto: string; opciones: strin
   return { texto: lineas.filter((_, k) => k !== i).join("\n").trim(), opciones };
 }
 
+/**
+ * Debajo del texto van los productos de los que habló, no los que trajo la última búsqueda.
+ * Si nombró la Despensa, mostrar tres combos distintos confunde y no vende.
+ */
+export function fichasNombradas(fichas: Ficha[], texto: string): Ficha[] {
+  const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const t = norm(texto);
+  const clave = (f: Ficha) => norm(f.nombre.replace(/^Combo /, "")).split(/[·(,]/)[0].trim();
+  const nombradas = fichas.filter((f) => {
+    const k = clave(f);
+    return k.length >= 4 && (t.includes(k) || t.includes(k.split(" ").slice(0, 3).join(" ")));
+  });
+  return nombradas.length ? nombradas : fichas;
+}
+
 /** El cuerpo que espera la API de Cloud para cada tipo. */
 export function cuerpoGraph(s: Saliente, to: string): Record<string, unknown> {
   const base = { messaging_product: "whatsapp", recipient_type: "individual", to };

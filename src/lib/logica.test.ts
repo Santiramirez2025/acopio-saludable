@@ -711,3 +711,11 @@ test("whatsapp: pedir una persona es pedirla de verdad, no nombrar whatsapp", ()
   assert.ok(!pidePersona("sos vendedor?"));
   assert.ok(!pidePersona("¡Hola! Quiero precios de frutos secos por kilo"));
 });
+
+import { fichasNombradas } from "./whatsapp-interactivo";
+test("vendedor: abajo van los productos que nombró", () => {
+  const f = (nombre: string) => ({ href: `/combos/${nombre}`, nombre: `Combo ${nombre}`, detalle: "", precio: "$ 1", foto: null });
+  const todas = [f("Desayuno 30 días"), f("Despensa de 4 kilos"), f("Alacena de frutos secos")];
+  assert.deepEqual(fichasNombradas(todas, "La Despensa de 4 kilos trae…").map((x) => x.nombre), ["Combo Despensa de 4 kilos"]);
+  assert.equal(fichasNombradas(todas, "Te paso opciones").length, 3);
+});
