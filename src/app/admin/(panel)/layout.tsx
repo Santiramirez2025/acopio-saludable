@@ -45,9 +45,10 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       <header className="border-b border-stone-200 bg-white print:hidden">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <Link href="/admin" className="font-semibold text-acopio-700">Acopio Saludable</Link>
-          <nav className="flex flex-wrap gap-4 text-sm text-stone-600">
+          {/* En el celular el menú es una sola fila que se desliza: tres renglones de links se comían media pantalla. */}
+          <nav className="-mx-4 order-last flex w-[calc(100%+2rem)] gap-4 overflow-x-auto whitespace-nowrap px-4 text-sm text-stone-600 [scrollbar-width:none] md:order-none md:mx-0 md:w-auto md:flex-wrap md:overflow-visible md:px-0">
             {NAV.map(([href, label]) => (
-              <Link key={href} href={href} className="hover:text-acopio-700">{label}</Link>
+              <Link key={href} href={href} className="py-1 hover:text-acopio-700">{label}</Link>
             ))}
           </nav>
           <span className="ml-auto text-xs text-stone-500">{session.user?.email}</span>

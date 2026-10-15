@@ -24,6 +24,11 @@ export async function POST(req: Request) {
   const telefono = typeof cuerpo.telefono === "string" ? (claveValida(cuerpo.telefono) ?? "") : "";
   if (!telefono) return NextResponse.json({ error: "Falta el teléfono" }, { status: 400 });
 
+  if (cuerpo.accion === "leida") {
+    await marcarLeida(telefono);
+    return NextResponse.json({ ok: true });
+  }
+
   if (cuerpo.accion === "bot" || cuerpo.accion === "persona") {
     await cambiarEstado(telefono, cuerpo.accion);
     if (cuerpo.accion === "persona") await marcarLeida(telefono);

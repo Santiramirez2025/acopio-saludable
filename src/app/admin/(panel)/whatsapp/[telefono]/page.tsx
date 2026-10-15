@@ -1,44 +1,6 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { conversacionDe, mensajesDe } from "@/lib/whatsapp-memoria";
-import { RespuestaWhatsapp } from "@/components/RespuestaWhatsapp";
-import { canalDe, claveValida, NOMBRE_CANAL } from "@/lib/meta-mensajes";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-const FECHA = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Cordoba", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-
+// La charla ahora se abre dentro de la bandeja, al lado de la lista. Los links viejos siguen andando.
 export default async function Charla({ params }: { params: Promise<{ telefono: string }> }) {
-  const telefono = claveValida((await params).telefono);
-  if (!telefono) notFound();
-  const canal = canalDe(telefono);
-  const id = canal === "whatsapp" ? `+${telefono}` : NOMBRE_CANAL[canal];
-  const [c, mensajes] = await Promise.all([conversacionDe(telefono), mensajesDe(telefono)]);
-  if (!c) notFound();
-  const ultimoDelCliente = [...mensajes].reverse().find((m) => m.de === "cliente")?.fecha ?? null;
-  const horasDesde = ultimoDelCliente ? (Date.now() - ultimoDelCliente.getTime()) / 3_600_000 : null;
-  return (
-    <div className="space-y-4">
-      <div>
-        <Link href="/admin/whatsapp" className="text-sm text-stone-600 underline">← Todas las charlas</Link>
-        <h1 className="mt-1 text-xl font-semibold">{c.nombre || id}</h1>
-        <p className="text-sm text-stone-600">
-          {id} · {c.estado === "persona" ? "La atiende una persona" : "La atiende el vendedor"}
-          {horasDesde !== null && horasDesde > 24 && <span className="ml-2 chip bg-stone-200 text-stone-700">Hace más de 24 h que no escribe: Meta no deja contestar hasta que vuelva a escribir (en WhatsApp, solo con plantilla)</span>}
-        </p>
-      </div>
-      <div className="space-y-2 rounded-lg border border-stone-200 bg-white p-4">
-        {mensajes.map((m) => (
-          <div key={m.id} className={`flex ${m.de === "cliente" ? "justify-start" : "justify-end"}`}>
-            <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-line ${m.de === "cliente" ? "bg-stone-100" : m.de === "persona" ? "bg-amber-100" : "bg-acopio-100"}`}>
-              <div className="mb-0.5 text-[11px] uppercase tracking-wide text-stone-500">{m.de === "cliente" ? "Cliente" : m.de === "persona" ? "Vos" : "Vendedor"} · {FECHA.format(m.fecha)}</div>
-              {m.texto}
-            </div>
-          </div>
-        ))}
-        {!mensajes.length && <p className="text-sm text-stone-600">Sin mensajes.</p>}
-      </div>
-      <RespuestaWhatsapp telefono={telefono} estado={c.estado} />
-    </div>
-  );
+  redirect(`/admin/whatsapp?c=${encodeURIComponent((await params).telefono)}`);
 }

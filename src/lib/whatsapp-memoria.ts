@@ -133,11 +133,16 @@ export async function marcarLeida(telefono: string): Promise<void> {
   await prisma.$executeRaw`UPDATE "WhatsappConversacion" SET "noLeidos" = 0 WHERE "telefono" = ${telefono}`;
 }
 
-export async function listarConversaciones(limite = 100): Promise<(Conversacion & { ultimoTexto: string | null })[]> {
-  return prisma.$queryRaw<(Conversacion & { ultimoTexto: string | null })[]>`
+export type Resumen = Conversacion & { ultimoTexto: string | null; ultimoDe: Mensaje["de"] | null };
+
+export async function listarConversaciones(limite = 100): Promise<Resumen[]> {
+  return prisma.$queryRaw<Resumen[]>`
     SELECT c."telefono", c."nombre", c."estado", c."noLeidos", c."ultimoMensaje", c."creado", c."anuncioId", c."anuncioTitulo", c."prospecto", c."baja",
-           (SELECT m."texto" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1) AS "ultimoTexto"
+           u."texto" AS "ultimoTexto", u."de" AS "ultimoDe"
     FROM "WhatsappConversacion" c
+    LEFT JOIN LATERAL (
+      SELECT m."texto", m."de" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1
+    ) u ON true
     ORDER BY (c."estado" = 'persona') DESC, c."ultimoMensaje" DESC
     LIMIT ${limite}
   `;

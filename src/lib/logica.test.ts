@@ -634,3 +634,27 @@ test("canales: clave por canal, validación y corte de textos largos", () => {
   assert.ok(partes.every((p) => p.length <= 990));
   assert.equal(partes.join("\n").replace(/\s+/g, " "), largo.replace(/\s+/g, " "));
 });
+
+import { cuando, iniciales, pasaFiltro, telefonoLindo, type ResumenCharla } from "./bandeja";
+
+test("bandeja: filtros, búsqueda, iniciales y fechas", () => {
+  const base: ResumenCharla = { telefono: "5493541519630", nombre: "María López", estado: "bot", noLeidos: 0, ultimoMensaje: new Date(), anuncioId: null, anuncioTitulo: null, prospecto: null, baja: false, ultimoTexto: "¿Tenés almendras?", ultimoDe: "cliente" };
+  assert.equal(pasaFiltro(base, "todas"), true);
+  assert.equal(pasaFiltro(base, "sin-leer"), false);
+  assert.equal(pasaFiltro({ ...base, noLeidos: 2 }, "sin-leer"), true);
+  assert.equal(pasaFiltro({ ...base, estado: "persona" }, "persona"), true);
+  assert.equal(pasaFiltro(base, "whatsapp"), true);
+  assert.equal(pasaFiltro({ ...base, telefono: "ig.1789" }, "instagram"), true);
+  assert.equal(pasaFiltro(base, "todas", "maria"), true);
+  assert.equal(pasaFiltro(base, "todas", "almendras"), true);
+  assert.equal(pasaFiltro(base, "todas", "3541"), true);
+  assert.equal(pasaFiltro(base, "todas", "nueces"), false);
+  assert.equal(iniciales("María López", "x"), "ML");
+  assert.equal(iniciales(null, "5493541519630"), "30");
+  assert.equal(telefonoLindo("5493541519630"), "+54 9 3541 51-9630");
+  assert.equal(telefonoLindo("fb.123456"), "Messenger");
+  const ahora = new Date("2026-10-15T18:00:00Z");
+  assert.equal(cuando(new Date("2026-10-15T17:59:30Z"), ahora), "ahora");
+  assert.equal(cuando(new Date("2026-10-15T17:45:00Z"), ahora), "hace 15 min");
+  assert.equal(cuando(new Date("2026-10-14T15:00:00Z"), ahora), "ayer");
+});
