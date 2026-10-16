@@ -8,6 +8,7 @@
 import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
 import { buscarEnCatalogo, comboDelAnuncio, type Accion, type EnvioCotizado, type Respuesta } from "./asistente-catalogo";
 import { cotizarEnvioChat } from "./envio-chat";
+import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
 import { leerToque, planTrae, planVer, planWhatsapp, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
@@ -252,10 +253,11 @@ export async function pensar(c: {
   }
   // «Ver los productos»: se muestran, sin preguntar ni gastar el modelo. Primero el de entrada, después por precio.
   if (quiereVer(c.texto)) {
+    const cfgArg = await leerConfig();
     const combos = (await combosTienda({ activo: true, tipo: "COMBO" }))
       .filter((x) => x.disponible)
       .sort((a, b) => a.precio - b.precio)
-      .map((x) => ({ slug: x.slug, nombre: x.nombre, precio: pesos(Math.round(x.precio)), ahorro: pesos(Math.round(x.ahorro)) }));
+      .map((x) => ({ slug: x.slug, nombre: x.nombre, precio: pesos(Math.round(x.precio)), argumento: argumentoCombo(x, cfgArg.descuentoTransferenciaPct, pesos).corto }));
     if (combos.length) return { salientes: planVer(combos, `${urlSitio()}/combos`), respuesta: { texto: "" }, derivar: false, conIA: false };
   }
 
@@ -267,7 +269,7 @@ export async function pensar(c: {
         slug: combo.slug,
         nombre: combo.nombre,
         precio: pesos(Math.round(combo.precio)),
-        ahorro: pesos(Math.round(combo.ahorro)),
+        argumento: argumentoCombo(combo, (await leerConfig()).descuentoTransferenciaPct, pesos).transferencia ?? "",
         renglones: combo.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)),
       });
       return { salientes, respuesta: { texto: "" }, derivar: false, conIA: false };

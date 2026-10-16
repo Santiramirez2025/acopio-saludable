@@ -31,3 +31,27 @@ export function temaDe(texto: string): Tema | null {
   const t = sinTildes(texto);
   return TEMAS.find((x) => x.patron.test(t)) ?? null;
 }
+
+/**
+ * El número que convence de un combo. «Ahorrás $1.856» no mueve a nadie en una compra de $35.000;
+ * sí mueven el precio por kilo (si todo se vende por peso) y el precio por transferencia.
+ */
+export function argumentoCombo(
+  c: { precio: number; items: { cantidad: number; producto: { contenido: number | null; unidad: string | null } }[] },
+  descuentoTransferenciaPct: number,
+  pesos: (n: number) => string,
+): { porKilo: string | null; transferencia: string | null; corto: string } {
+  let gramos = 0;
+  let todoPorPeso = c.items.length > 0;
+  for (const { cantidad, producto } of c.items) {
+    const u = (producto.unidad ?? "").toLowerCase();
+    if (!producto.contenido || !(u === "g" || u === "kg")) {
+      todoPorPeso = false;
+      break;
+    }
+    gramos += producto.contenido * (u === "kg" ? 1000 : 1) * cantidad;
+  }
+  const porKilo = todoPorPeso && gramos >= 1000 ? `${pesos(Math.round(c.precio / (gramos / 1000)))} el kilo` : null;
+  const transferencia = descuentoTransferenciaPct > 0 ? `${pesos(Math.round(c.precio * (1 - descuentoTransferenciaPct / 100)))} por transferencia` : null;
+  return { porKilo, transferencia, corto: porKilo ?? transferencia ?? "" };
+}

@@ -763,7 +763,7 @@ test("combos: cada búsqueda va a su combo, y sin TACC gana", () => {
   assert.equal(temaDe("algo para el desayuno, granola")?.id, "desayuno");
   assert.equal(temaDe("proteína para el gym")?.id, "gym");
   assert.equal(temaDe("hola"), null);
-  const t = planTrae({ slug: "x", nombre: "X", precio: "$ 1", ahorro: "$ 0", renglones: ["a", "b"] });
+  const t = planTrae({ slug: "x", nombre: "X", precio: "$ 1", argumento: "", renglones: ["a", "b"] });
   assert.equal(t[0].tipo, "botones");
   assert.match((t[0] as { cuerpo: string }).cuerpo, /• a\n• b/);
 });
@@ -803,10 +803,20 @@ import { quiereVer, planVer } from "./whatsapp-interactivo";
 test("whatsapp: «ver los productos» muestra, no pregunta", () => {
   for (const t of ["Ver los productos", "Ver combos", "Ver otros combos", "Ver otro combo", "ver otras opciones", "¿Qué tienen?", "catálogo", "pasame la lista"]) assert.ok(quiereVer(t), t);
   for (const t of ["Busco frutos secos", "quiero la despensa", "hola"]) assert.ok(!quiereVer(t), t);
-  const p = planVer([{ slug: "despensa", nombre: "Despensa de 4 kilos", precio: "$ 35.268", ahorro: "$ 1.856" }]);
+  const p = planVer([{ slug: "despensa", nombre: "Despensa de 4 kilos", precio: "$ 35.268", argumento: "$ 8.817 el kilo" }]);
   const l = p[0] as Extract<(typeof p)[number], { tipo: "lista" }>;
   assert.equal(l.secciones[0].filas[0].id, "trae|despensa");
   assert.equal(l.secciones[1].filas.length, 3);
-  const conWeb = planVer([{ slug: "d", nombre: "D", precio: "$ 1", ahorro: "$ 0" }], "https://x/combos");
+  const conWeb = planVer([{ slug: "d", nombre: "D", precio: "$ 1", argumento: "" }], "https://x/combos");
   assert.equal(conWeb[1].tipo, "cta");
+});
+
+import { argumentoCombo } from "./combos-tema";
+test("combos: el argumento es el precio por kilo o por transferencia, no «ahorrás»", () => {
+  const p = (n: number) => `$${n}`;
+  const despensa = { precio: 35268, items: [1, 2, 3, 4].map(() => ({ cantidad: 1, producto: { contenido: 1, unidad: "kg" } })) };
+  assert.equal(argumentoCombo(despensa, 8, p).porKilo, "$8817 el kilo");
+  const mixto = { precio: 65000, items: [{ cantidad: 1, producto: { contenido: null, unidad: null } }] };
+  assert.equal(argumentoCombo(mixto, 8, p).porKilo, null);
+  assert.equal(argumentoCombo(mixto, 8, p).corto, "$59800 por transferencia");
 });
