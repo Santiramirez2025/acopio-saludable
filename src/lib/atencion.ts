@@ -24,6 +24,7 @@ import { cambiarEstado, estadoDe, guardarPedido, respuestasRecientes, historialD
 import { contextoProspecto, darDeBaja, datosProspecto, esBaja } from "./whatsapp-prospectos";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
+import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
 
 const SALUD =
   "Eso no te lo puedo responder: no damos indicaciones de salud ni de consumo. Para eso consultá a tu médico o nutricionista. " +
@@ -184,6 +185,11 @@ export async function atender(e: Entrada): Promise<void> {
 
   // Prospecto que dice que no: se le da de baja, se le agradece una vez y nunca más.
   const prospecto = await datosProspecto(e.clave);
+  // Un proveedor: no le habla el vendedor. Queda para Santiago y le llega el aviso.
+  if (prospecto.prospecto === MARCA_PROVEEDOR) {
+    await avisarSantiago(`Proveedor: ${prospecto.negocio ?? e.clave}`, `📦 ${prospecto.negocio ?? e.nombre ?? e.clave} contestó:\n${(e.guardar ?? texto).slice(0, 300)}\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
+    return;
+  }
   if (prospecto.baja) {
     console.log("chat: dado de baja, no se contesta", cola(e.clave));
     return;

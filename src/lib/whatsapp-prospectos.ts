@@ -17,7 +17,7 @@ const GRAPH = "https://graph.facebook.com/v21.0";
 
 type Graph = { ok: boolean; estado: number; cuerpo: unknown };
 
-async function graph(camino: string, metodo: "GET" | "POST" | "DELETE", cuerpo?: unknown): Promise<Graph> {
+export async function graph(camino: string, metodo: "GET" | "POST" | "DELETE", cuerpo?: unknown): Promise<Graph> {
   const token = process.env.WHATSAPP_TOKEN;
   if (!token) return { ok: false, estado: 0, cuerpo: "Falta WHATSAPP_TOKEN" };
   try {
