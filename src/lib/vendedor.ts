@@ -275,7 +275,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const partes = [
       `Compra mínima: ${pesos(cfg.compraMinima)} por pedido, combinando lo que quiera.`,
       cfg.entregaPropiaActiva
-        ? `Entrega propia sin cargo en Villa Carlos Paz y el sur de Punilla (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz, Cuesta Blanca) en ${cfg.plazoEntregaPropia}. Los domingos no se entrega.${zp ? ` A ${zp.nombre} también, por ${pesos(zp.precio)}.` : ""}`
+        ? `Entrega propia sin cargo en Villa Carlos Paz y todo lo cercano: Estancia Vieja, Santa Cruz del Lago, Villa Parque Siquiman, Villa del Lago, San Roque, Bialet Massé, Tanti, Cabalango y el sur de Punilla (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz, Cuesta Blanca, Tala Huasi) en ${cfg.plazoEntregaPropia}. Los domingos no se entrega.${zp ? ` A ${zp.nombre} también, por ${pesos(zp.precio)}.` : ""}`
         : "",
       "Al resto del país, por correo: despacho en 24 a 48 hs hábiles y de 2 a 7 días hábiles según zona. El costo se ve en el carrito con el código postal, antes de pagar.",
       cfg.envioGratisDesde ? `Envío gratis desde ${pesos(cfg.envioGratisDesde)}.` : "",

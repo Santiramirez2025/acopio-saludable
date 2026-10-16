@@ -9,13 +9,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { enviarPorCanal } from "@/lib/atencion";
 import { claveValida } from "@/lib/meta-mensajes";
-import { cambiarEstado, marcarLeida, registrarSalida } from "@/lib/whatsapp-memoria";
+import { cambiarEstado, guardarPedido, marcarLeida, registrarSalida } from "@/lib/whatsapp-memoria";
+import { enviarSaliente } from "@/lib/whatsapp-cloud";
+import { ID, textoParaPanel, type Saliente } from "@/lib/whatsapp-interactivo";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown };
+  let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown; pedido?: unknown; zonas?: unknown };
   try {
     cuerpo = await req.json();
   } catch {
@@ -37,6 +39,27 @@ export async function POST(req: Request) {
 
   const texto = typeof cuerpo.texto === "string" ? cuerpo.texto.trim().slice(0, 4000) : "";
   if (!texto) return NextResponse.json({ error: "Mensaje vacío" }, { status: 400 });
+
+  // Seguimiento: lo manda el vendedor (la charla sigue en sus manos), con los botones de zona si
+  // se pide, y deja guardado el pedido para que al tocar la zona salga el envío y los botones de pago.
+  if (cuerpo.accion === "seguimiento") {
+    if (typeof cuerpo.pedido === "string" && cuerpo.pedido.startsWith("/carrito?p=")) await guardarPedido(telefono, cuerpo.pedido.slice(0, 300));
+    const m: Saliente = cuerpo.zonas
+      ? {
+          tipo: "botones",
+          cuerpo: texto.slice(0, 1024),
+          botones: [
+            { id: `${ID.zona}Carlos Paz`, titulo: "Carlos Paz y zona" },
+            { id: `${ID.zona}Córdoba Capital`, titulo: "Córdoba Capital" },
+            { id: `${ID.opcion}Otra ciudad`, titulo: "Otra ciudad" },
+          ],
+        }
+      : { tipo: "texto", texto };
+    const ok = await enviarSaliente(telefono, m);
+    if (!ok) return NextResponse.json({ error: "Meta rechazó el envío (¿pasaron más de 24 horas?)" }, { status: 502 });
+    await registrarSalida(telefono, "bot", textoParaPanel(m));
+    return NextResponse.json({ ok: true });
+  }
 
   // Contestar a mano toma la charla: el bot no se mete hasta que se la devuelvan.
   await cambiarEstado(telefono, "persona");

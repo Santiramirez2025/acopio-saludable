@@ -5,7 +5,7 @@ import { PROVINCIAS } from "./envios/geo";
 const sinTildes = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 
 // Donde llegamos con entrega propia sin cargo: los mismos lugares que dice datos_de_la_tienda.
-const PROPIA = /\b(carlos paz|vcp|villa carlos paz|san antonio de arredondo|arredondo|mayu sumaj|icho cruz|cuesta blanca|tala huasi)\b/;
+const PROPIA = /\b(carlos paz|vcp|villa carlos paz|estancia vieja|santa cruz del lago|villa santa cruz del lago|villa parque siquiman|siquiman|villa del lago|playas de oro|san roque|bialet masse|cabalango|tanti|san antonio de arredondo|arredondo|mayu sumaj|icho cruz|cuesta blanca|tala huasi|villa rio icho cruz)\b/;
 // Córdoba capital: la segunda zona de entrega propia, con precio.
 const CAPITAL = /\b(cordoba capital|ciudad de cordoba|nueva cordoba|cerro de las rosas|general paz|alberdi|guemes|centro de cordoba|argüello|arguello|villa belgrano|alta cordoba|^cordoba$)\b/;
 
