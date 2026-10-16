@@ -242,7 +242,7 @@ export function presentacionDe(f: Ficha): string {
 export function quiereVer(texto: string): boolean {
   const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   if (t.length > 45) return false;
-  return /^(quiero |me )?(ver|mostrame|mostrar|pasame|mandame)( (los|las|todos|todas|otros|otras|mas|el|la))* (productos|combos|opciones|catalogo|precios|lista)\b|^(que|cuales|que productos) (tienen|venden|hay|ofrecen)\b|^(catalogo|lista de precios|productos|combos|precios|ver mas)$/.test(t);
+  return /^(quiero |me )?(ver|mostrame|mostrar|pasame|mandame)( (los|las|todos|todas|otros|otras|otro|otra|mas|el|la))* (productos?|combos?|opcion(es)?|catalogo|precios|lista)\b|^(que|cuales|que productos) (tienen|venden|hay|ofrecen)\b|^(catalogo|lista de precios|productos|combos|precios|ver mas)$/.test(t);
 }
 
 export function planVer(combos: { slug: string; nombre: string; precio: string; ahorro: string }[]): Saliente[] {
