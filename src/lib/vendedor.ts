@@ -509,14 +509,15 @@ export async function responderComoVendedor(
           // A veces contesta solo con la línea de OPCIONES. Si ya buscó productos, alcanza con una
           // frase corta: la lista con precios va debajo. Si no, se le pide de nuevo el texto.
           console.error("vendedor: respuesta sin texto", { vuelta, conFichas: fichas.length });
-          if (fichas.length) texto = "Mirá, acá tenés las opciones con precio 👇";
-          else if (vuelta < MAX_VUELTAS - 1) {
+          if (vuelta < MAX_VUELTAS - 1) {
             if (!bloques.length) mensajes.pop();
-            mensajes.push({ role: "user", content: "(Escribile la respuesta al cliente: una o dos frases cortas, y al final la línea OPCIONES.)" });
+            mensajes.push({ role: "user", content: "(Escribile la respuesta al cliente: dos o tres frases cortas, nombrando lo que le recomendás, y al final la línea OPCIONES.)" });
             continue;
-          } else return null;
+          }
+          if (!fichas.length) return null;
+          texto = "Mirá, acá tenés las opciones con precio 👇";
         }
-        const mostradas = fichasNombradas(fichas, texto);
+        const mostradas = sep.texto ? fichasNombradas(fichas, texto) : fichas.slice(0, 4);
         return {
           texto,
           opciones: opciones.length ? opciones : undefined,
