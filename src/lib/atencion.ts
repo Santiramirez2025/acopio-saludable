@@ -11,7 +11,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { leerToque, planTrae, planVer, planWhatsapp, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
+import { leerToque, planSinApuro, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { combosTienda, cotizarCarrito } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
@@ -284,6 +284,11 @@ export async function pensar(c: {
       const texto = `¡Perfecto! ${envio!.detalle} Te dejo el resumen 👇`;
       return { salientes: planWhatsapp({ texto }, pedido), respuesta: { texto }, derivar: false, conIA: false, guardarPedido: pedido.camino };
     }
+  }
+  // «Lo veo tranquila y te escribo»: se le da tiempo. Nada de armarle el pedido ni ponerle las zonas.
+  if (!c.toque && postergaCompra(c.texto)) {
+    const salientes = planSinApuro(c.nombre, urlSitio());
+    return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
   }
   // «Ver los productos»: se muestran, sin preguntar ni gastar el modelo. Primero el de entrada, después por precio.
   if (quiereVer(c.texto)) {
