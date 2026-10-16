@@ -11,13 +11,16 @@ import { enviarPorCanal } from "@/lib/atencion";
 import { claveValida } from "@/lib/meta-mensajes";
 import { cambiarEstado, guardarPedido, marcarLeida, registrarSalida } from "@/lib/whatsapp-memoria";
 import { enviarSaliente } from "@/lib/whatsapp-cloud";
-import { ID, textoParaPanel, type Saliente } from "@/lib/whatsapp-interactivo";
+import { ID, planVer, textoParaPanel, type Saliente } from "@/lib/whatsapp-interactivo";
+import { combosTienda } from "@/lib/tienda";
+import { pesos } from "@/lib/precios";
+import { urlSitio } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown; pedido?: unknown; zonas?: unknown };
+  let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown; pedido?: unknown; zonas?: unknown; combos?: unknown };
   try {
     cuerpo = await req.json();
   } catch {
@@ -55,9 +58,21 @@ export async function POST(req: Request) {
           ],
         }
       : { tipo: "texto", texto };
-    const ok = await enviarSaliente(telefono, m);
-    if (!ok) return NextResponse.json({ error: "Meta rechazó el envío (¿pasaron más de 24 horas?)" }, { status: 502 });
-    await registrarSalida(telefono, "bot", textoParaPanel(m));
+    // Con combos: true, después del texto va la lista de combos y el botón a la tienda.
+    const extra: Saliente[] = cuerpo.combos
+      ? planVer(
+          (await combosTienda({ activo: true, tipo: "COMBO" }))
+            .filter((x) => x.disponible)
+            .sort((a, b) => a.precio - b.precio)
+            .map((x) => ({ slug: x.slug, nombre: x.nombre, precio: pesos(Math.round(x.precio)), ahorro: pesos(Math.round(x.ahorro)) })),
+          `${urlSitio()}/combos`,
+        )
+      : [];
+    for (const [i, msg] of [m, ...extra].entries()) {
+      const ok = await enviarSaliente(telefono, msg);
+      if (!ok) return NextResponse.json({ error: "Meta rechazó el envío (¿pasaron más de 24 horas?)", enviados: i }, { status: 502 });
+      await registrarSalida(telefono, "bot", textoParaPanel(msg));
+    }
     return NextResponse.json({ ok: true });
   }
 
