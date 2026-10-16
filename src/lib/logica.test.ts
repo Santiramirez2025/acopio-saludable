@@ -673,7 +673,9 @@ test("whatsapp: los ids de botones y filas dicen qué tocó", () => {
   assert.deepEqual(leerToque("quiero|c|despensa-de-4-kilos"), { tipo: "quiero", clase: "combo", id: "despensa-de-4-kilos" });
   assert.deepEqual(leerToque("quiero|p|00123"), { tipo: "quiero", clase: "producto", id: "00123" });
   assert.deepEqual(leerToque("pagar|/carrito?p=c-x*1"), { tipo: "pagar", camino: "/carrito?p=c-x*1" });
-  assert.deepEqual(leerToque("transf|/carrito?p=5*2"), { tipo: "transferencia", camino: "/carrito?p=5*2" });
+  assert.deepEqual(leerToque("transf|/carrito?p=5*2"), { tipo: "transferencia", camino: "/carrito?p=5*2", envio: null });
+  assert.deepEqual(leerToque("recibir|/carrito?p=c-d*1~0~Carlos Paz"), { tipo: "recibir", camino: "/carrito?p=c-d*1", envio: { costo: 0, lugar: "Carlos Paz" } });
+  assert.deepEqual(leerToque("transf|/carrito?p=c-d*1~~Rosario"), { tipo: "transferencia", camino: "/carrito?p=c-d*1", envio: { costo: null, lugar: "Rosario" } });
   assert.equal(leerToque(null), null);
   assert.equal(leerToque("cualquier cosa"), null);
 });
@@ -700,13 +702,15 @@ test("whatsapp: productos van en lista para tocar, pedido con botones de pago, s
   const sinZona = planWhatsapp({ texto: "Listo, te lo armé." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null });
   assert.deepEqual((sinZona[0] as { botones: { id: string }[] }).botones.map((b) => b.id), ["zona|Carlos Paz", "zona|Córdoba Capital", "op|Otra ciudad"]);
   assert.match((sinZona[0] as { cuerpo: string }).cuerpo, /barrio o ciudad/);
-  const pedido = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Córdoba Capital", costo: 15000, detalle: "x", totalConEnvio: "$ 50.268", transferenciaConEnvio: "$ 47.447" } });
+  const pedido = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Córdoba Capital", costo: 15000, detalle: "x", propia: true, totalConEnvio: "$ 50.268", transferenciaConEnvio: "$ 47.447" } });
+  assert.deepEqual((pedido[0] as { botones: { id: string; titulo: string }[] }).botones.map((b) => b.titulo), ["Mercado Pago", "Transferencia", "Pago al recibir"]);
+  assert.equal((pedido[0] as { botones: { id: string }[] }).botones[2].id, "recibir|/carrito?p=c-despensa*1~15000~Córdoba Capital");
   assert.match((pedido[0] as { cuerpo: string }).cuerpo, /Envío: \$\s15\.000\nTotal con envío: \$ 50\.268\nPor transferencia: \$ 47\.447/);
   assert.equal(pedido[0].tipo, "botones");
   const b = pedido[0] as Extract<(typeof pedido)[number], { tipo: "botones" }>;
-  assert.deepEqual(b.botones.map((x) => x.titulo), ["Mercado Pago", "Transferencia", "Sumar algo más"]);
+  assert.deepEqual(b.botones.map((x) => x.titulo), ["Mercado Pago", "Transferencia", "Pago al recibir"]);
   assert.equal(b.botones[0].id, "pagar|/carrito?p=c-despensa*1");
-  assert.match(textoParaPanel(b), /\[Botones: Mercado Pago · Transferencia · Sumar algo más\]/);
+  assert.match(textoParaPanel(b), /\[Botones: Mercado Pago · Transferencia · Pago al recibir\]/);
 
   const corto = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=1*1", renglones: ["Algo — $ 5.000"], total: "$ 5.000", conTransferencia: null, falta: "$ 30.000" });
   assert.match((corto[0] as { cuerpo: string }).cuerpo, /Te faltan \$ 30\.000/);

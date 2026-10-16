@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NOMBRE_MEDIO } from "@/lib/pedido-calculos";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
@@ -27,7 +28,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Pedido {numero} <span className="chip bg-acopio-100 text-acopio-700">{nombreEstado(pedido.estado)}</span></h1>
-          <p className="text-sm text-stone-600">{pedido.createdAt.toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba" })} · {pedido.medioPago === "MERCADOPAGO" ? `Mercado Pago${pedido.mpPaymentId ? ` (pago ${pedido.mpPaymentId})` : ""}` : "Transferencia"}</p>
+          <p className="text-sm text-stone-600">{pedido.createdAt.toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba" })} · {pedido.medioPago === "MERCADOPAGO" ? `Mercado Pago${pedido.mpPaymentId ? ` (pago ${pedido.mpPaymentId})` : ""}` : NOMBRE_MEDIO[pedido.medioPago]}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/admin/pedidos/${pedido.id}/compra`} className="btn">Lista de compra a Distrimay</Link>

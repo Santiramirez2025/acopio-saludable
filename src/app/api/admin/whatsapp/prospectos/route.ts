@@ -9,6 +9,7 @@
 // { forzar: true } se puede repetir a propósito (por ejemplo, la prueba a tu propio número).
 
 import { NextResponse } from "next/server";
+import { crearPlantillaAviso } from "@/lib/avisos";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { borrarPlantilla, crearPlantillas, enviarProspecto, estadoPlantillas, type ResultadoEnvio } from "@/lib/whatsapp-prospectos";
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
   }
 
   if (cuerpo.accion === "plantillas") return NextResponse.json(await crearPlantillas());
+  if (cuerpo.accion === "plantilla-aviso") return NextResponse.json(await crearPlantillaAviso());
 
   if (cuerpo.accion === "borrar") {
     const nombres = Array.isArray((cuerpo as { nombres?: unknown }).nombres) ? ((cuerpo as { nombres: unknown[] }).nombres).slice(0, 10).map(String) : [];

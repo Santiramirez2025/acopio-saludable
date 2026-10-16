@@ -14,6 +14,8 @@ import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsa
 import { leerToque, planTrae, planVer, planWhatsapp, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { combosTienda, cotizarCarrito } from "./tienda";
+import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
+import { avisarSantiago } from "./avisos";
 import { leerConfig } from "./config";
 import { pesos, renglonCombo } from "./precios";
 import { urlSitio } from "./sitio";
@@ -110,18 +112,45 @@ export async function planCobroLink(camino: string): Promise<Saliente[]> {
 }
 
 /** Tocó «Transferencia»: total con descuento, datos para transferir y la charla pasa a una persona. */
-async function cobrarPorTransferencia(clave: string, camino: string): Promise<void> {
-  const [cot, cfg] = await Promise.all([cotizarCarrito(leerPedido(camino.replace(/^\/carrito\?p=/, ""))), leerConfig()]);
-  const total = cot.conTransferencia ?? cot.subtotal;
-  const partes = [
-    `Perfecto${cfg.descuentoTransferenciaPct > 0 ? `, por transferencia tenés ${cfg.descuentoTransferenciaPct}% de descuento` : ""}: el pedido te queda en ${pesos(total)} más el envío.`,
-    cfg.transferenciaDatos ? `Los datos para transferir:\n${cfg.transferenciaDatos}` : "",
-    "Pasame tu dirección o barrio así te confirmo el envío, y cuando transfieras mandame el comprobante por acá. Lo sigo yo personalmente.",
-  ].filter(Boolean);
-  await responderWhatsapp(clave, [{ tipo: "texto", texto: partes.join("\n\n") }]);
-  // Para que en el panel se vea qué pidió sin abrir nada.
-  await registrarSalida(clave, "bot", `[Pedido por transferencia: ${cot.lineas.map((l) => `${l.cantidad} x ${l.nombre}`).join(", ")} · ${pesos(total)}]`);
-  await cambiarEstado(clave, "persona");
+/**
+ * Cerró la venta: Transferencia o Pago al recibir. Se crea el pedido en el panel (con lista de compra
+ * a Distrimay), se le avisa a Santiago y el vendedor le pide nombre, dirección y horario para entregar.
+ */
+async function cerrarVenta(
+  clave: string,
+  nombre: string | null,
+  medio: "TRANSFERENCIA" | "AL_RECIBIR",
+  camino: string,
+  envio: { costo: number | null; lugar: string } | null,
+): Promise<void> {
+  const cfg = await leerConfig();
+  const lineas = leerPedido(camino.replace(/^\/carrito\?p=/, ""));
+  let pedido;
+  try {
+    pedido = await crearPedidoWhatsapp({ lineas, medioPago: medio, nombre: nombre ?? "", telefono: clave, envio: envio ?? { lugar: "A confirmar", costo: null } });
+  } catch (e) {
+    console.error("chat: no se pudo crear el pedido", cola(clave), e);
+    await responder(clave, "¡Genial! Ya le paso tu pedido a Santiago y te escribe enseguida para coordinar.");
+    await avisarSantiago("Venta por WhatsApp sin pedido", `No se pudo crear el pedido de ${nombre ?? clave} (${clave}). Revisá la charla en el panel.`);
+    await cambiarEstado(clave, "persona");
+    return;
+  }
+  const total = pesos(Number(pedido.total));
+  const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "más el envío, que te confirmo";
+  const partes =
+    medio === "TRANSFERENCIA"
+      ? [
+          `¡Listo! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}${cfg.descuentoTransferenciaPct > 0 ? `, ya con el ${cfg.descuentoTransferenciaPct}% de descuento por transferencia` : ""}.`,
+          cfg.transferenciaDatos ? `Los datos para transferir:\n${cfg.transferenciaDatos}` : "",
+          "Para mandártelo pasame en un mensaje: nombre y apellido, dirección (calle, número y barrio) y en qué horario te queda bien recibirlo. Cuando transfieras, mandame el comprobante por acá 🙌",
+        ]
+      : [
+          `¡Listo! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Lo pagás cuando lo recibís, en efectivo o por transferencia.`,
+          "Para llevártelo pasame en un mensaje: nombre y apellido, dirección (calle, número y barrio) y en qué horario te queda bien recibirlo 🙌",
+        ];
+  await responderWhatsapp(clave, [{ tipo: "texto", texto: partes.filter(Boolean).join("\n\n") }]);
+  // La charla queda atada al pedido: lo que mande ahora (dirección, horario) se guarda ahí.
+  await guardarPedido(clave, `orden:${pedido.id}`);
 }
 
 export async function atender(e: Entrada): Promise<void> {
@@ -170,6 +199,7 @@ export async function atender(e: Entrada): Promise<void> {
   if (esRespuestaAutomatica(texto) || (await respuestasRecientes(e.clave, 10)) >= 6) {
     console.log("chat: respuesta automática o demasiados mensajes seguidos, pasa a una persona", cola(e.clave));
     await cambiarEstado(e.clave, "persona");
+    await avisarSantiago("Charla pausada", `🤖 La charla con ${e.nombre ?? e.clave} se pausó (respondió un bot o hubo muchos mensajes seguidos). Revisala:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
     return;
   }
 
@@ -193,7 +223,8 @@ export async function atender(e: Entrada): Promise<void> {
   // Botones que no necesitan al modelo: cobrar es un paso fijo, no una charla.
   const toque = canal === "whatsapp" ? leerToque(e.toque) : null;
   if (toque?.tipo === "pagar") return cobrarConLink(e.clave, toque.camino);
-  if (toque?.tipo === "transferencia") return cobrarPorTransferencia(e.clave, toque.camino);
+  if (toque?.tipo === "transferencia") return cerrarVenta(e.clave, e.nombre, "TRANSFERENCIA", toque.camino, toque.envio);
+  if (toque?.tipo === "recibir") return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", toque.camino, toque.envio);
 
   // El historial se lee sin el mensaje recién guardado: el vendedor lo recibe aparte.
   const historial = (await historialDe(e.clave, 9)).slice(0, -1);
@@ -213,18 +244,21 @@ export async function atender(e: Entrada): Promise<void> {
   if (p.derivar) {
     await responder(e.clave, DERIVADO);
     await cambiarEstado(e.clave, "persona");
+    await avisarSantiago("Charla para vos", `💬 ${e.nombre ?? "Alguien"} (${e.clave}) quiere hablar con una persona.\nÚltimo mensaje: «${texto.slice(0, 200)}»\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
     return;
   }
   if (canal === "whatsapp") {
     await responderWhatsapp(e.clave, p.salientes);
     if (p.guardarPedido) await guardarPedido(e.clave, p.guardarPedido);
+    // Ya pasó los datos de entrega: la sigue Santiago (el aviso con todo ya le llegó).
+    if (p.aPersona) await cambiarEstado(e.clave, "persona");
     return;
   }
   const salida = paraWhatsapp(p.respuesta);
   if (salida) await responder(e.clave, salida);
 }
 
-export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: boolean; conIA: boolean; guardarPedido?: string };
+export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: boolean; conIA: boolean; guardarPedido?: string; aPersona?: boolean };
 
 /**
  * Qué contestar, sin mandar nada ni tocar la base de mensajes. Lo usa atender() y lo usa el
@@ -292,7 +326,12 @@ export async function pensar(c: {
     c.toque?.tipo === "quiero"
       ? `<eligio>Tocó «Lo quiero» en el ${c.toque.clase} ${c.toque.clase === "combo" ? "slug" : "codigo"} ${c.toque.id}. Agregalo YA con agregar_al_pedido (junto con lo que ya había elegido antes) y en una frase ofrecé sumar algo chico o dejarlo listo para pagar.</eligio>\n`
       : "";
-  const r = vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${eligio}${c.texto}`, c.historial, null, "whatsapp") : null;
+  // Venta ya cerrada: lo que mande ahora (dirección, horario) va al pedido.
+  const ordenId = c.pedidoGuardado?.startsWith("orden:") ? Number(c.pedidoGuardado.slice(6)) || undefined : undefined;
+  const cerrado = ordenId
+    ? `<pedido_cerrado>Ya cerró la compra (pedido ${numeroPedido(ordenId)}). Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
+    : "";
+  const r = vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId }) : null;
 
   let respuesta: Respuesta;
   if (r) respuesta = r;
@@ -319,5 +358,5 @@ export async function pensar(c: {
   const lineas = respuesta.acciones?.length ? lineasDeAcciones(respuesta.acciones) : respuesta.envio && c.pedidoGuardado ? lineasDeCamino(c.pedidoGuardado) : [];
   const pedido = await pedidoDe(lineas, respuesta.envio);
   const salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, pedido);
-  return { salientes, respuesta, derivar, conIA: Boolean(r), guardarPedido: pedido?.camino };
+  return { salientes, respuesta, derivar, conIA: Boolean(r), guardarPedido: pedido?.camino, aPersona: Boolean(r?.entregaGuardada) };
 }

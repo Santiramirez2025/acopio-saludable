@@ -27,6 +27,8 @@ enum EstadoPedido {
 enum MedioPago {
   MERCADOPAGO
   TRANSFERENCIA
+  // Paga en efectivo o transferencia cuando le llega el pedido (solo entrega propia).
+  AL_RECIBIR
 }
 
 enum TipoCombo {
