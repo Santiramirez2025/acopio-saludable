@@ -88,6 +88,17 @@ export async function registrarSalida(telefono: string, de: "bot" | "persona", t
   }
 }
 
+/** El id del último mensaje que escribió el cliente: sirve para contestar una sola vez a una ráfaga. */
+export async function ultimoDelCliente(telefono: string): Promise<string | null> {
+  const filas = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT "id" FROM "WhatsappMensaje"
+    WHERE "telefono" = ${telefono} AND "de" = 'cliente'
+    ORDER BY "fecha" DESC
+    LIMIT 1
+  `;
+  return filas[0]?.id ?? null;
+}
+
 /** Los últimos turnos de la charla, en el formato que entiende el vendedor. */
 export async function historialDe(telefono: string, cantidad = 8): Promise<Turno[]> {
   const filas = await prisma.$queryRaw<{ de: string; texto: string }[]>`

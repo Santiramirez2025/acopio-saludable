@@ -719,3 +719,16 @@ test("vendedor: abajo van los productos que nombró", () => {
   assert.deepEqual(fichasNombradas(todas, "La Despensa de 4 kilos trae…").map((x) => x.nombre), ["Combo Despensa de 4 kilos"]);
   assert.equal(fichasNombradas(todas, "Te paso opciones").length, 3);
 });
+
+test("whatsapp: «almendra» encuentra «Almendras» y los tamaños se distinguen en la lista", () => {
+  const al = (pres: string, precio: string, cod: string) => ({ href: `/producto/${cod}`, nombre: "Almendras Non Pareil", detalle: `Distrimay · ${pres}`, precio, foto: null });
+  const caja = { href: "/combos/caja", nombre: "Combo Caja Sin TACC del mes", detalle: "Trae: x", precio: "$ 66.778", foto: null };
+  const todas = [caja, al("x 1 kg", "$ 36.398", "1"), al("x 500 gr", "$ 18.819", "2")];
+  const elegidas = fichasNombradas(todas, "Te recomiendo la Almendra Non Pareil de 1 kilo a $ 36.398.");
+  assert.deepEqual(elegidas.map((f) => f.href), ["/producto/1", "/producto/2"]);
+  const plan = planWhatsapp({ texto: "Hay almendras.", fichas: elegidas }, null);
+  const lista = plan.find((x) => x.tipo === "lista") as Extract<(typeof plan)[number], { tipo: "lista" }>;
+  const titulos = lista.secciones[0].filas.map((f) => f.titulo);
+  assert.equal(new Set(titulos).size, 2);
+  assert.match(titulos[0], /^1 kg · Almendras/);
+});
