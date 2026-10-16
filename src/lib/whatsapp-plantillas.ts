@@ -12,7 +12,7 @@ type Plantilla = { nombre: string; cuerpo: string; botones: [string, string]; co
 /** Qué plantilla le toca a cada rubro y qué tiene que saber el vendedor cuando contestan. */
 export const PLANTILLAS: Record<"desayuno" | "kit", Plantilla> = {
   desayuno: {
-    nombre: "acopio_alojamientos_desayuno",
+    nombre: "acopio_alojamientos_desayuno_v2",
     cuerpo:
       "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
       "Ofrecemos a los alojamientos de la zona lo que lleva el desayuno: granola, frutos secos, mermeladas y productos sin TACC para el huésped que los pide. Por volumen y con entrega sin costo en Carlos Paz y alrededores.\n\n" +
@@ -23,7 +23,7 @@ export const PLANTILLAS: Record<"desayuno" | "kit", Plantilla> = {
       "usá pedido_para_negocio con «hotel», nombrá dos o tres productos concretos con su precio real y preguntá cuántos desayunos sirven por semana para armarle el pedido.",
   },
   kit: {
-    nombre: "acopio_alojamientos_kit",
+    nombre: "acopio_alojamientos_kit_v2",
     cuerpo:
       "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
       "Armamos kits de bienvenida para cabañas y departamentos: alfajores y budines sin TACC, frutos secos y snacks, para que el huésped encuentre algo rico al llegar. Por volumen y con entrega sin costo en Carlos Paz y alrededores.\n\n" +
