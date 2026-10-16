@@ -41,7 +41,7 @@ for(var j=0;j<as.length&&!btn;j++){var c=as[j];for(var k=0;k<8&&c&&!btn;k++){c=c
 if(!btn){falta.push(it.codigo+' '+it.producto);continue}
 for(var n=0;n<it.cantidad;n++){btn.click();await esperar(400)}}
 location.hash='#/home/cart';
-alert(falta.length?'Cargué el resto, pero no encontré: '+falta.join(', ')+'. Agregalos a mano.':'Listo: carrito cargado. Revisalo y tocá Finalizar compra.');
+alert(falta.length?'Cargué el resto, pero no encontré: '+falta.join(', ')+'. Agregalos a mano.':'Listo: carrito cargado. Revisalo, tocá Finalizar compra y después «Ya lo compré» en el panel de Acopio.');
 }catch(e){alert('No se pudo cargar: '+e.message)}})();`;
   return `javascript:${encodeURIComponent(cuerpo.replace(/\n\s*/g, ""))}`;
 }

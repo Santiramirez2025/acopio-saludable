@@ -308,3 +308,49 @@ export async function avisarVenta(pedido: Order, titulo: string): Promise<void> 
   const { avisarSantiago } = await import("./avisos");
   await avisarSantiago(`${titulo} ${numeroPedido(pedido.id)} · ${pesos(Number(pedido.total))}`, texto);
 }
+
+// ---------- Compra a Distrimay ----------
+
+/**
+ * Los pedidos cuya mercadería todavía hay que comprar: pagados, o por transferencia / al recibir
+ * (ya son ventas), y que no se marcaron como comprados. Con «Ya lo compré» salen de la lista.
+ */
+export async function pedidosPorComprar() {
+  const sinComprar = await prisma.$queryRaw<{ id: number }[]>`
+    SELECT "id" FROM "Order"
+    WHERE "compradoAt" IS NULL
+      AND ("estado" = 'PAGADO' OR ("estado" = 'PENDIENTE_PAGO' AND "medioPago" IN ('TRANSFERENCIA', 'AL_RECIBIR')))
+  `;
+  if (!sinComprar.length) return [];
+  return prisma.order.findMany({ where: { id: { in: sinComprar.map((f) => f.id) } }, include: { items: true }, orderBy: { createdAt: "asc" } });
+}
+
+/** Marca como comprados: salen de la lista; los pagados pasan a «En compra al proveedor». */
+export async function marcarComprados(ids: number[]): Promise<number> {
+  if (!ids.length) return 0;
+  const pedidos = await prisma.order.findMany({ where: { id: { in: ids } } });
+  for (const p of pedidos) {
+    await prisma.$executeRaw`UPDATE "Order" SET "compradoAt" = now() WHERE "id" = ${p.id}`;
+    if (p.estado === "PAGADO") await prisma.order.update({ where: { id: p.id }, data: { estado: "EN_COMPRA" } });
+    await prisma.orderEvent.create({ data: { orderId: p.id, estado: p.estado === "PAGADO" ? "EN_COMPRA" : p.estado, nota: "Comprado a Distrimay" } });
+  }
+  return pedidos.length;
+}
+
+/**
+ * Cambia un producto del pedido por otro (porque el de Distrimay se quedó sin stock). El cliente
+ * paga lo mismo: cambia lo que se compra y su costo, no el precio que ya aceptó.
+ */
+export async function reemplazarProducto(orderId: number, codigoViejo: string, codigoNuevo: string): Promise<string> {
+  const nuevo = await prisma.product.findUnique({ where: { codigo: codigoNuevo } });
+  if (!nuevo) throw new ErrorPedido(`No existe el código ${codigoNuevo}`);
+  const items = await prisma.orderItem.findMany({ where: { orderId, codigo: codigoViejo } });
+  if (!items.length) throw new ErrorPedido(`El pedido no tiene el código ${codigoViejo}`);
+  await prisma.$transaction([
+    prisma.orderItem.updateMany({ where: { orderId, codigo: codigoViejo }, data: { codigo: nuevo.codigo, producto: nuevo.producto, presentacion: nuevo.presentacion, costoUnitario: nuevo.costo } }),
+    prisma.orderEvent.create({ data: { orderId, estado: (await prisma.order.findUniqueOrThrow({ where: { id: orderId } })).estado, nota: `Reemplazo: ${items[0].producto} (${codigoViejo}) → ${nuevo.producto} (${nuevo.codigo})` } }),
+  ]);
+  const todos = await prisma.orderItem.findMany({ where: { orderId } });
+  await prisma.order.update({ where: { id: orderId }, data: { costoProductos: redondear2(todos.reduce((s, i) => s + Number(i.costoUnitario) * i.cantidad, 0)) } });
+  return `${items[0].producto} → ${nuevo.producto}`;
+}
