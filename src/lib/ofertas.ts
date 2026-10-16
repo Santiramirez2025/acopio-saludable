@@ -55,6 +55,10 @@ export async function ofertasDelProveedor(limite = 12): Promise<Oferta[]> {
       return { ...ficha, precioAntes, bajoPct: bajaPct(precioAntes, ficha.precio) };
     })
     .filter((o) => o.bajoPct >= BAJA_MINIMA_PCT)
-    .sort((a, b) => b.bajoPct - a.bajoPct)
+    // Sin bolsones (nadie compra 10 kg de almendras por una baja) y sin tres «Manzanilla» seguidas:
+    // la portada muestra una presentación por producto, la más chica.
+    .filter((o) => !/bols[oó]n|caja x|\b(5|10|20|25) ?(kg|kilos?)\b/i.test(`${o.presentacion} ${o.producto}`))
+    .sort((a, b) => b.bajoPct - a.bajoPct || a.precio - b.precio)
+    .filter((o, i, arr) => arr.findIndex((x) => x.producto.toLowerCase() === o.producto.toLowerCase()) === i)
     .slice(0, limite);
 }
