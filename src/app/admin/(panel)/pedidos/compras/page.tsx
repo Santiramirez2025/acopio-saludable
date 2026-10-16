@@ -6,6 +6,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
 import { A_CONFIRMAR, listaDeCompra, NOMBRE_MEDIO, nombreEstado, numeroPedido } from "@/lib/pedidos";
+import { claveCompras, codigoCargarDistrimay } from "@/lib/compra-distrimay";
+import { urlSitio } from "@/lib/sitio";
+import { MarcadorCompras } from "@/components/MarcadorCompras";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +37,13 @@ export default async function ComprasYReparto() {
 
       <section className="space-y-2">
         <h2 className="font-semibold">Comprar en Distrimay · {aComprar.length} pedido{aComprar.length === 1 ? "" : "s"}</h2>
+        <div className="rounded-lg border border-acopio-200 bg-acopio-50 p-3 text-sm print:hidden">
+          <p>
+            <b>Cargar todo en el carrito de Distrimay con un toque.</b> Arrastrá este botón a la barra de favoritos una sola vez (o creá un favorito y pegá el código):{" "}
+            <MarcadorCompras codigo={codigoCargarDistrimay(urlSitio(), claveCompras())} />
+          </p>
+          <p className="mt-1 text-stone-700">Después, con compras.distrimay.com abierto (y tu sesión iniciada), tocalo: busca cada código y lo suma al carrito con su cantidad. Vos revisás y tocás «Finalizar compra». Si el carrito tiene otras cosas, vacialo antes.</p>
+        </div>
         {sinPagar.length > 0 && (
           <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
             Transferencia todavía sin confirmar: {sinPagar.map((p) => `${numeroPedido(p.id)} (${p.nombre})`).join(", ")}. Revisá que haya llegado antes de comprar.
