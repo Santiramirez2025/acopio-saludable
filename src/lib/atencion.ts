@@ -5,7 +5,7 @@
 // una persona tomó la charla o si el prospecto pidió la baja, y contesta el mismo vendedor.
 // Lo único que cambia por canal es cómo se manda la respuesta.
 
-import { detectar, pidePersona } from "./asistente";
+import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
 import { buscarEnCatalogo, comboDelAnuncio, type Accion, type EnvioCotizado, type Respuesta } from "./asistente-catalogo";
 import { cotizarEnvioChat } from "./envio-chat";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
@@ -17,7 +17,7 @@ import { leerConfig } from "./config";
 import { pesos, renglonCombo } from "./precios";
 import { urlSitio } from "./sitio";
 import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
-import { cambiarEstado, estadoDe, guardarPedido, historialDe, pedidoGuardado, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
+import { cambiarEstado, estadoDe, guardarPedido, respuestasRecientes, historialDe, pedidoGuardado, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
 import { contextoProspecto, darDeBaja, datosProspecto, esBaja } from "./whatsapp-prospectos";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 
@@ -163,6 +163,14 @@ export async function atender(e: Entrada): Promise<void> {
     return;
   }
   if (!texto) return;
+
+  // Freno de bucles: si del otro lado contesta un bot, o si ya le mandamos muchos mensajes seguidos,
+  // el vendedor se calla y la charla pasa a una persona. Dos bots hablándose es spam para WhatsApp.
+  if (esRespuestaAutomatica(texto) || (await respuestasRecientes(e.clave, 10)) >= 6) {
+    console.log("chat: respuesta automática o demasiados mensajes seguidos, pasa a una persona", cola(e.clave));
+    await cambiarEstado(e.clave, "persona");
+    return;
+  }
 
   if (detectar(texto) === "salud") {
     await responder(e.clave, `${SALUD}\n\n${AVISO_SUPLEMENTOS}`);
