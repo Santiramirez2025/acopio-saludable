@@ -242,10 +242,10 @@ export function presentacionDe(f: Ficha): string {
 export function quiereVer(texto: string): boolean {
   const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   if (t.length > 45) return false;
-  return /^(quiero |me )?(ver|mostrame|mostrar|pasame|mandame)( (los|las|todos|todas|otros|otras|mas|el|la))* (productos|combos|opciones|catalogo|precios|lista)\b|^(que|cuales|que productos) (tienen|venden|hay|ofrecen)\b|^(catalogo|lista de precios|productos|combos|precios|ver mas)$/.test(t);
+  return /^(quiero |me )?(ver|mostrame|mostrar|pasame|mandame)( (los|las|todos|todas|otros|otras|otro|otra|mas|el|la))* (productos?|combos?|opcion(es)?|catalogo|precios|lista)\b|^(que|cuales|que productos) (tienen|venden|hay|ofrecen)\b|^(catalogo|lista de precios|productos|combos|precios|ver mas)$/.test(t);
 }
 
-export function planVer(combos: { slug: string; nombre: string; precio: string; ahorro: string }[]): Saliente[] {
+export function planVer(combos: { slug: string; nombre: string; precio: string; ahorro: string }[], tienda?: string): Saliente[] {
   const filas: Fila[] = combos.slice(0, 7).map((c) => ({
     id: corte(`${ID.trae}${c.slug}`, TOPE.id),
     titulo: corte(c.nombre, TOPE.filaTitulo),
@@ -263,6 +263,10 @@ export function planVer(combos: { slug: string; nombre: string; precio: string; 
         { titulo: "O buscá por tipo", filas: tipos },
       ],
     },
+    // La web, como botón y no como link suelto: se ve oficial y ahí está todo con fotos.
+    ...(tienda
+      ? [{ tipo: "cta" as const, cuerpo: "Y si preferís mirar todo tranquilo, con fotos y precios, está en nuestra tienda online. Cualquier cosa me escribís y te armo el pedido.", texto: "Ver la tienda", url: tienda, pie: "acopiosaludable.com" }]
+      : []),
   ];
 }
 

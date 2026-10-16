@@ -807,4 +807,6 @@ test("whatsapp: «ver los productos» muestra, no pregunta", () => {
   const l = p[0] as Extract<(typeof p)[number], { tipo: "lista" }>;
   assert.equal(l.secciones[0].filas[0].id, "trae|despensa");
   assert.equal(l.secciones[1].filas.length, 3);
+  const conWeb = planVer([{ slug: "d", nombre: "D", precio: "$ 1", ahorro: "$ 0" }], "https://x/combos");
+  assert.equal(conWeb[1].tipo, "cta");
 });

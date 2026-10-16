@@ -256,7 +256,7 @@ export async function pensar(c: {
       .filter((x) => x.disponible)
       .sort((a, b) => a.precio - b.precio)
       .map((x) => ({ slug: x.slug, nombre: x.nombre, precio: pesos(Math.round(x.precio)), ahorro: pesos(Math.round(x.ahorro)) }));
-    if (combos.length) return { salientes: planVer(combos), respuesta: { texto: "" }, derivar: false, conIA: false };
+    if (combos.length) return { salientes: planVer(combos, `${urlSitio()}/combos`), respuesta: { texto: "" }, derivar: false, conIA: false };
   }
 
   // «¿Qué trae?» de un combo: la lista completa, fija, sin gastar el modelo.
