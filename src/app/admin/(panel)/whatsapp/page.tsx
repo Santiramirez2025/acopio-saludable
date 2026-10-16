@@ -1,3 +1,5 @@
+import { MensajeMedia } from "@/components/MensajeMedia";
+import { sinIds } from "@/lib/whatsapp-media";
 import Link from "next/link";
 import { conversacionDe, listarConversaciones, mensajesDe, RETOMA_HORAS } from "@/lib/whatsapp-memoria";
 import { cloudActivo } from "@/lib/whatsapp-cloud";
@@ -143,7 +145,7 @@ export default async function Mensajes({ searchParams }: { searchParams: Promise
                       <div className="flex items-center justify-between gap-2">
                         <p className={`truncate text-[13px] ${c.noLeidos > 0 ? "text-stone-800" : "text-stone-500"}`}>
                           <span className="text-stone-400">{prefijo(c.ultimoDe)}</span>
-                          {c.ultimoTexto ?? "—"}
+                          {c.ultimoTexto ? sinIds(c.ultimoTexto) : "—"}
                         </p>
                         {c.noLeidos > 0 && <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-acopio-600 px-1.5 text-[11px] font-bold text-white">{c.noLeidos}</span>}
                       </div>
@@ -222,7 +224,7 @@ export default async function Mensajes({ searchParams }: { searchParams: Promise
                             m.de === "cliente" ? "rounded-tl-sm bg-white text-stone-900" : m.de === "persona" ? "rounded-tr-sm bg-amber-100 text-stone-900" : "rounded-tr-sm bg-acopio-100 text-acopio-900"
                           }`}
                         >
-                          {m.texto}
+                          <MensajeMedia texto={m.texto} />
                           <div className="mt-1 text-right text-[10px] text-stone-500">
                             {m.de === "bot" ? "Vendedor · " : m.de === "persona" ? "Vos · " : ""}
                             {HORA.format(m.fecha)}

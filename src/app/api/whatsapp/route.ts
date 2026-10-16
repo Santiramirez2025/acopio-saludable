@@ -19,6 +19,7 @@ import { after, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { atender, cola } from "@/lib/atencion";
 import { cloudActivo } from "@/lib/whatsapp-cloud";
+import { leerEntrante, type Entrante as EntranteMedia } from "@/lib/whatsapp-media";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs"; // hace falta crypto y after()
@@ -43,24 +44,8 @@ export async function GET(req: Request) {
 
 // "referral" llega en el primer mensaje cuando la persona tocó un anuncio "clic a WhatsApp".
 type Referral = { source_id?: string; source_type?: string; source_url?: string; headline?: string; body?: string; ctwa_clid?: string };
-// "button" es el toque en un botón de plantilla; "interactive", en un botón de mensaje interactivo.
-type Entrante = {
-  from: string;
-  id: string;
-  type: string;
-  text?: { body?: string };
-  button?: { text?: string };
-  interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { id?: string; title?: string } };
-  referral?: Referral;
-};
+type Entrante = EntranteMedia & { from: string; id: string; referral?: Referral };
 
-/** Lo que dijo la persona, sea texto o el botón que tocó. null si no es nada de eso (audio, foto...). */
-function textoDe(m: Entrante): string | null {
-  if (m.type === "text") return m.text?.body ?? "";
-  if (m.type === "button") return m.button?.text ?? "";
-  if (m.type === "interactive") return m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? "";
-  return null;
-}
 /** El id del botón o la fila que tocó: dice qué eligió sin depender del texto del botón. */
 function toqueDe(m: Entrante): string | null {
   if (m.type !== "interactive") return null;
@@ -121,11 +106,14 @@ async function atenderWhatsapp(m: Entrante, nombre: string | null): Promise<void
     return;
   }
   const ref = m.referral;
+  const leido = leerEntrante(m);
   await atender({
     clave: m.from,
     idMensaje: m.id,
     nombre,
-    texto: textoDe(m),
+    texto: leido.texto,
+    guardar: leido.guardar,
+    silencioso: leido.silencioso,
     toque: toqueDe(m),
     tipo: m.type,
     anuncio: ref ? { id: ref.source_id ?? null, titulo: ref.headline ?? null, texto: ref.body ?? null, ctwaClid: ref.ctwa_clid ?? null } : null,

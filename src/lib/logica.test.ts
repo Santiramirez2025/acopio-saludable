@@ -833,3 +833,18 @@ test("postergar la compra: se le da tiempo, sin pedido ni zonas", () => {
   assert.equal(s.tipo, "cta");
   assert.ok(s.tipo === "cta" && s.cuerpo.startsWith("¡Dale, Gloria!"));
 });
+
+import { leerEntrante, partirMarca, sinIds } from "./whatsapp-media";
+test("audios, fotos y reacciones entran a la charla", () => {
+  const r = leerEntrante({ type: "reaction", reaction: { emoji: "🥳", message_id: "x" } });
+  assert.deepEqual([r.guardar, r.texto, r.silencioso], ["[reacción 🥳]", null, true]);
+  const a = leerEntrante({ type: "audio", audio: { id: "123456789", voice: true } });
+  assert.deepEqual([a.guardar, a.texto, a.silencioso], ["[audio·123456789]", null, false]);
+  const f = leerEntrante({ type: "image", image: { id: "987654321", caption: "tienen esto?" } });
+  assert.deepEqual([f.guardar, f.texto], ["[foto·987654321] tienen esto?", "tienen esto?"]);
+  assert.deepEqual(partirMarca(f.guardar), { tipo: "foto", id: "987654321", resto: "tienen esto?" });
+  assert.equal(sinIds(f.guardar), "[foto] tienen esto?");
+  const l = leerEntrante({ type: "location", location: { latitude: -31.4, longitude: -64.5, address: "Río Salado 451, Carlos Paz" } });
+  assert.ok(l.texto?.includes("Carlos Paz"));
+  assert.equal(partirMarca("hola"), null);
+});
