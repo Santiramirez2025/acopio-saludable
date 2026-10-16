@@ -17,7 +17,7 @@ const GRAPH = "https://graph.facebook.com/v21.0";
 
 type Graph = { ok: boolean; estado: number; cuerpo: unknown };
 
-async function graph(camino: string, metodo: "GET" | "POST", cuerpo?: unknown): Promise<Graph> {
+async function graph(camino: string, metodo: "GET" | "POST" | "DELETE", cuerpo?: unknown): Promise<Graph> {
   const token = process.env.WHATSAPP_TOKEN;
   if (!token) return { ok: false, estado: 0, cuerpo: "Falta WHATSAPP_TOKEN" };
   try {
@@ -57,6 +57,18 @@ export async function crearPlantillas(): Promise<Record<string, Graph>> {
     });
   }
   return salida;
+}
+
+/**
+ * Borra una plantilla de prospección por nombre. Solo las de alojamientos: las demás
+ * (hello_world o las que use otro sistema) no se tocan desde acá.
+ * Ojo: Meta no deja reusar el nombre de una plantilla borrada por 30 días.
+ */
+export async function borrarPlantilla(nombre: string): Promise<Graph> {
+  const waba = process.env.WHATSAPP_WABA_ID;
+  if (!waba) return { ok: false, estado: 0, cuerpo: "Falta WHATSAPP_WABA_ID" };
+  if (!/^acopio_alojamientos_[a-z0-9_]+$/.test(nombre)) return { ok: false, estado: 400, cuerpo: "Solo se borran plantillas de alojamientos" };
+  return graph(`${waba}/message_templates?name=${encodeURIComponent(nombre)}`, "DELETE");
 }
 
 /** Estado de las plantillas: PENDING mientras Meta las revisa, APPROVED cuando se pueden usar. */
