@@ -11,7 +11,8 @@ import type { Bulto, OpcionEnvio } from "./envios/tipos";
 import { enviarEmail, escaparHtml } from "./email";
 import { SITIO, urlSitio } from "./sitio";
 import { linkSeguimiento } from "./envios/seguimiento";
-import { ErrorPedido, envioQueSeCobra, NOMBRE_MEDIO, numeroPedido, validarCliente } from "./pedido-calculos";
+import { ErrorPedido, envioQueSeCobra, listaDeCompra, NOMBRE_MEDIO, numeroPedido, validarCliente } from "./pedido-calculos";
+import { ORDEN_PROVEEDORES, PROVEEDORES, proveedorDe } from "./proveedores";
 
 export * from "./pedido-calculos";
 
@@ -332,7 +333,7 @@ export async function marcarComprados(ids: number[]): Promise<number> {
   for (const p of pedidos) {
     await prisma.$executeRaw`UPDATE "Order" SET "compradoAt" = now() WHERE "id" = ${p.id}`;
     if (p.estado === "PAGADO") await prisma.order.update({ where: { id: p.id }, data: { estado: "EN_COMPRA" } });
-    await prisma.orderEvent.create({ data: { orderId: p.id, estado: p.estado === "PAGADO" ? "EN_COMPRA" : p.estado, nota: "Comprado a Distrimay" } });
+    await prisma.orderEvent.create({ data: { orderId: p.id, estado: p.estado === "PAGADO" ? "EN_COMPRA" : p.estado, nota: "Mercadería comprada" } });
   }
   return pedidos.length;
 }
@@ -353,4 +354,16 @@ export async function reemplazarProducto(orderId: number, codigoViejo: string, c
   const todos = await prisma.orderItem.findMany({ where: { orderId } });
   await prisma.order.update({ where: { id: orderId }, data: { costoProductos: redondear2(todos.reduce((s, i) => s + Number(i.costoUnitario) * i.cantidad, 0)) } });
   return `${items[0].producto} → ${nuevo.producto}`;
+}
+
+/** La compra partida por proveedor: a quién se le compra cada renglón, con su total. */
+export async function compraPorProveedor(items: Parameters<typeof listaDeCompra>[0]) {
+  const { renglones } = listaDeCompra(items);
+  const marcas = new Map(
+    (await prisma.product.findMany({ where: { codigo: { in: renglones.map((r) => r.codigo) } }, select: { codigo: true, marca: true } })).map((p) => [p.codigo, p.marca]),
+  );
+  return ORDEN_PROVEEDORES.map((id) => {
+    const suyos = renglones.filter((r) => proveedorDe({ producto: r.producto, marca: marcas.get(r.codigo) }) === id);
+    return { proveedor: PROVEEDORES[id], renglones: suyos, total: redondear2(suyos.reduce((s, r) => s + r.total, 0)) };
+  }).filter((g) => g.renglones.length);
 }

@@ -1,11 +1,11 @@
-// Compras y reparto: todo lo que hay que comprar en Distrimay para los pedidos abiertos,
-// sumado por producto, y la lista de entregas con dirección, horario y cómo paga cada uno.
+// Compras y reparto: todo lo que hay que comprar para los pedidos abiertos, sumado por producto
+// y partido por proveedor (Todo Granolas, La Granja del Centro, Distrimay), y la lista de entregas con dirección, horario y cómo paga cada uno.
 // Para salir a comprar y a repartir con una sola hoja (se imprime con Ctrl/Cmd + P).
 
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
-import { A_CONFIRMAR, listaDeCompra, NOMBRE_MEDIO, nombreEstado, numeroPedido, pedidosPorComprar } from "@/lib/pedidos";
+import { A_CONFIRMAR, compraPorProveedor, NOMBRE_MEDIO, nombreEstado, numeroPedido, pedidosPorComprar } from "@/lib/pedidos";
 import { yaComprado } from "@/lib/acciones";
 import { claveCompras, codigoCargarDistrimay } from "@/lib/compra-distrimay";
 import { urlSitio } from "@/lib/sitio";
@@ -24,7 +24,8 @@ export default async function ComprasYReparto({ searchParams }: { searchParams: 
     orderBy: { createdAt: "asc" },
   });
   const aComprar = await pedidosPorComprar();
-  const { renglones, total } = listaDeCompra(aComprar.flatMap((p) => p.items));
+  const grupos = await compraPorProveedor(aComprar.flatMap((p) => p.items));
+  const hayCompra = grupos.length > 0;
   const reparto = pedidos.filter((p) => p.envioOrigen === "propia");
   const correo = pedidos.filter((p) => p.envioOrigen !== "propia");
   const sinPagar = aComprar.filter((p) => p.estado === "PENDIENTE_PAGO" && p.medioPago === "TRANSFERENCIA");
@@ -38,40 +39,50 @@ export default async function ComprasYReparto({ searchParams }: { searchParams: 
       <h1 className="text-xl font-semibold">Compras y reparto</h1>
 
       <section className="space-y-2">
-        <h2 className="font-semibold">Comprar en Distrimay · {aComprar.length} pedido{aComprar.length === 1 ? "" : "s"}</h2>
-        <div className="rounded-lg border border-acopio-200 bg-acopio-50 p-3 text-sm print:hidden">
-          <p>
-            <b>Cargar todo en el carrito de Distrimay con un toque.</b> Arrastrá este botón a la barra de favoritos una sola vez (o creá un favorito y pegá el código):{" "}
-            <MarcadorCompras codigo={codigoCargarDistrimay(urlSitio(), claveCompras())} />
-          </p>
-          <p className="mt-1 text-stone-700">Después, con compras.distrimay.com abierto (y tu sesión iniciada), tocalo: busca cada código y lo suma al carrito con su cantidad. Vos revisás y tocás «Finalizar compra». Si el carrito tiene otras cosas, vacialo antes.</p>
-        </div>
+        <h2 className="font-semibold">Comprar · {aComprar.length} pedido{aComprar.length === 1 ? "" : "s"}</h2>
         {sinPagar.length > 0 && (
           <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
             Transferencia todavía sin confirmar: {sinPagar.map((p) => `${numeroPedido(p.id)} (${p.nombre})`).join(", ")}. Revisá que haya llegado antes de comprar.
           </p>
         )}
         {comprado && <p className="rounded-md bg-acopio-50 px-3 py-2 text-sm text-acopio-800">Listo: esos pedidos ya no se vuelven a sumar a la compra.</p>}
-        {renglones.length ? (
-          <table className="w-full rounded-lg border border-stone-200 bg-white text-sm">
-            <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-600">
-              <tr><th className="px-3 py-2">Código</th><th className="px-3 py-2">Producto</th><th className="px-3 py-2 text-right">Cantidad</th><th className="px-3 py-2 text-right">Costo</th><th className="px-3 py-2 text-right">Total</th></tr>
-            </thead>
-            <tbody>
-              {renglones.map((r) => (
-                <tr key={r.codigo} className="border-t border-stone-100">
-                  <td className="px-3 py-2 font-mono text-xs">{r.codigo}</td>
-                  <td className="px-3 py-2">{r.producto} <span className="text-stone-600">{r.presentacion}</span></td>
-                  <td className="px-3 py-2 text-right text-base font-semibold tabular-nums">{r.cantidad}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{pesos(r.costo)}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{pesos(r.total)}</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot><tr className="border-t border-stone-300 font-semibold"><td colSpan={4} className="px-3 py-2 text-right">Total a pagar a Distrimay</td><td className="px-3 py-2 text-right tabular-nums">{pesos(total)}</td></tr></tfoot>
-          </table>
-        ) : null}
-        {renglones.length ? (
+        {grupos.map(({ proveedor, renglones, total }) => (
+          <div key={proveedor.id} className="space-y-2 break-inside-avoid">
+            <h3 className="font-semibold">{proveedor.nombre} <span className="text-sm font-normal text-stone-600">· {proveedor.que}</span></h3>
+            <p className="text-sm text-stone-700">
+              {proveedor.como} ·{" "}
+              <a href={`https://wa.me/${proveedor.contacto}`} target="_blank" rel="noopener noreferrer" className="underline">WhatsApp</a>
+            </p>
+            {proveedor.id === "distrimay" && (
+              <div className="rounded-lg border border-acopio-200 bg-acopio-50 p-3 text-sm print:hidden">
+                <p>
+                  <b>Cargar esto en el carrito de Distrimay con un toque.</b> Arrastrá este botón a la barra de favoritos una sola vez (o creá un favorito y pegá el código):{" "}
+                  <MarcadorCompras codigo={codigoCargarDistrimay(urlSitio(), claveCompras())} />
+                </p>
+                <p className="mt-1 text-stone-700">Con compras.distrimay.com abierto (y tu sesión iniciada), tocalo: suma al carrito solo lo de Distrimay. Vos revisás y tocás «Finalizar compra».</p>
+              </div>
+            )}
+            <table className="w-full rounded-lg border border-stone-200 bg-white text-sm">
+              <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-600">
+                <tr><th className="px-3 py-2">Código</th><th className="px-3 py-2">Producto</th><th className="px-3 py-2 text-right">Cantidad</th><th className="px-3 py-2 text-right">Costo ref.</th><th className="px-3 py-2 text-right">Total</th></tr>
+              </thead>
+              <tbody>
+                {renglones.map((r) => (
+                  <tr key={r.codigo} className="border-t border-stone-100">
+                    <td className="px-3 py-2 font-mono text-xs">{r.codigo}</td>
+                    <td className="px-3 py-2">{r.producto} <span className="text-stone-600">{r.presentacion}</span></td>
+                    <td className="px-3 py-2 text-right text-base font-semibold tabular-nums">{r.cantidad}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{pesos(r.costo)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{pesos(r.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot><tr className="border-t border-stone-300 font-semibold"><td colSpan={4} className="px-3 py-2 text-right">Total de referencia</td><td className="px-3 py-2 text-right tabular-nums">{pesos(total)}</td></tr></tfoot>
+            </table>
+          </div>
+        ))}
+        {hayCompra && <p className="text-xs text-stone-600">El costo de referencia es el de Distrimay hasta que carguemos las listas de Todo Granolas y La Granja: lo real es más bajo.</p>}
+        {hayCompra ? (
           <form action={yaComprado} className="flex flex-wrap items-center gap-3 print:hidden">
             <input type="hidden" name="ids" value={aComprar.map((p) => p.id).join(",")} />
             <button className="btn">✓ Ya lo compré</button>

@@ -855,3 +855,19 @@ test("gracias solo y «pregunto y te digo»", () => {
   for (const t of ["gracias, y el envío?", "Mi nombre es Juan.", "gracias por pasarme veo tranquila y te escribo"]) assert.ok(!soloAgradece(t), t);
   for (const t of ["Pregunto y te digo. Gracias", "consulto y te aviso"]) assert.ok(postergaCompra(t), t);
 });
+
+import { proveedorDe } from "./proveedores";
+test("a quién se le compra cada cosa", () => {
+  const S = "Sin marca / fraccionado";
+  assert.equal(proveedorDe({ producto: "Mix Clasico", marca: S }), "todogranolas");
+  assert.equal(proveedorDe({ producto: "Nuez Mariposa Extra Light", marca: S }), "todogranolas");
+  assert.equal(proveedorDe({ producto: "Banana Chips", marca: S }), "todogranolas");
+  assert.equal(proveedorDe({ producto: "Avena Instantanea", marca: S }), "lagranja");
+  assert.equal(proveedorDe({ producto: "Azucar Mascabo", marca: S }), "lagranja");
+  assert.equal(proveedorDe({ producto: "Pasas de uva sin semillas", marca: S }), "lagranja");
+  assert.equal(proveedorDe({ producto: "Datiles con carozo", marca: S }), "lagranja");
+  assert.equal(proveedorDe({ producto: "Sal Rosada del Himalaya", marca: S }), "lagranja");
+  assert.equal(proveedorDe({ producto: "Alfajores Surtidos Sin Gluten", marca: "Yuka" }), "distrimay");
+  assert.equal(proveedorDe({ producto: "Pasta de Mani Natural", marca: "Entrenuts" }), "distrimay");
+  assert.equal(proveedorDe({ producto: "Mani Japones queso", marca: S }), "distrimay");
+});

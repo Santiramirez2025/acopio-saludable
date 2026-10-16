@@ -1,7 +1,7 @@
 // Lista de compra para el botón «Cargar en Distrimay». Se llama desde compras.distrimay.com.
 
 import { NextResponse } from "next/server";
-import { listaDeCompra, numeroPedido, pedidosPorComprar } from "@/lib/pedidos";
+import { compraPorProveedor, numeroPedido, pedidosPorComprar } from "@/lib/pedidos";
 import { claveComprasValida } from "@/lib/compra-distrimay";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,8 @@ export function OPTIONS() {
 export async function GET(req: Request) {
   if (!claveComprasValida(new URL(req.url).searchParams.get("k"))) return NextResponse.json({ error: "Clave inválida" }, { status: 401, headers: CORS });
   const pedidos = await pedidosPorComprar();
-  const { renglones } = listaDeCompra(pedidos.flatMap((p) => p.items));
+  // Solo lo que se le compra a Distrimay: lo demás va a Todo Granolas o a La Granja.
+  const renglones = (await compraPorProveedor(pedidos.flatMap((p) => p.items))).find((g) => g.proveedor.id === "distrimay")?.renglones ?? [];
   return NextResponse.json(
     {
       pedidos: pedidos.map((p) => numeroPedido(p.id)),
