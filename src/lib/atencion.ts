@@ -10,7 +10,7 @@ import { buscarEnCatalogo, comboDelAnuncio, type Accion, type EnvioCotizado, typ
 import { cotizarEnvioChat } from "./envio-chat";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { leerToque, planTrae, planWhatsapp, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
+import { leerToque, planTrae, planVer, planWhatsapp, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { combosTienda, cotizarCarrito } from "./tienda";
 import { leerConfig } from "./config";
@@ -250,6 +250,15 @@ export async function pensar(c: {
       return { salientes: planWhatsapp({ texto }, pedido), respuesta: { texto }, derivar: false, conIA: false, guardarPedido: pedido.camino };
     }
   }
+  // «Ver los productos»: se muestran, sin preguntar ni gastar el modelo. Primero el de entrada, después por precio.
+  if (quiereVer(c.texto)) {
+    const combos = (await combosTienda({ activo: true, tipo: "COMBO" }))
+      .filter((x) => x.disponible)
+      .sort((a, b) => a.precio - b.precio)
+      .map((x) => ({ slug: x.slug, nombre: x.nombre, precio: pesos(Math.round(x.precio)), ahorro: pesos(Math.round(x.ahorro)) }));
+    if (combos.length) return { salientes: planVer(combos), respuesta: { texto: "" }, derivar: false, conIA: false };
+  }
+
   // «¿Qué trae?» de un combo: la lista completa, fija, sin gastar el modelo.
   if (c.toque?.tipo === "trae") {
     const combo = (await combosTienda({ slug: c.toque.slug, tipo: "COMBO" }))[0];

@@ -149,7 +149,7 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     const primero = fichas[0];
     // Tarjeta solo si lo ofrecido son combos. Si mezcla combo y producto suelto, va la lista:
     // así «Lo quiero» nunca agrega algo distinto de lo que dice el texto.
-    if (primero.c?.clase === "c" && fichas.every((x) => x.c?.clase === "c")) {
+    if (primero.c?.clase === "c" && fichas.length === 1) {
       if (primero.f.foto?.startsWith("http")) salida.push({ tipo: "imagen", url: primero.f.foto, pie: `${primero.f.nombre} · ${primero.f.precio}` });
       const tercera =
         (r.opciones ?? []).find((o) => !/quiero|trae|separ|agreg|s[ií]\b|dale/i.test(o)) ?? (fichas.length > 1 ? "Ver otro combo" : "Ver otros combos");
@@ -236,6 +236,34 @@ export function presentacionDe(f: Ficha): string {
   if (f.detalle.startsWith("Trae:")) return "";
   const partes = f.detalle.split(" · ").map((p) => p.trim()).filter(Boolean);
   return partes.at(-1) ?? "";
+}
+
+/** Pidió ver productos: no se pregunta nada, se muestran. Lista con los combos y atajos por tipo. */
+export function quiereVer(texto: string): boolean {
+  const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  if (t.length > 45) return false;
+  return /^(quiero |me )?(ver|mostrame|mostrar|pasame|mandame)( (los|las|todos|todas|otros|otras|mas|el|la))* (productos|combos|opciones|catalogo|precios|lista)\b|^(que|cuales|que productos) (tienen|venden|hay|ofrecen)\b|^(catalogo|lista de precios|productos|combos|precios|ver mas)$/.test(t);
+}
+
+export function planVer(combos: { slug: string; nombre: string; precio: string; ahorro: string }[]): Saliente[] {
+  const filas: Fila[] = combos.slice(0, 7).map((c) => ({
+    id: corte(`${ID.trae}${c.slug}`, TOPE.id),
+    titulo: corte(c.nombre, TOPE.filaTitulo),
+    descripcion: corte(`${c.precio} · ahorrás ${c.ahorro}`, TOPE.filaDesc),
+  }));
+  const tipos = ["Frutos secos", "Sin TACC", "Para el desayuno"].map((t) => ({ id: `${ID.opcion}${t}`, titulo: t }));
+  return [
+    {
+      tipo: "lista",
+      cuerpo:
+        "Te paso los combos armados 👇 Cada uno trae todo para el mes con 5% menos y llega solo a la compra mínima. Tocá el que te guste y te cuento qué trae. Si buscás algo puntual, escribime qué y te lo busco.",
+      boton: "Ver combos",
+      secciones: [
+        { titulo: "Combos", filas },
+        { titulo: "O buscá por tipo", filas: tipos },
+      ],
+    },
+  ];
 }
 
 /** «¿Qué trae?» de un combo: la lista completa y el botón para llevarlo. Fijo, sin modelo. */

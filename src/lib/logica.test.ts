@@ -798,3 +798,13 @@ test("whatsapp: no se le contesta a otro bot", () => {
   assert.ok(!esRespuestaAutomatica("Sí, pasame precios"));
   assert.ok(!esRespuestaAutomatica("Hola, somos 20 habitaciones, qué tienen para el desayuno?"));
 });
+
+import { quiereVer, planVer } from "./whatsapp-interactivo";
+test("whatsapp: «ver los productos» muestra, no pregunta", () => {
+  for (const t of ["Ver los productos", "Ver combos", "Ver otros combos", "Ver otro combo", "ver otras opciones", "¿Qué tienen?", "catálogo", "pasame la lista"]) assert.ok(quiereVer(t), t);
+  for (const t of ["Busco frutos secos", "quiero la despensa", "hola"]) assert.ok(!quiereVer(t), t);
+  const p = planVer([{ slug: "despensa", nombre: "Despensa de 4 kilos", precio: "$ 35.268", ahorro: "$ 1.856" }]);
+  const l = p[0] as Extract<(typeof p)[number], { tipo: "lista" }>;
+  assert.equal(l.secciones[0].filas[0].id, "trae|despensa");
+  assert.equal(l.secciones[1].filas.length, 3);
+});
