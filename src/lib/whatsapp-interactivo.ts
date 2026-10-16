@@ -108,11 +108,20 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     if (unico && unico.c?.clase === "c" && unico.f.foto?.startsWith("http")) {
       salida.push({ tipo: "imagen", url: unico.f.foto, pie: `${unico.f.nombre} · ${unico.f.precio}` });
     }
-    const filas: Fila[] = fichas.slice(0, 6).map(({ f, c }) => ({
-      id: corte(`${ID.quiero}${c!.clase}|${c!.id}`, TOPE.id),
-      titulo: corte(f.nombre.replace(/^Combo /, ""), TOPE.filaTitulo),
-      descripcion: corte([f.precio, f.detalle].filter(Boolean).join(" · "), TOPE.filaDesc),
-    }));
+    // Si hay nombres repetidos (la misma almendra en tres tamaños), lo que distingue es la presentación:
+    // va en el título, que es lo que se lee primero. Antes salían tres «Almendras Non Pareil» iguales.
+    const nombres = fichas.map(({ f }) => f.nombre.replace(/^Combo /, ""));
+    const repetido = (n: string) => nombres.filter((x) => x.toLowerCase() === n.toLowerCase()).length > 1;
+    const filas: Fila[] = fichas.slice(0, 6).map(({ f, c }, i) => {
+      const nombre = nombres[i];
+      const pres = presentacionDe(f);
+      const titulo = repetido(nombre) && pres ? `${pres.replace(/^x\s*/i, "")} · ${nombre}` : nombre;
+      return {
+        id: corte(`${ID.quiero}${c!.clase}|${c!.id}`, TOPE.id),
+        titulo: corte(titulo, TOPE.filaTitulo),
+        descripcion: corte([f.precio, f.detalle.startsWith("Trae:") ? f.detalle : pres || f.detalle].filter(Boolean).join(" · "), TOPE.filaDesc),
+      };
+    });
     const secciones = [{ titulo: "Tocá el que querés", filas }];
     const extra = (r.opciones ?? []).slice(0, 3).map((o) => ({ id: corte(`${ID.opcion}${o}`, TOPE.id), titulo: corte(o, TOPE.filaTitulo) }));
     if (extra.length) secciones.push({ titulo: "O respondé", filas: extra });
@@ -146,14 +155,27 @@ export function separarOpciones(crudo: string): { texto: string; opciones: strin
  * Si nombró la Despensa, mostrar tres combos distintos confunde y no vende.
  */
 export function fichasNombradas(fichas: Ficha[], texto: string): Ficha[] {
-  const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const t = norm(texto);
-  const clave = (f: Ficha) => norm(f.nombre.replace(/^Combo /, "")).split(/[·(,]/)[0].trim();
+  const VACIAS = new Set(["de", "del", "la", "el", "los", "las", "con", "sin", "x", "y", "combo", "en"]);
+  // Sin tildes, sin plural: «almendra» del texto tiene que encontrar «Almendras Non Pareil».
+  const palabras = (t: string) =>
+    t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9ñ\s]/g, " ").split(/\s+/)
+      .filter((w) => w.length > 1 && !VACIAS.has(w))
+      .map((w) => (w.length > 4 ? w.replace(/(es|s)$/, "") : w));
+  const t = new Set(palabras(texto));
   const nombradas = fichas.filter((f) => {
-    const k = clave(f);
-    return k.length >= 4 && (t.includes(k) || t.includes(k.split(" ").slice(0, 3).join(" ")));
+    const clave = palabras(f.nombre.replace(/^Combo /, "").split(/[·(,]/)[0]).slice(0, 3);
+    if (!clave.length) return false;
+    const coinciden = clave.filter((w) => t.has(w)).length;
+    return coinciden >= Math.min(2, clave.length);
   });
   return nombradas.length ? nombradas : fichas;
+}
+
+/** La presentación que trae el detalle de una ficha («Marca · x 1 kg» → «x 1 kg»). */
+export function presentacionDe(f: Ficha): string {
+  if (f.detalle.startsWith("Trae:")) return "";
+  const partes = f.detalle.split(" · ").map((p) => p.trim()).filter(Boolean);
+  return partes.at(-1) ?? "";
 }
 
 /** El cuerpo que espera la API de Cloud para cada tipo. */

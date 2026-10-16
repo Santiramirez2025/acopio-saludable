@@ -16,7 +16,7 @@ import { leerConfig } from "./config";
 import { pesos } from "./precios";
 import { urlSitio } from "./sitio";
 import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
-import { cambiarEstado, estadoDe, historialDe, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
+import { cambiarEstado, estadoDe, historialDe, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
 import { contextoProspecto, darDeBaja, datosProspecto, esBaja } from "./whatsapp-prospectos";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 
@@ -27,6 +27,8 @@ const SALUD =
 const DERIVADO = "Dale, ya te escribo yo personalmente por acá. Atiendo de lunes a sábado, de 8 a 20 h. Mientras tanto contame qué necesitás así lo tengo a mano.";
 
 // Un identificador no va entero a los logs: con los últimos cuatro alcanza para seguir una charla.
+const ESPERA_RAFAGA_MS = 4000;
+
 export const cola = (n: string) => `…${n.slice(-4)}`;
 
 /** Manda un texto por el canal que corresponda a la charla. */
@@ -148,6 +150,18 @@ export async function atender(e: Entrada): Promise<void> {
   if (detectar(texto) === "salud") {
     await responder(e.clave, `${SALUD}\n\n${AVISO_SUPLEMENTOS}`);
     return;
+  }
+
+  // La gente escribe en ráfagas: «Hola», «¿hay almendras?», «para casa». Se espera un momento y,
+  // si llegó otro mensaje después de este, se deja que conteste ese, que ya ve toda la ráfaga.
+  // Antes se contestaba cada uno por separado: tres respuestas casi iguales seguidas, como un robot.
+  if (!e.toque) {
+    await new Promise((r) => setTimeout(r, ESPERA_RAFAGA_MS));
+    const ultimo = await ultimoDelCliente(e.clave);
+    if (ultimo && ultimo !== e.idMensaje) {
+      console.log("chat: llegó otro después, contesta ese", cola(e.clave));
+      return;
+    }
   }
 
   // Botones que no necesitan al modelo: cobrar es un paso fijo, no una charla.

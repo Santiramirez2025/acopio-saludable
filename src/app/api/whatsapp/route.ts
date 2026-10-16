@@ -98,14 +98,18 @@ export async function POST(req: Request) {
 
   // El 200 sale ahora; contestar puede tardar varios segundos y Meta no espera.
   after(async () => {
-    for (const { m, nombre } of mensajes) {
-      if (!m?.from || !m.id) continue;
-      try {
-        await atenderWhatsapp(m, nombre);
-      } catch (e) {
-        console.error("whatsapp: atender falló", cola(m.from), e);
-      }
-    }
+    // En paralelo y no uno detrás del otro: si alguien manda «Hola» y «¿hay almendras?» juntos,
+    // los dos quedan guardados enseguida y el vendedor contesta una sola vez, al último, con los dos a la vista.
+    await Promise.all(
+      mensajes.map(async ({ m, nombre }) => {
+        if (!m?.from || !m.id) return;
+        try {
+          await atenderWhatsapp(m, nombre);
+        } catch (e) {
+          console.error("whatsapp: atender falló", cola(m.from), e);
+        }
+      }),
+    );
   });
 
   return NextResponse.json({ ok: true });
