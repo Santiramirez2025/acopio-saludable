@@ -29,6 +29,7 @@ export const ID = {
   pagar: "pagar|", // pagar|<camino del carrito>
   transferencia: "transf|", // transf|<camino del carrito>
   opcion: "op|", // op|<texto>: se atiende como si lo hubiera escrito
+  trae: "trae|", // trae|<slug>: qué trae el combo, sin pasar por el modelo
 } as const;
 
 /** De qué es una ficha, leyendo su link: producto o combo, y su código o slug. */
@@ -44,6 +45,7 @@ export type Toque =
   | { tipo: "pagar"; camino: string }
   | { tipo: "transferencia"; camino: string }
   | { tipo: "opcion" }
+  | { tipo: "trae"; slug: string }
   | null;
 
 export function leerToque(id: string | null | undefined): Toque {
@@ -57,6 +59,7 @@ export function leerToque(id: string | null | undefined): Toque {
   if (id.startsWith(ID.pagar)) return { tipo: "pagar", camino: id.slice(ID.pagar.length) };
   if (id.startsWith(ID.transferencia)) return { tipo: "transferencia", camino: id.slice(ID.transferencia.length) };
   if (id.startsWith(ID.opcion)) return { tipo: "opcion" };
+  if (id.startsWith(ID.trae)) return id.length > ID.trae.length ? { tipo: "trae", slug: id.slice(ID.trae.length) } : null;
   return null;
 }
 
@@ -101,12 +104,30 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     ];
   }
 
-  const fichas = (r.fichas ?? []).map((f) => ({ f, c: claseDeFicha(f) })).filter((x) => x.c);
+  // Los combos adelante: son la oferta principal aunque la última búsqueda haya sido un producto suelto.
+  const fichas = (r.fichas ?? [])
+    .map((f) => ({ f, c: claseDeFicha(f) }))
+    .filter((x) => x.c)
+    .sort((a, b) => Number(b.c!.clase === "c") - Number(a.c!.clase === "c"));
   if (fichas.length) {
     const salida: Saliente[] = [];
-    const unico = fichas.length === 1 ? fichas[0] : null;
-    if (unico && unico.c?.clase === "c" && unico.f.foto?.startsWith("http")) {
-      salida.push({ tipo: "imagen", url: unico.f.foto, pie: `${unico.f.nombre} · ${unico.f.precio}` });
+    // Combo primero: si lo que ofrece es un combo, va como tarjeta con foto y tres botones.
+    // Es la oferta principal y tiene que cerrarse en un toque, no perderse en una lista.
+    const primero = fichas[0];
+    if (primero.c?.clase === "c") {
+      if (primero.f.foto?.startsWith("http")) salida.push({ tipo: "imagen", url: primero.f.foto, pie: `${primero.f.nombre} · ${primero.f.precio}` });
+      const tercera =
+        (r.opciones ?? []).find((o) => !/quiero|trae|separ|agreg|s[ií]\b|dale/i.test(o)) ?? (fichas.length > 1 ? "Ver otro combo" : "Ver otros combos");
+      salida.push({
+        tipo: "botones",
+        cuerpo: corte(texto + aviso, TOPE.cuerpo),
+        botones: [
+          { id: corte(`${ID.quiero}c|${primero.c.id}`, TOPE.id), titulo: "Lo quiero 🛒" },
+          { id: corte(`${ID.trae}${primero.c.id}`, TOPE.id), titulo: "¿Qué trae?" },
+          { id: corte(`${ID.opcion}${tercera}`, TOPE.id), titulo: corte(tercera, TOPE.boton) },
+        ],
+      });
+      return salida;
     }
     // Si hay nombres repetidos (la misma almendra en tres tamaños), lo que distingue es la presentación:
     // va en el título, que es lo que se lee primero. Antes salían tres «Almendras Non Pareil» iguales.
@@ -176,6 +197,21 @@ export function presentacionDe(f: Ficha): string {
   if (f.detalle.startsWith("Trae:")) return "";
   const partes = f.detalle.split(" · ").map((p) => p.trim()).filter(Boolean);
   return partes.at(-1) ?? "";
+}
+
+/** «¿Qué trae?» de un combo: la lista completa y el botón para llevarlo. Fijo, sin modelo. */
+export function planTrae(c: { slug: string; nombre: string; precio: string; ahorro: string; renglones: string[] }): Saliente[] {
+  const cuerpo = [`El combo ${c.nombre} trae:`, ...c.renglones.map((r) => `• ${r}`), "", `Todo por ${c.precio}, ahorrás ${c.ahorro} y ya llega a la compra mínima.`].join("\n");
+  return [
+    {
+      tipo: "botones",
+      cuerpo: corte(cuerpo, TOPE.cuerpo),
+      botones: [
+        { id: corte(`${ID.quiero}c|${c.slug}`, TOPE.id), titulo: "Lo quiero 🛒" },
+        { id: `${ID.opcion}Ver otros combos`, titulo: "Ver otros combos" },
+      ],
+    },
+  ];
 }
 
 /** El cuerpo que espera la API de Cloud para cada tipo. */
