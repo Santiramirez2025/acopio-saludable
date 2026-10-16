@@ -14,7 +14,7 @@ import { normalizarCp, zonaDeProvincia } from "./envios/geo";
  * Se divide, no se multiplica: para que después de que el pago se lleve su 8% queden los $35.000
  * del correo, hay que cobrar 35.000 / 0,92, no 35.000 × 1,08.
  */
-export function envioQueSeCobra(envio: number, medioPago: "MERCADOPAGO" | "TRANSFERENCIA", comisionPagoPct: number): number {
+export function envioQueSeCobra(envio: number, medioPago: "MERCADOPAGO" | "TRANSFERENCIA" | "AL_RECIBIR", comisionPagoPct: number): number {
   if (medioPago !== "MERCADOPAGO" || !(envio > 0)) return redondear2(envio);
   const pct = Math.min(Math.max(comisionPagoPct, 0), 95);
   return redondear2(envio / (1 - pct / 100));
@@ -127,7 +127,13 @@ export function margenNeto(p: Pick<Order, "total" | "costoProductos" | "costoEnv
  * Por transferencia el pedido alta es la compra: el cliente eligió, dejó sus datos y nos debe
  * la plata. Por tarjeta no: hasta que Mercado Pago no confirme, no hubo compra.
  */
-export function compraReportable(estado: EstadoPedido, medioPago: "MERCADOPAGO" | "TRANSFERENCIA"): boolean {
+export function compraReportable(estado: EstadoPedido, medioPago: "MERCADOPAGO" | "TRANSFERENCIA" | "AL_RECIBIR"): boolean {
   if (estado === "CANCELADO") return false;
-  return medioPago === "TRANSFERENCIA" || estado !== "PENDIENTE_PAGO";
+  return medioPago !== "MERCADOPAGO" || estado !== "PENDIENTE_PAGO";
 }
+
+export const NOMBRE_MEDIO: Record<"MERCADOPAGO" | "TRANSFERENCIA" | "AL_RECIBIR", string> = {
+  MERCADOPAGO: "Mercado Pago",
+  TRANSFERENCIA: "Transferencia",
+  AL_RECIBIR: "Paga al recibir",
+};

@@ -11,7 +11,7 @@ import type { Bulto, OpcionEnvio } from "./envios/tipos";
 import { enviarEmail, escaparHtml } from "./email";
 import { SITIO, urlSitio } from "./sitio";
 import { linkSeguimiento } from "./envios/seguimiento";
-import { ErrorPedido, envioQueSeCobra, numeroPedido, validarCliente } from "./pedido-calculos";
+import { ErrorPedido, envioQueSeCobra, NOMBRE_MEDIO, numeroPedido, validarCliente } from "./pedido-calculos";
 
 export * from "./pedido-calculos";
 
@@ -128,6 +128,7 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
     },
   });
   await avisarPedidoRecibido(pedido, cfg);
+  await avisarVenta(pedido, "Nueva venta en la web").catch((e) => console.error("aviso de venta web falló", e));
   return pedido;
 }
 
@@ -145,6 +146,7 @@ export async function confirmarPago(orderId: number, nota: string, mpPaymentId?:
   });
   if (confirmado) {
     const pedido = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+    await avisarVenta(pedido, "Pago confirmado").catch((e) => console.error("aviso de pago falló", e));
     await enviarEmail({
       para: pedido.email,
       asunto: `Recibimos tu pago · Pedido ${numeroPedido(pedido.id)}`,
@@ -187,13 +189,6 @@ async function avisarPedidoRecibido(pedido: Order, cfg: Config) {
     html: plantilla(`Recibimos tu pedido ${numeroPedido(pedido.id)}`, `<ul>${filas}</ul><p>Envío: ${escaparHtml(pedido.envioNombre)}</p>${pago}`, pedido.token),
     responderA: cfg.emailContacto,
   });
-  if (cfg.emailContacto) {
-    await enviarEmail({
-      para: cfg.emailContacto,
-      asunto: `Nuevo pedido ${numeroPedido(pedido.id)} · ${pesos(Number(pedido.total))}`,
-      html: `<p>${escaparHtml(pedido.nombre)} (${escaparHtml(pedido.telefono)}) · ${pedido.medioPago === "TRANSFERENCIA" ? "Transferencia" : "Mercado Pago"}</p><ul>${filas}</ul><p><a href="${urlSitio()}/admin/pedidos/${pedido.id}">Abrir en el panel</a></p>`,
-    });
-  }
 }
 
 
@@ -218,4 +213,98 @@ export async function avisarDespachado(orderId: number): Promise<boolean> {
     ),
     responderA: cfg.emailContacto,
   });
+}
+
+// ---------- Pedidos que se cierran por WhatsApp ----------
+
+/** Lo que falta saber para entregar: se pide en la charla y se completa después. */
+export const A_CONFIRMAR = "A confirmar por WhatsApp";
+
+
+/**
+ * Una venta cerrada en el chat pasa a ser un pedido como los de la web: con número, productos,
+ * costo, envío y lista de compra a Distrimay. Así se prepara y se entrega desde el mismo panel.
+ */
+export async function crearPedidoWhatsapp(a: {
+  lineas: unknown;
+  medioPago: "TRANSFERENCIA" | "AL_RECIBIR";
+  nombre: string;
+  telefono: string;
+  envio: { lugar: string; costo: number | null };
+}): Promise<Order> {
+  const cfg = await leerConfig();
+  const [cotizacion, renglones] = await Promise.all([cotizarCarrito(a.lineas), expandirCarrito(a.lineas, cfg)]);
+  if (!renglones.length) throw new ErrorPedido("El pedido está vacío");
+  const bultos = armarBultos(renglones.map((r) => ({ pesoG: r.pesoG ?? PESO_POR_DEFECTO_G, cantidad: r.cantidad })));
+  const envio = a.envio.costo ?? 0;
+  const { descuento, envioCobrado, total, comisionPago } = totales(cotizacion.subtotal, envio, a.medioPago, cfg);
+  const propia = a.envio.costo !== null && (a.envio.costo === 0 || a.medioPago === "AL_RECIBIR");
+  const pedido = await prisma.order.create({
+    data: {
+      token: randomBytes(18).toString("base64url"),
+      medioPago: a.medioPago,
+      nombre: a.nombre.slice(0, 120) || "Cliente de WhatsApp",
+      email: "",
+      telefono: a.telefono,
+      calle: A_CONFIRMAR,
+      ciudad: a.envio.lugar.slice(0, 100),
+      provincia: "Córdoba",
+      cp: "",
+      notas: "Venta por WhatsApp",
+      subtotal: cotizacion.subtotal,
+      descuento,
+      envioCobrado,
+      total,
+      costoProductos: redondear2(renglones.reduce((s, r) => s + r.costoUnitario * r.cantidad, 0)),
+      costoEnvioReal: envio,
+      comisionPago,
+      costoPackaging: redondear2(cfg.costoPackaging),
+      envioOpcionId: propia ? "propia" : "whatsapp",
+      envioNombre: propia ? (envio === 0 ? "Entrega propia sin cargo" : "Entrega propia") : "Envío a coordinar",
+      envioPlazo: propia ? cfg.plazoEntregaPropia : null,
+      envioOrigen: propia ? "propia" : "tabla",
+      pesoTotalG: bultos.reduce((s, b) => s + b.pesoG, 0),
+      bultos: bultos.length,
+      items: { create: renglones.map(aItemDePedido) },
+      eventos: { create: { estado: "PENDIENTE_PAGO", nota: `Venta por WhatsApp · ${NOMBRE_MEDIO[a.medioPago]}` } },
+    },
+  });
+  await avisarVenta(pedido, "Nueva venta por WhatsApp");
+  return pedido;
+}
+
+/** Completa nombre, dirección y horario cuando la persona los pasa en la charla. */
+export async function completarEntrega(orderId: number, d: { nombre?: string; direccion?: string; horario?: string; referencia?: string }): Promise<Order | null> {
+  const pedido = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!pedido) return null;
+  const notas = [d.horario ? `Horario: ${d.horario}` : "", d.referencia ? `Referencia: ${d.referencia}` : "", pedido.notas ?? ""].filter(Boolean).join(" · ").slice(0, 500);
+  const actualizado = await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      ...(d.nombre ? { nombre: d.nombre.slice(0, 120) } : {}),
+      ...(d.direccion ? { calle: d.direccion.slice(0, 160) } : {}),
+      notas,
+    },
+  });
+  await avisarVenta(actualizado, "Datos de entrega");
+  return actualizado;
+}
+
+/** Aviso a Santiago con todo lo de la venta en limpio. */
+export async function avisarVenta(pedido: Order, titulo: string): Promise<void> {
+  const items = await prisma.orderItem.findMany({ where: { orderId: pedido.id } });
+  const productos = items.map((i) => `• ${i.cantidad} × ${i.producto} ${i.presentacion}`).join("\n");
+  const texto = [
+    `🛒 ${titulo} · ${numeroPedido(pedido.id)}`,
+    `${pedido.nombre} · ${pedido.telefono}`,
+    `${pedido.calle}, ${pedido.ciudad}`,
+    pedido.notas ?? "",
+    `${NOMBRE_MEDIO[pedido.medioPago]} · ${pesos(Number(pedido.total))} · ${pedido.envioNombre}`,
+    productos,
+    `${urlSitio()}/admin/pedidos/${pedido.id}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const { avisarSantiago } = await import("./avisos");
+  await avisarSantiago(`${titulo} ${numeroPedido(pedido.id)} · ${pesos(Number(pedido.total))}`, texto);
 }

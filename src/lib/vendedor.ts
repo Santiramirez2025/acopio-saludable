@@ -22,6 +22,7 @@ import { cortada, fichasNombradas, separarOpciones } from "./whatsapp-interactiv
 import { argumentoCombo, COMBO_ENTRADA, temaDe } from "./combos-tema";
 import type { Accion, Enlace, EnvioCotizado, Ficha, Respuesta } from "./asistente-catalogo";
 import { cotizarEnvioChat } from "./envio-chat";
+import { completarEntrega } from "./pedidos";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
 /** Dónde atiende: cambia qué pasa cuando pide que siga una persona. */
@@ -66,6 +67,22 @@ const HERRAMIENTAS = [
       type: "object" as const,
       properties: { busca: { type: "string", description: "Lo que busca, con sus palabras: «sin tacc», «nueces», «para el desayuno», «para el gym»." } },
       required: ["busca"],
+    },
+  },
+  {
+    name: "datos_de_entrega",
+    description:
+      "Guarda en el pedido ya cerrado los datos para entregar: nombre y apellido, dirección, una referencia y el horario en que puede recibir. " +
+      "Usala apenas la persona te pasa cualquiera de esos datos después de cerrar la compra.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        nombre: { type: "string", description: "Nombre y apellido, si lo dijo." },
+        direccion: { type: "string", description: "Calle, número y barrio, como lo escribió." },
+        referencia: { type: "string", description: "Opcional: entre calles, color de casa, depto." },
+        horario: { type: "string", description: "Cuándo puede recibir: «hoy a la tarde», «mañana de 9 a 12»." },
+      },
+      required: [],
     },
   },
   {
@@ -173,10 +190,26 @@ const HERRAMIENTAS = [
   },
 ];
 
-type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[]; derivar?: boolean; envio?: EnvioCotizado };
+type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[]; derivar?: boolean; envio?: EnvioCotizado; entregaGuardada?: boolean };
 
 /** Exportada para poder probar cada herramienta sin pegarle a la API ni gastar tokens. */
-export async function correrHerramienta(nombre: string, entrada: Record<string, unknown>, canal: Canal = "web"): Promise<Salida> {
+/** Lo que el vendedor sabe de la charla además del texto: por ahora, el pedido ya cerrado. */
+export type Contexto = { ordenId?: number };
+
+export async function correrHerramienta(nombre: string, entrada: Record<string, unknown>, canal: Canal = "web", ctx: Contexto = {}): Promise<Salida> {
+  if (nombre === "datos_de_entrega") {
+    if (!ctx.ordenId) return { texto: "No hay un pedido cerrado en esta charla: no hay dónde guardar los datos." };
+    const s = (k: string) => (typeof entrada[k] === "string" ? String(entrada[k]).trim() : "");
+    const pedido = await completarEntrega(ctx.ordenId, { nombre: s("nombre"), direccion: s("direccion"), referencia: s("referencia"), horario: s("horario") });
+    if (!pedido) return { texto: "No encontré el pedido. Decile que Santiago le escribe para coordinar." };
+    const falta = [!s("direccion") && "la dirección", !s("horario") && "el horario"].filter(Boolean);
+    return {
+      texto: falta.length
+        ? `Guardado. Falta ${falta.join(" y ")}: pedíselo en una frase.`
+        : "Guardado en el pedido. Agradecé en una frase y decile que Santiago le confirma la entrega por acá. No pidas nada más ni ofrezcas otra cosa.",
+      entregaGuardada: falta.length === 0,
+    };
+  }
   if (nombre === "buscar_productos") {
     const consulta = String(entrada.consulta ?? "");
     const soloSinTacc = entrada.solo_sin_tacc === true;
@@ -446,7 +479,7 @@ function instrucciones(compraMinima: string): string {
     "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería), usá pedido_para_negocio y hablale de reventa: precio sugerido y cuánto gana.",
     `- La compra mínima es ${compraMinima}. Nunca la digas como un problema («te falta plata»): es la razón por la que el combo le conviene.`,
     "- Si pregunta la dirección, el local o dónde están: trabajamos online desde Villa Carlos Paz, sin local a la calle. Se pide por acá o por la web y se lo llevamos: entrega propia en Carlos Paz y alrededores, y por correo al resto del país. Preguntale su barrio o ciudad para decirle el envío (datos_de_la_tienda) y volvé a la oferta.",
-    "- Dudas típicas, en una frase: ¿envío? → usá datos_de_la_tienda. ¿Confianza? → somos de Villa Carlos Paz, pagás por Mercado Pago o transferencia, y te atiendo yo por acá. ¿Precio? → por transferencia tenés descuento.",
+    "- Dudas típicas, en una frase: ¿envío? → usá datos_de_la_tienda. ¿Confianza? → somos de Villa Carlos Paz, te atiendo yo por acá, y en Carlos Paz y alrededores podés pagar cuando lo recibís. ¿Precio? → por transferencia tenés descuento.",
     "- Preguntá «¿para casa o para un negocio?» solo si de verdad cambia lo que ofrecés. No preguntes cosas que no usás.",
     "- No regatees ni inventes descuentos ni plazos.",
     "",
@@ -482,6 +515,7 @@ export async function responderComoVendedor(
   historial: Turno[] = [],
   carrito: CarritoVisto | null = null,
   canal: Canal = "web",
+  ctx: Contexto = {},
 ): Promise<Respuesta | null> {
   const clave = process.env.ANTHROPIC_API_KEY;
   if (!clave) return null;
@@ -489,10 +523,10 @@ export async function responderComoVendedor(
   const cfg = await leerConfig();
   // El carrito va pegado al mensaje y no en las instrucciones: así las instrucciones
   // y las herramientas no cambian nunca y el caché del prompt sirve de verdad.
-  const ctx = contexto(carrito);
+  const carritoTxt = contexto(carrito);
   const mensajes: { role: "user" | "assistant"; content: unknown }[] = [
     ...historial.slice(-8).map((t) => ({ role: (t.de === "yo" ? "user" : "assistant") as "user" | "assistant", content: t.texto })),
-    { role: "user" as const, content: ctx ? `${ctx}\n\n${mensaje}` : mensaje },
+    { role: "user" as const, content: carritoTxt ? `${carritoTxt}\n\n${mensaje}` : mensaje },
   ];
 
   let fichas: Ficha[] = [];
@@ -500,6 +534,7 @@ export async function responderComoVendedor(
   let enlaces: Enlace[] = [];
   let derivar = false;
   let envio: EnvioCotizado | undefined;
+  let entregaGuardada = false;
   try {
     for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -563,12 +598,14 @@ export async function responderComoVendedor(
           enlaces: enlaces.length ? enlaces : undefined,
           derivar: derivar || undefined,
           envio,
+          entregaGuardada: entregaGuardada || undefined,
         };
       }
 
       const resultados = [];
       for (const u of usos) {
-        const r = await correrHerramienta(u.name ?? "", u.input ?? {}, canal);
+        const r = await correrHerramienta(u.name ?? "", u.input ?? {}, canal, ctx);
+        if (r.entregaGuardada) entregaGuardada = true;
         if (r.fichas?.length) fichas = [...r.fichas, ...fichas.filter((f) => !r.fichas!.some((n) => n.href === f.href))].slice(0, 8);
         if (r.acciones?.length) acciones = r.acciones;
         if (r.enlaces?.length) enlaces = r.enlaces;

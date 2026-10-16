@@ -15,11 +15,11 @@ export async function cotizarEnvioChat(lugar: string, provincia: string | null, 
   const zona = zonaDeLugar(lugar, provincia);
   if (!zona) return null;
   if (zona.tipo === "propia" && cfg.entregaPropiaActiva) {
-    return { lugar, costo: 0, detalle: `Envío a ${lugar}: sin cargo, te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.` };
+    return { lugar, costo: 0, propia: true, detalle: `Envío a ${lugar}: sin cargo, te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.` };
   }
   const zp = zonaPagaDe(cfg.tabla);
   if (zona.tipo === "capital" && cfg.entregaPropiaActiva && zp) {
-    return { lugar, costo: zp.precio, detalle: `Envío a ${lugar}: ${pesos(zp.precio)}, te lo llevamos nosotros${zp.plazo ? ` en ${zp.plazo}` : ""}.` };
+    return { lugar, costo: zp.precio, propia: true, detalle: `Envío a ${lugar}: ${pesos(zp.precio)}, te lo llevamos nosotros${zp.plazo ? ` en ${zp.plazo}` : ""}.` };
   }
   const prov = zona.tipo === "correo" ? zona.provincia : "Córdoba";
   const tarifas = cotizarConTabla(cfg.tabla, prov, [{ pesoG: 4000, unidades: 1, excedido: false }]);

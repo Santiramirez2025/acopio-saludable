@@ -28,7 +28,8 @@ export const corte = (t: string, n: number) => (t.length <= n ? t : `${t.slice(0
 export const ID = {
   quiero: "quiero|", // quiero|p|<codigo> o quiero|c|<slug>
   pagar: "pagar|", // pagar|<camino del carrito>
-  transferencia: "transf|", // transf|<camino del carrito>
+  transferencia: "transf|", // transf|<camino>~<costo envío>~<lugar>
+  recibir: "recibir|", // recibir|<camino>~<costo envío>~<lugar>: paga cuando le llega (entrega propia)
   opcion: "op|", // op|<texto>: se atiende como si lo hubiera escrito
   trae: "trae|", // trae|<slug>: qué trae el combo, sin pasar por el modelo
   zona: "zona|", // zona|<lugar>: dónde vive, para cotizar el envío del pedido guardado
@@ -45,7 +46,8 @@ export function claseDeFicha(f: Ficha): { clase: "p" | "c"; id: string } | null 
 export type Toque =
   | { tipo: "quiero"; clase: "producto" | "combo"; id: string }
   | { tipo: "pagar"; camino: string }
-  | { tipo: "transferencia"; camino: string }
+  | { tipo: "transferencia"; camino: string; envio: { costo: number | null; lugar: string } | null }
+  | { tipo: "recibir"; camino: string; envio: { costo: number | null; lugar: string } | null }
   | { tipo: "opcion" }
   | { tipo: "trae"; slug: string }
   | { tipo: "zona"; lugar: string }
@@ -60,11 +62,20 @@ export function leerToque(id: string | null | undefined): Toque {
     return { tipo: "quiero", clase: c === "c" ? "combo" : "producto", id: codigo };
   }
   if (id.startsWith(ID.pagar)) return { tipo: "pagar", camino: id.slice(ID.pagar.length) };
-  if (id.startsWith(ID.transferencia)) return { tipo: "transferencia", camino: id.slice(ID.transferencia.length) };
+  if (id.startsWith(ID.transferencia)) return { tipo: "transferencia", ...conEnvio(id.slice(ID.transferencia.length)) };
+  if (id.startsWith(ID.recibir)) return { tipo: "recibir", ...conEnvio(id.slice(ID.recibir.length)) };
   if (id.startsWith(ID.opcion)) return { tipo: "opcion" };
   if (id.startsWith(ID.zona)) return id.length > ID.zona.length ? { tipo: "zona", lugar: id.slice(ID.zona.length) } : null;
   if (id.startsWith(ID.trae)) return id.length > ID.trae.length ? { tipo: "trae", slug: id.slice(ID.trae.length) } : null;
   return null;
+}
+
+/** «/carrito?p=c-x*1~0~Carlos Paz» → camino y envío. Sin «~» (botones viejos), sin envío. */
+export function conEnvio(resto: string): { camino: string; envio: { costo: number | null; lugar: string } | null } {
+  const [camino, costo, ...lugar] = resto.split("~");
+  if (costo === undefined) return { camino, envio: null };
+  const n = Number(costo);
+  return { camino, envio: { costo: costo === "" || !Number.isFinite(n) ? null : n, lugar: lugar.join("~") } };
 }
 
 const botonesDeOpciones = (opciones: string[]): Boton[] =>
@@ -130,8 +141,11 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
         pie: "Acopio Saludable · Villa Carlos Paz",
         botones: [
           { id: corte(`${ID.pagar}${pedido.camino}`, 256), titulo: "Mercado Pago" },
-          { id: corte(`${ID.transferencia}${pedido.camino}`, 256), titulo: "Transferencia" },
-          { id: `${ID.opcion}Sumar algo más`, titulo: "Sumar algo más" },
+          { id: corte(`${ID.transferencia}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Transferencia" },
+          // Con entrega propia se puede pagar al recibir; si no, el tercer botón es sumar algo más.
+          pedido.envio.propia
+            ? { id: corte(`${ID.recibir}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Pago al recibir" }
+            : { id: `${ID.opcion}Sumar algo más`, titulo: "Sumar algo más" },
         ],
       },
     ];

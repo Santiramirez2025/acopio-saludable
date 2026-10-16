@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NOMBRE_MEDIO } from "@/lib/pedido-calculos";
 import type { EstadoPedido } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
@@ -14,7 +15,10 @@ export default async function Pedidos({ searchParams }: { searchParams: Promise<
   const cuenta = (e: EstadoPedido) => conteos.find((c) => c.estado === e)?._count ?? 0;
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Pedidos</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold">Pedidos</h1>
+        <Link href="/admin/pedidos/compras" className="btn">Compras y reparto</Link>
+      </div>
       <div className="flex flex-wrap gap-2 text-sm">
         <Link href="/admin/pedidos" className={`chip ${!filtro ? "bg-acopio-600 text-white" : "bg-stone-200 text-stone-700"}`}>Todos</Link>
         {ESTADOS.map((e) => (
@@ -39,7 +43,7 @@ export default async function Pedidos({ searchParams }: { searchParams: Promise<
                   <td className="px-3 py-2"><Link href={`/admin/pedidos/${p.id}`} className="font-medium text-acopio-700 underline">{numeroPedido(p.id)}</Link><div className="text-xs text-stone-600">{p.createdAt.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Cordoba" })}</div></td>
                   <td className="px-3 py-2">{p.nombre}<div className="text-xs text-stone-600">{p.ciudad}, {p.provincia}</div></td>
                   <td className="px-3 py-2"><span className={`chip ${p.estado === "PENDIENTE_PAGO" ? "bg-amber-100 text-amber-800" : p.estado === "CANCELADO" ? "bg-stone-200 text-stone-600" : "bg-acopio-100 text-acopio-700"}`}>{nombreEstado(p.estado)}</span></td>
-                  <td className="px-3 py-2">{p.medioPago === "MERCADOPAGO" ? "Mercado Pago" : "Transferencia"}</td>
+                  <td className="px-3 py-2">{NOMBRE_MEDIO[p.medioPago]}</td>
                   <td className="px-3 py-2">{p.envioNombre}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{pesos(Number(p.total))}</td>
                   <td className={`px-3 py-2 text-right tabular-nums ${m.alerta === "perdida" ? "font-semibold text-red-600" : m.alerta === "flaco" ? "font-semibold text-amber-700" : ""}`}>{pesos(m.neto)} <span className="text-xs text-stone-600">({m.netoPct.toFixed(1)}%)</span></td>
