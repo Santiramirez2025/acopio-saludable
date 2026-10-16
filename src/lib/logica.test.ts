@@ -871,3 +871,11 @@ test("a quién se le compra cada cosa", () => {
   assert.equal(proveedorDe({ producto: "Pasta de Mani Natural", marca: "Entrenuts" }), "distrimay");
   assert.equal(proveedorDe({ producto: "Mani Japones queso", marca: S }), "distrimay");
 });
+
+import { pagaAlRecibir, tieneDireccion } from "./whatsapp-interactivo";
+test("pago aquí y dirección", () => {
+  for (const t of ["Pago aquí.", "pago cuando me lo traes", "Lo pago al recibir", "en efectivo", "contra entrega", "te pago aca"]) assert.ok(pagaAlRecibir(t), t);
+  for (const t of ["¿puedo pagar al recibir?", "Mi nombre es Juan.", "quiero la despensa", "transferencia"]) assert.ok(!pagaAlRecibir(t), t);
+  for (const t of ["La dirección es Cartago 100, esquina Rosario casa blanca", "Río Salado 451 Barrio El Fantasio", "Av. San Martín 1200"]) assert.ok(tieneDireccion(t), t);
+  for (const t of ["Pago aquí.", "gracias", "quiero 2 kilos"]) assert.ok(!tieneDireccion(t), t);
+});
