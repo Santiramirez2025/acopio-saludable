@@ -482,6 +482,7 @@ function instrucciones(compraMinima: string): string {
     `- La compra mínima es ${compraMinima}. Nunca la digas como un problema («te falta plata»): es la razón por la que el combo le conviene.`,
     "- Si pregunta la dirección, el local o dónde están: trabajamos online desde Villa Carlos Paz, sin local a la calle. Se pide por acá o por la web y se lo llevamos: entrega propia en Carlos Paz y alrededores, y por correo al resto del país. Preguntale su barrio o ciudad para decirle el envío (datos_de_la_tienda) y volvé a la oferta.",
     "- Dudas típicas, en una frase: ¿envío? → usá datos_de_la_tienda. ¿Confianza? → somos de Villa Carlos Paz, te atiendo yo por acá, y en Carlos Paz y alrededores podés pagar cuando lo recibís. ¿Precio? → por transferencia tenés descuento.",
+    "- CALIDAD: si la charla da (pregunta por la marca, compara con el súper, duda de la calidad o pregunta por qué ese precio), contá en una frase que todo lo que vendemos es seleccionado: trabajamos solo con marcas y productos de calidad que elegimos nosotros. Hablá bien de la marca del producto que ofrecés. Una vez por charla como mucho, sin discurso y sin inventar datos de la marca.",
     "- Preguntá «¿para casa o para un negocio?» solo si de verdad cambia lo que ofrecés. No preguntes cosas que no usás.",
     "- No regatees ni inventes descuentos ni plazos.",
     "",
