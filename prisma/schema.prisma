@@ -300,6 +300,8 @@ model WhatsappConversacion {
   negocio         String?
   contactado      DateTime?         @db.Timestamptz(6)
   baja            Boolean           @default(false)
+  // Pedido armado en la charla, esperando la zona para cotizar el envío.
+  pedido          String?
   mensajes      WhatsappMensaje[]
 
   @@index([ultimoMensaje(sort: Desc)])

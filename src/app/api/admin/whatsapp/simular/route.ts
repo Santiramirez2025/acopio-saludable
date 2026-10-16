@@ -30,6 +30,7 @@ export async function POST(req: Request) {
   if (!pasos.length) return NextResponse.json({ error: "Faltan pasos" }, { status: 400 });
 
   const historial: Turno[] = [];
+  let pedido: string | null = null;
   const salida = [];
   for (const [i, p] of pasos.entries()) {
     const texto = String(p.texto ?? "").slice(0, 400);
@@ -52,7 +53,9 @@ export async function POST(req: Request) {
       anuncio: i === 0 && cuerpo.anuncio ? { titulo: cuerpo.anuncio.titulo ?? null, texto: cuerpo.anuncio.texto ?? null } : null,
       nombre: cuerpo.nombre ?? null,
       negocio: "",
+      pedidoGuardado: pedido,
     });
+    if (r.guardarPedido) pedido = r.guardarPedido;
     const vio = r.salientes.map(textoParaPanel);
     salida.push({ entrada: texto, toque: p.toque ?? null, conIA: r.conIA, ms: Date.now() - inicio, salientes: r.salientes, vio });
     historial.push({ de: "yo", texto }, { de: "acopio", texto: vio.join("\n") });

@@ -696,7 +696,12 @@ test("whatsapp: productos van en lista para tocar, pedido con botones de pago, s
   const cuerpo = cuerpoGraph(lista, "549351") as { interactive: { action: { sections: { rows: { title: string }[] }[] } } };
   assert.ok(cuerpo.interactive.action.sections[0].rows.every((r) => r.title.length <= 24));
 
-  const pedido = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null });
+  // Sin zona todavía: primero se pregunta dónde vive, con botones de zona.
+  const sinZona = planWhatsapp({ texto: "Listo, te lo armé." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null });
+  assert.deepEqual((sinZona[0] as { botones: { id: string }[] }).botones.map((b) => b.id), ["zona|Carlos Paz", "zona|Córdoba Capital", "op|Otra ciudad"]);
+  assert.match((sinZona[0] as { cuerpo: string }).cuerpo, /barrio o ciudad/);
+  const pedido = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Córdoba Capital", costo: 15000, detalle: "x", totalConEnvio: "$ 50.268", transferenciaConEnvio: "$ 47.447" } });
+  assert.match((pedido[0] as { cuerpo: string }).cuerpo, /Envío: \$\s15\.000\nTotal con envío: \$ 50\.268\nPor transferencia: \$ 47\.447/);
   assert.equal(pedido[0].tipo, "botones");
   const b = pedido[0] as Extract<(typeof pedido)[number], { tipo: "botones" }>;
   assert.deepEqual(b.botones.map((x) => x.titulo), ["Mercado Pago", "Transferencia", "Sumar algo más"]);
@@ -770,4 +775,16 @@ test("vendedor: una respuesta cortada no se manda", () => {
   assert.equal(cortada("Dale 👍"), false);
   assert.equal(cortada("Listo, te la separo\nOPCIONES: Sí | No"), true);
   assert.equal(cortada("Para sin TACC te conviene la Caja Sin TACC del mes: $66.778 y ahorrás"), false);
+});
+
+import { zonaDeLugar } from "./envio-zona";
+test("envío en el chat: la zona sale de lo que escribe", () => {
+  assert.deepEqual(zonaDeLugar("Villa Carlos Paz"), { tipo: "propia" });
+  assert.deepEqual(zonaDeLugar("soy de Icho Cruz"), { tipo: "propia" });
+  assert.deepEqual(zonaDeLugar("Nueva Córdoba"), { tipo: "capital" });
+  assert.deepEqual(zonaDeLugar("Córdoba"), { tipo: "capital" });
+  assert.deepEqual(zonaDeLugar("Rosario", "Santa Fe"), { tipo: "correo", provincia: "Santa Fe" });
+  assert.deepEqual(zonaDeLugar("Mendoza"), { tipo: "correo", provincia: "Mendoza" });
+  assert.deepEqual(zonaDeLugar("CABA"), { tipo: "correo", provincia: "Ciudad Autónoma de Buenos Aires" });
+  assert.equal(zonaDeLugar("Rosario"), null);
 });

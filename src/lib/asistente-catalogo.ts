@@ -12,7 +12,9 @@ export type Ficha = { href: string; nombre: string; detalle: string; precio: str
 export type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string; nombre: string; cantidad: number; precio: string };
 /** `derivar`: el vendedor pidió que siga una persona (en WhatsApp, el bot se calla a partir de acá). */
 /** `opciones`: respuestas cortas para tocar (en WhatsApp son botones; en la web, chips). */
-export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean; opciones?: string[] };
+/** Envío cotizado para la zona que dijo la persona. costo null: «se ve con el código postal». */
+export type EnvioCotizado = { lugar: string; costo: number | null; detalle: string };
+export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean; opciones?: string[]; envio?: EnvioCotizado };
 
 type Indexado = ProductoTienda & { nombre: string; indice: string };
 

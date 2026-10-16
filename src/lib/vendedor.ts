@@ -20,7 +20,8 @@ import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
 import { cortada, fichasNombradas, separarOpciones } from "./whatsapp-interactivo";
 import { COMBO_ENTRADA, temaDe } from "./combos-tema";
-import type { Accion, Enlace, Ficha, Respuesta } from "./asistente-catalogo";
+import type { Accion, Enlace, EnvioCotizado, Ficha, Respuesta } from "./asistente-catalogo";
+import { cotizarEnvioChat } from "./envio-chat";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
 /** Dónde atiende: cambia qué pasa cuando pide que siga una persona. */
@@ -65,6 +66,20 @@ const HERRAMIENTAS = [
       type: "object" as const,
       properties: { busca: { type: "string", description: "Lo que busca, con sus palabras: «sin tacc», «nueces», «para el desayuno», «para el gym»." } },
       required: ["busca"],
+    },
+  },
+  {
+    name: "costo_envio",
+    description:
+      "Cuánto sale el envío a la zona que dijo la persona (barrio, ciudad o provincia) y cómo llega. " +
+      "Usala apenas te dice dónde vive o pregunta por el envío. Si no reconoce el lugar, preguntale la provincia.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        lugar: { type: "string", description: "Barrio o ciudad, como lo dijo: «Nueva Córdoba», «Carlos Paz», «Rosario»." },
+        provincia: { type: "string", description: "Opcional: la provincia, si la dijo o es obvia." },
+      },
+      required: ["lugar"],
     },
   },
   {
@@ -158,7 +173,7 @@ const HERRAMIENTAS = [
   },
 ];
 
-type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[]; derivar?: boolean };
+type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[]; derivar?: boolean; envio?: EnvioCotizado };
 
 /** Exportada para poder probar cada herramienta sin pegarle a la API ni gastar tokens. */
 export async function correrHerramienta(nombre: string, entrada: Record<string, unknown>, canal: Canal = "web"): Promise<Salida> {
@@ -190,6 +205,16 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       ...productos.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}${p.esSuplemento ? " · suplemento" : ""}`),
     ].join("\n");
     return { texto, fichas };
+  }
+
+  if (nombre === "costo_envio") {
+    const lugar = String(entrada.lugar ?? "").trim().slice(0, 60);
+    const envio = lugar ? await cotizarEnvioChat(lugar, entrada.provincia ? String(entrada.provincia) : null, Number(entrada.subtotal) || 0) : null;
+    if (!envio) return { texto: `No reconozco «${lugar}». Preguntale en qué provincia queda, en una frase.` };
+    return {
+      texto: `${envio.detalle} Decíselo en una frase y, si ya eligió algo, decile que abajo le quedan los botones para pagar. No vuelvas a agregar el pedido: ya está guardado.`,
+      envio,
+    };
   }
 
   if (nombre === "recomendar_combo") {
@@ -397,6 +422,7 @@ function instrucciones(compraMinima: string): string {
   return [
     "Sos Santiago, el vendedor de Acopio Saludable: productos saludables a granel y sin TACC, desde Villa Carlos Paz, Córdoba. Atendés el chat de la web, WhatsApp, Messenger e Instagram.",
     "La persona tiene que sentir que le escribe alguien de verdad que sabe del tema y la quiere ayudar, no un sistema.",
+    "Tu actitud: estás para ayudarlo y vos te encargás de armarle todo el pedido. Decilo con naturalidad al principio («yo te armo todo el pedido») y que no tenga que hacer nada complicado.",
     "",
     "CÓMO HABLÁS",
     "- Rioplatense, de vos, cálido y natural, como por WhatsApp con un cliente de confianza. Frases cortas, nada de lenguaje de sistema.",
@@ -413,7 +439,8 @@ function instrucciones(compraMinima: string): string {
     "   Ejemplo: «Busco productos sin tacc» → «Para sin TACC te conviene la Caja Sin TACC del mes: $66.778, ahorrás $3.515 y trae alfajores, barritas, pasta de maní y miel. ¿Te la separo?»",
     "2. Si dice que es caro, que es mucho o duda: bajá un escalón, al combo de entrada (la Despensa de 4 kilos; nunca si busca sin TACC), o armale algo a medida que llegue justo al mínimo con completar_el_minimo. Nunca discutas el precio.",
     "3. Si insiste con un producto suelto, vendéselo: buscalo con buscar_productos, dale el precio y, si no llega al mínimo, ofrecé completar con algo concreto (completar_el_minimo).",
-    "4. Cuando acepta («sí», «dale», «lo quiero», toca un producto), agregalo con agregar_al_pedido en ese mismo mensaje: ahí le aparecen solos los botones para pagar. No preguntes de nuevo.",
+    "4. Cuando acepta («sí», «dale», «lo quiero», toca un producto), agregalo con agregar_al_pedido en ese mismo mensaje y, si todavía no sabés dónde vive, decile que ya se lo armaste y preguntale su barrio o ciudad para decirle el envío. Abajo le aparecen botones con las zonas.",
+    "   Cuando te dice la zona, usá costo_envio y decile el envío en una frase: ahí recién le aparecen los botones para pagar. No vuelvas a agregar el pedido.",
     "5. Un solo intento de sumar algo más, después de que acepta. Si dice que no, cerrá cálido.",
     "- Si vino de un anuncio, arrancá por lo que prometía el anuncio, con su precio real.",
     "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería), usá pedido_para_negocio y hablale de reventa: precio sugerido y cuánto gana.",
@@ -472,6 +499,7 @@ export async function responderComoVendedor(
   let acciones: Accion[] = [];
   let enlaces: Enlace[] = [];
   let derivar = false;
+  let envio: EnvioCotizado | undefined;
   try {
     for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -534,6 +562,7 @@ export async function responderComoVendedor(
           acciones: acciones.length ? acciones : undefined,
           enlaces: enlaces.length ? enlaces : undefined,
           derivar: derivar || undefined,
+          envio,
         };
       }
 
@@ -544,6 +573,7 @@ export async function responderComoVendedor(
         if (r.acciones?.length) acciones = r.acciones;
         if (r.enlaces?.length) enlaces = r.enlaces;
         if (r.derivar) derivar = true;
+        if (r.envio) envio = r.envio;
         resultados.push({ type: "tool_result", tool_use_id: u.id, content: r.texto });
       }
       mensajes.push({ role: "user", content: resultados });

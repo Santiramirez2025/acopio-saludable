@@ -6,7 +6,8 @@
 // que no conoce, y escribir cansa. Un botón se toca, se ve oficial y la charla avanza sola.
 // El link aparece recién cuando la persona eligió pagar, y va dentro de un botón «Pagar».
 
-import type { Ficha, Respuesta } from "./asistente-catalogo";
+import { pesos } from "./precios";
+import type { EnvioCotizado, Ficha, Respuesta } from "./asistente-catalogo";
 
 export type Boton = { id: string; titulo: string };
 export type Fila = { id: string; titulo: string; descripcion?: string };
@@ -30,6 +31,7 @@ export const ID = {
   transferencia: "transf|", // transf|<camino del carrito>
   opcion: "op|", // op|<texto>: se atiende como si lo hubiera escrito
   trae: "trae|", // trae|<slug>: qué trae el combo, sin pasar por el modelo
+  zona: "zona|", // zona|<lugar>: dónde vive, para cotizar el envío del pedido guardado
 } as const;
 
 /** De qué es una ficha, leyendo su link: producto o combo, y su código o slug. */
@@ -46,6 +48,7 @@ export type Toque =
   | { tipo: "transferencia"; camino: string }
   | { tipo: "opcion" }
   | { tipo: "trae"; slug: string }
+  | { tipo: "zona"; lugar: string }
   | null;
 
 export function leerToque(id: string | null | undefined): Toque {
@@ -59,6 +62,7 @@ export function leerToque(id: string | null | undefined): Toque {
   if (id.startsWith(ID.pagar)) return { tipo: "pagar", camino: id.slice(ID.pagar.length) };
   if (id.startsWith(ID.transferencia)) return { tipo: "transferencia", camino: id.slice(ID.transferencia.length) };
   if (id.startsWith(ID.opcion)) return { tipo: "opcion" };
+  if (id.startsWith(ID.zona)) return id.length > ID.zona.length ? { tipo: "zona", lugar: id.slice(ID.zona.length) } : null;
   if (id.startsWith(ID.trae)) return id.length > ID.trae.length ? { tipo: "trae", slug: id.slice(ID.trae.length) } : null;
   return null;
 }
@@ -67,7 +71,15 @@ const botonesDeOpciones = (opciones: string[]): Boton[] =>
   opciones.slice(0, 3).map((o) => ({ id: corte(`${ID.opcion}${o}`, TOPE.id), titulo: corte(o, TOPE.boton) }));
 
 /** El pedido armado: qué lleva, cuánto suma y cómo quiere pagar. */
-export type PedidoArmado = { camino: string; renglones: string[]; total: string; conTransferencia: string | null; falta: string | null };
+export type PedidoArmado = {
+  camino: string;
+  renglones: string[];
+  total: string;
+  conTransferencia: string | null;
+  falta: string | null;
+  /** Envío ya cotizado para su zona. Sin esto todavía no se muestran los botones de pago. */
+  envio?: (EnvioCotizado & { totalConEnvio: string | null; transferenciaConEnvio: string | null }) | null;
+};
 
 /**
  * Traduce la respuesta del vendedor a lo que se manda por WhatsApp.
@@ -89,6 +101,27 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
       lineas.push(`Te faltan ${pedido.falta} para la compra mínima.`);
       return [{ tipo: "botones", cuerpo: corte(lineas.join("\n"), TOPE.cuerpo), botones: botonesDeOpciones(["Sumar algo más", "Ver combos"]) }];
     }
+    // Primero la zona: sin saber cuánto sale el envío, la gente no paga (pasó: dijeron «lo quiero» y se frenaron).
+    if (!pedido.envio) {
+      if (!/\?\s*$/.test(texto)) lineas.push("", "¿De qué barrio o ciudad sos? Así te digo el envío.");
+      return [
+        {
+          tipo: "botones",
+          cuerpo: corte(lineas.join("\n"), TOPE.cuerpo),
+          botones: [
+            { id: `${ID.zona}Carlos Paz`, titulo: "Carlos Paz y zona" },
+            { id: `${ID.zona}Córdoba Capital`, titulo: "Córdoba Capital" },
+            { id: `${ID.opcion}Otra ciudad`, titulo: "Otra ciudad" },
+          ],
+        },
+      ];
+    }
+    // Con el envío ya cotizado, el «por transferencia» de arriba se reemplaza por el que lo incluye.
+    const iTransf = lineas.findIndex((l) => l.startsWith("Por transferencia"));
+    if (iTransf >= 0) lineas.splice(iTransf, 1);
+    lineas.push(pedido.envio.costo === 0 ? `Envío: sin cargo` : pedido.envio.costo === null ? "Envío: se calcula con tu código postal" : `Envío: ${pesos(pedido.envio.costo)}`);
+    if (pedido.envio.totalConEnvio) lineas.push(`Total con envío: ${pedido.envio.totalConEnvio}`);
+    if (pedido.envio.transferenciaConEnvio) lineas.push(`Por transferencia: ${pedido.envio.transferenciaConEnvio}`);
     lineas.push("", "¿Cómo preferís pagar?");
     return [
       {

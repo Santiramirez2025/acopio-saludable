@@ -99,6 +99,16 @@ export async function ultimoDelCliente(telefono: string): Promise<string | null>
   return filas[0]?.id ?? null;
 }
 
+/** El pedido armado en la charla (camino del carrito), o null. */
+export async function pedidoGuardado(telefono: string): Promise<string | null> {
+  const f = await prisma.$queryRaw<{ pedido: string | null }[]>`SELECT "pedido" FROM "WhatsappConversacion" WHERE "telefono" = ${telefono}`;
+  return f[0]?.pedido ?? null;
+}
+
+export async function guardarPedido(telefono: string, camino: string | null): Promise<void> {
+  await prisma.$executeRaw`UPDATE "WhatsappConversacion" SET "pedido" = ${camino} WHERE "telefono" = ${telefono}`;
+}
+
 /** Los últimos turnos de la charla, en el formato que entiende el vendedor. */
 export async function historialDe(telefono: string, cantidad = 8): Promise<Turno[]> {
   const filas = await prisma.$queryRaw<{ de: string; texto: string }[]>`
