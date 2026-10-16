@@ -824,3 +824,12 @@ test("combos: el argumento es el precio por kilo o por transferencia, no «ahorr
   assert.equal(argumentoCombo(mixto, 8, p).porKilo, null);
   assert.equal(argumentoCombo(mixto, 8, p).corto, "$59800 por transferencia");
 });
+
+import { postergaCompra, planSinApuro } from "./whatsapp-interactivo";
+test("postergar la compra: se le da tiempo, sin pedido ni zonas", () => {
+  for (const t of ["Gracias por pasarme veo traquila y te escribo para encargarte", "Lo veo tranquila y te aviso", "lo voy a pensar", "después te escribo", "Bueno gracias, mañana te confirmo", "lo consulto con mi marido y te aviso", "cualquier cosa te escribo", "voy a mirarlo con calma"]) assert.ok(postergaCompra(t), t);
+  for (const t of ["dale, lo quiero", "hola", "lo veo tranquila, ¿hacen envío a Tanti?", "gracias", "Sí, dejámelo listo", "quiero la despensa", "Carlos Paz"]) assert.ok(!postergaCompra(t), t);
+  const [s] = planSinApuro("Gloria Pérez", "https://x.com");
+  assert.equal(s.tipo, "cta");
+  assert.ok(s.tipo === "cta" && s.cuerpo.startsWith("¡Dale, Gloria!"));
+});

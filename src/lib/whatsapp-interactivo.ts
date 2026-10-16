@@ -166,7 +166,7 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     if (primero.c?.clase === "c" && fichas.length === 1) {
       if (primero.f.foto?.startsWith("http")) salida.push({ tipo: "imagen", url: primero.f.foto, pie: `${primero.f.nombre} · ${primero.f.precio}` });
       const tercera =
-        (r.opciones ?? []).find((o) => !/quiero|trae|separ|agreg|s[ií]\b|dale/i.test(o)) ?? (fichas.length > 1 ? "Ver otro combo" : "Ver otros combos");
+        (r.opciones ?? []).find((o) => !/quiero|trae|separ|agreg|dej|list|llev|compr|ped[ií]|^s[ií]\b|^s[ií]\W|dale/i.test(o)) ?? (fichas.length > 1 ? "Ver otro combo" : "Ver otros combos");
       salida.push({
         tipo: "botones",
         cuerpo: corte(texto + aviso, TOPE.cuerpo),
@@ -257,6 +257,30 @@ export function quiereVer(texto: string): boolean {
   const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   if (t.length > 45) return false;
   return /^(quiero |me )?(ver|mostrame|mostrar|pasame|mandame)( (los|las|todos|todas|otros|otras|otro|otra|mas|el|la))* (productos?|combos?|opcion(es)?|catalogo|precios|lista)\b|^(que|cuales|que productos) (tienen|venden|hay|ofrecen)\b|^(catalogo|lista de precios|productos|combos|precios|ver mas)$/.test(t);
+}
+
+/**
+ * «Lo veo tranquila y te escribo», «lo pienso», «después te aviso»: está pidiendo tiempo.
+ * Ahí no se le arma el pedido ni se le ponen las zonas: se le da aire y se deja la puerta abierta.
+ * Si en el mismo mensaje pregunta algo o acepta, no es postergar: se contesta normal.
+ */
+export function postergaCompra(texto: string): boolean {
+  if (texto.includes("?")) return false;
+  const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  if (t.length > 160) return false;
+  if (/\b(lo quiero|la quiero|quiero (el|la|los|las|uno|una)|separamel|dejamel|agregal|anotal|mandamel|como (pago|hago)|pasame (el|los) (alias|cbu|link))\b/.test(t)) return false;
+  return /\b(lo|la|los|las) (veo|miro|reviso|pienso|charlo|hablo|consulto)\b|\bveo tra?n?quil|\b(miro|reviso|veo) (con calma|tranquil|bien)|\b(lo|la) voy a (pensar|ver|mirar|consultar)|\bvoy a (pensar|ver|mirar)lo\b|\b(despues|luego|mas tarde|manana|en un rato|en otro momento|la semana que viene|cuando (cobre|pueda|vuelva))\b.*\b(te )?(escribo|aviso|confirmo|hablo|encargo|pido)|\bte (escribo|aviso|confirmo|hablo) (despues|luego|mas tarde|manana|en un rato|para encargar)|\bte escribo para (encargar|pedir)|\b(cualquier cosa|si me decido) te (escribo|aviso)/.test(t);
+}
+
+/** La respuesta a «lo veo tranquila»: cálida, corta, sin pedido ni zonas. Solo la tienda, por si quiere ir mirando. */
+export function planSinApuro(nombre: string | null, tienda: string): Saliente[] {
+  const quien = nombre ? `, ${nombre.split(/\s+/)[0].slice(0, 20)}` : "";
+  return [{
+    tipo: "cta",
+    cuerpo: `¡Dale${quien}! Miralo con calma, no hay apuro 🙌 Cuando quieras me escribís y te armo el pedido como prefieras. Si te surge cualquier duda, acá estoy.`,
+    texto: "Ver la tienda",
+    url: tienda,
+  }];
 }
 
 export function planVer(combos: { slug: string; nombre: string; precio: string; argumento: string }[], tienda?: string): Saliente[] {
