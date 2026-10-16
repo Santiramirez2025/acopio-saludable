@@ -114,7 +114,9 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     // Combo primero: si lo que ofrece es un combo, va como tarjeta con foto y tres botones.
     // Es la oferta principal y tiene que cerrarse en un toque, no perderse en una lista.
     const primero = fichas[0];
-    if (primero.c?.clase === "c") {
+    // Tarjeta solo si lo ofrecido son combos. Si mezcla combo y producto suelto, va la lista:
+    // así «Lo quiero» nunca agrega algo distinto de lo que dice el texto.
+    if (primero.c?.clase === "c" && fichas.every((x) => x.c?.clase === "c")) {
       if (primero.f.foto?.startsWith("http")) salida.push({ tipo: "imagen", url: primero.f.foto, pie: `${primero.f.nombre} · ${primero.f.precio}` });
       const tercera =
         (r.opciones ?? []).find((o) => !/quiero|trae|separ|agreg|s[ií]\b|dale/i.test(o)) ?? (fichas.length > 1 ? "Ver otro combo" : "Ver otros combos");
