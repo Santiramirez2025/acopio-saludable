@@ -220,6 +220,17 @@ export function planTrae(c: { slug: string; nombre: string; precio: string; ahor
   ];
 }
 
+/**
+ * Un texto que parece cortado a mitad de palabra: corto y sin cierre (punto, signo o emoji)
+ * en la parte que va antes de la línea de OPCIONES. Mejor pedirlo de nuevo que mandarlo así.
+ */
+export function cortada(crudo: string): boolean {
+  const texto = separarOpciones(crudo).texto.trim();
+  if (!texto) return false; // vacío se maneja aparte
+  if (texto.length >= 40) return false;
+  return !/[.!?…)\]"»\p{Extended_Pictographic}]$/u.test(texto);
+}
+
 /** El cuerpo que espera la API de Cloud para cada tipo. */
 export function cuerpoGraph(s: Saliente, to: string): Record<string, unknown> {
   const base = { messaging_product: "whatsapp", recipient_type: "individual", to };

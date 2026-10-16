@@ -762,3 +762,12 @@ test("combos: cada búsqueda va a su combo, y sin TACC gana", () => {
   assert.equal(t[0].tipo, "botones");
   assert.match((t[0] as { cuerpo: string }).cuerpo, /• a\n• b/);
 });
+
+import { cortada } from "./whatsapp-interactivo";
+test("vendedor: una respuesta cortada no se manda", () => {
+  assert.equal(cortada("No hace fal"), true);
+  assert.equal(cortada("No hace falta, trabajamos online."), false);
+  assert.equal(cortada("Dale 👍"), false);
+  assert.equal(cortada("Listo, te la separo\nOPCIONES: Sí | No"), true);
+  assert.equal(cortada("Para sin TACC te conviene la Caja Sin TACC del mes: $66.778 y ahorrás"), false);
+});

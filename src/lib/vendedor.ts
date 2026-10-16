@@ -18,7 +18,7 @@ import { pesos, renglonCombo } from "./precios";
 import { zonaPagaDe } from "./envios/tabla";
 import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
-import { fichasNombradas, separarOpciones } from "./whatsapp-interactivo";
+import { cortada, fichasNombradas, separarOpciones } from "./whatsapp-interactivo";
 import { COMBO_ENTRADA, temaDe } from "./combos-tema";
 import type { Accion, Enlace, Ficha, Respuesta } from "./asistente-catalogo";
 
@@ -418,6 +418,7 @@ function instrucciones(compraMinima: string): string {
     "- Si vino de un anuncio, arrancá por lo que prometía el anuncio, con su precio real.",
     "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería), usá pedido_para_negocio y hablale de reventa: precio sugerido y cuánto gana.",
     `- La compra mínima es ${compraMinima}. Nunca la digas como un problema («te falta plata»): es la razón por la que el combo le conviene.`,
+    "- Si pregunta la dirección, el local o dónde están: trabajamos online desde Villa Carlos Paz, sin local a la calle. Se pide por acá o por la web y se lo llevamos: entrega propia en Carlos Paz y alrededores, y por correo al resto del país. Preguntale su barrio o ciudad para decirle el envío (datos_de_la_tienda) y volvé a la oferta.",
     "- Dudas típicas, en una frase: ¿envío? → usá datos_de_la_tienda. ¿Confianza? → somos de Villa Carlos Paz, pagás por Mercado Pago o transferencia, y te atiendo yo por acá. ¿Precio? → por transferencia tenés descuento.",
     "- Preguntá «¿para casa o para un negocio?» solo si de verdad cambia lo que ofrecés. No preguntes cosas que no usás.",
     "- No regatees ni inventes descuentos ni plazos.",
@@ -495,8 +496,16 @@ export async function responderComoVendedor(
         console.error("vendedor: la API rechazó", res.status, (await res.text()).slice(0, 300));
         return null;
       }
-      const data = (await res.json()) as { content?: Bloque[] };
-      const bloques = data.content ?? [];
+      const data = (await res.json()) as { content?: Bloque[]; stop_reason?: string };
+      let bloques = data.content ?? [];
+      // Una respuesta cortada («No hace fal») no sale nunca: se descarta el texto y se le pide de nuevo.
+      if (data.stop_reason === "max_tokens") {
+        console.error("vendedor: respuesta cortada por largo", { vuelta });
+        bloques = bloques.filter((b) => b.type !== "text");
+      } else if (cortada(bloques.filter((b) => b.type === "text").map((b) => b.text ?? "").join(""))) {
+        console.error("vendedor: respuesta que parece cortada", { vuelta, stop: data.stop_reason });
+        bloques = bloques.filter((b) => b.type !== "text");
+      }
       mensajes.push({ role: "assistant", content: bloques });
 
       const usos = bloques.filter((b) => b.type === "tool_use");
