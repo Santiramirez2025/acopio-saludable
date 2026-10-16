@@ -682,12 +682,17 @@ test("whatsapp: productos van en lista para tocar, pedido con botones de pago, s
   const fichas = [
     { href: "/combos/despensa", nombre: "Combo Despensa de 4 kilos", detalle: "Trae: muchas cosas", precio: "$ 35.268", foto: "https://x/f.jpg" },
   ];
-  const plan = planWhatsapp({ texto: "Te conviene la Despensa.", fichas, opciones: ["Quiero la Despensa"] }, null);
+  const plan = planWhatsapp({ texto: "Te conviene la Despensa.", fichas, opciones: ["Quiero la Despensa", "Para un negocio"] }, null);
   assert.equal(plan[0].tipo, "imagen");
-  assert.equal(plan[1].tipo, "lista");
-  const lista = plan[1] as Extract<(typeof plan)[number], { tipo: "lista" }>;
-  assert.equal(lista.secciones[0].filas[0].id, "quiero|c|despensa");
-  assert.ok(!lista.cuerpo.includes("http"));
+  assert.equal(plan[1].tipo, "botones");
+  const tarjeta = plan[1] as Extract<(typeof plan)[number], { tipo: "botones" }>;
+  assert.deepEqual(tarjeta.botones.map((b) => b.id), ["quiero|c|despensa", "trae|despensa", "op|Para un negocio"]);
+  assert.ok(!tarjeta.cuerpo.includes("http"));
+
+  // Productos sueltos: lista para tocar, con títulos dentro del tope de Meta.
+  const sueltos = planWhatsapp({ texto: "Hay nueces.", fichas: [{ href: "/producto/9", nombre: "Nuez Mariposa Extra Light Fraccionada de primera calidad", detalle: "x 1 kg", precio: "$ 22.937", foto: null }] }, null);
+  const lista = sueltos[0] as Extract<(typeof sueltos)[number], { tipo: "lista" }>;
+  assert.equal(lista.tipo, "lista");
   const cuerpo = cuerpoGraph(lista, "549351") as { interactive: { action: { sections: { rows: { title: string }[] }[] } } };
   assert.ok(cuerpo.interactive.action.sections[0].rows.every((r) => r.title.length <= 24));
 
@@ -740,4 +745,19 @@ test("whatsapp: el mensaje escrito trae lo que la persona estaba mirando", () =>
   assert.match(mensajeSegun("/carrito", null), /pedido armado/);
   assert.equal(mensajeSegun("/", "Acopio"), SALUDO_GENERAL);
   assert.equal(conMensaje("https://wa.me/5493541519630?text=viejo", "Hola! sí"), "https://wa.me/5493541519630?text=Hola!%20s%C3%AD");
+});
+
+import { temaDe } from "./combos-tema";
+import { planTrae } from "./whatsapp-interactivo";
+test("combos: cada búsqueda va a su combo, y sin TACC gana", () => {
+  assert.equal(temaDe("Busco productos sin tacc")?.slugs[0], "caja-sin-tacc-del-mes");
+  assert.equal(temaDe("alfajores sin gluten")?.slugs[0], "merienda-sin-tacc");
+  assert.equal(temaDe("Nueces x kg.")?.slugs[0], "alacena-de-frutos-secos");
+  assert.equal(temaDe("¡Hola! Quiero precios de frutos secos por kilo")?.id, "frutos-secos");
+  assert.equal(temaDe("algo para el desayuno, granola")?.id, "desayuno");
+  assert.equal(temaDe("proteína para el gym")?.id, "gym");
+  assert.equal(temaDe("hola"), null);
+  const t = planTrae({ slug: "x", nombre: "X", precio: "$ 1", ahorro: "$ 0", renglones: ["a", "b"] });
+  assert.equal(t[0].tipo, "botones");
+  assert.match((t[0] as { cuerpo: string }).cuerpo, /• a\n• b/);
 });

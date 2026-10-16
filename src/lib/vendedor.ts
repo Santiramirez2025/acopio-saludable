@@ -19,6 +19,7 @@ import { zonaPagaDe } from "./envios/tabla";
 import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
 import { fichasNombradas, separarOpciones } from "./whatsapp-interactivo";
+import { COMBO_ENTRADA, temaDe } from "./combos-tema";
 import type { Accion, Enlace, Ficha, Respuesta } from "./asistente-catalogo";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
@@ -53,6 +54,17 @@ const HERRAMIENTAS = [
         solo_sin_tacc: { type: "boolean", description: "true para traer únicamente productos marcados sin TACC." },
       },
       required: ["consulta"],
+    },
+  },
+  {
+    name: "recomendar_combo",
+    description:
+      "Devuelve el combo que mejor le resuelve lo que busca (y el combo de entrada más barato), con precio, ahorro y qué trae. " +
+      "Usala PRIMERO cada vez que la persona dice qué busca o pregunta por un producto o una categoría: el combo es la oferta principal.",
+    input_schema: {
+      type: "object" as const,
+      properties: { busca: { type: "string", description: "Lo que busca, con sus palabras: «sin tacc», «nueces», «para el desayuno», «para el gym»." } },
+      required: ["busca"],
     },
   },
   {
@@ -177,6 +189,36 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       ...combos.map((c) => `- combo slug ${c.slug} · ${c.nombre} · trae ${c.items.map(({ producto, cantidad }) => `${cantidad} x ${producto.producto} ${producto.presentacion}`).join(", ")} · ${pesos(Math.round(c.precio))} (lista ${pesos(Math.round(c.precioLista))})`),
       ...productos.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}${p.esSuplemento ? " · suplemento" : ""}`),
     ].join("\n");
+    return { texto, fichas };
+  }
+
+  if (nombre === "recomendar_combo") {
+    const busca = String(entrada.busca ?? "");
+    const cfg = await leerConfig();
+    const todos = (await combosTienda({ activo: true, tipo: "COMBO" })).filter((c) => c.disponible);
+    const tema = temaDe(busca);
+    const porTema = tema ? tema.slugs.map((s) => todos.find((c) => c.slug === s)).filter((c): c is (typeof todos)[number] => Boolean(c)) : [];
+    const porItems = porTema.length ? [] : (await hallarCombos(busca)).slice(0, 2);
+    const elegidos = [...porTema, ...porItems].slice(0, 2);
+    const entrada_ = todos.find((c) => c.slug === COMBO_ENTRADA);
+    const lineas = (c: (typeof todos)[number], rol: string) =>
+      `- ${rol}: slug ${c.slug} · ${c.nombre} · ${pesos(Math.round(c.precio))} (lista ${pesos(Math.round(c.precioLista))}, ahorra ${pesos(Math.round(c.ahorro))})` +
+      `${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""} · trae ${c.items.length} productos: ${c.items.slice(0, 6).map((i) => `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${i.producto.producto}`).join(", ")}${c.items.length > 6 ? "…" : ""}`;
+    const texto = [
+      tema ? `Tema detectado: ${tema.nombre}.` : "No hay un combo específico para eso.",
+      ...elegidos.map((c, i) => lineas(c, i === 0 ? "RECOMENDADO" : "alternativa")),
+      entrada_ && !elegidos.some((c) => c.slug === entrada_.slug) ? lineas(entrada_, "entrada más barata (ofrecela solo si el recomendado le parece caro)") : "",
+      elegidos.length
+        ? "Ofrecé el RECOMENDADO: nombre, precio, cuánto ahorra y 2 o 3 cosas que trae. Si pidió un producto puntual, decí también su precio suelto en media frase."
+        : "Ofrecé el producto que pidió (buscalo con buscar_productos) y, para llegar al mínimo, la entrada más barata.",
+    ].filter(Boolean).join("\n");
+    const fichas: Ficha[] = elegidos.map((c) => ({
+      href: `/combos/${c.slug}`,
+      nombre: `Combo ${c.nombre}`,
+      detalle: `Trae: ${c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)).join(" · ")}`,
+      precio: pesos(Math.round(c.precio)),
+      foto: c.fotoUrl ?? c.items[0]?.producto.fotoUrl ?? null,
+    }));
     return { texto, fichas };
   }
 
@@ -354,23 +396,25 @@ function instrucciones(compraMinima: string): string {
     "CÓMO HABLÁS",
     "- Rioplatense, de vos, cálido y natural, como por WhatsApp con un cliente de confianza. Frases cortas, nada de lenguaje de sistema.",
     "- Nunca digas «encontré N opciones», «según el catálogo», «no coincide con el anuncio», «soy un asistente» ni nada que suene a robot.",
-    "- La gente escribe corto y no lee párrafos: contestá en una o dos frases cortas, de 25 palabras como mucho en total. Una sola pregunta al final, y solo si hace falta.",
-    "- Si pregunta un precio: decí el precio de UNA presentación, la más pedida o la que mejor le conviene, y nada más. Las otras presentaciones y opciones van solas en la lista y en los botones de abajo: no las escribas.",
-    "  Ejemplo: «Nueces x kg» → «La nuez mariposa sale $22.937 el kilo. ¿Te la separo?» con OPCIONES: Sí, 1 kilo | Ver otros tamaños | Para un negocio",
+    "- La gente escribe corto y no lee párrafos: contestá en dos o tres frases cortas, de 40 palabras como mucho en total. Una sola pregunta al final, y solo si hace falta.",
+    "- Si pregunta un precio: el precio de UNA presentación y el combo que lo trae. Las otras presentaciones y opciones van solas en los botones de abajo: no las escribas.",
+    "  Ejemplo: «Nueces x kg» → «La nuez mariposa sale $22.937 el kilo. Pero te conviene la Alacena de frutos secos: trae nueces, mix y semillas por $66.422 con 5% menos. ¿Te la separo?» con OPCIONES: Quiero el combo | Solo las nueces | Ver qué trae",
     "- Nunca listas con guiones ni viñetas. Saludá solo en el primer mensaje, sin presentarte de nuevo después.",
     "- Como mucho un emoji y solo si suma.",
     "",
-    "CÓMO ASESORÁS (esto es lo que vende)",
-    "- Antes de ofrecer, entendé qué necesita: para qué lo quiere, si es para la casa o un negocio, cuánto consume. Una pregunta a la vez, y solo si cambia lo que le ofrecés.",
-    "- Respondé lo que preguntó con producto y precio real. Si suma, agregá UN dato que le importe escuchar, verdadero y en pocas palabras: cuánto ahorra, que llega fresco, que el combo ya le resuelve todo.",
-    "- Recomendá UNA cosa concreta y por qué le conviene a él. No tires listas: elegí vos lo mejor para su caso.",
-    "- Los combos son tu mejor oferta: 5% de descuento y casi todos llegan solos a la compra mínima. Buscalos con buscar_productos o ver_combos.",
-    "- Si vino de un anuncio, arrancá por lo que prometía el anuncio, con su precio real, y ofrecéselo directo. Si el precio cambió, dalo sin hacer ruido.",
+    "CÓMO VENDÉS: COMBO PRIMERO",
+    "1. Apenas dice qué busca (un producto, una categoría, «sin tacc», «para el desayuno»), usá recomendar_combo y ofrecé el RECOMENDADO: nombre, precio, cuánto ahorra y 2 o 3 cosas que trae. Si pidió un producto puntual, dale también su precio suelto en media frase.",
+    "   El argumento es siempre el mismo y es verdad: el combo resuelve la compra del mes, tiene 5% menos que comprando suelto y llega solo a la compra mínima, así no tiene que andar sumando.",
+    "   Ejemplo: «Busco productos sin tacc» → «Para sin TACC te conviene la Caja Sin TACC del mes: $66.778, ahorrás $3.515 y trae alfajores, barritas, pasta de maní y miel. ¿Te la separo?»",
+    "2. Si dice que es caro, que es mucho o duda: bajá un escalón, al combo de entrada (la Despensa de 4 kilos), o armale algo a medida que llegue justo al mínimo con completar_el_minimo. Nunca discutas el precio.",
+    "3. Si insiste con un producto suelto, vendéselo: buscalo con buscar_productos, dale el precio y, si no llega al mínimo, ofrecé completar con algo concreto (completar_el_minimo).",
+    "4. Cuando acepta («sí», «dale», «lo quiero», toca un producto), agregalo con agregar_al_pedido en ese mismo mensaje: ahí le aparecen solos los botones para pagar. No preguntes de nuevo.",
+    "5. Un solo intento de sumar algo más, después de que acepta. Si dice que no, cerrá cálido.",
+    "- Si vino de un anuncio, arrancá por lo que prometía el anuncio, con su precio real.",
     "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería), usá pedido_para_negocio y hablale de reventa: precio sugerido y cuánto gana.",
-    `- La compra mínima es ${compraMinima}. Si no llega, usá completar_el_minimo y ofrecé algo concreto con su precio, nunca «te falta plata».`,
-    "- Cuando acepta algo o elige un producto, agregalo con agregar_al_pedido en ese mismo mensaje. Ahí se le muestran solos los botones para pagar.",
-    "- Cuando ya tiene lo que buscaba, preguntá una sola vez si le sumás algo más o se lo dejás listo. Si dice que no, cerrá cálido y agradecé.",
-    "- Si duda o desconfía: contale que somos de Carlos Paz, que puede pagar por transferencia con descuento y que lo atiende una persona. Si duda por el precio, nombrá el descuento por transferencia, un combo o una baja real de ver_ofertas.",
+    `- La compra mínima es ${compraMinima}. Nunca la digas como un problema («te falta plata»): es la razón por la que el combo le conviene.`,
+    "- Dudas típicas, en una frase: ¿envío? → usá datos_de_la_tienda. ¿Confianza? → somos de Villa Carlos Paz, pagás por Mercado Pago o transferencia, y te atiendo yo por acá. ¿Precio? → por transferencia tenés descuento.",
+    "- Preguntá «¿para casa o para un negocio?» solo si de verdad cambia lo que ofrecés. No preguntes cosas que no usás.",
     "- No regatees ni inventes descuentos ni plazos.",
     "",
     "LO QUE NO HACÉS NUNCA",

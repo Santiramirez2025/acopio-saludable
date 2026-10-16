@@ -7,13 +7,13 @@
 
 import { detectar, pidePersona } from "./asistente";
 import { buscarEnCatalogo, comboDelAnuncio, type Accion, type Respuesta } from "./asistente-catalogo";
-import { responderComoVendedor, vendedorActivo } from "./vendedor";
+import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { leerToque, planWhatsapp, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
+import { leerToque, planTrae, planWhatsapp, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
-import { cotizarCarrito } from "./tienda";
+import { combosTienda, cotizarCarrito } from "./tienda";
 import { leerConfig } from "./config";
-import { pesos } from "./precios";
+import { pesos, renglonCombo } from "./precios";
 import { urlSitio } from "./sitio";
 import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
 import { cambiarEstado, estadoDe, historialDe, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
@@ -172,9 +172,63 @@ export async function atender(e: Entrada): Promise<void> {
   // El historial se lee sin el mensaje recién guardado: el vendedor lo recibe aparte.
   const historial = (await historialDe(e.clave, 9)).slice(0, -1);
   const inicio = Date.now();
+  const p = await pensar({
+    canal,
+    texto,
+    toque,
+    historial,
+    anuncio: ref ? { titulo: ref.titulo, texto: ref.texto } : null,
+    nombre: e.nombre,
+    negocio: prospecto.prospecto ? contextoProspecto(prospecto.prospecto, prospecto.negocio) : "",
+  });
+  console.log("chat: respuesta armada", { canal, de: cola(e.clave), conIA: p.conIA, ms: Date.now() - inicio, derivar: p.derivar, tipos: p.salientes.map((x) => x.tipo) });
+
+  if (p.derivar) {
+    await responder(e.clave, DERIVADO);
+    await cambiarEstado(e.clave, "persona");
+    return;
+  }
+  if (canal === "whatsapp") {
+    await responderWhatsapp(e.clave, p.salientes);
+    return;
+  }
+  const salida = paraWhatsapp(p.respuesta);
+  if (salida) await responder(e.clave, salida);
+}
+
+export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: boolean; conIA: boolean };
+
+/**
+ * Qué contestar, sin mandar nada ni tocar la base de mensajes. Lo usa atender() y lo usa el
+ * simulador del panel, así lo que se prueba es exactamente lo que recibe el cliente.
+ */
+export async function pensar(c: {
+  canal: ReturnType<typeof canalDe>;
+  texto: string;
+  toque: ReturnType<typeof leerToque>;
+  historial: Turno[];
+  anuncio: { titulo: string | null; texto: string | null } | null;
+  nombre: string | null;
+  negocio: string;
+}): Promise<Pensado> {
+  // «¿Qué trae?» de un combo: la lista completa, fija, sin gastar el modelo.
+  if (c.toque?.tipo === "trae") {
+    const combo = (await combosTienda({ slug: c.toque.slug, tipo: "COMBO" }))[0];
+    if (combo?.disponible) {
+      const salientes = planTrae({
+        slug: combo.slug,
+        nombre: combo.nombre,
+        precio: pesos(Math.round(combo.precio)),
+        ahorro: pesos(Math.round(combo.ahorro)),
+        renglones: combo.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)),
+      });
+      return { salientes, respuesta: { texto: "" }, derivar: false, conIA: false };
+    }
+  }
+
   // Lo que prometió el anuncio, quién es y qué tocó van pegados al mensaje y no a las
   // instrucciones, para no romper el caché del prompt.
-  const textoAnuncio = ref ? [ref.titulo, ref.texto].filter(Boolean).join(" — ").slice(0, 300) : "";
+  const textoAnuncio = c.anuncio ? [c.anuncio.titulo, c.anuncio.texto].filter(Boolean).join(" — ").slice(0, 300) : "";
   const combo = textoAnuncio ? await comboDelAnuncio(textoAnuncio) : null;
   const anuncio = textoAnuncio
     ? `<anuncio>Tocó un anuncio que decía: ${textoAnuncio}.${
@@ -183,35 +237,25 @@ export async function atender(e: Entrada): Promise<void> {
           : ""
       } Arrancá por eso aunque su mensaje pregunte otra cosa: contale qué trae y por qué conviene, y ofrecé dejárselo listo.</anuncio>\n\n`
     : "";
-  const cliente = !historial.length && e.nombre ? `<cliente>Se llama ${e.nombre.slice(0, 40)}.</cliente>\n` : "";
-  const eligio = toque?.tipo === "quiero" ? `<eligio>Tocó en la lista el ${toque.clase} ${toque.clase === "combo" ? "slug" : "codigo"} ${toque.id}. Agregalo con agregar_al_pedido, junto con lo que ya había elegido antes en la charla.</eligio>\n` : "";
-  const negocio = prospecto.prospecto ? contextoProspecto(prospecto.prospecto, prospecto.negocio) : "";
-  const r = vendedorActivo() ? await responderComoVendedor(`${negocio}${cliente}${anuncio}${eligio}${texto}`, historial, null, "whatsapp") : null;
+  const cliente = !c.historial.length && c.nombre ? `<cliente>Se llama ${c.nombre.slice(0, 40)}.</cliente>\n` : "";
+  const eligio =
+    c.toque?.tipo === "quiero"
+      ? `<eligio>Tocó «Lo quiero» en el ${c.toque.clase} ${c.toque.clase === "combo" ? "slug" : "codigo"} ${c.toque.id}. Agregalo YA con agregar_al_pedido (junto con lo que ya había elegido antes) y en una frase ofrecé sumar algo chico o dejarlo listo para pagar.</eligio>\n`
+      : "";
+  const r = vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${eligio}${c.texto}`, c.historial, null, "whatsapp") : null;
 
   let respuesta: Respuesta;
   if (r) respuesta = r;
   else {
     // Sin IA (caída o sin clave): el buscador, pero dicho como lo diría una persona.
-    const b = await buscarEnCatalogo(texto);
+    const b = await buscarEnCatalogo(c.texto);
     respuesta = b.fichas?.length
       ? { ...b, texto: "¡Hola! Te paso lo que tengo de eso, tocá el que te interese y te lo dejo listo 👇", enlaces: undefined, opciones: ["Ver combos", "Hablar con Santiago"] }
       : { texto: "¡Hola! Contame qué estás buscando y te paso precio al toque. Tenemos frutos secos, semillas, harinas sin TACC, cereales y combos armados.", opciones: ["Frutos secos", "Ver combos", "Sin TACC"] };
   }
 
-  // Pedir una persona deriva siempre, conteste la IA o el buscador. Y el texto es fijo:
-  // el modelo tiende a prometer cosas que acá no existen.
-  const derivar = Boolean(respuesta.derivar) || pidePersona(texto);
-  console.log("chat: respuesta armada", { canal, de: cola(e.clave), conIA: Boolean(r), ms: Date.now() - inicio, derivar, acciones: respuesta.acciones?.length ?? 0, fichas: respuesta.fichas?.length ?? 0 });
-
-  if (derivar) {
-    await responder(e.clave, DERIVADO);
-    await cambiarEstado(e.clave, "persona");
-    return;
-  }
-  if (canal === "whatsapp") {
-    await responderWhatsapp(e.clave, planWhatsapp(respuesta, await pedidoDe(respuesta.acciones)));
-    return;
-  }
-  const salida = paraWhatsapp(respuesta);
-  if (salida) await responder(e.clave, salida);
+  // Pedir una persona deriva siempre, conteste la IA o el buscador.
+  const derivar = Boolean(respuesta.derivar) || pidePersona(c.texto);
+  const salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, await pedidoDe(respuesta.acciones));
+  return { salientes, respuesta, derivar, conIA: Boolean(r) };
 }
