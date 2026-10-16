@@ -191,7 +191,11 @@ export function fichasNombradas(fichas: Ficha[], texto: string): Ficha[] {
     const coinciden = clave.filter((w) => t.has(w)).length;
     return coinciden >= Math.min(2, clave.length);
   });
-  return nombradas.length ? nombradas : fichas;
+  if (nombradas.length) return nombradas;
+  // No nombró ninguno: se muestra lo buscado solo si fue una búsqueda chica. Si juntó muchas
+  // (varias herramientas), mostrar todo mezcla cosas que no ofreció, como un combo con TACC
+  // a quien pidió sin TACC. Mejor sin lista: quedan los botones de respuesta.
+  return fichas.length <= 4 ? fichas : [];
 }
 
 /** La presentación que trae el detalle de una ficha («Marca · x 1 kg» → «x 1 kg»). */

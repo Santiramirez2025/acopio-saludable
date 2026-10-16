@@ -264,7 +264,7 @@ export async function pensar(c: {
   if (combo && !respuesta.fichas?.length && !respuesta.acciones?.length) {
     respuesta = {
       ...respuesta,
-      fichas: [{ href: `/combos/${combo.slug}`, nombre: `Combo ${combo.nombre}`, detalle: "Trae: combo", precio: pesos(Math.round(combo.precio)), foto: combo.fotoUrl ?? combo.items[0]?.producto.fotoUrl ?? null }],
+      fichas: [{ href: `/combos/${combo.slug}`, nombre: `Combo ${combo.nombre}`, detalle: "Trae: combo", precio: pesos(Math.round(combo.precio)), foto: combo.fotoUrl }],
     };
   }
 
