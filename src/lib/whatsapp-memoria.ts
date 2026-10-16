@@ -11,6 +11,7 @@
 
 import { prisma } from "./prisma";
 import type { Turno } from "./vendedor";
+import { sinIds } from "./whatsapp-media";
 
 export type EstadoConversacion = "bot" | "persona";
 
@@ -93,6 +94,7 @@ export async function ultimoDelCliente(telefono: string): Promise<string | null>
   const filas = await prisma.$queryRaw<{ id: string }[]>`
     SELECT "id" FROM "WhatsappMensaje"
     WHERE "telefono" = ${telefono} AND "de" = 'cliente'
+      AND "texto" NOT LIKE '[reacción%' AND "texto" NOT LIKE '[sacó la reacción]' AND "texto" NOT LIKE '[sticker%'
     ORDER BY "fecha" DESC
     LIMIT 1
   `;
@@ -126,7 +128,7 @@ export async function historialDe(telefono: string, cantidad = 8): Promise<Turno
     ORDER BY "fecha" DESC
     LIMIT ${cantidad}
   `;
-  return filas.reverse().map((f) => ({ de: f.de === "cliente" ? ("yo" as const) : ("acopio" as const), texto: f.texto }));
+  return filas.reverse().map((f) => ({ de: f.de === "cliente" ? ("yo" as const) : ("acopio" as const), texto: sinIds(f.texto) }));
 }
 
 /** Si una persona tomó la charla y no escribe en este tiempo, el vendedor la retoma solo. */

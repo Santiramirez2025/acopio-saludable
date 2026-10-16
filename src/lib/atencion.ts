@@ -23,6 +23,7 @@ import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
 import { cambiarEstado, estadoDe, guardarPedido, respuestasRecientes, historialDe, pedidoGuardado, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
 import { contextoProspecto, darDeBaja, datosProspecto, esBaja } from "./whatsapp-prospectos";
 import { AVISO_SUPLEMENTOS } from "./sitio";
+import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 
 const SALUD =
   "Eso no te lo puedo responder: no damos indicaciones de salud ni de consumo. Para eso consultá a tu médico o nutricionista. " +
@@ -47,6 +48,8 @@ export type Entrada = {
   texto: string | null; // null: no es texto ni botón (audio, foto, sticker...)
   toque?: string | null; // id del botón o fila que tocó, en WhatsApp
   tipo: string;
+  guardar?: string; // lo que queda en la charla, si no es el texto (foto, audio, reacción)
+  silencioso?: boolean; // reacción o sticker: se guarda y no se contesta
   anuncio?: { id: string | null; titulo: string | null; texto: string | null; ctwaClid: string | null } | null;
 };
 
@@ -156,7 +159,7 @@ async function cerrarVenta(
 export async function atender(e: Entrada): Promise<void> {
   const canal = canalDe(e.clave);
   const texto = e.texto !== null ? e.texto.trim().slice(0, 400) : `[${e.tipo}]`;
-  const nuevo = await registrarEntrante(e.idMensaje, e.clave, e.nombre, texto);
+  const nuevo = await registrarEntrante(e.idMensaje, e.clave, e.nombre, (e.guardar ?? texto).slice(0, 600));
   if (!nuevo) {
     console.log("chat: repetido, se ignora", e.idMensaje);
     return;
@@ -169,6 +172,9 @@ export async function atender(e: Entrada): Promise<void> {
     await registrarAnuncio(e.clave, { anuncioId: ref.id, titulo: ref.titulo ?? ref.texto?.slice(0, 120) ?? null, ctwaClid: ref.ctwaClid });
     console.log("chat: viene de un anuncio", { canal, de: cola(e.clave), anuncio: ref.id });
   }
+
+  // Una reacción o un sticker: queda en el panel y no se contesta.
+  if (e.silencioso) return;
 
   // Una persona tomó la charla: el bot no se mete. El mensaje queda guardado y suma no leídos.
   if ((await estadoDe(e.clave)) === "persona") {
@@ -188,8 +194,12 @@ export async function atender(e: Entrada): Promise<void> {
     return;
   }
 
+  // Audio, foto sin texto, video, archivo: el vendedor no lo puede leer. Se le pide que lo escriba
+  // y le llega el aviso a Santiago, que lo puede escuchar o ver en el panel.
   if (e.texto === null) {
-    await responder(e.clave, "Por ahora te leo solo mensajes de texto. Escribime qué estás buscando y te paso precio y link.");
+    await responder(e.clave, respuestaMedio(e.tipo));
+    const que = NOMBRE_MEDIO[e.tipo as keyof typeof NOMBRE_MEDIO] ?? e.tipo;
+    await avisarSantiago(`Mandó ${que}`, `📎 ${e.nombre ?? e.clave} mandó ${que === "foto" ? "una foto" : `un ${que}`}. Miralo en el panel:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
     return;
   }
   if (!texto) return;
