@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SALUDO_GENERAL } from "@/lib/whatsapp-saludo";
 import { Logo } from "@/components/Logo";
 import { ProveedorCarrito } from "@/components/Carrito";
 import { BarraInferior, Encabezado, MedidorPedido } from "@/components/Encabezado";
@@ -56,7 +57,7 @@ export default async function TiendaLayout({ children }: { children: React.React
             <div>
               <h2 className="mb-1 font-semibold text-white">Ayuda</h2>
               {/* El WhatsApp arriba de los enlaces: es la vía por la que la gente pregunta de verdad. */}
-              <EnlaceWhatsapp mensaje="Hola! Tengo una consulta sobre Acopio Saludable." className="min-h-[48px] font-semibold text-white underline underline-offset-4">
+              <EnlaceWhatsapp mensaje={SALUDO_GENERAL} className="min-h-[48px] font-semibold text-white underline underline-offset-4">
                 Escribinos por WhatsApp
               </EnlaceWhatsapp>
               <ul className="grid grid-cols-2 gap-x-4">

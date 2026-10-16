@@ -732,3 +732,12 @@ test("whatsapp: «almendra» encuentra «Almendras» y los tamaños se distingue
   assert.equal(new Set(titulos).size, 2);
   assert.match(titulos[0], /^1 kg · Almendras/);
 });
+
+import { mensajeSegun, conMensaje, SALUDO_GENERAL } from "./whatsapp-saludo";
+test("whatsapp: el mensaje escrito trae lo que la persona estaba mirando", () => {
+  assert.equal(mensajeSegun("/producto/123", "Almendras Non Pareil x 1 kg"), "Hola! Quiero Almendras Non Pareil x 1 kg. ¿Me ayudás con el pedido?");
+  assert.equal(mensajeSegun("/combos/despensa", "Despensa de 4 kilos"), "Hola! Me interesa el combo Despensa de 4 kilos. ¿Me lo separás?");
+  assert.match(mensajeSegun("/carrito", null), /pedido armado/);
+  assert.equal(mensajeSegun("/", "Acopio"), SALUDO_GENERAL);
+  assert.equal(conMensaje("https://wa.me/5493541519630?text=viejo", "Hola! sí"), "https://wa.me/5493541519630?text=Hola!%20s%C3%AD");
+});

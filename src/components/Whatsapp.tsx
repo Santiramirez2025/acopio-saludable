@@ -1,5 +1,7 @@
 import { leerConfig } from "@/lib/config";
 import { linkWhatsapp } from "@/lib/pedidos";
+import { SALUDO_GENERAL } from "@/lib/whatsapp-saludo";
+import { BotonWhatsappVivo } from "./BotonWhatsappVivo";
 
 /**
  * WhatsApp de la tienda, en un solo lugar.
@@ -25,18 +27,16 @@ function Icono({ className = "h-5 w-5" }: { className?: string }) {
  * la barra con el carrito es lo que convierte, el WhatsApp es el que evacúa dudas.
  */
 export async function BotonWhatsapp() {
-  const href = await whatsappTienda("Hola! Tengo una consulta sobre Acopio Saludable.");
+  const href = await whatsappTienda(SALUDO_GENERAL);
   if (!href) return null;
   return (
-    <a
+    <BotonWhatsappVivo
       href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="Escribirnos por WhatsApp"
+      etiqueta="Escribirnos por WhatsApp"
       className="fixed bottom-[132px] right-3 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acopio-900 md:bottom-6 md:right-6 md:h-14 md:w-14"
     >
       <Icono className="h-6 w-6 md:h-7 md:w-7" />
-    </a>
+    </BotonWhatsappVivo>
   );
 }
 

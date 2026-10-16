@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { SALUDO_GENERAL } from "@/lib/whatsapp-saludo";
 import { leerConfig } from "@/lib/config";
 import { detectar, palabrasClave } from "@/lib/asistente";
 import { buscarEnCatalogo, type Enlace, type Respuesta } from "@/lib/asistente-catalogo";
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
 
   const cfg = await leerConfig();
   const persona: Enlace = cfg.whatsapp
-    ? { href: linkWhatsapp(cfg.whatsapp, "Hola, tengo una consulta sobre Acopio Saludable.") ?? "/contacto", texto: "Escribir por WhatsApp", externo: true }
+    ? { href: linkWhatsapp(cfg.whatsapp, SALUDO_GENERAL) ?? "/contacto", texto: "Escribir por WhatsApp", externo: true }
     : { href: "/contacto", texto: "Ver datos de contacto" };
   const propia = cfg.entregaPropiaActiva;
   const zonaPaga = propia ? zonaPagaDe(cfg.tabla) : null;
