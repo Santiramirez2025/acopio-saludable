@@ -6,7 +6,8 @@
 // Lo único que cambia por canal es cómo se manda la respuesta.
 
 import { detectar, pidePersona } from "./asistente";
-import { buscarEnCatalogo, comboDelAnuncio, type Accion, type Respuesta } from "./asistente-catalogo";
+import { buscarEnCatalogo, comboDelAnuncio, type Accion, type EnvioCotizado, type Respuesta } from "./asistente-catalogo";
+import { cotizarEnvioChat } from "./envio-chat";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
 import { leerToque, planTrae, planWhatsapp, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
@@ -16,7 +17,7 @@ import { leerConfig } from "./config";
 import { pesos, renglonCombo } from "./precios";
 import { urlSitio } from "./sitio";
 import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
-import { cambiarEstado, estadoDe, historialDe, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
+import { cambiarEstado, estadoDe, guardarPedido, historialDe, pedidoGuardado, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
 import { contextoProspecto, darDeBaja, datosProspecto, esBaja } from "./whatsapp-prospectos";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 
@@ -62,20 +63,31 @@ async function responderWhatsapp(clave: string, salientes: Saliente[]): Promise<
   }
 }
 
-/** El pedido que armó el vendedor, cotizado por el servidor: los precios nunca salen del modelo. */
-async function pedidoDe(acciones: Accion[] | undefined): Promise<PedidoArmado | null> {
-  if (!acciones?.length) return null;
-  const lineas = acciones.map((a) => ({ tipo: a.clase, id: a.id, cantidad: a.cantidad }));
+/** El pedido armado, cotizado por el servidor: los precios nunca salen del modelo. Con el envío si ya se sabe la zona. */
+async function pedidoDe(lineas: { tipo: "producto" | "combo"; id: string; cantidad: number }[], envio?: EnvioCotizado | null): Promise<PedidoArmado | null> {
+  if (!lineas.length) return null;
   const cot = await cotizarCarrito(lineas);
   if (!cot.lineas.length) return null;
+  const cfg = envio ? await leerConfig() : null;
   return {
     camino: enlacePedido(lineas),
     renglones: cot.lineas.filter((l) => l.disponible).map((l) => `${l.cantidad > 1 ? `${l.cantidad} x ` : ""}${l.nombre} — ${pesos(l.subtotal)}`),
     total: pesos(cot.subtotal),
     conTransferencia: cot.conTransferencia ? pesos(cot.conTransferencia) : null,
     falta: cot.falta > 0 ? pesos(cot.falta) : null,
+    envio: envio
+      ? {
+          ...envio,
+          totalConEnvio: envio.costo !== null && envio.costo > 0 ? pesos(cot.subtotal + envio.costo) : null,
+          transferenciaConEnvio:
+            cot.conTransferencia && cfg && cfg.descuentoTransferenciaPct > 0 ? `${pesos(cot.conTransferencia + (envio.costo ?? 0))}${envio.costo === null ? " + envío" : ""}` : null,
+        }
+      : null,
   };
 }
+
+const lineasDeAcciones = (acciones?: Accion[]) => (acciones ?? []).map((a) => ({ tipo: a.clase, id: a.id, cantidad: a.cantidad }));
+const lineasDeCamino = (camino: string) => leerPedido(camino.replace(/^\/carrito\?p=/, ""));
 
 /** Tocó «Mercado Pago»: recién ahí va el link, dentro de un botón y explicado. Sin pasar por el modelo. */
 async function cobrarConLink(clave: string, camino: string): Promise<void> {
@@ -178,6 +190,7 @@ export async function atender(e: Entrada): Promise<void> {
   const historial = (await historialDe(e.clave, 9)).slice(0, -1);
   const inicio = Date.now();
   const p = await pensar({
+    pedidoGuardado: canal === "whatsapp" ? await pedidoGuardado(e.clave) : null,
     canal,
     texto,
     toque,
@@ -195,13 +208,14 @@ export async function atender(e: Entrada): Promise<void> {
   }
   if (canal === "whatsapp") {
     await responderWhatsapp(e.clave, p.salientes);
+    if (p.guardarPedido) await guardarPedido(e.clave, p.guardarPedido);
     return;
   }
   const salida = paraWhatsapp(p.respuesta);
   if (salida) await responder(e.clave, salida);
 }
 
-export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: boolean; conIA: boolean };
+export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: boolean; conIA: boolean; guardarPedido?: string };
 
 /**
  * Qué contestar, sin mandar nada ni tocar la base de mensajes. Lo usa atender() y lo usa el
@@ -215,7 +229,19 @@ export async function pensar(c: {
   anuncio: { titulo: string | null; texto: string | null } | null;
   nombre: string | null;
   negocio: string;
+  pedidoGuardado?: string | null;
 }): Promise<Pensado> {
+  // Tocó su zona (Carlos Paz, Córdoba Capital) con el pedido ya armado: envío y botones de pago, sin modelo.
+  if (c.toque?.tipo === "zona" && c.pedidoGuardado) {
+    const lineas = lineasDeCamino(c.pedidoGuardado);
+    const previo = await pedidoDe(lineas);
+    const envio = await cotizarEnvioChat(c.toque.lugar, null, previo ? Number(previo.total.replace(/[^\d,]/g, "").replace(",", ".")) : 0);
+    const pedido = envio ? await pedidoDe(lineas, envio) : null;
+    if (pedido) {
+      const texto = `¡Perfecto! ${envio!.detalle} Te dejo el resumen 👇`;
+      return { salientes: planWhatsapp({ texto }, pedido), respuesta: { texto }, derivar: false, conIA: false, guardarPedido: pedido.camino };
+    }
+  }
   // «¿Qué trae?» de un combo: la lista completa, fija, sin gastar el modelo.
   if (c.toque?.tipo === "trae") {
     const combo = (await combosTienda({ slug: c.toque.slug, tipo: "COMBO" }))[0];
@@ -270,6 +296,9 @@ export async function pensar(c: {
 
   // Pedir una persona deriva siempre, conteste la IA o el buscador.
   const derivar = Boolean(respuesta.derivar) || pidePersona(c.texto);
-  const salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, await pedidoDe(respuesta.acciones));
-  return { salientes, respuesta, derivar, conIA: Boolean(r) };
+  // El pedido: el que acaba de armar, o el guardado si recién ahora cotizó el envío.
+  const lineas = respuesta.acciones?.length ? lineasDeAcciones(respuesta.acciones) : respuesta.envio && c.pedidoGuardado ? lineasDeCamino(c.pedidoGuardado) : [];
+  const pedido = await pedidoDe(lineas, respuesta.envio);
+  const salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, pedido);
+  return { salientes, respuesta, derivar, conIA: Boolean(r), guardarPedido: pedido?.camino };
 }
