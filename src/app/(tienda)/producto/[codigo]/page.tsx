@@ -119,7 +119,7 @@ export default async function Producto({ params }: Props) {
             <p className="mt-3 text-xs text-stone-600">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras.</p>
             {/* La consulta llega con el producto adentro: así no hay que preguntar «¿cuál?» y se contesta de una. */}
             <EnlaceWhatsapp
-              mensaje={`Hola! Tengo una consulta sobre ${p.producto} ${p.presentacion} (${p.codigo}).`}
+              mensaje={`Hola! Quiero ${p.producto} ${p.presentacion}. ¿Me ayudás con el pedido?`}
               className="mt-2 text-sm font-semibold text-acopio-700 underline underline-offset-4"
             >
               Preguntar por este producto

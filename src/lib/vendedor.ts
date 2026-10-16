@@ -10,6 +10,7 @@
 //    así que se cobran una vez cada cinco minutos en lugar de una vez por mensaje.
 
 import { leerConfig } from "./config";
+import { SALUDO_GENERAL } from "./whatsapp-saludo";
 import { catalogo, hallarCombos, hallarProductos } from "./asistente-catalogo";
 import { combosTienda } from "./tienda";
 import { ofertasDelProveedor } from "./ofertas";
@@ -334,7 +335,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     }
     const cfg = await leerConfig();
     const resumen = String(entrada.resumen ?? "").trim().slice(0, 400);
-    const href = cfg.whatsapp ? linkWhatsapp(cfg.whatsapp, `Hola! ${resumen || "Tengo una consulta sobre Acopio Saludable."}`) : null;
+    const href = cfg.whatsapp ? linkWhatsapp(cfg.whatsapp, resumen ? `Hola! ${resumen}` : SALUDO_GENERAL) : null;
     if (!href) return { texto: "Pasalo a la página de contacto: /contacto.", enlaces: [{ href: "/contacto", texto: "Ver datos de contacto" }] };
     return {
       texto: "Le dejé el botón de WhatsApp con el mensaje ya escrito. Decile en una frase que de ahí lo sigue una persona, de lunes a sábado de 8 a 20.",
