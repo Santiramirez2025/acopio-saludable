@@ -19,7 +19,7 @@ import { zonaPagaDe } from "./envios/tabla";
 import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
 import { cortada, fichasNombradas, separarOpciones } from "./whatsapp-interactivo";
-import { COMBO_ENTRADA, temaDe } from "./combos-tema";
+import { argumentoCombo, COMBO_ENTRADA, temaDe } from "./combos-tema";
 import type { Accion, Enlace, EnvioCotizado, Ficha, Respuesta } from "./asistente-catalogo";
 import { cotizarEnvioChat } from "./envio-chat";
 
@@ -60,7 +60,7 @@ const HERRAMIENTAS = [
   {
     name: "recomendar_combo",
     description:
-      "Devuelve el combo que mejor le resuelve lo que busca (y el combo de entrada más barato), con precio, ahorro y qué trae. " +
+      "Devuelve el combo que mejor le resuelve lo que busca (y el combo de entrada más barato), con precio, precio por kilo o por transferencia, y qué trae. " +
       "Usala PRIMERO cada vez que la persona dice qué busca o pregunta por un producto o una categoría: el combo es la oferta principal.",
     input_schema: {
       type: "object" as const,
@@ -229,7 +229,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const esSinTacc = tema?.id.startsWith("sintacc") ?? false;
     const entrada_ = esSinTacc ? undefined : todos.find((c) => c.slug === COMBO_ENTRADA);
     const lineas = (c: (typeof todos)[number], rol: string) =>
-      `- ${rol}: slug ${c.slug} · ${c.nombre} · ${pesos(Math.round(c.precio))} (lista ${pesos(Math.round(c.precioLista))}, ahorra ${pesos(Math.round(c.ahorro))})` +
+      `- ${rol}: slug ${c.slug} · ${c.nombre} · ${pesos(Math.round(c.precio))}${(() => { const a = argumentoCombo(c, cfg.descuentoTransferenciaPct, pesos); return [a.porKilo, a.transferencia].filter(Boolean).map((x) => ` · ${x}`).join(""); })()}` +
       `${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""} · trae ${c.items.length} productos: ${c.items.slice(0, 6).map((i) => `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${i.producto.producto}`).join(", ")}${c.items.length > 6 ? "…" : ""}`;
     const texto = [
       tema ? `Tema detectado: ${tema.nombre}.` : "No hay un combo específico para eso.",
@@ -239,7 +239,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
         ? "Busca SIN TACC: todo lo que ofrezcas tiene que ser sin TACC. Si el combo le parece caro, no ofrezcas la Despensa: armale algo a medida con buscar_productos (solo_sin_tacc: true) o completar_el_minimo que llegue al mínimo."
         : "",
       elegidos.length
-        ? "Ofrecé el RECOMENDADO: nombre, precio, cuánto ahorra y 2 o 3 cosas que trae. Si pidió un producto puntual, decí también su precio suelto en media frase."
+        ? "Ofrecé el RECOMENDADO: nombre, precio, el precio por kilo (si lo tiene) o por transferencia, y 2 o 3 cosas que trae. Si pidió un producto puntual, decí también su precio suelto en media frase."
         : "Ofrecé el producto que pidió (buscalo con buscar_productos) y, para llegar al mínimo, la entrada más barata.",
     ].filter(Boolean).join("\n");
     const fichas: Ficha[] = elegidos.map((c) => ({
@@ -264,7 +264,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       foto: c.fotoUrl,
     }));
     const texto = combos
-      .map((c) => `- slug ${c.slug} · ${c.nombre} · ${c.items.length} productos · ${pesos(Math.round(c.precio))} (ahorra ${pesos(Math.round(c.ahorro))})${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""}`)
+      .map((c) => `- slug ${c.slug} · ${c.nombre} · ${c.items.length} productos · ${pesos(Math.round(c.precio))} ${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""}`)
       .join("\n");
     return { texto, fichas };
   }
@@ -434,9 +434,9 @@ function instrucciones(compraMinima: string): string {
     "- Como mucho un emoji y solo si suma.",
     "",
     "CÓMO VENDÉS: COMBO PRIMERO",
-    "1. Apenas dice qué busca (un producto, una categoría, «sin tacc», «para el desayuno»), usá recomendar_combo y ofrecé el RECOMENDADO: nombre, precio, cuánto ahorra y 2 o 3 cosas que trae. Si pidió un producto puntual, dale también su precio suelto en media frase.",
+    "1. Apenas dice qué busca (un producto, una categoría, «sin tacc», «para el desayuno»), usá recomendar_combo y ofrecé el RECOMENDADO: nombre, precio, el precio por kilo si lo tiene (o el precio por transferencia) y 2 o 3 cosas que trae. Si pidió un producto puntual, dale también su precio suelto en media frase.",
     "   El argumento es siempre el mismo y es verdad: el combo resuelve la compra del mes, tiene 5% menos que comprando suelto y llega solo a la compra mínima, así no tiene que andar sumando.",
-    "   Ejemplo: «Busco productos sin tacc» → «Para sin TACC te conviene la Caja Sin TACC del mes: $66.778, ahorrás $3.515 y trae alfajores, barritas, pasta de maní y miel. ¿Te la separo?»",
+    "   Ejemplo: «Busco productos sin tacc» → «Para sin TACC te conviene la Caja Sin TACC del mes: trae alfajores, barritas, pasta de maní y miel por $66.778, y por transferencia te queda en $61.436. ¿Te la separo?»",
     "2. Si dice que es caro, que es mucho o duda: bajá un escalón, al combo de entrada (la Despensa de 4 kilos; nunca si busca sin TACC), o armale algo a medida que llegue justo al mínimo con completar_el_minimo. Nunca discutas el precio.",
     "3. Si insiste con un producto suelto, vendéselo: buscalo con buscar_productos, dale el precio y, si no llega al mínimo, ofrecé completar con algo concreto (completar_el_minimo).",
     "4. Cuando acepta («sí», «dale», «lo quiero», toca un producto), agregalo con agregar_al_pedido en ese mismo mensaje y, si todavía no sabés dónde vive, decile que ya se lo armaste y preguntale su barrio o ciudad para decirle el envío. Abajo le aparecen botones con las zonas.",

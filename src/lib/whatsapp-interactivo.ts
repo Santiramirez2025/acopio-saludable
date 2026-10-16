@@ -245,18 +245,18 @@ export function quiereVer(texto: string): boolean {
   return /^(quiero |me )?(ver|mostrame|mostrar|pasame|mandame)( (los|las|todos|todas|otros|otras|otro|otra|mas|el|la))* (productos?|combos?|opcion(es)?|catalogo|precios|lista)\b|^(que|cuales|que productos) (tienen|venden|hay|ofrecen)\b|^(catalogo|lista de precios|productos|combos|precios|ver mas)$/.test(t);
 }
 
-export function planVer(combos: { slug: string; nombre: string; precio: string; ahorro: string }[], tienda?: string): Saliente[] {
+export function planVer(combos: { slug: string; nombre: string; precio: string; argumento: string }[], tienda?: string): Saliente[] {
   const filas: Fila[] = combos.slice(0, 7).map((c) => ({
     id: corte(`${ID.trae}${c.slug}`, TOPE.id),
     titulo: corte(c.nombre, TOPE.filaTitulo),
-    descripcion: corte(`${c.precio} · ahorrás ${c.ahorro}`, TOPE.filaDesc),
+    descripcion: corte([c.precio, c.argumento].filter(Boolean).join(" · "), TOPE.filaDesc),
   }));
   const tipos = ["Frutos secos", "Sin TACC", "Para el desayuno"].map((t) => ({ id: `${ID.opcion}${t}`, titulo: t }));
   return [
     {
       tipo: "lista",
       cuerpo:
-        "Te paso los combos armados 👇 Cada uno trae todo para el mes con 5% menos y llega solo a la compra mínima. Tocá el que te guste y te cuento qué trae. Si buscás algo puntual, escribime qué y te lo busco.",
+        "Te paso los combos armados 👇 Cada uno trae todo para el mes y llega solo a la compra mínima. Tocá el que te guste y te cuento qué trae. Si buscás algo puntual, escribime qué y te lo busco.",
       boton: "Ver combos",
       secciones: [
         { titulo: "Combos", filas },
@@ -271,8 +271,8 @@ export function planVer(combos: { slug: string; nombre: string; precio: string; 
 }
 
 /** «¿Qué trae?» de un combo: la lista completa y el botón para llevarlo. Fijo, sin modelo. */
-export function planTrae(c: { slug: string; nombre: string; precio: string; ahorro: string; renglones: string[] }): Saliente[] {
-  const cuerpo = [`El combo ${c.nombre} trae:`, ...c.renglones.map((r) => `• ${r}`), "", `Todo por ${c.precio}, ahorrás ${c.ahorro} y ya llega a la compra mínima.`].join("\n");
+export function planTrae(c: { slug: string; nombre: string; precio: string; argumento: string; renglones: string[] }): Saliente[] {
+  const cuerpo = [`El combo ${c.nombre} trae:`, ...c.renglones.map((r) => `• ${r}`), "", `Todo por ${c.precio}${c.argumento ? ` (${c.argumento})` : ""} y ya llega a la compra mínima. Yo te lo armo y te lo llevo.`].join("\n");
   return [
     {
       tipo: "botones",

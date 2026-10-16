@@ -15,6 +15,8 @@ import { ID, planVer, textoParaPanel, type Saliente } from "@/lib/whatsapp-inter
 import { combosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
 import { urlSitio } from "@/lib/sitio";
+import { leerConfig } from "@/lib/config";
+import { argumentoCombo } from "@/lib/combos-tema";
 
 export const dynamic = "force-dynamic";
 
@@ -59,12 +61,13 @@ export async function POST(req: Request) {
         }
       : { tipo: "texto", texto };
     // Con combos: true, después del texto va la lista de combos y el botón a la tienda.
+    const cfgArg = await leerConfig();
     const extra: Saliente[] = cuerpo.combos
       ? planVer(
           (await combosTienda({ activo: true, tipo: "COMBO" }))
             .filter((x) => x.disponible)
             .sort((a, b) => a.precio - b.precio)
-            .map((x) => ({ slug: x.slug, nombre: x.nombre, precio: pesos(Math.round(x.precio)), ahorro: pesos(Math.round(x.ahorro)) })),
+            .map((x) => ({ slug: x.slug, nombre: x.nombre, precio: pesos(Math.round(x.precio)), argumento: argumentoCombo(x, cfgArg.descuentoTransferenciaPct, pesos).corto })),
           `${urlSitio()}/combos`,
         )
       : [];
