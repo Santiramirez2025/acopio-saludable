@@ -272,6 +272,24 @@ export function postergaCompra(texto: string): boolean {
   return /\b(lo|la|los|las) (veo|miro|reviso|pienso|charlo|hablo|consulto)\b|\bveo tra?n?quil|\b(miro|reviso|veo) (con calma|tranquil|bien)|\b(lo|la) voy a (pensar|ver|mirar|consultar)|\bvoy a (pensar|ver|mirar)lo\b|\b(despues|luego|mas tarde|manana|en un rato|en otro momento|la semana que viene|cuando (cobre|pueda|vuelva))\b.*\b(te )?(escribo|aviso|confirmo|hablo|encargo|pido)|\bte (escribo|aviso|confirmo|hablo) (despues|luego|mas tarde|manana|en un rato|para encargar)|\bte escribo para (encargar|pedir)|\b(cualquier cosa|si me decido) te (escribo|aviso)|\b(pregunto|consulto|averiguo|veo|lo hablo|lo charlo) y te (digo|aviso|confirmo|escribo|cuento)/.test(t);
 }
 
+const limpio = (texto: string) => texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+
+/**
+ * «Pago aquí», «pago cuando me lo traés», «al recibir», «en efectivo cuando llegue»: está cerrando,
+ * y pagar al recibir solo existe en la entrega propia. No hay que preguntarle la zona ni nada más.
+ */
+export function pagaAlRecibir(texto: string): boolean {
+  const t = limpio(texto);
+  if (t.includes("?")) return false;
+  return /\b(pago|abono|te pago|lo pago|pagamos) (aqui|aca|ahi|al recibir|al recibirlo|contra ?entrega|en (mano|efectivo|casa)|cuando (llegue|lo reciba|me lo traigas|lo traigas|venga|vengas|me lo traes|lo traes))\b|\b(al recibir|contra ?entrega|contraentrega)\b|\bpago (en )?efectivo\b|^(efectivo|en efectivo|al recibir|pago al recibir)$/.test(t);
+}
+
+/** ¿Pasó una dirección? Una calle con número, o «esquina», «barrio», «casa», «depto». */
+export function tieneDireccion(texto: string): boolean {
+  const t = limpio(texto);
+  return /\b(direccion|calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?))/.test(t);
+}
+
 /** «Gracias», «ok, gracias», «👍» solos: se agradece corto y sin botones, sin volver a ofrecer. */
 export function soloAgradece(texto: string): boolean {
   const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();

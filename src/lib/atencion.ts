@@ -11,7 +11,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { leerToque, planDeNada, planSinApuro, soloAgradece, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
+import { leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { combosTienda, cotizarCarrito } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
@@ -126,6 +126,7 @@ async function cerrarVenta(
   medio: "TRANSFERENCIA" | "AL_RECIBIR",
   camino: string,
   envio: { costo: number | null; lugar: string } | null,
+  direccion?: string,
 ): Promise<void> {
   const cfg = await leerConfig();
   const lineas = leerPedido(camino.replace(/^\/carrito\?p=/, ""));
@@ -141,8 +142,14 @@ async function cerrarVenta(
   }
   const total = pesos(Number(pedido.total));
   const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "más el envío, que te confirmo";
-  const partes =
-    medio === "TRANSFERENCIA"
+  // Ya pasó la dirección: no se le vuelve a pedir nada. Se confirma y listo.
+  if (direccion) await completarEntrega(pedido.id, { direccion });
+  const partes = direccion
+    ? [
+        `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Te lo llevo a ${direccion.slice(0, 120)} en ${cfg.plazoEntregaPropia} y lo pagás ahí${medio === "TRANSFERENCIA" ? " por transferencia" : ", en efectivo o por transferencia"} 🙌`,
+        "Si tenés un horario que te quede mejor, decime y lo anoto.",
+      ]
+    : medio === "TRANSFERENCIA"
       ? [
           `¡Listo! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}${cfg.descuentoTransferenciaPct > 0 ? `, ya con el ${cfg.descuentoTransferenciaPct}% de descuento por transferencia` : ""}.`,
           cfg.transferenciaDatos ? `Los datos para transferir:\n${cfg.transferenciaDatos}` : "",
@@ -242,11 +249,20 @@ export async function atender(e: Entrada): Promise<void> {
   if (toque?.tipo === "transferencia") return cerrarVenta(e.clave, e.nombre, "TRANSFERENCIA", toque.camino, toque.envio);
   if (toque?.tipo === "recibir") return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", toque.camino, toque.envio);
 
+  // «Pago aquí» con el pedido armado: se cierra al recibir, sin preguntar zona (pagar al recibir
+  // es solo en Carlos Paz y alrededores). Si en el mismo mensaje viene la dirección, queda anotada.
+  const guardado = canal === "whatsapp" ? await pedidoGuardado(e.clave) : null;
+  if (guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto)) {
+    const direccion = tieneDireccion(texto) ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160) : undefined;
+    console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
+    return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: "Villa Carlos Paz" }, direccion || undefined);
+  }
+
   // El historial se lee sin el mensaje recién guardado: el vendedor lo recibe aparte.
   const historial = (await historialDe(e.clave, 9)).slice(0, -1);
   const inicio = Date.now();
   const p = await pensar({
-    pedidoGuardado: canal === "whatsapp" ? await pedidoGuardado(e.clave) : null,
+    pedidoGuardado: guardado,
     canal,
     texto,
     toque,
@@ -280,6 +296,8 @@ export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: bo
  * Qué contestar, sin mandar nada ni tocar la base de mensajes. Lo usa atender() y lo usa el
  * simulador del panel, así lo que se prueba es exactamente lo que recibe el cliente.
  */
+const normalizar = (t: string) => t.toLowerCase().replace(/\[.*?\]/g, "").replace(/[^a-záéíóúñ0-9$]+/g, " ").trim();
+
 export async function pensar(c: {
   canal: ReturnType<typeof canalDe>;
   texto: string;
@@ -383,6 +401,17 @@ export async function pensar(c: {
   // El pedido: el que acaba de armar, o el guardado si recién ahora cotizó el envío.
   const lineas = respuesta.acciones?.length ? lineasDeAcciones(respuesta.acciones) : respuesta.envio && c.pedidoGuardado ? lineasDeCamino(c.pedidoGuardado) : [];
   const pedido = await pedidoDe(lineas, respuesta.envio);
-  const salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, pedido);
+  let salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, pedido);
+  // Sin repetir: si el resumen del pedido o la pregunta de la zona ya salieron en los últimos
+  // mensajes, no se mandan de nuevo. A Juan le llegó tres veces lo mismo y eso molesta.
+  const recientes = c.historial.slice(-6).filter((h) => h.de === "acopio").map((h) => normalizar(h.texto));
+  const repetido = (s: Saliente) => {
+    const t = normalizar(textoParaPanel(s));
+    return recientes.some((h) => h === t || (t.length > 60 && (h.includes(t) || t.includes(h))));
+  };
+  if (salientes.length > 1) {
+    const sinRepetir = salientes.filter((s) => !repetido(s));
+    if (sinRepetir.length) salientes = sinRepetir;
+  }
   return { salientes, respuesta, derivar, conIA: Boolean(r), guardarPedido: pedido?.camino, aPersona: Boolean(r?.entregaGuardada) };
 }
