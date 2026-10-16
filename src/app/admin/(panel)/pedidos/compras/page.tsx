@@ -5,14 +5,16 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
-import { A_CONFIRMAR, listaDeCompra, NOMBRE_MEDIO, nombreEstado, numeroPedido } from "@/lib/pedidos";
+import { A_CONFIRMAR, listaDeCompra, NOMBRE_MEDIO, nombreEstado, numeroPedido, pedidosPorComprar } from "@/lib/pedidos";
+import { yaComprado } from "@/lib/acciones";
 import { claveCompras, codigoCargarDistrimay } from "@/lib/compra-distrimay";
 import { urlSitio } from "@/lib/sitio";
 import { MarcadorCompras } from "@/components/MarcadorCompras";
 
 export const dynamic = "force-dynamic";
 
-export default async function ComprasYReparto() {
+export default async function ComprasYReparto({ searchParams }: { searchParams: Promise<{ comprado?: string }> }) {
+  const { comprado } = await searchParams;
   // Abiertos: pagados, o por transferencia / al recibir aunque todavía no estén pagos (ya son compras).
   const pedidos = await prisma.order.findMany({
     where: {
@@ -21,7 +23,7 @@ export default async function ComprasYReparto() {
     include: { items: true },
     orderBy: { createdAt: "asc" },
   });
-  const aComprar = pedidos.filter((p) => p.estado === "PAGADO" || p.estado === "PENDIENTE_PAGO");
+  const aComprar = await pedidosPorComprar();
   const { renglones, total } = listaDeCompra(aComprar.flatMap((p) => p.items));
   const reparto = pedidos.filter((p) => p.envioOrigen === "propia");
   const correo = pedidos.filter((p) => p.envioOrigen !== "propia");
@@ -49,6 +51,7 @@ export default async function ComprasYReparto() {
             Transferencia todavía sin confirmar: {sinPagar.map((p) => `${numeroPedido(p.id)} (${p.nombre})`).join(", ")}. Revisá que haya llegado antes de comprar.
           </p>
         )}
+        {comprado && <p className="rounded-md bg-acopio-50 px-3 py-2 text-sm text-acopio-800">Listo: esos pedidos ya no se vuelven a sumar a la compra.</p>}
         {renglones.length ? (
           <table className="w-full rounded-lg border border-stone-200 bg-white text-sm">
             <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-600">
@@ -67,6 +70,13 @@ export default async function ComprasYReparto() {
             </tbody>
             <tfoot><tr className="border-t border-stone-300 font-semibold"><td colSpan={4} className="px-3 py-2 text-right">Total a pagar a Distrimay</td><td className="px-3 py-2 text-right tabular-nums">{pesos(total)}</td></tr></tfoot>
           </table>
+        ) : null}
+        {renglones.length ? (
+          <form action={yaComprado} className="flex flex-wrap items-center gap-3 print:hidden">
+            <input type="hidden" name="ids" value={aComprar.map((p) => p.id).join(",")} />
+            <button className="btn">✓ Ya lo compré</button>
+            <span className="text-sm text-stone-600">Marca {aComprar.map((p) => numeroPedido(p.id)).join(", ")} como comprados: salen de esta lista y el próximo pedido arranca de cero.</span>
+          </form>
         ) : (
           <p className="text-sm text-stone-600">No hay nada para comprar ahora.</p>
         )}

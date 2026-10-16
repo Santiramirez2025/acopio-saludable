@@ -204,6 +204,8 @@ model Order {
   mpPreferenceId String?
   mpPaymentId    String?
   pagadoAt       DateTime?
+  // Ya se le compró a Distrimay: sale de la lista de compra.
+  compradoAt     DateTime?    @db.Timestamptz(6)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

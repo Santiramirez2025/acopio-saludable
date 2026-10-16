@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
 import { ESTADOS, MARGEN_FLACO_PCT, linkWhatsapp, margenNeto, nombreEstado, numeroPedido } from "@/lib/pedidos";
-import { cambiarEstadoPedido } from "@/lib/acciones";
+import { cambiarEstadoPedido, reemplazarEnPedido } from "@/lib/acciones";
 import { leerConfig } from "@/lib/config";
 import { linkSeguimiento } from "@/lib/envios/seguimiento";
 
@@ -55,6 +55,16 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
                 ))}
               </tbody>
             </table>
+            <details className="mt-2 text-sm">
+              <summary className="cursor-pointer text-stone-600">Reemplazar un producto (sin stock en Distrimay)</summary>
+              <form action={reemplazarEnPedido} className="mt-2 flex flex-wrap items-end gap-2">
+                <input type="hidden" name="id" value={pedido.id} />
+                <label className="text-xs">Producto<select name="viejo" className="campo">{[...new Map(pedido.items.map((i) => [i.codigo, i])).values()].map((i) => <option key={i.codigo} value={i.codigo}>{i.producto} ({i.codigo})</option>)}</select></label>
+                <label className="text-xs">Código nuevo de Distrimay<input name="nuevo" className="campo" placeholder="p. ej. 7798161290233" required /></label>
+                <button className="btn-sec">Reemplazar</button>
+              </form>
+              <p className="mt-1 text-xs text-stone-600">El cliente paga lo mismo; cambia lo que se compra y el costo.</p>
+            </details>
           </div>
           <div className="tarjeta text-sm">
             <h2 className="mb-2 text-sm font-semibold">Cliente y entrega</h2>

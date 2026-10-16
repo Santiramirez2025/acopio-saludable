@@ -7,7 +7,7 @@ import { requireAdmin } from "./auth";
 import { calcularCombo, descuentoMaximo, margenPct } from "./precios";
 import { leerItemsCombo, slugDesdeNombre } from "./combos";
 import type { EstadoPedido } from "@prisma/client";
-import { ESTADOS, avisarDespachado, confirmarPago } from "./pedidos";
+import { ESTADOS, avisarDespachado, confirmarPago, marcarComprados, reemplazarProducto } from "./pedidos";
 import { ZONAS, normalizarCp, validarListaCp } from "./envios/geo";
 import { generarTokenSync, registrarSync, resolverPendientes, textoResumen } from "./sync";
 import { codigoMarcador } from "./marcador";
@@ -523,4 +523,25 @@ export async function registrarFotos(items: { codigo: string; url: string }[]): 
   const conocidos = new Set(productos.map((p) => p.codigo));
   revalidatePath("/", "layout");
   return { asignadas, desconocidos: [...porCodigo.keys()].filter((c) => !conocidos.has(c)) };
+}
+
+export async function yaComprado(fd: FormData) {
+  await requireAdmin();
+  const ids = String(fd.get("ids") ?? "").split(",").map((x) => Number.parseInt(x, 10)).filter((n) => Number.isFinite(n));
+  await marcarComprados(ids);
+  revalidatePath("/admin/pedidos", "layout");
+  redirect("/admin/pedidos/compras?comprado=1");
+}
+
+export async function reemplazarEnPedido(fd: FormData) {
+  await requireAdmin();
+  const id = Number.parseInt(String(fd.get("id")), 10);
+  let destino = `/admin/pedidos/${id}?ok=1`;
+  try {
+    await reemplazarProducto(id, String(fd.get("viejo") ?? "").trim(), String(fd.get("nuevo") ?? "").trim());
+  } catch (e) {
+    destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
+  }
+  revalidatePath("/admin/pedidos", "layout");
+  redirect(destino);
 }
