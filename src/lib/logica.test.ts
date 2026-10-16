@@ -789,3 +789,12 @@ test("envío en el chat: la zona sale de lo que escribe", () => {
   assert.deepEqual(zonaDeLugar("CABA"), { tipo: "correo", provincia: "Ciudad Autónoma de Buenos Aires" });
   assert.equal(zonaDeLugar("Rosario"), null);
 });
+
+import { esRespuestaAutomatica } from "./asistente";
+test("whatsapp: no se le contesta a otro bot", () => {
+  assert.ok(esRespuestaAutomatica("Hola, ¿cómo estás? Un gusto saludarte. Gracias por comunicarte y elegir nuestros servicios, soy Terra el asistente virtual de Terra Firma"));
+  assert.ok(esRespuestaAutomatica("Gracias por tu mensaje. En breve te responderemos."));
+  assert.ok(esRespuestaAutomatica("Nuestro horario de atención es de 9 a 18 hs"));
+  assert.ok(!esRespuestaAutomatica("Sí, pasame precios"));
+  assert.ok(!esRespuestaAutomatica("Hola, somos 20 habitaciones, qué tienen para el desayuno?"));
+});

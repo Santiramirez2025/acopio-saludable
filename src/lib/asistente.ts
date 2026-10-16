@@ -36,6 +36,14 @@ export function pidePersona(texto: string): boolean {
   return /\b(humano|una persona|persona real|un asesor|una asesora|hablar con|atencion personalizada|llamame|me llaman|me podes llamar|quiero que me llamen)\b/.test(normalizar(texto));
 }
 
+/**
+ * Una respuesta automática de otro negocio («soy el asistente virtual de…», «en breve te respondemos»).
+ * Si el vendedor le contesta, los dos bots se hablan en bucle: para WhatsApp eso es spam.
+ */
+export function esRespuestaAutomatica(texto: string): boolean {
+  return /\b(asistente virtual|respuesta automatica|mensaje automatico|soy (el|la|un|una) (asistente|bot)|gracias por comunicarte|gracias por (tu|su) mensaje|en breve (te|le|nos) (responde|contesta|comunica)|a la brevedad (te|le) (responde|contesta)|fuera (del|de) horario|nuestro horario de atencion es|este es un mensaje automatico|no respondas? a este)/.test(normalizar(texto));
+}
+
 export function detectar(texto: string): Intencion {
   const t = normalizar(texto);
   for (const [intencion, re] of REGLAS) if (re.test(t)) return intencion;

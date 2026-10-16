@@ -99,6 +99,15 @@ export async function ultimoDelCliente(telefono: string): Promise<string | null>
   return filas[0]?.id ?? null;
 }
 
+/** Cuántos mensajes mandó el vendedor a esta charla en los últimos minutos (freno de bucles). */
+export async function respuestasRecientes(telefono: string, minutos = 10): Promise<number> {
+  const f = await prisma.$queryRaw<{ n: bigint }[]>`
+    SELECT count(*) AS n FROM "WhatsappMensaje"
+    WHERE "telefono" = ${telefono} AND "de" = 'bot' AND "fecha" > now() - (${minutos} * interval '1 minute')
+  `;
+  return Number(f[0]?.n ?? 0);
+}
+
 /** El pedido armado en la charla (camino del carrito), o null. */
 export async function pedidoGuardado(telefono: string): Promise<string | null> {
   const f = await prisma.$queryRaw<{ pedido: string | null }[]>`SELECT "pedido" FROM "WhatsappConversacion" WHERE "telefono" = ${telefono}`;
