@@ -254,6 +254,15 @@ export async function pensar(c: {
       : { texto: "¡Hola! Contame qué estás buscando y te paso precio al toque. Tenemos frutos secos, semillas, harinas sin TACC, cereales y combos armados.", opciones: ["Frutos secos", "Ver combos", "Sin TACC"] };
   }
 
+  // Vino del anuncio de un combo y todavía no lo eligió: la respuesta lleva la tarjeta del combo,
+  // con «Lo quiero» a un toque. Sin esto, el texto lo ofrecía pero no había botón para tomarlo.
+  if (combo && !respuesta.fichas?.length && !respuesta.acciones?.length) {
+    respuesta = {
+      ...respuesta,
+      fichas: [{ href: `/combos/${combo.slug}`, nombre: `Combo ${combo.nombre}`, detalle: "Trae: combo", precio: pesos(Math.round(combo.precio)), foto: combo.fotoUrl ?? combo.items[0]?.producto.fotoUrl ?? null }],
+    };
+  }
+
   // Pedir una persona deriva siempre, conteste la IA o el buscador.
   const derivar = Boolean(respuesta.derivar) || pidePersona(c.texto);
   const salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, await pedidoDe(respuesta.acciones));

@@ -200,7 +200,9 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const porTema = tema ? tema.slugs.map((s) => todos.find((c) => c.slug === s)).filter((c): c is (typeof todos)[number] => Boolean(c)) : [];
     const porItems = porTema.length ? [] : (await hallarCombos(busca)).slice(0, 2);
     const elegidos = [...porTema, ...porItems].slice(0, 2);
-    const entrada_ = todos.find((c) => c.slug === COMBO_ENTRADA);
+    // Sin TACC nunca baja a la Despensa: no es apta. Ahí lo barato se arma a medida con productos sin TACC.
+    const esSinTacc = tema?.id.startsWith("sintacc") ?? false;
+    const entrada_ = esSinTacc ? undefined : todos.find((c) => c.slug === COMBO_ENTRADA);
     const lineas = (c: (typeof todos)[number], rol: string) =>
       `- ${rol}: slug ${c.slug} · ${c.nombre} · ${pesos(Math.round(c.precio))} (lista ${pesos(Math.round(c.precioLista))}, ahorra ${pesos(Math.round(c.ahorro))})` +
       `${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""} · trae ${c.items.length} productos: ${c.items.slice(0, 6).map((i) => `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${i.producto.producto}`).join(", ")}${c.items.length > 6 ? "…" : ""}`;
@@ -208,6 +210,9 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       tema ? `Tema detectado: ${tema.nombre}.` : "No hay un combo específico para eso.",
       ...elegidos.map((c, i) => lineas(c, i === 0 ? "RECOMENDADO" : "alternativa")),
       entrada_ && !elegidos.some((c) => c.slug === entrada_.slug) ? lineas(entrada_, "entrada más barata (ofrecela solo si el recomendado le parece caro)") : "",
+      esSinTacc
+        ? "Busca SIN TACC: todo lo que ofrezcas tiene que ser sin TACC. Si el combo le parece caro, no ofrezcas la Despensa: armale algo a medida con buscar_productos (solo_sin_tacc: true) o completar_el_minimo que llegue al mínimo."
+        : "",
       elegidos.length
         ? "Ofrecé el RECOMENDADO: nombre, precio, cuánto ahorra y 2 o 3 cosas que trae. Si pidió un producto puntual, decí también su precio suelto en media frase."
         : "Ofrecé el producto que pidió (buscalo con buscar_productos) y, para llegar al mínimo, la entrada más barata.",
@@ -406,7 +411,7 @@ function instrucciones(compraMinima: string): string {
     "1. Apenas dice qué busca (un producto, una categoría, «sin tacc», «para el desayuno»), usá recomendar_combo y ofrecé el RECOMENDADO: nombre, precio, cuánto ahorra y 2 o 3 cosas que trae. Si pidió un producto puntual, dale también su precio suelto en media frase.",
     "   El argumento es siempre el mismo y es verdad: el combo resuelve la compra del mes, tiene 5% menos que comprando suelto y llega solo a la compra mínima, así no tiene que andar sumando.",
     "   Ejemplo: «Busco productos sin tacc» → «Para sin TACC te conviene la Caja Sin TACC del mes: $66.778, ahorrás $3.515 y trae alfajores, barritas, pasta de maní y miel. ¿Te la separo?»",
-    "2. Si dice que es caro, que es mucho o duda: bajá un escalón, al combo de entrada (la Despensa de 4 kilos), o armale algo a medida que llegue justo al mínimo con completar_el_minimo. Nunca discutas el precio.",
+    "2. Si dice que es caro, que es mucho o duda: bajá un escalón, al combo de entrada (la Despensa de 4 kilos; nunca si busca sin TACC), o armale algo a medida que llegue justo al mínimo con completar_el_minimo. Nunca discutas el precio.",
     "3. Si insiste con un producto suelto, vendéselo: buscalo con buscar_productos, dale el precio y, si no llega al mínimo, ofrecé completar con algo concreto (completar_el_minimo).",
     "4. Cuando acepta («sí», «dale», «lo quiero», toca un producto), agregalo con agregar_al_pedido en ese mismo mensaje: ahí le aparecen solos los botones para pagar. No preguntes de nuevo.",
     "5. Un solo intento de sumar algo más, después de que acepta. Si dice que no, cerrá cálido.",
