@@ -79,8 +79,13 @@ async function pedidoDe(acciones: Accion[] | undefined): Promise<PedidoArmado | 
 
 /** Tocó «Mercado Pago»: recién ahí va el link, dentro de un botón y explicado. Sin pasar por el modelo. */
 async function cobrarConLink(clave: string, camino: string): Promise<void> {
+  await responderWhatsapp(clave, await planCobroLink(camino));
+}
+
+/** El mensaje con el botón «Pagar mi pedido». Separado para que el simulador muestre lo mismo. */
+export async function planCobroLink(camino: string): Promise<Saliente[]> {
   const cot = await cotizarCarrito(leerPedido(camino.replace(/^\/carrito\?p=/, "")));
-  await responderWhatsapp(clave, [
+  return [
     {
       tipo: "cta",
       cuerpo: `¡Buenísimo! 🙌 Te dejo el pedido armado${cot.subtotal ? ` (${pesos(cot.subtotal)})` : ""} en nuestra web. Ahí ponés el código postal, ves el envío y pagás con Mercado Pago, que es seguro. Cualquier duda me escribís por acá.`,
@@ -88,7 +93,7 @@ async function cobrarConLink(clave: string, camino: string): Promise<void> {
       url: `${urlSitio()}${camino}`,
       pie: "acopiosaludable.com",
     },
-  ]);
+  ];
 }
 
 /** Tocó «Transferencia»: total con descuento, datos para transferir y la charla pasa a una persona. */

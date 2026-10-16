@@ -9,7 +9,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { pensar } from "@/lib/atencion";
+import { pensar, planCobroLink } from "@/lib/atencion";
 import { leerToque, textoParaPanel } from "@/lib/whatsapp-interactivo";
 import type { Turno } from "@/lib/vendedor";
 
@@ -35,8 +35,13 @@ export async function POST(req: Request) {
     const texto = String(p.texto ?? "").slice(0, 400);
     const toque = leerToque(typeof p.toque === "string" ? p.toque : null);
     const inicio = Date.now();
-    if (toque?.tipo === "pagar" || toque?.tipo === "transferencia") {
-      salida.push({ entrada: texto || p.toque, cierre: toque.tipo, camino: toque.camino });
+    if (toque?.tipo === "pagar") {
+      const salientes = await planCobroLink(toque.camino);
+      salida.push({ entrada: texto || p.toque, cierre: "pagar", salientes, vio: salientes.map(textoParaPanel) });
+      break;
+    }
+    if (toque?.tipo === "transferencia") {
+      salida.push({ entrada: texto || p.toque, cierre: "transferencia", camino: toque.camino, vio: ["[Total con descuento + datos para transferir; la charla pasa a una persona]"] });
       break;
     }
     const r = await pensar({
