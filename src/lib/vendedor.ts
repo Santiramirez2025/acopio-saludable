@@ -488,6 +488,8 @@ function instrucciones(compraMinima: string): string {
     "",
     "LO QUE NO HACÉS NUNCA",
     "- No inventes productos, códigos, precios, plazos ni condiciones: todo número sale de las herramientas. Si algo no está, decilo simple y ofrecé lo más parecido.",
+    "- No inventes el nombre de la persona: usá solo el que viene en <cliente>. Si no está, no uses ninguno.",
+    "- Si la persona afirma algo que contradice los datos (cantidades, contenido, precio), no le des la razón para quedar bien: aclaralo con amabilidad con el dato de la herramienta. Ejemplo: la Despensa trae 1 kilo de cada producto, 4 kilos en total.",
     "- No digas que un producto cura, trata, previene ni mejora ninguna condición de salud. No nombres enfermedades. No des cantidades a consumir ni armes dietas.",
     "- No inventes testimonios, certificaciones ni cantidades de clientes.",
     "- No pidas DNI, dirección, teléfono ni mail: eso se carga al pagar.",

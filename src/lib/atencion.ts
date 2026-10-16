@@ -11,7 +11,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { leerToque, planSinApuro, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
+import { leerToque, planDeNada, planSinApuro, soloAgradece, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { combosTienda, cotizarCarrito } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
@@ -206,7 +206,7 @@ export async function atender(e: Entrada): Promise<void> {
 
   // Freno de bucles: si del otro lado contesta un bot, o si ya le mandamos muchos mensajes seguidos,
   // el vendedor se calla y la charla pasa a una persona. Dos bots hablándose es spam para WhatsApp.
-  if (esRespuestaAutomatica(texto) || (await respuestasRecientes(e.clave, 10)) >= 6) {
+  if (esRespuestaAutomatica(texto) || (await respuestasRecientes(e.clave, 10)) >= 15) {
     console.log("chat: respuesta automática o demasiados mensajes seguidos, pasa a una persona", cola(e.clave));
     await cambiarEstado(e.clave, "persona");
     await avisarSantiago("Charla pausada", `🤖 La charla con ${e.nombre ?? e.clave} se pausó (respondió un bot o hubo muchos mensajes seguidos). Revisala:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
@@ -296,6 +296,11 @@ export async function pensar(c: {
     }
   }
   // «Lo veo tranquila y te escribo»: se le da tiempo. Nada de armarle el pedido ni ponerle las zonas.
+  // «Gracias» solo: se contesta corto y sin volver a ofrecer.
+  if (!c.toque && c.historial.length && soloAgradece(c.texto)) {
+    const salientes = planDeNada(c.nombre);
+    return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
+  }
   if (!c.toque && postergaCompra(c.texto)) {
     const salientes = planSinApuro(c.nombre, urlSitio());
     return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
@@ -336,7 +341,7 @@ export async function pensar(c: {
           : ""
       } Si su mensaje es una pregunta (dirección, envío, pago, un producto), contestala PRIMERO en una frase y recién después ofrecé lo del anuncio. Si no pregunta nada concreto, arrancá por el anuncio: qué trae y por qué conviene, y ofrecé dejárselo listo.</anuncio>\n\n`
     : "";
-  const cliente = !c.historial.length && c.nombre ? `<cliente>Se llama ${c.nombre.slice(0, 40)}.</cliente>\n` : "";
+  const cliente = c.nombre ? `<cliente>Se llama ${c.nombre.slice(0, 40)}${c.historial.length ? " (ya lo saludaste: no lo saludes de nuevo)" : ""}.</cliente>\n` : "";
   const eligio =
     c.toque?.tipo === "quiero"
       ? `<eligio>Tocó «Lo quiero» en el ${c.toque.clase} ${c.toque.clase === "combo" ? "slug" : "codigo"} ${c.toque.id}. Agregalo YA con agregar_al_pedido (junto con lo que ya había elegido antes) y en una frase ofrecé sumar algo chico o dejarlo listo para pagar.</eligio>\n`

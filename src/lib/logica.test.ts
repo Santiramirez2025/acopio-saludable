@@ -848,3 +848,10 @@ test("audios, fotos y reacciones entran a la charla", () => {
   assert.ok(l.texto?.includes("Carlos Paz"));
   assert.equal(partirMarca("hola"), null);
 });
+
+import { soloAgradece } from "./whatsapp-interactivo";
+test("gracias solo y «pregunto y te digo»", () => {
+  for (const t of ["Gracias.", "ok gracias", "Muchas gracias!", "👍", "dale gracias"]) assert.ok(soloAgradece(t), t);
+  for (const t of ["gracias, y el envío?", "Mi nombre es Juan.", "gracias por pasarme veo tranquila y te escribo"]) assert.ok(!soloAgradece(t), t);
+  for (const t of ["Pregunto y te digo. Gracias", "consulto y te aviso"]) assert.ok(postergaCompra(t), t);
+});

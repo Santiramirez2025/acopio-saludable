@@ -269,10 +269,21 @@ export function postergaCompra(texto: string): boolean {
   const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   if (t.length > 160) return false;
   if (/\b(lo quiero|la quiero|quiero (el|la|los|las|uno|una)|separamel|dejamel|agregal|anotal|mandamel|como (pago|hago)|pasame (el|los) (alias|cbu|link))\b/.test(t)) return false;
-  return /\b(lo|la|los|las) (veo|miro|reviso|pienso|charlo|hablo|consulto)\b|\bveo tra?n?quil|\b(miro|reviso|veo) (con calma|tranquil|bien)|\b(lo|la) voy a (pensar|ver|mirar|consultar)|\bvoy a (pensar|ver|mirar)lo\b|\b(despues|luego|mas tarde|manana|en un rato|en otro momento|la semana que viene|cuando (cobre|pueda|vuelva))\b.*\b(te )?(escribo|aviso|confirmo|hablo|encargo|pido)|\bte (escribo|aviso|confirmo|hablo) (despues|luego|mas tarde|manana|en un rato|para encargar)|\bte escribo para (encargar|pedir)|\b(cualquier cosa|si me decido) te (escribo|aviso)/.test(t);
+  return /\b(lo|la|los|las) (veo|miro|reviso|pienso|charlo|hablo|consulto)\b|\bveo tra?n?quil|\b(miro|reviso|veo) (con calma|tranquil|bien)|\b(lo|la) voy a (pensar|ver|mirar|consultar)|\bvoy a (pensar|ver|mirar)lo\b|\b(despues|luego|mas tarde|manana|en un rato|en otro momento|la semana que viene|cuando (cobre|pueda|vuelva))\b.*\b(te )?(escribo|aviso|confirmo|hablo|encargo|pido)|\bte (escribo|aviso|confirmo|hablo) (despues|luego|mas tarde|manana|en un rato|para encargar)|\bte escribo para (encargar|pedir)|\b(cualquier cosa|si me decido) te (escribo|aviso)|\b(pregunto|consulto|averiguo|veo|lo hablo|lo charlo) y te (digo|aviso|confirmo|escribo|cuento)/.test(t);
+}
+
+/** «Gracias», «ok, gracias», «👍» solos: se agradece corto y sin botones, sin volver a ofrecer. */
+export function soloAgradece(texto: string): boolean {
+  const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  return /^((ok|oka|okey|dale|bueno|listo|genial|perfecto|joya|buenisimo|barbaro)\s)?(muchas\s)?(gracias|graciass+|grax|mil gracias)(\s(a vos|igualmente|che|genio|capo))?$/.test(t) || /^(ok|oka|okey|joya)$/.test(t) || t === "";
 }
 
 /** La respuesta a «lo veo tranquila»: cálida, corta, sin pedido ni zonas. Solo la tienda, por si quiere ir mirando. */
+export function planDeNada(nombre: string | null): Saliente[] {
+  const quien = nombre ? `, ${nombre.split(/\s+/)[0].slice(0, 20)}` : "";
+  return [{ tipo: "texto", texto: `¡De nada${quien}! Cualquier cosa me escribís por acá 🙌` }];
+}
+
 export function planSinApuro(nombre: string | null, tienda: string): Saliente[] {
   const quien = nombre ? `, ${nombre.split(/\s+/)[0].slice(0, 20)}` : "";
   return [{
