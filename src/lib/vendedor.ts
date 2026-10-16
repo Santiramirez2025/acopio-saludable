@@ -353,12 +353,15 @@ function instrucciones(compraMinima: string): string {
     "CÓMO HABLÁS",
     "- Rioplatense, de vos, cálido y natural, como por WhatsApp con un cliente de confianza. Frases cortas, nada de lenguaje de sistema.",
     "- Nunca digas «encontré N opciones», «según el catálogo», «no coincide con el anuncio», «soy un asistente» ni nada que suene a robot.",
-    "- Hasta tres frases y como mucho una pregunta por mensaje. Nunca listas con guiones ni viñetas: si hay varias presentaciones, recomendá la que más le conviene y nombrá como mucho una alternativa. Saludá solo al principio, y si sabés el nombre, usalo una vez.",
+    "- La gente escribe corto y no lee párrafos: contestá en una o dos frases cortas, de 25 palabras como mucho en total. Una sola pregunta al final, y solo si hace falta.",
+    "- Si pregunta un precio: decí el precio de UNA presentación, la más pedida o la que mejor le conviene, y nada más. Las otras presentaciones y opciones van solas en la lista y en los botones de abajo: no las escribas.",
+    "  Ejemplo: «Nueces x kg» → «La nuez mariposa sale $22.937 el kilo. ¿Te la separo?» con OPCIONES: Sí, 1 kilo | Ver otros tamaños | Para un negocio",
+    "- Nunca listas con guiones ni viñetas. Saludá solo en el primer mensaje, sin presentarte de nuevo después.",
     "- Como mucho un emoji y solo si suma.",
     "",
     "CÓMO ASESORÁS (esto es lo que vende)",
     "- Antes de ofrecer, entendé qué necesita: para qué lo quiere, si es para la casa o un negocio, cuánto consume. Una pregunta a la vez, y solo si cambia lo que le ofrecés.",
-    "- Respondé lo que preguntó con producto y precio real, y decile lo que le importa escuchar, siempre con datos verdaderos: cuánto ahorra, que le rinde, que se arma a pedido y llega fresco, que el combo ya le resuelve todo.",
+    "- Respondé lo que preguntó con producto y precio real. Si suma, agregá UN dato que le importe escuchar, verdadero y en pocas palabras: cuánto ahorra, que llega fresco, que el combo ya le resuelve todo.",
     "- Recomendá UNA cosa concreta y por qué le conviene a él. No tires listas: elegí vos lo mejor para su caso.",
     "- Los combos son tu mejor oferta: 5% de descuento y casi todos llegan solos a la compra mínima. Buscalos con buscar_productos o ver_combos.",
     "- Si vino de un anuncio, arrancá por lo que prometía el anuncio, con su precio real, y ofrecéselo directo. Si el precio cambió, dalo sin hacer ruido.",
@@ -426,7 +429,7 @@ export async function responderComoVendedor(
         body: JSON.stringify({
           model: MODELO,
           // Las respuestas son de tres frases: un techo bajo corta las que se van de largo.
-          max_tokens: 700,
+          max_tokens: 500,
           // El cache_control al final del system cubre las herramientas y las instrucciones:
           // son el 90% de lo que se manda y no cambian entre mensajes.
           system: [{ type: "text", text: instrucciones(pesos(cfg.compraMinima)), cache_control: { type: "ephemeral" } }],
@@ -449,10 +452,19 @@ export async function responderComoVendedor(
       const usos = bloques.filter((b) => b.type === "tool_use");
       if (!usos.length) {
         const crudo = bloques.filter((b) => b.type === "text").map((b) => b.text ?? "").join("").trim();
-        const { texto, opciones } = separarOpciones(crudo);
+        const sep = separarOpciones(crudo);
+        const opciones = sep.opciones;
+        let texto = sep.texto;
         if (!texto) {
-          console.error("vendedor: respuesta sin texto", { vuelta });
-          return null;
+          // A veces contesta solo con la línea de OPCIONES. Si ya buscó productos, alcanza con una
+          // frase corta: la lista con precios va debajo. Si no, se le pide de nuevo el texto.
+          console.error("vendedor: respuesta sin texto", { vuelta, conFichas: fichas.length });
+          if (fichas.length) texto = "Mirá, acá tenés las opciones con precio 👇";
+          else if (vuelta < MAX_VUELTAS - 1) {
+            if (!bloques.length) mensajes.pop();
+            mensajes.push({ role: "user", content: "(Escribile la respuesta al cliente: una o dos frases cortas, y al final la línea OPCIONES.)" });
+            continue;
+          } else return null;
         }
         const mostradas = fichasNombradas(fichas, texto);
         return {
