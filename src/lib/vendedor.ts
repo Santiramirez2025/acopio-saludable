@@ -222,7 +222,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       nombre: `Combo ${c.nombre}`,
       detalle: `Trae: ${c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)).join(" · ")}`,
       precio: pesos(Math.round(c.precio)),
-      foto: c.fotoUrl ?? c.items[0]?.producto.fotoUrl ?? null,
+      foto: c.fotoUrl,
     }));
     return { texto, fichas };
   }

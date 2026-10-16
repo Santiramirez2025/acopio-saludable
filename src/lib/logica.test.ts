@@ -723,6 +723,7 @@ test("vendedor: abajo van los productos que nombró", () => {
   const todas = [f("Desayuno 30 días"), f("Despensa de 4 kilos"), f("Alacena de frutos secos")];
   assert.deepEqual(fichasNombradas(todas, "La Despensa de 4 kilos trae…").map((x) => x.nombre), ["Combo Despensa de 4 kilos"]);
   assert.equal(fichasNombradas(todas, "Te paso opciones").length, 3);
+  assert.equal(fichasNombradas([...todas, ...todas], "Te paso opciones").length, 0);
 });
 
 test("whatsapp: «almendra» encuentra «Almendras» y los tamaños se distinguen en la lista", () => {
