@@ -30,7 +30,7 @@ const SALUD =
   "Entiendo, y qué bueno que te estés cuidando 💚 Sobre salud no te puedo aconsejar, eso lo ve mejor tu médico o nutricionista. " +
   "Lo que sí puedo es contarte qué productos son sin azúcar agregada y pasarte precios. ¿Querés que te los pase?";
 
-const DERIVADO = "Dale, ya te escribo yo personalmente por acá. Atiendo de lunes a sábado, de 8 a 20 h. Mientras tanto contame qué necesitás así lo tengo a mano.";
+const DERIVADO = "Dale, en un rato te escribe alguien del equipo por acá para coordinarlo. Atendemos de lunes a sábado, de 8 a 20 h.";
 
 // Un identificador no va entero a los logs: con los últimos cuatro alcanza para seguir una charla.
 const ESPERA_RAFAGA_MS = 4000;
@@ -146,7 +146,7 @@ async function cerrarVenta(
   if (direccion) await completarEntrega(pedido.id, { direccion });
   const partes = direccion
     ? [
-        `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Te lo llevo a ${direccion.slice(0, 120)} en ${cfg.plazoEntregaPropia} y lo pagás ahí${medio === "TRANSFERENCIA" ? " por transferencia" : ", en efectivo o por transferencia"} 🙌`,
+        `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Te llega a ${direccion.slice(0, 120)} en ${cfg.plazoEntregaPropia} y lo pagás ahí${medio === "TRANSFERENCIA" ? " por transferencia" : ", en efectivo o por transferencia"} 🙌`,
         "Si tenés un horario que te quede mejor, decime y lo anoto.",
       ]
     : medio === "TRANSFERENCIA"
@@ -397,7 +397,7 @@ export async function pensar(c: {
     // Sin IA (caída o sin clave): el buscador, pero dicho como lo diría una persona.
     const b = await buscarEnCatalogo(c.texto);
     respuesta = b.fichas?.length
-      ? { ...b, texto: "¡Hola! Te paso lo que tengo de eso, tocá el que te interese y te lo dejo listo 👇", enlaces: undefined, opciones: ["Ver combos", "Hablar con Santiago"] }
+      ? { ...b, texto: "¡Hola! Te paso lo que tengo de eso, tocá el que te interese y lo sumamos a tu pedido 👇", enlaces: undefined, opciones: ["Ver combos", "Hablar con Santiago"] }
       : { texto: "¡Hola! Contame qué estás buscando y te paso precio al toque. Tenemos frutos secos, semillas, harinas sin TACC, cereales y combos armados.", opciones: ["Frutos secos", "Ver combos", "Sin TACC"] };
   }
 

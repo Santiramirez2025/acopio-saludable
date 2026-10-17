@@ -310,7 +310,7 @@ export function primerNombre(nombre: string | null | undefined): string | null {
 export function planDeNada(nombre: string | null): Saliente[] {
   const n = primerNombre(nombre);
   const quien = n ? `, ${n}` : "";
-  return [{ tipo: "texto", texto: `¡De nada${quien}! Cualquier cosa me escribís por acá 🙌` }];
+  return [{ tipo: "texto", texto: `¡De nada${quien}! Cualquier cosa nos escribís por acá 🙌` }];
 }
 
 export function planSinApuro(nombre: string | null, tienda: string): Saliente[] {
@@ -318,7 +318,7 @@ export function planSinApuro(nombre: string | null, tienda: string): Saliente[] 
   const quien = n ? `, ${n}` : "";
   return [{
     tipo: "cta",
-    cuerpo: `¡Dale${quien}! Miralo con calma, no hay apuro 🙌 Cuando quieras me escribís y te armo el pedido como prefieras. Si te surge cualquier duda, acá estoy.`,
+    cuerpo: `¡Dale${quien}! Miralo con calma, no hay apuro 🙌 Cuando quieras nos escribís y encargás todo por acá. Si te surge cualquier duda, estamos.`,
     texto: "Ver la tienda",
     url: tienda,
   }];
@@ -344,14 +344,14 @@ export function planVer(combos: { slug: string; nombre: string; precio: string; 
     },
     // La web, como botón y no como link suelto: se ve oficial y ahí está todo con fotos.
     ...(tienda
-      ? [{ tipo: "cta" as const, cuerpo: "Y si preferís mirar todo tranquilo, con fotos y precios, está en nuestra tienda online. Cualquier cosa me escribís y te armo el pedido.", texto: "Ver la tienda", url: tienda, pie: "acopiosaludable.com" }]
+      ? [{ tipo: "cta" as const, cuerpo: "Y si preferís mirar todo tranquilo, con fotos y precios, está en nuestra tienda online. Cualquier cosa nos escribís y lo encargás por acá.", texto: "Ver la tienda", url: tienda, pie: "acopiosaludable.com" }]
       : []),
   ];
 }
 
 /** «¿Qué trae?» de un combo: la lista completa y el botón para llevarlo. Fijo, sin modelo. */
 export function planTrae(c: { slug: string; nombre: string; precio: string; argumento: string; renglones: string[] }): Saliente[] {
-  const cuerpo = [`El combo ${c.nombre} trae:`, ...c.renglones.map((r) => `• ${r}`), "", `Todo por ${c.precio}${c.argumento ? ` (${c.argumento})` : ""} y ya llega a la compra mínima. Yo te lo armo y te lo llevo.`].join("\n");
+  const cuerpo = [`El combo ${c.nombre} trae:`, ...c.renglones.map((r) => `• ${r}`), "", `Todo por ${c.precio}${c.argumento ? ` (${c.argumento})` : ""} y ya llega a la compra mínima. Lo encargás por acá y te llega a tu casa.`].join("\n");
   return [
     {
       tipo: "botones",
