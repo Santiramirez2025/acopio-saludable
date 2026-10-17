@@ -58,9 +58,12 @@ export async function hallarProductos(texto: string, soloSinTacc = false): Promi
   if (!hallados.length && grupos.length > 1) hallados = productos.filter((p) => puntosDe(p) > 0);
   return hallados
     .map((p, i) => ({ p, i, s: puntosDe(p) }))
-    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .sort((a, b) => b.s - a.s || propio(b.p) - propio(a.p) || (propio(a.p) && propio(b.p) ? a.p.precio - b.p.precio : 0) || a.i - b.i)
     .map((x) => x.p);
 }
+
+/** Lo propio (Todo Granolas, La Granja) va antes, y entre lo propio, del más barato al más caro: es lo que promete el anuncio. */
+const propio = (p: { codigo: string }) => (/^(TG|LG)-/.test(p.codigo) ? 1 : 0);
 
 /**
  * Los combos que coinciden con lo que se busca, por su nombre o por lo que traen.
