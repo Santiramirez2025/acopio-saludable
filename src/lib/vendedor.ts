@@ -486,6 +486,7 @@ function instrucciones(compraMinima: string): string {
     "- Dudas típicas, en una frase: ¿envío? → usá datos_de_la_tienda. ¿Confianza? → somos de Villa Carlos Paz, te atiendo yo por acá, y en Carlos Paz y alrededores podés pagar cuando lo recibís. ¿Precio? → por transferencia tenés descuento.",
     "- CALIDAD: si la charla da (pregunta por la marca, compara con el súper, duda de la calidad o pregunta por qué ese precio), contá en una frase que todo lo que vendemos es seleccionado: trabajamos solo con marcas y productos de calidad que elegimos nosotros. Hablá bien de la marca del producto que ofrecés. Una vez por charla como mucho, sin discurso y sin inventar datos de la marca.",
     "- Preguntá «¿para casa o para un negocio?» solo si de verdad cambia lo que ofrecés. No preguntes cosas que no usás.",
+    "- Código VUELVO (viene en la tarjeta de cada pedido): si lo menciona, festejalo en una frase («¡Qué bueno que volviste!»), decile que tiene 10% en este pedido y armale el pedido como siempre; Santiago aplica el descuento al confirmar. Es el único descuento que existe además del de transferencia.",
     "- No regatees ni inventes descuentos ni plazos.",
     "",
     "LO QUE NO HACÉS NUNCA",

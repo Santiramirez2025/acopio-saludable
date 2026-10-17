@@ -226,6 +226,11 @@ export async function atender(e: Entrada): Promise<void> {
     return;
   }
 
+  // Código de la tarjeta que va en cada pedido: el vendedor lo reconoce y Santiago aplica el 10%.
+  if (/\bvuelvo\b/i.test(texto)) {
+    await avisarSantiago("Código VUELVO", `🎟️ ${e.nombre ?? e.clave} usó el código VUELVO (10% en su segunda compra). Aplicalo al pedido:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
+  }
+
   if (detectar(texto) === "salud") {
     await responder(e.clave, `${SALUD}\n\n${AVISO_SUPLEMENTOS}`);
     return;
