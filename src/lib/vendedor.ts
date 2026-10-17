@@ -95,6 +95,7 @@ const HERRAMIENTAS = [
       properties: {
         lugar: { type: "string", description: "Barrio o ciudad, como lo dijo: «Nueva Córdoba», «Carlos Paz», «Rosario». Si dijo ciudad y barrio («Carlos Paz, barrio El Fantasío»), pasá los dos juntos." },
         provincia: { type: "string", description: "Opcional: la provincia, si la dijo o es obvia." },
+        kilos: { type: "number", description: "Kilos del pedido: sumá lo que pidió (la Despensa son 4, la Alacena 3, un producto de 1 kg es 1). Si todavía no eligió nada, 4." },
       },
       required: ["lugar"],
     },
@@ -242,7 +243,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
 
   if (nombre === "costo_envio") {
     const lugar = String(entrada.lugar ?? "").trim().slice(0, 60);
-    const envio = lugar ? await cotizarEnvioChat(lugar, entrada.provincia ? String(entrada.provincia) : null, Number(entrada.subtotal) || 0) : null;
+    const envio = lugar ? await cotizarEnvioChat(lugar, entrada.provincia ? String(entrada.provincia) : null, Number(entrada.subtotal) || 0, Number(entrada.kilos) || 4) : null;
     if (!envio) return { texto: `No reconozco «${lugar}». Preguntale en qué provincia queda, en una frase.` };
     return {
       texto: `${envio.detalle} Decíselo en una frase y, si ya eligió algo, decile que abajo le quedan los botones para pagar. No vuelvas a agregar el pedido: ya está guardado.`,
