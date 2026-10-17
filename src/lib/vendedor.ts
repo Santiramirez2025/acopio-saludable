@@ -93,7 +93,7 @@ const HERRAMIENTAS = [
     input_schema: {
       type: "object" as const,
       properties: {
-        lugar: { type: "string", description: "Barrio o ciudad, como lo dijo: «Nueva Córdoba», «Carlos Paz», «Rosario»." },
+        lugar: { type: "string", description: "Barrio o ciudad, como lo dijo: «Nueva Córdoba», «Carlos Paz», «Rosario». Si dijo ciudad y barrio («Carlos Paz, barrio El Fantasío»), pasá los dos juntos." },
         provincia: { type: "string", description: "Opcional: la provincia, si la dijo o es obvia." },
       },
       required: ["lugar"],
