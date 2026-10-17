@@ -326,11 +326,17 @@ export async function pensar(c: {
   }
   // «Lo veo tranquila y te escribo»: se le da tiempo. Nada de armarle el pedido ni ponerle las zonas.
   // «Gracias» solo: se contesta corto y sin volver a ofrecer.
-  if (!c.toque && c.historial.length && soloAgradece(c.texto)) {
+  // Lo que mandó seguido antes de este mensaje, sin respuesta nuestra en el medio. «¿Con quién confirmo lo del maní?» + «?»
+  // es una pregunta, no un gracias: los atajos miran toda la ráfaga, no solo el último mensaje.
+  const rafaga: string[] = [];
+  for (let i = c.historial.length - 1; i >= 0 && c.historial[i].de === "yo"; i--) rafaga.unshift(c.historial[i].texto);
+  const todoGracias = [...rafaga, c.texto].every((t) => soloAgradece(t));
+  const preguntaAbierta = rafaga.some((t) => t.includes("?") || /^(con quien|cuando|donde|como|cuanto|que|cual)\b/i.test(t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/^[¿¡\s]+/, "")));
+  if (!c.toque && c.historial.length && todoGracias) {
     const salientes = planDeNada(c.nombre);
     return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
   }
-  if (!c.toque && postergaCompra(c.texto)) {
+  if (!c.toque && !preguntaAbierta && postergaCompra(c.texto)) {
     const salientes = planSinApuro(c.nombre, urlSitio());
     return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
   }
