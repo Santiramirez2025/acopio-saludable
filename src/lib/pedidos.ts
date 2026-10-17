@@ -363,7 +363,7 @@ export async function compraPorProveedor(items: Parameters<typeof listaDeCompra>
     (await prisma.product.findMany({ where: { codigo: { in: renglones.map((r) => r.codigo) } }, select: { codigo: true, marca: true } })).map((p) => [p.codigo, p.marca]),
   );
   return ORDEN_PROVEEDORES.map((id) => {
-    const suyos = renglones.filter((r) => proveedorDe({ producto: r.producto, marca: marcas.get(r.codigo) }) === id);
+    const suyos = renglones.filter((r) => proveedorDe({ producto: r.producto, marca: marcas.get(r.codigo), codigo: r.codigo }) === id);
     return { proveedor: PROVEEDORES[id], renglones: suyos, total: redondear2(suyos.reduce((s, r) => s + r.total, 0)) };
   }).filter((g) => g.renglones.length);
 }

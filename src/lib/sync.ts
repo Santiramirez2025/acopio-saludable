@@ -85,7 +85,8 @@ export async function registrarSync(args: { origen: string; modo: unknown; compl
   if (!entrantes.length) throw new Error("La actualización no trae productos válidos");
   const modo = entrantes.some((e) => e.costo !== null) ? "costos" : "publicos";
   const cfg = await prisma.setting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
-  const actuales = (await prisma.product.findMany({ select: { codigo: true, producto: true, costo: true, precioPublico: true, estado: true, fotoUrl: true } })).map((p) => ({
+  // Los productos de otros proveedores (TG-…, LG-…) no vienen en la lista de Distrimay: no son «desaparecidos».
+  const actuales = (await prisma.product.findMany({ where: { NOT: [{ codigo: { startsWith: "TG-" } }, { codigo: { startsWith: "LG-" } }] }, select: { codigo: true, producto: true, costo: true, precioPublico: true, estado: true, fotoUrl: true } })).map((p) => ({
     ...p,
     costo: Number(p.costo),
     precioPublico: Number(p.precioPublico),

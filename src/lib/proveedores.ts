@@ -51,7 +51,9 @@ export function esDeMarca(marca: string | null | undefined): boolean {
   return Boolean(m) && !/sin marca|fraccionad|granel|suelto/.test(m);
 }
 
-export function proveedorDe(p: { producto: string; marca?: string | null }): IdProveedor {
+export function proveedorDe(p: { producto: string; marca?: string | null; codigo?: string }): IdProveedor {
+  if (p.codigo?.startsWith("TG-")) return "todogranolas";
+  if (p.codigo?.startsWith("LG-")) return "lagranja";
   if (esDeMarca(p.marca)) return "distrimay";
   const t = normal(p.producto);
   if (/bolson|caja x/.test(t)) return "distrimay"; // presentaciones de Distrimay que no se arman igual en otro lado
