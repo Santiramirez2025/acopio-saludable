@@ -102,7 +102,7 @@ export const COMBOS_A_DESACTIVAR = ["merienda-sin-tacc", "guisos-y-legumbres", "
 
 /** Lo que se saca de la vista pública: bolsones y presentaciones de negocio, y lo que no es dietética. */
 export const OCULTAR = {
-  presentacion: /bols[oó]n|caja x ?\d|\b(5|10|12|20|22|25) ?(kg|kilos?)\b|x ?(5|10|20|25) ?k\b/i,
+  presentacion: /bols[oó]n|caja x ?(1[0-9]|[2-9]\d)|\b(5|10|12|20|22|25) ?(kg|kilos?)\b|x ?(5|10|20|25) ?k\b/i,
   producto: /sahumerio|cascara sagrada|laxante/i,
   categorias: ["Supermercado"],
   motivo: "Bolsón o fuera de rubro (catálogo hogar, oct 2026)",
