@@ -29,6 +29,10 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [{ source: "/:path((?!api/).*)", has: [{ type: "host", value: "acopio-saludable.vercel.app" }], destination: "https://www.acopiosaludable.com/:path", permanent: true }];
   },
+  // Las piezas de anuncios se suben a Meta desde el navegador: necesitan CORS abierto.
+  async headers() {
+    return [{ source: "/img/anuncios/:file*", headers: [{ key: "Access-Control-Allow-Origin", value: "*" }] }];
+  },
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
 };
 
