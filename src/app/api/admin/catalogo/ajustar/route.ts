@@ -10,7 +10,7 @@ import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { margenPct } from "@/lib/precios";
-import { COMBOS_A_DESACTIVAR, COMBOS_PROVEEDORES, OCULTAR, PRODUCTOS_PROVEEDORES, precioDe } from "@/lib/catalogo-proveedores";
+import { COMBOS_A_DESACTIVAR, COMBOS_PROVEEDORES, OCULTAR, OCULTOS_PROPIOS, PRODUCTOS_PROVEEDORES, fotoCombo, fotoProducto, precioDe } from "@/lib/catalogo-proveedores";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -59,7 +59,14 @@ export async function POST(req: Request) {
       porQueLoElegimos: p.porQueLoElegimos ?? null,
     };
     const previo = await prisma.product.findUnique({ where: { codigo: p.codigo } });
-    await prisma.product.upsert({ where: { codigo: p.codigo }, create: { codigo: p.codigo, ...datos }, update: { ...datos, fotoUrl: previo?.fotoUrl, fotos: previo?.fotos } });
+    // La foto propia (generada con el estilo de los anuncios) manda; si no hay, queda la que tenía.
+    const foto = fotoProducto(p.codigo) ?? previo?.fotoUrl ?? null;
+    const oculto = OCULTOS_PROPIOS.includes(p.codigo);
+    await prisma.product.upsert({
+      where: { codigo: p.codigo },
+      create: { codigo: p.codigo, ...datos, visible: !oculto, fotoUrl: foto, fotos: foto ? [foto] : [] },
+      update: { ...datos, visible: !oculto, ocultoMotivo: oculto ? "Sin stock en el proveedor" : null, fotoUrl: foto, fotos: foto ? [foto] : previo?.fotos ?? [] },
+    });
     if (!previo || Number(previo.costo) !== p.costo || Number(previo.precioPublico) !== precio) {
       await prisma.priceHistory.create({ data: { codigo: p.codigo, costo: p.costo, precioPublico: precio, origen: "proveedor" } });
     }
@@ -67,7 +74,7 @@ export async function POST(req: Request) {
 
   for (const c of COMBOS_PROVEEDORES) {
     const datos = { nombre: c.nombre, tipo: "COMBO" as const, descuentoPct: c.descuentoPct, activo: true, destacado: Boolean(c.destacado) };
-    const combo = await prisma.combo.upsert({ where: { slug: c.slug }, create: { slug: c.slug, ...datos }, update: datos });
+    const combo = await prisma.combo.upsert({ where: { slug: c.slug }, create: { slug: c.slug, ...datos, fotoUrl: fotoCombo(c.slug) }, update: { ...datos, fotoUrl: fotoCombo(c.slug) } });
     await prisma.comboItem.deleteMany({ where: { comboId: combo.id } });
     await prisma.comboItem.createMany({ data: c.items.map((i) => ({ comboId: combo.id, codigo: i.codigo, cantidad: i.cantidad })) });
   }

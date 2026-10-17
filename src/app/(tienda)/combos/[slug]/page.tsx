@@ -19,7 +19,7 @@ async function cargar(slug: string) {
 }
 
 // Combos con una segunda imagen de ambiente en public/img/combos/<slug>-2.webp.
-const SEGUNDA_FOTO = new Set(["duo-magnesio", "desayuno-30-dias", "alacena-de-frutos-secos", "arranque-gym"]);
+const SEGUNDA_FOTO = new Set<string>([]);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const c = await cargar((await params).slug);
@@ -57,7 +57,7 @@ export default async function ComboPagina({ params }: Props) {
       </p>
       {c.fotoUrl && (
         <div className={`grid gap-3 ${SEGUNDA_FOTO.has(c.slug) ? "sm:grid-cols-2" : ""}`}>
-          <Foto src={c.fotoUrl} alt={`Combo ${c.nombre}`} className={`w-full rounded-3xl ${SEGUNDA_FOTO.has(c.slug) ? "aspect-[4/3]" : "aspect-[16/10] sm:aspect-[21/9]"}`} prioridad sizes="(max-width: 640px) 100vw, 550px" />
+          <Foto src={c.fotoUrl} alt={`Combo ${c.nombre}`} className={`w-full rounded-3xl ${SEGUNDA_FOTO.has(c.slug) || c.fotoUrl.includes("/v2/") ? "aspect-[4/3] sm:max-w-2xl" : "aspect-[16/10] sm:aspect-[21/9]"}`} prioridad sizes="(max-width: 640px) 100vw, 550px" />
           {SEGUNDA_FOTO.has(c.slug) && <Foto src={`/img/combos/${c.slug}-2.webp`} alt="" className="aspect-[4/3] w-full rounded-3xl" sizes="(max-width: 640px) 100vw, 550px" />}
         </div>
       )}
