@@ -106,13 +106,18 @@ export const OCULTAR = {
   producto: /sahumerio|cascara sagrada|laxante/i,
   categorias: ["Supermercado"],
   /** Sueltos de Distrimay que ya tenemos de Todo Granolas o La Granja: más caros y con stock que falla. El vendedor cotizaba estos. */
-  codigos: [
-    "8052", "1102", "1104", "5656564", "5656563", "654854", "4544451", // mixes
-    "706", "707", "570", "571", "6543268", "7643289", "5006", "5007", "800000000120", "0111", // nuez, pasas, dátiles
-    "149", "150", "522054", "00000011", "800000000158", "800000000159", "77981422628974", "800000000162", // semillas
-    "5000", "5002", "314151", "32425262", "0000099", "000098", "95668", // maní saborizado, granola con maní
-  ],
+  codigos: [] as string[], // se completa abajo con las claves de REEMPLAZOS
   motivo: "Bolsón o fuera de rubro (catálogo hogar, oct 2026)",
+};
+
+/** En los pedidos sugeridos por rubro, cada suelto de Distrimay pasa a su equivalente propio, así se puede ocultar. */
+export const REEMPLAZOS: Record<string, string> = {
+  "8052": "TG-MIXCG", "1102": "TG-MIXCG", "1104": "TG-MIXCG", "5656564": "TG-MIXCG", "5656563": "TG-MIXT", "654854": "TG-MIXCERV", "4544451": "TG-MIXCERV",
+  "706": "TG-NUEZ", "707": "TG-NUEZ", "570": "TG-PASAS", "571": "TG-PASAS", "6543268": "LG-PASASRUBIAS", "7643289": "LG-PASASRUBIAS",
+  "5006": "LG-DATIL", "5007": "LG-DATIL", "800000000120": "LG-DATIL", "0111": "LG-DATIL",
+  "149": "LG-MIXSEM", "150": "LG-MIXSEM", "522054": "LG-CHIA", "00000011": "LG-CHIA", "800000000158": "LG-LINO", "800000000159": "LG-LINO",
+  "77981422628974": "TG-GIRASOL", "800000000162": "TG-GIRASOL",
+  "5000": "TG-MANIPIZZA", "000098": "TG-MANIPIZZA", "5002": "TG-MANIJAMON", "0000099": "TG-MANIJAMON", "314151": "TG-MANIQUESO", "32425262": "TG-MANIQUESO", "95668": "TG-GPMANI",
 };
 
 /** Productos cargados que todavía no se venden (sin stock o sin foto real). */
@@ -122,3 +127,5 @@ export const OCULTOS_PROPIOS = ["TG-ALFAJORFS"];
 const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !["TG-ALFAJORFS", "LG-SAL"].includes(c)));
 export const fotoProducto = (codigo: string) => (CON_FOTO.has(codigo) ? `/img/productos/prov/${codigo.toLowerCase()}.webp` : null);
 export const fotoCombo = (slug: string) => `/img/combos/v2/${slug}.webp`;
+
+OCULTAR.codigos.push(...Object.keys(REEMPLAZOS));

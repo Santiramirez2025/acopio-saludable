@@ -10,7 +10,7 @@ import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { margenPct } from "@/lib/precios";
-import { COMBOS_A_DESACTIVAR, COMBOS_PROVEEDORES, OCULTAR, OCULTOS_PROPIOS, PRODUCTOS_PROVEEDORES, fotoCombo, fotoProducto, precioDe } from "@/lib/catalogo-proveedores";
+import { COMBOS_A_DESACTIVAR, COMBOS_PROVEEDORES, OCULTAR, OCULTOS_PROPIOS, PRODUCTOS_PROVEEDORES, REEMPLAZOS, fotoCombo, fotoProducto, precioDe } from "@/lib/catalogo-proveedores";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -19,9 +19,24 @@ export async function POST(req: Request) {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const { aplicar } = (await req.json().catch(() => ({}))) as { aplicar?: boolean };
 
+  // Pedidos sugeridos por rubro: los sueltos de Distrimay pasan a su equivalente propio (si ya está, se suman).
+  const propios = new Set(COMBOS_PROVEEDORES.map((c) => c.slug));
+  const viejos = await prisma.comboItem.findMany({ where: { codigo: { in: Object.keys(REEMPLAZOS) }, combo: { slug: { notIn: [...propios] } } }, select: { comboId: true, codigo: true, cantidad: true } });
+  if (aplicar) {
+    for (const it of viejos) {
+      const nuevo = REEMPLAZOS[it.codigo];
+      await prisma.comboItem.delete({ where: { comboId_codigo: { comboId: it.comboId, codigo: it.codigo } } });
+      await prisma.comboItem.upsert({
+        where: { comboId_codigo: { comboId: it.comboId, codigo: nuevo } },
+        create: { comboId: it.comboId, codigo: nuevo, cantidad: it.cantidad },
+        update: { cantidad: { increment: it.cantidad } },
+      });
+    }
+  }
+
   // Lo que se oculta: bolsones, fuera de rubro y la categoría Supermercado. Nunca lo que va en un combo nuevo.
   const activos = await prisma.comboItem.findMany({ where: { combo: { activo: true, slug: { notIn: COMBOS_A_DESACTIVAR } } }, select: { codigo: true } });
-  const enCombos = new Set([...COMBOS_PROVEEDORES.flatMap((c) => c.items.map((i) => i.codigo)), ...activos.map((i) => i.codigo)]);
+  const enCombos = new Set([...COMBOS_PROVEEDORES.flatMap((c) => c.items.map((i) => i.codigo)), ...activos.map((i) => i.codigo).filter((c) => !REEMPLAZOS[c])]);
   const visibles = await prisma.product.findMany({ where: { visible: true }, select: { codigo: true, producto: true, presentacion: true, categoria: true } });
   const ocultar = visibles.filter(
     (p) => !enCombos.has(p.codigo) && (OCULTAR.presentacion.test(`${p.presentacion} ${p.producto}`) || OCULTAR.producto.test(p.producto) || OCULTAR.categorias.includes(p.categoria) || OCULTAR.codigos.includes(p.codigo)),
@@ -32,6 +47,7 @@ export async function POST(req: Request) {
     combos: COMBOS_PROVEEDORES.map((c) => c.slug),
     combosApagados: COMBOS_A_DESACTIVAR,
     ocultar: ocultar.length,
+    reemplazosEnPedidosSugeridos: viejos.length,
     ejemplosOcultos: ocultar.slice(0, 15).map((p) => `${p.producto} ${p.presentacion}`),
   };
   if (!aplicar) return NextResponse.json({ prueba: true, ...resumen });
