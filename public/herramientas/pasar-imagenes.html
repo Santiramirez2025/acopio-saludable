@@ -5,13 +5,14 @@
 // Solo lee imágenes públicas del sitio. ?f=a.jpg,b.jpg
 (async () => {
   const nombres = (new URLSearchParams(location.search).get("f") || "").split(",").filter((n) => /^[\w.-]+\.(jpg|png|webp)$/.test(n));
-  const dir = new URLSearchParams(location.search).get("d") === "ig" ? "ig" : "anuncios";
+  const d = new URLSearchParams(location.search).get("d");
+  const dir = d === "ig" || d === "kit" ? d : "anuncios";
   const files = [];
   for (const n of nombres) {
     const b = await fetch("/img/" + dir + "/" + n).then((r) => r.blob());
     files.push(new File([b], "acopio-" + n, { type: b.type }));
   }
-  if (window.opener) for (const o of ["https://adsmanager.facebook.com", "https://business.facebook.com"]) window.opener.postMessage({ acopioFiles: files }, o);
+  if (window.opener) for (const o of ["https://adsmanager.facebook.com", "https://business.facebook.com", "https://studio.youtube.com", "https://www.youtube.com", "https://www.tiktok.com", "https://www.instagram.com", "https://business.google.com", "https://www.google.com"]) window.opener.postMessage({ acopioFiles: files }, o);
   document.body.textContent = "Listo: " + files.length + " imágenes. Podés cerrar esta ventana.";
   setTimeout(() => window.close(), 1500);
 })();
