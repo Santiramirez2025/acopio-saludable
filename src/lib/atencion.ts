@@ -27,8 +27,8 @@ import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
 
 const SALUD =
-  "Eso no te lo puedo responder: no damos indicaciones de salud ni de consumo. Para eso consultá a tu médico o nutricionista. " +
-  "Si querés, te paso el producto con su presentación y precio.";
+  "Entiendo, y qué bueno que te estés cuidando 💚 Sobre salud no te puedo aconsejar, eso lo ve mejor tu médico o nutricionista. " +
+  "Lo que sí puedo es contarte qué productos son sin azúcar agregada y pasarte precios. ¿Querés que te los pase?";
 
 const DERIVADO = "Dale, ya te escribo yo personalmente por acá. Atiendo de lunes a sábado, de 8 a 20 h. Mientras tanto contame qué necesitás así lo tengo a mano.";
 

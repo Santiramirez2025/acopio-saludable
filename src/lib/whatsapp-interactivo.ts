@@ -292,6 +292,8 @@ export function tieneDireccion(texto: string): boolean {
 
 /** «Gracias», «ok, gracias», «👍» solos: se agradece corto y sin botones, sin volver a ofrecer. */
 export function soloAgradece(texto: string): boolean {
+  // «?» o «??» no es un gracias: está esperando la respuesta a algo que preguntó.
+  if (texto.includes("?")) return false;
   const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   return /^((ok|oka|okey|dale|bueno|listo|genial|perfecto|joya|buenisimo|barbaro)\s)?(muchas\s)?(gracias|graciass+|grax|mil gracias)(\s(a vos|igualmente|che|genio|capo))?$/.test(t) || /^(ok|oka|okey|joya)$/.test(t) || t === "";
 }

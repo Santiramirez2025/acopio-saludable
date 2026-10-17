@@ -105,6 +105,13 @@ export const OCULTAR = {
   presentacion: /bols[oó]n|caja x ?(1[0-9]|[2-9]\d)|\b(5|10|12|20|22|25) ?(kg|kilos?)\b|x ?(5|10|20|25) ?k\b/i,
   producto: /sahumerio|cascara sagrada|laxante/i,
   categorias: ["Supermercado"],
+  /** Sueltos de Distrimay que ya tenemos de Todo Granolas o La Granja: más caros y con stock que falla. El vendedor cotizaba estos. */
+  codigos: [
+    "8052", "1102", "1104", "5656564", "5656563", "654854", "4544451", // mixes
+    "706", "707", "570", "571", "6543268", "7643289", "5006", "5007", "800000000120", "0111", // nuez, pasas, dátiles
+    "149", "150", "522054", "00000011", "800000000158", "800000000159", "77981422628974", "800000000162", // semillas
+    "5000", "5002", "314151", "32425262", "0000099", "000098", "95668", // maní saborizado, granola con maní
+  ],
   motivo: "Bolsón o fuera de rubro (catálogo hogar, oct 2026)",
 };
 
