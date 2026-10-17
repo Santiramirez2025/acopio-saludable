@@ -10,7 +10,7 @@ import type { EnvioCotizado } from "./asistente-catalogo";
 import { zonaDeLugar } from "./envio-zona";
 export { zonaDeLugar } from "./envio-zona";
 
-export async function cotizarEnvioChat(lugar: string, provincia: string | null, subtotal: number): Promise<EnvioCotizado | null> {
+export async function cotizarEnvioChat(lugar: string, provincia: string | null, subtotal: number, kilos = 4): Promise<EnvioCotizado | null> {
   const cfg = await leerConfig();
   const zona = zonaDeLugar(lugar, provincia);
   if (!zona) return null;
@@ -22,7 +22,7 @@ export async function cotizarEnvioChat(lugar: string, provincia: string | null, 
     return { lugar, costo: zp.precio, propia: true, detalle: `Envío a ${lugar}: ${pesos(zp.precio)}, te lo llevamos nosotros${zp.plazo ? ` en ${zp.plazo}` : ""}.` };
   }
   const prov = zona.tipo === "correo" ? zona.provincia : "Córdoba";
-  const tarifas = cotizarConTabla(cfg.tabla, prov, [{ pesoG: 4000, unidades: 1, excedido: false }]);
+  const tarifas = cotizarConTabla(cfg.tabla, prov, [{ pesoG: Math.round(Math.min(25, Math.max(0.5, kilos)) * 1000) + 100, unidades: 1, excedido: false }]);
   const opciones = aplicarReglas(tarifas, subtotal, cfg.envioGratisDesde);
   if (!opciones.length) return { lugar, costo: null, detalle: `Envío a ${lugar}: por correo, el costo exacto te aparece con tu código postal al pagar.` };
   const precio = opciones[0].precio;
