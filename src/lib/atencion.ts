@@ -11,7 +11,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
+import { primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { combosTienda, cotizarCarrito } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
@@ -217,9 +217,10 @@ export async function atender(e: Entrada): Promise<void> {
   }
   if (!texto) return;
 
-  // Freno de bucles: si del otro lado contesta un bot, o si ya le mandamos muchos mensajes seguidos,
+  // Freno de bucles: si del otro lado contesta un bot, o si ya le mandamos muchísimos mensajes seguidos
+  // (40 en 10 minutos: cada respuesta son 2 o 3 mensajes, y una clienta con dudas llegaba a 15 y se cortaba la venta),
   // el vendedor se calla y la charla pasa a una persona. Dos bots hablándose es spam para WhatsApp.
-  if (esRespuestaAutomatica(texto) || (await respuestasRecientes(e.clave, 10)) >= 15) {
+  if (esRespuestaAutomatica(texto) || (await respuestasRecientes(e.clave, 10)) >= 40) {
     console.log("chat: respuesta automática o demasiados mensajes seguidos, pasa a una persona", cola(e.clave));
     await cambiarEstado(e.clave, "persona");
     await avisarSantiago("Charla pausada", `🤖 La charla con ${e.nombre ?? e.clave} se pausó (respondió un bot o hubo muchos mensajes seguidos). Revisala:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
@@ -333,8 +334,10 @@ export async function pensar(c: {
   const todoGracias = [...rafaga, c.texto].every((t) => soloAgradece(t));
   const preguntaAbierta = rafaga.some((t) => t.includes("?") || /^(con quien|cuando|donde|como|cuanto|que|cual)\b/i.test(t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/^[¿¡\s]+/, "")));
   if (!c.toque && c.historial.length && todoGracias) {
-    const salientes = planDeNada(c.nombre);
-    return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
+    // Si ya le dijimos «de nada» y vuelve a agradecer (o reacciona), no se contesta otra vez lo mismo.
+    const ultimoNuestro = [...c.historial].reverse().find((h) => h.de === "acopio")?.texto ?? "";
+    const salientes = /^¡De nada/.test(ultimoNuestro) ? [] : planDeNada(c.nombre);
+    return { salientes, respuesta: { texto: salientes[0] ? textoParaPanel(salientes[0]) : "" }, derivar: false, conIA: false };
   }
   if (!c.toque && !preguntaAbierta && postergaCompra(c.texto)) {
     const salientes = planSinApuro(c.nombre, urlSitio());
@@ -376,7 +379,7 @@ export async function pensar(c: {
           : ""
       } Si su mensaje es una pregunta (dirección, envío, pago, un producto), contestala PRIMERO en una frase y recién después ofrecé lo del anuncio. Si no pregunta nada concreto, arrancá por el anuncio: qué trae y por qué conviene, y ofrecé dejárselo listo.</anuncio>\n\n`
     : "";
-  const cliente = c.nombre ? `<cliente>Se llama ${c.nombre.slice(0, 40)}${c.historial.length ? " (ya lo saludaste: no lo saludes de nuevo)" : ""}.</cliente>\n` : "";
+  const cliente = c.nombre ? `<cliente>${primerNombre(c.nombre) ? `Se llama ${primerNombre(c.nombre)}` : `Su perfil de WhatsApp dice «${c.nombre.slice(0, 40)}» (no es un nombre de persona: no lo llames así)`}${c.historial.length ? " (ya lo saludaste: no lo saludes de nuevo)" : ""}.</cliente>\n` : "";
   const eligio =
     c.toque?.tipo === "quiero"
       ? `<eligio>Tocó «Lo quiero» en el ${c.toque.clase} ${c.toque.clase === "combo" ? "slug" : "codigo"} ${c.toque.id}. Agregalo YA con agregar_al_pedido (junto con lo que ya había elegido antes) y en una frase ofrecé sumar algo chico o dejarlo listo para pagar.</eligio>\n`

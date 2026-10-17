@@ -177,7 +177,7 @@ const HERRAMIENTAS = [
     description:
       "Devuelve un link de WhatsApp con el resumen ya escrito, para que la atienda una persona. " +
       "Usala cuando: compra para revender y quiere condiciones, pregunta por un pedido ya hecho, hay un reclamo, " +
-      "pide algo que no está en el catálogo, o la conversación se estira sin cerrar. No la uses para preguntas que ya podés contestar.",
+      "pide algo que no está en el catálogo, o pide coordinar algo que solo puede resolver Santiago (un punto de encuentro, un horario especial). Nunca porque la charla sea larga ni porque dude: eso lo resolvés vos. No la uses para preguntas que ya podés contestar.",
     input_schema: {
       type: "object" as const,
       properties: {
