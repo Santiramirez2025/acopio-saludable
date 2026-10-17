@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><title>Pasando imágenes</title>
+<body style="font:16px system-ui;padding:20px">Pasando imágenes al Administrador de anuncios…
+<script>
+// Herramienta interna: la abre el Administrador de anuncios como ventana emergente y le pasa las piezas de /img/anuncios.
+// Solo lee imágenes públicas del sitio. ?f=a.jpg,b.jpg
+(async () => {
+  const nombres = (new URLSearchParams(location.search).get("f") || "").split(",").filter((n) => /^[\w.-]+\.(jpg|png|webp)$/.test(n));
+  const files = [];
+  for (const n of nombres) {
+    const b = await fetch("/img/anuncios/" + n).then((r) => r.blob());
+    files.push(new File([b], "acopio-" + n, { type: b.type }));
+  }
+  if (window.opener) window.opener.postMessage({ acopioFiles: files }, "https://adsmanager.facebook.com");
+  document.body.textContent = "Listo: " + files.length + " imágenes. Podés cerrar esta ventana.";
+  setTimeout(() => window.close(), 1500);
+})();
+</script>
