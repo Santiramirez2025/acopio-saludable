@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const enCombos = new Set([...COMBOS_PROVEEDORES.flatMap((c) => c.items.map((i) => i.codigo)), ...activos.map((i) => i.codigo)]);
   const visibles = await prisma.product.findMany({ where: { visible: true }, select: { codigo: true, producto: true, presentacion: true, categoria: true } });
   const ocultar = visibles.filter(
-    (p) => !enCombos.has(p.codigo) && (OCULTAR.presentacion.test(`${p.presentacion} ${p.producto}`) || OCULTAR.producto.test(p.producto) || OCULTAR.categorias.includes(p.categoria)),
+    (p) => !enCombos.has(p.codigo) && (OCULTAR.presentacion.test(`${p.presentacion} ${p.producto}`) || OCULTAR.producto.test(p.producto) || OCULTAR.categorias.includes(p.categoria) || OCULTAR.codigos.includes(p.codigo)),
   );
 
   const resumen = {
