@@ -11,6 +11,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { pensar, planCobroLink } from "@/lib/atencion";
 import { leerToque, textoParaPanel } from "@/lib/whatsapp-interactivo";
+import { contextoProspecto } from "@/lib/whatsapp-plantillas";
 import type { Turno } from "@/lib/vendedor";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ type Paso = { texto?: unknown; toque?: unknown };
 
 export async function POST(req: Request) {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  let cuerpo: { pasos?: unknown; anuncio?: { titulo?: string; texto?: string } | null; nombre?: string };
+  let cuerpo: { pasos?: unknown; anuncio?: { titulo?: string; texto?: string } | null; nombre?: string; prospecto?: { rubro?: string; negocio?: string } | null };
   try {
     cuerpo = await req.json();
   } catch {
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
       historial: [...historial],
       anuncio: i === 0 && cuerpo.anuncio ? { titulo: cuerpo.anuncio.titulo ?? null, texto: cuerpo.anuncio.texto ?? null } : null,
       nombre: cuerpo.nombre ?? null,
-      negocio: "",
+      negocio: cuerpo.prospecto?.rubro ? contextoProspecto(cuerpo.prospecto.rubro, cuerpo.prospecto.negocio ?? null) : "",
       pedidoGuardado: pedido,
     });
     if (r.guardarPedido) pedido = r.guardarPedido;
