@@ -691,12 +691,12 @@ test("whatsapp: productos van en lista para tocar, pedido con botones de pago, s
   assert.deepEqual(tarjeta.botones.map((b) => b.id), ["quiero|c|despensa", "trae|despensa", "op|Para un negocio"]);
   assert.ok(!tarjeta.cuerpo.includes("http"));
 
-  // Productos sueltos: lista para tocar, con títulos dentro del tope de Meta.
-  const sueltos = planWhatsapp({ texto: "Hay nueces.", fichas: [{ href: "/producto/9", nombre: "Nuez Mariposa Extra Light Fraccionada de primera calidad", detalle: "x 1 kg", precio: "$ 22.937", foto: null }] }, null);
-  const lista = sueltos[0] as Extract<(typeof sueltos)[number], { tipo: "lista" }>;
-  assert.equal(lista.tipo, "lista");
-  const cuerpo = cuerpoGraph(lista, "549351") as { interactive: { action: { sections: { rows: { title: string }[] }[] } } };
-  assert.ok(cuerpo.interactive.action.sections[0].rows.every((r) => r.title.length <= 24));
+  // Productos sueltos: sin lista. Si termina en pregunta, botones con las respuestas; si no, texto.
+  const nuez = [{ href: "/producto/9", nombre: "Nuez Mariposa Extra Light", detalle: "x 1 kg", precio: "$ 22.937", foto: null }];
+  assert.equal(planWhatsapp({ texto: "La nuez sale $ 22.937 el kilo.", fichas: nuez, opciones: ["Para mi casa"] }, null)[0].tipo, "texto");
+  const conPregunta = planWhatsapp({ texto: "La nuez sale $ 22.937. ¿Para tu casa o un negocio?", fichas: nuez, opciones: ["Para mi casa", "Para un negocio"] }, null);
+  assert.equal(conPregunta[0].tipo, "botones");
+  assert.ok(conPregunta.every((x) => x.tipo !== "lista"));
 
   // Sin zona todavía: primero se pregunta dónde vive, con botones de zona.
   const sinZona = planWhatsapp({ texto: "Listo, te lo armé." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null });
@@ -741,11 +741,7 @@ test("whatsapp: «almendra» encuentra «Almendras» y los tamaños se distingue
   const todas = [caja, al("x 1 kg", "$ 36.398", "1"), al("x 500 gr", "$ 18.819", "2")];
   const elegidas = fichasNombradas(todas, "Te recomiendo la Almendra Non Pareil de 1 kilo a $ 36.398.");
   assert.deepEqual(elegidas.map((f) => f.href), ["/producto/1", "/producto/2"]);
-  const plan = planWhatsapp({ texto: "Hay almendras.", fichas: elegidas }, null);
-  const lista = plan.find((x) => x.tipo === "lista") as Extract<(typeof plan)[number], { tipo: "lista" }>;
-  const titulos = lista.secciones[0].filas.map((f) => f.titulo);
-  assert.equal(new Set(titulos).size, 2);
-  assert.match(titulos[0], /^1 kg · Almendras/);
+  assert.ok(planWhatsapp({ texto: "Hay almendras.", fichas: elegidas }, null).every((x) => x.tipo !== "lista"));
 });
 
 import { mensajeSegun, conMensaje, SALUDO_GENERAL } from "./whatsapp-saludo";
@@ -810,11 +806,11 @@ test("whatsapp: «ver los productos» muestra, no pregunta", () => {
   for (const t of ["Ver los productos", "Ver combos", "Ver otros combos", "Ver otro combo", "ver otras opciones", "¿Qué tienen?", "catálogo", "pasame la lista"]) assert.ok(quiereVer(t), t);
   for (const t of ["Busco frutos secos", "quiero la despensa", "hola"]) assert.ok(!quiereVer(t), t);
   const p = planVer([{ slug: "despensa", nombre: "Despensa de 4 kilos", precio: "$ 35.268", argumento: "$ 8.817 el kilo" }]);
-  const l = p[0] as Extract<(typeof p)[number], { tipo: "lista" }>;
-  assert.equal(l.secciones[0].filas[0].id, "trae|despensa");
-  assert.equal(l.secciones[1].filas.length, 3);
-  const conWeb = planVer([{ slug: "d", nombre: "D", precio: "$ 1", argumento: "" }], "https://x/combos");
-  assert.equal(conWeb[1].tipo, "cta");
+  const b = p[0] as Extract<(typeof p)[number], { tipo: "botones" }>;
+  assert.equal(b.tipo, "botones");
+  assert.equal(b.botones[0].id, "trae|despensa");
+  assert.match(b.cuerpo, /Despensa de 4 kilos: \$ 35\.268/);
+  assert.equal(p.length, 1);
 });
 
 import { argumentoCombo } from "./combos-tema";

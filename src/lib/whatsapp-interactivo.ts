@@ -178,28 +178,14 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
       });
       return salida;
     }
-    // Si hay nombres repetidos (la misma almendra en tres tamaños), lo que distingue es la presentación:
-    // va en el título, que es lo que se lee primero. Antes salían tres «Almendras Non Pareil» iguales.
-    const nombres = fichas.map(({ f }) => f.nombre.replace(/^Combo /, ""));
-    const repetido = (n: string) => nombres.filter((x) => x.toLowerCase() === n.toLowerCase()).length > 1;
-    const filas: Fila[] = fichas.slice(0, 6).map(({ f, c }, i) => {
-      const nombre = nombres[i];
-      const pres = presentacionDe(f);
-      const titulo = repetido(nombre) && pres ? `${pres.replace(/^x\s*/i, "")} · ${nombre}` : nombre;
-      return {
-        id: corte(`${ID.quiero}${c!.clase}|${c!.id}`, TOPE.id),
-        titulo: corte(titulo, TOPE.filaTitulo),
-        descripcion: corte([f.precio, f.detalle.startsWith("Trae:") ? f.detalle : pres || f.detalle].filter(Boolean).join(" · "), TOPE.filaDesc),
-      };
-    });
-    const secciones = [{ titulo: "Tocá el que querés", filas }];
-    const extra = (r.opciones ?? []).slice(0, 3).map((o) => ({ id: corte(`${ID.opcion}${o}`, TOPE.id), titulo: corte(o, TOPE.filaTitulo) }));
-    if (extra.length) secciones.push({ titulo: "O respondé", filas: extra });
-    salida.push({ tipo: "lista", cuerpo: corte(texto + aviso, TOPE.cuerpo), boton: "Ver precios", secciones });
-    return salida;
+    // Varios productos: sin lista. La lista esconde los precios detrás de un botón y en los datos
+    // fue lo que peor respondió (6 de 14 contestaron, contra 2 de cada 3 con texto o botones).
+    // El texto ya nombra los precios; abajo van solo las respuestas a su pregunta.
   }
 
-  if (r.opciones?.length) {
+  // Botones solo cuando el mensaje termina en una pregunta: son las respuestas a esa pregunta.
+  // Botones genéricos en cada mensaje («Ver combos», «Sumar algo más») son ruido y nadie los toca.
+  if (r.opciones?.length && /\?\s*$/.test(texto)) {
     return [{ tipo: "botones", cuerpo: corte(texto + aviso, TOPE.cuerpo), botones: botonesDeOpciones(r.opciones) }];
   }
   return [{ tipo: "texto", texto: texto + aviso }];
@@ -324,28 +310,16 @@ export function planSinApuro(nombre: string | null, tienda: string): Saliente[] 
   }];
 }
 
-export function planVer(combos: { slug: string; nombre: string; precio: string; argumento: string }[], tienda?: string): Saliente[] {
-  const filas: Fila[] = combos.slice(0, 7).map((c) => ({
-    id: corte(`${ID.trae}${c.slug}`, TOPE.id),
-    titulo: corte(c.nombre, TOPE.filaTitulo),
-    descripcion: corte([c.precio, c.argumento].filter(Boolean).join(" · "), TOPE.filaDesc),
-  }));
-  const tipos = ["Frutos secos", "Sin TACC", "Para el desayuno"].map((t) => ({ id: `${ID.opcion}${t}`, titulo: t }));
+export function planVer(combos: { slug: string; nombre: string; precio: string; argumento: string }[], _tienda?: string): Saliente[] {
+  // Los combos a la vista, no escondidos en una lista: la lista se abría poco y la charla moría ahí.
+  const renglones = combos.slice(0, 6).map((c) => `• ${c.nombre}: ${c.precio}`);
+  const cuerpo = ["Estos son los combos del mes 👇", ...renglones, "", "¿Cuál te interesa? Tocalo y te cuento qué trae."].join("\n");
   return [
     {
-      tipo: "lista",
-      cuerpo:
-        "Te paso los combos armados 👇 Cada uno trae todo para el mes y llega solo a la compra mínima. Tocá el que te guste y te cuento qué trae. Si buscás algo puntual, escribime qué y te lo busco.",
-      boton: "Ver combos",
-      secciones: [
-        { titulo: "Combos", filas },
-        { titulo: "O buscá por tipo", filas: tipos },
-      ],
+      tipo: "botones",
+      cuerpo: corte(cuerpo, TOPE.cuerpo),
+      botones: combos.slice(0, 3).map((c) => ({ id: corte(`${ID.trae}${c.slug}`, TOPE.id), titulo: corte(c.nombre, TOPE.boton) })),
     },
-    // La web, como botón y no como link suelto: se ve oficial y ahí está todo con fotos.
-    ...(tienda
-      ? [{ tipo: "cta" as const, cuerpo: "Y si preferís mirar todo tranquilo, con fotos y precios, está en nuestra tienda online. Cualquier cosa nos escribís y lo encargás por acá.", texto: "Ver la tienda", url: tienda, pie: "acopiosaludable.com" }]
-      : []),
   ];
 }
 
