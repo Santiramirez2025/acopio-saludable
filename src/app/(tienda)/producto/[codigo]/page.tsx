@@ -7,6 +7,7 @@ import { leerConfig } from "@/lib/config";
 import { aTienda, combosTienda, estaPublicado, productosTienda } from "@/lib/tienda";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadBase, precioSugerido } from "@/lib/precios";
+import { cortarEnPalabra, marcaVisible } from "@/lib/texto";
 import { proximoCorte } from "@/lib/corte";
 import { CuentaRegresiva } from "@/components/CuentaRegresiva";
 import { Plazos } from "@/components/Plazos";
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const titulo = `${p.producto} ${p.presentacion}`;
   return {
     title: `${titulo}: precio y envío`,
-    description: `${titulo} de ${p.marca}, en ${p.categoria.toLowerCase()}. Precio actualizado, entrega sin cargo en Villa Carlos Paz y envíos a todo el país.`.slice(0, 158),
+    description: cortarEnPalabra(`${titulo}${marcaVisible(p.marca) ? ` de ${p.marca}` : ""}, en ${p.categoria.toLowerCase()}. Precio actualizado, entrega sin cargo en Villa Carlos Paz y envíos a todo el país.`, 158),
     alternates: { canonical: `/producto/${encodeURIComponent(p.codigo)}` },
     openGraph: { title: titulo, url: `/producto/${encodeURIComponent(p.codigo)}`, images: p.fotoUrl ? [p.fotoUrl] : undefined },
   };
@@ -46,7 +47,10 @@ export default async function Producto({ params }: Props) {
   const propias = fila.fotos.filter((x) => x.startsWith("/img/"));
   if (propias.length) fila.fotos = propias;
   const p = aTienda(fila, cfg);
-  const reventa = precioSugerido(p.precio, cfg.recargoSugeridoPct);
+  // «Venta sugerida / Ganás» es un dato de reventa: solo tiene sentido en bolsones y presentaciones de negocio.
+  // En un paquete hogareño una familia lo lee como «me están cobrando con margen de reventa».
+  const esBolson = /bols[oó]n|caja x|\b(5|10|20|25) ?(kg|kilos?)\b/i.test(`${p.presentacion} ${p.producto}`);
+  const reventa = esBolson ? precioSugerido(p.precio, cfg.recargoSugeridoPct) : null;
   const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
   const [combos, relacionados] = await Promise.all([
     combosTienda({ tipo: "COMBO", activo: true, items: { some: { codigo: p.codigo } } }),
@@ -57,7 +61,7 @@ export default async function Producto({ params }: Props) {
     "@type": "Product",
     name: `${p.producto} ${p.presentacion}`,
     sku: p.codigo,
-    brand: { "@type": "Brand", name: p.marca },
+    ...(marcaVisible(p.marca) ? { brand: { "@type": "Brand", name: p.marca } } : {}),
     category: p.categoria,
     image: fila.fotos.length ? fila.fotos : undefined,
     offers: {
