@@ -299,13 +299,23 @@ export function soloAgradece(texto: string): boolean {
 }
 
 /** La respuesta a «lo veo tranquila»: cálida, corta, sin pedido ni zonas. Solo la tienda, por si quiere ir mirando. */
+/** El nombre de pila, si el perfil de WhatsApp es de una persona. «casa playas de oro» o «Hotel X» no: «¡De nada, casa!» queda mal. */
+export function primerNombre(nombre: string | null | undefined): string | null {
+  const p = (nombre ?? "").trim().split(/\s+/)[0]?.replace(/[^\p{L}]/gu, "") ?? "";
+  if (p.length < 2 || p.length > 20) return null;
+  if (/^(casa|hotel|cabañas?|cabanas?|complejo|depto|departamentos?|apart|hostel|hosteria|hostería|posada|resort|spa|kiosco|almacen|almacén|dietetica|dietética|tienda|negocio|empresa|distribuidora|gym|gimnasio|lic|dr|dra|la|el|los|las|mi|mis|info|ventas|administracion|administración)$/i.test(p)) return null;
+  return p[0].toUpperCase() + p.slice(1);
+}
+
 export function planDeNada(nombre: string | null): Saliente[] {
-  const quien = nombre ? `, ${nombre.split(/\s+/)[0].slice(0, 20)}` : "";
+  const n = primerNombre(nombre);
+  const quien = n ? `, ${n}` : "";
   return [{ tipo: "texto", texto: `¡De nada${quien}! Cualquier cosa me escribís por acá 🙌` }];
 }
 
 export function planSinApuro(nombre: string | null, tienda: string): Saliente[] {
-  const quien = nombre ? `, ${nombre.split(/\s+/)[0].slice(0, 20)}` : "";
+  const n = primerNombre(nombre);
+  const quien = n ? `, ${n}` : "";
   return [{
     tipo: "cta",
     cuerpo: `¡Dale${quien}! Miralo con calma, no hay apuro 🙌 Cuando quieras me escribís y te armo el pedido como prefieras. Si te surge cualquier duda, acá estoy.`,
