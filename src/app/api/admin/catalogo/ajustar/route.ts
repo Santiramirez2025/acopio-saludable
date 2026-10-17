@@ -20,7 +20,8 @@ export async function POST(req: Request) {
   const { aplicar } = (await req.json().catch(() => ({}))) as { aplicar?: boolean };
 
   // Lo que se oculta: bolsones, fuera de rubro y la categoría Supermercado. Nunca lo que va en un combo nuevo.
-  const enCombos = new Set(COMBOS_PROVEEDORES.flatMap((c) => c.items.map((i) => i.codigo)));
+  const activos = await prisma.comboItem.findMany({ where: { combo: { activo: true, slug: { notIn: COMBOS_A_DESACTIVAR } } }, select: { codigo: true } });
+  const enCombos = new Set([...COMBOS_PROVEEDORES.flatMap((c) => c.items.map((i) => i.codigo)), ...activos.map((i) => i.codigo)]);
   const visibles = await prisma.product.findMany({ where: { visible: true }, select: { codigo: true, producto: true, presentacion: true, categoria: true } });
   const ocultar = visibles.filter(
     (p) => !enCombos.has(p.codigo) && (OCULTAR.presentacion.test(`${p.presentacion} ${p.producto}`) || OCULTAR.producto.test(p.producto) || OCULTAR.categorias.includes(p.categoria)),
