@@ -69,6 +69,7 @@ export default async function TiendaLayout({ children }: { children: React.React
           </div>
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-white/10 px-4 py-4 text-xs">
             <p>{AVISO_SUPLEMENTOS}</p>
+            <p>Acopio Saludable es un emprendimiento de Santiago Agustín Ramírez · CUIT 20-37092832-1 · Responsable monotributo · Villa Carlos Paz, Córdoba.</p>
             <Link href="/cambios-y-devoluciones#arrepentimiento" className="flex min-h-[48px] items-center font-semibold text-white underline underline-offset-4">Botón de arrepentimiento</Link>
           </div>
         </footer>
