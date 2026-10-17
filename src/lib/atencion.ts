@@ -403,7 +403,10 @@ export async function pensar(c: {
 
   // Vino del anuncio de un combo y todavía no lo eligió: la respuesta lleva la tarjeta del combo,
   // con «Lo quiero» a un toque. Sin esto, el texto lo ofrecía pero no había botón para tomarlo.
-  if (combo && !respuesta.fichas?.length && !respuesta.acciones?.length) {
+  // Solo si el texto habla del combo: si contestó precios por kilo y preguntó otra cosa, la tarjeta
+  // pisaba la pregunta con botones que no tenían nada que ver.
+  const nombraCombo = combo ? normalizar(respuesta.texto).includes(normalizar(combo.nombre).split(" ")[0]) : false;
+  if (combo && nombraCombo && !respuesta.fichas?.length && !respuesta.acciones?.length) {
     respuesta = {
       ...respuesta,
       fichas: [{ href: `/combos/${combo.slug}`, nombre: `Combo ${combo.nombre}`, detalle: "Trae: combo", precio: pesos(Math.round(combo.precio)), foto: combo.fotoUrl }],
