@@ -40,6 +40,12 @@ export default async function Nicho({ params }: Props) {
       <Titulo sobre="Por negocio" bajada="Productos por volumen para tu negocio, con precios al día y entrega sin cargo en Villa Carlos Paz y sur de Punilla.">
         {nicho.nombre}
       </Titulo>
+      {nicho.id === "hoteleria" && (
+        <Link href="/cotizador-hoteles" className="flex items-center justify-between gap-3 rounded-2xl bg-acopio-900 px-5 py-4 text-white">
+          <span><span className="block font-display text-lg font-semibold">¿Cuánto te cuesta cada desayuno?</span><span className="text-sm text-white/80">Calculalo con tus plazas y ocupación, con precios de hoy.</span></span>
+          <span aria-hidden="true">→</span>
+        </Link>
+      )}
       {PORTADAS[nicho.id] && <Foto src={PORTADAS[nicho.id]} alt="" className="!mt-0 aspect-[16/10] w-full rounded-3xl sm:aspect-[21/8]" prioridad sizes="(max-width: 1024px) 100vw, 1100px" />}
       {pedidos.map((pedido) => {
         const items = pedido.items.filter((i) => vendibles.has(i.producto.codigo));

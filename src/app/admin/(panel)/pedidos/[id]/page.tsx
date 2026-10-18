@@ -24,7 +24,10 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/pedidos" className="text-sm text-stone-600 underline">← Pedidos</Link>
+      <div className="flex flex-wrap gap-4 text-sm">
+        <Link href="/admin/pedidos" className="text-stone-600 underline">← Pedidos</Link>
+        <Link href={`/admin/pedidos/${pedido.id}/qr`} className="text-acopio-700 underline">QR de reposición para imprimir</Link>
+      </div>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Pedido {numero} <span className="chip bg-acopio-100 text-acopio-700">{nombreEstado(pedido.estado)}</span></h1>

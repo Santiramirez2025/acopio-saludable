@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { enlacePedido } from "@/lib/pedido-enlace";
+import { enlaceRepetir, codigoAmigo } from "@/lib/repetir";
+import { urlSitio } from "@/lib/sitio";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
@@ -39,12 +40,7 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
   const numero = numeroPedido(pedido.id);
   const pendiente = pedido.estado === "PENDIENTE_PAGO";
   const rastreo = linkSeguimiento(cfg.tabla.correo, pedido.tracking);
-  // El mismo pedido como enlace al carrito: los combos vuelven como combo, el resto producto por producto.
-  const combos = [...new Set(pedido.items.filter((i) => i.comboSlug).map((i) => i.comboSlug as string))];
-  const repetir = enlacePedido([
-    ...combos.map((slug) => ({ tipo: "combo" as const, id: slug, cantidad: 1 })),
-    ...pedido.items.filter((i) => !i.comboSlug).map((i) => ({ tipo: "producto" as const, id: i.codigo, cantidad: i.cantidad })),
-  ]);
+  const repetir = enlaceRepetir(pedido.items);
   const wa = cfg.whatsapp ? linkWhatsapp(cfg.whatsapp, `Hola, hice el pedido ${numero} en Acopio Saludable por ${pesos(Number(pedido.total))}.${pedido.medioPago === "TRANSFERENCIA" && pendiente ? " Te envío el comprobante de la transferencia." : ""}`) : null;
 
   return (
@@ -124,6 +120,20 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
           <p className="font-medium text-acopio-900">¿Se te está terminando?</p>
           <p className="mt-1 text-stone-700">Repetí este pedido en un clic, con los precios de hoy. Lo revisás en el carrito antes de pagar.</p>
           <Link href={`${repetir}&ref=repetir`} className="btn mt-3">Repetir este pedido</Link>
+        </section>
+      )}
+      {!pendiente && pedido.estado !== "CANCELADO" && (
+        <section className="rounded-xl border border-tierra-200 bg-white p-4 text-sm">
+          <p className="font-medium text-stone-900">¿Le sirve a alguien más?</p>
+          <p className="mt-1 text-stone-700">Pasale tu link a quien quiera ahorrar tiempo con la compra del mes. Cuando compre, lo registramos a tu nombre.</p>
+          <a
+            className="btn-sec mt-3"
+            href={`https://wa.me/?text=${encodeURIComponent(`Yo compro la despensa en Acopio Saludable y me llega a casa: ${urlSitio()}/?ref=amigo-${codigoAmigo(token)}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Recomendar por WhatsApp
+          </a>
         </section>
       )}
       <Link href="/catalogo" className="text-sm text-acopio-700 underline">Seguir mirando el catálogo</Link>

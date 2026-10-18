@@ -63,7 +63,7 @@ export default async function TiendaLayout({ children }: { children: React.React
                 Escribinos por WhatsApp
               </EnlaceWhatsapp>
               <ul className="grid grid-cols-2 gap-x-4">
-                {[["/envios", "Envíos"], ["/cambios-y-devoluciones", "Cambios y devoluciones"], ["/contacto", "Contacto"], ["/guias", "Guías"], ["/novedades", "Novedades"], ["/app", "Instalar la app"], ["/terminos", "Términos"], ["/privacidad", "Privacidad"]].map(([h, t]) => (
+                {[["/nosotros", "Quiénes somos"], ["/envios", "Envíos"], ["/cambios-y-devoluciones", "Cambios y devoluciones"], ["/contacto", "Contacto"], ["/guias", "Guías"], ["/novedades", "Novedades"], ["/app", "Instalar la app"], ["/terminos", "Términos"], ["/privacidad", "Privacidad"]].map(([h, t]) => (
                   <li key={h}><Link href={h} className="flex min-h-[48px] items-center hover:text-white hover:underline">{t}</Link></li>
                 ))}
               </ul>
