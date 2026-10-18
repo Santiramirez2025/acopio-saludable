@@ -92,7 +92,12 @@ export function totales(subtotal: number, envio: number, medioPago: MedioPago, c
 
 // ---------- Alta ----------
 
-export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; envioOpcionId?: unknown; medioPago?: unknown; mpDisponible: boolean }): Promise<Order> {
+/** Por SQL directo: el cliente de Prisma puede ser anterior a la columna. Si falla, el pedido sigue igual. */
+async function guardarOrigen(id: number, origen: string): Promise<void> {
+  await prisma.$executeRaw`UPDATE "Order" SET "origen" = ${origen} WHERE "id" = ${id}`.catch((e) => console.error("origen del pedido", e));
+}
+
+export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; envioOpcionId?: unknown; medioPago?: unknown; origen?: unknown; mpDisponible: boolean }): Promise<Order> {
   const cliente = validarCliente(args.cliente);
   const medioPago = args.medioPago === "MERCADOPAGO" || args.medioPago === "TRANSFERENCIA" ? args.medioPago : null;
   if (!medioPago) throw new ErrorPedido("Elegí cómo querés pagar");
@@ -128,6 +133,8 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
       eventos: { create: { estado: "PENDIENTE_PAGO", nota: "Pedido recibido" } },
     },
   });
+  const origenWeb = typeof args.origen === "string" && args.origen.trim() ? args.origen.replace(/[^\p{L}\p{N} ./:·_()>→-]/gu, "").slice(0, 200) : "web · directo";
+  await guardarOrigen(pedido.id, origenWeb);
   await avisarPedidoRecibido(pedido, cfg);
   await avisarVenta(pedido, "Nueva venta en la web").catch((e) => console.error("aviso de venta web falló", e));
   return pedido;
@@ -240,6 +247,8 @@ export async function crearPedidoWhatsapp(a: {
   const envio = a.envio.costo ?? 0;
   const { descuento, envioCobrado, total, comisionPago } = totales(cotizacion.subtotal, envio, a.medioPago, cfg);
   const propia = a.envio.costo !== null && (a.envio.costo === 0 || a.medioPago === "AL_RECIBIR");
+  const charla = await prisma.$queryRaw<{ anuncioTitulo: string | null; prospecto: string | null }[]>`SELECT "anuncioTitulo", "prospecto" FROM "WhatsappConversacion" WHERE "telefono" = ${a.telefono}`;
+  const origen = charla[0]?.prospecto ? `whatsapp · prospección: ${charla[0].prospecto}` : charla[0]?.anuncioTitulo ? `whatsapp · anuncio: ${charla[0].anuncioTitulo}` : "whatsapp";
   const pedido = await prisma.order.create({
     data: {
       token: randomBytes(18).toString("base64url"),
@@ -270,6 +279,7 @@ export async function crearPedidoWhatsapp(a: {
       eventos: { create: { estado: "PENDIENTE_PAGO", nota: `Venta por WhatsApp · ${NOMBRE_MEDIO[a.medioPago]}` } },
     },
   });
+  await guardarOrigen(pedido.id, origen.slice(0, 200));
   await avisarVenta(pedido, "Nueva venta por WhatsApp");
   return pedido;
 }

@@ -23,6 +23,7 @@ const NEGOCIO = {
   address: { "@type": "PostalAddress", addressLocality: "Villa Carlos Paz", addressRegion: "Córdoba", addressCountry: "AR" },
   areaServed: [{ "@type": "City", name: "Villa Carlos Paz" }, { "@type": "AdministrativeArea", name: "Valle de Punilla" }, { "@type": "Country", name: "Argentina" }],
 };
+import { Origen } from "@/components/Origen";
 
 export default async function TiendaLayout({ children }: { children: React.ReactNode }) {
   const cfg = await leerConfig();
@@ -37,6 +38,7 @@ export default async function TiendaLayout({ children }: { children: React.React
           <span className="hidden sm:inline"> · {cfg.entregaPropiaActiva ? "Entrega sin cargo en Villa Carlos Paz y el sur de Punilla · " : ""}Envíos a todo el país</span>
         </p>
         <Encabezado />
+        <Origen />
         <main id="contenido" className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 pb-40 pt-5 md:pb-24 md:pt-8">{children}</main>
         <footer className="fondo-oscuro bg-acopio-900 pb-28 text-white/80 md:pb-0">
           <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">

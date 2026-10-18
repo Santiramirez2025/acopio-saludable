@@ -23,6 +23,26 @@ export default async function Estadisticas({ searchParams }: { searchParams: Pro
     nichos: new Map(NICHOS.map((n) => [n.id, n.nombre])),
     combos: new Map(combos.map((c) => [c.slug, c.nombre])),
   });
+  // Canales: de dónde vino cada pedido (columna «origen», por SQL directo) y si era su primera compra.
+  const ids = pedidos.map((p) => p.id);
+  const origenes = ids.length ? await prisma.$queryRaw<{ id: number; origen: string | null }[]>`SELECT "id", "origen" FROM "Order" WHERE "id" = ANY(${ids})` : [];
+  const origenDe = new Map(origenes.map((o) => [o.id, o.origen]));
+  const previos = ids.length
+    ? await prisma.$queryRaw<{ id: number; antes: bigint }[]>`SELECT o."id", (SELECT count(*) FROM "Order" p WHERE p."telefono" = o."telefono" AND p."id" < o."id" AND p."estado" <> 'CANCELADO') AS antes FROM "Order" o WHERE o."id" = ANY(${ids})`
+    : [];
+  const esNuevo = new Map(previos.map((x) => [x.id, Number(x.antes) === 0]));
+  const canalDe = (o: string | null) => (o ?? "sin dato").split(" → ")[0].replace(/ · \d{4}-\d{2}-\d{2}$/, "").replace(/^whatsapp · anuncio: .*/, "whatsapp · anuncio").trim() || "sin dato";
+  const canales = new Map<string, { pedidos: number; nuevos: number; ventas: number; contribucion: number }>();
+  for (const p of pedidos) {
+    const c = canalDe(origenDe.get(p.id) ?? null);
+    const fila = canales.get(c) ?? { pedidos: 0, nuevos: 0, ventas: 0, contribucion: 0 };
+    fila.pedidos++;
+    if (esNuevo.get(p.id)) fila.nuevos++;
+    fila.ventas += Number(p.total);
+    fila.contribucion += Number(p.total) - Number(p.costoProductos) - Number(p.costoEnvioReal) - Number(p.comisionPago) - Number(p.costoPackaging);
+    canales.set(c, fila);
+  }
+  const filasCanal = [...canales.entries()].sort((a, b) => b[1].contribucion - a[1].contribucion);
   const serie = serieDiaria(r.porDia, diaLocal(desde), diaLocal(new Date()));
   const tiles = [
     ["Ventas", pesos(r.ventas), "productos menos descuentos"],
@@ -84,6 +104,19 @@ export default async function Estadisticas({ searchParams }: { searchParams: Pro
               <div className="flex justify-between border-t border-stone-200 pt-1 font-semibold"><dt>Margen neto</dt><dd>{pesos(r.margenNeto)}</dd></div>
             </dl>
             <p className="mt-2 text-xs text-stone-600">Los descuentos por transferencia ({pesos(r.descuentos)}) ya están restados de las ventas.</p>
+          </div>
+
+          <div className="tarjeta text-sm">
+            <h2 className="mb-1 text-sm font-semibold">Canales: de dónde vienen los compradores</h2>
+            <p className="mb-2 text-xs text-stone-600">Contribución = total cobrado − mercadería − envío real − comisión − packaging. «Nuevos» = primera compra con ese teléfono. Los pedidos anteriores a esta medición salen «sin dato».</p>
+            <table className="w-full tabular-nums">
+              <thead><tr className="text-left text-xs text-stone-600"><th className="py-1">Canal</th><th className="py-1 text-right">Pedidos</th><th className="py-1 text-right">Nuevos</th><th className="py-1 text-right">Ventas</th><th className="py-1 text-right">Contribución</th></tr></thead>
+              <tbody>
+                {filasCanal.map(([c, f]) => (
+                  <tr key={c} className="border-t border-stone-100"><td className="py-1">{c}</td><td className="py-1 text-right">{f.pedidos}</td><td className="py-1 text-right">{f.nuevos}</td><td className="py-1 text-right">{pesos(f.ventas)}</td><td className={`py-1 text-right ${f.contribucion < 0 ? "text-red-700" : ""}`}>{pesos(f.contribucion)}</td></tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">

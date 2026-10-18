@@ -123,7 +123,7 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
         <section className="rounded-xl border border-acopio-200 bg-acopio-50 p-4 text-sm">
           <p className="font-medium text-acopio-900">¿Se te está terminando?</p>
           <p className="mt-1 text-stone-700">Repetí este pedido en un clic, con los precios de hoy. Lo revisás en el carrito antes de pagar.</p>
-          <Link href={repetir} className="btn mt-3">Repetir este pedido</Link>
+          <Link href={`${repetir}&ref=repetir`} className="btn mt-3">Repetir este pedido</Link>
         </section>
       )}
       <Link href="/catalogo" className="text-sm text-acopio-700 underline">Seguir mirando el catálogo</Link>

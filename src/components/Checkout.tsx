@@ -1,5 +1,7 @@
 "use client";
 
+import { leerOrigen } from "./Origen";
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { pesosCliente, useCarrito } from "./Carrito";
@@ -76,7 +78,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
     const f = new FormData(e.currentTarget);
     const cliente = Object.fromEntries(["nombre", "email", "telefono", "calle", "ciudad", "notas"].map((k) => [k, f.get(k)]));
     try {
-      const r = await fetch("/api/pedidos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lineas, cliente: { ...cliente, provincia, cp }, envioOpcionId: opcion.id, medioPago: medio }) });
+      const r = await fetch("/api/pedidos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lineas, cliente: { ...cliente, provincia, cp }, envioOpcionId: opcion.id, medioPago: medio, origen: leerOrigen() }) });
       const datos = await r.json();
       if (!r.ok) throw new Error(datos.error);
       window.location.href = datos.url;
