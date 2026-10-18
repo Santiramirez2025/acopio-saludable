@@ -961,3 +961,13 @@ test("comentarios: intención de compra y lectura del webhook", () => {
   assert.equal(fb[0].esRespuesta, false);
   assert.match(mensajePrivado("$ 35.232"), /35\.232.*\?$/);
 });
+
+import { nuevas, textoAviso, type Publicacion } from "./radar";
+
+test("radar: solo publicaciones recientes y no avisadas", () => {
+  const ahora = new Date("2026-10-18T20:00:00Z");
+  const p = (id: string, min: number): Publicacion => ({ id, username: "cuenta", seguidores: 25400, caption: "Llega el finde largo", permalink: "https://instagram.com/p/x", timestamp: new Date(ahora.getTime() - min * 60_000).toISOString(), likes: 10, comentarios: 2 });
+  const r = nuevas([p("a", 5), p("b", 120), p("c", 10)], new Set(["c"]), ahora);
+  assert.deepEqual(r.map((x) => x.id), ["a"]);
+  assert.match(textoAviso(p("a", 5), "¡Qué bueno!", ahora), /@cuenta \(25\.4 mil seguidores\) publicó hace 5 min/);
+});
