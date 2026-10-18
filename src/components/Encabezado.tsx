@@ -104,7 +104,7 @@ export function MedidorPedido() {
   if (ruta.startsWith("/carrito") || ruta.startsWith("/checkout") || ruta.startsWith("/pedido")) return null;
   const { falta, progresoPct, subtotal, puedePagar } = cotizacion;
   return (
-    <aside aria-label="Tu pedido" className="fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 mx-auto max-w-md md:inset-x-auto md:bottom-5 md:right-5 md:w-[380px]">
+    <aside aria-label="Tu pedido" className="fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 mx-auto max-w-md md:inset-x-auto md:bottom-5 md:right-24 md:w-[380px]">
       <Link href={puedePagar ? "/checkout" : "/carrito"} className="fondo-oscuro block overflow-hidden rounded-2xl bg-acopio-900 text-white shadow-dock" aria-label={puedePagar ? "Finalizar la compra" : "Ver tu pedido"}>
         <div className="flex items-center gap-3 px-4 pb-2.5 pt-3">
           <div className="min-w-0 flex-1">
