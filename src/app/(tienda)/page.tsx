@@ -81,6 +81,28 @@ export default async function Home() {
         </div>
       </section>
 
+      <section aria-labelledby="herramientas">
+        <h2 id="herramientas" className="sr-only">Armá tu compra</h2>
+        <div className="grid gap-3 md:grid-cols-3">
+          {[
+            { href: "/mi-lista", chip: "Para tu casa", titulo: "Tu lista del mes en 60 segundos", texto: "Personas, qué querés resolver y presupuesto: te armamos la compra con precios de hoy.", foto: "/img/nichos/familias.webp", cta: "Armar mi lista" },
+            { href: "/cotizador-hoteles", chip: "Hoteles y cabañas", titulo: "¿Cuánto te cuesta cada desayuno?", texto: "Plazas, ocupación y días: el pedido del mes y el costo por desayuno, listo para aprobar.", foto: "/img/nichos/hoteleria.webp", cta: "Calcular presupuesto" },
+            { href: "/armador", chip: "Para negocios", titulo: "El pedido de tu negocio, armado", texto: "Gimnasios, cafeterías, kioscos y dietéticas: un pedido por rubro que ajustás a tu medida.", foto: "/img/nichos/kioscos.webp", cta: "Armar pedido" },
+          ].map((h) => (
+            <Link key={h.href} href={h.href} className="group relative flex min-h-[260px] flex-col justify-end overflow-hidden rounded-3xl bg-acopio-900 p-5 text-white">
+              <Image src={h.foto} alt="" fill sizes="(max-width: 768px) 100vw, 380px" className="object-cover opacity-55 transition group-hover:scale-[1.03]" />
+              <span className="absolute inset-0 bg-gradient-to-t from-acopio-900 via-acopio-900/70 to-transparent" aria-hidden="true" />
+              <span className="relative">
+                <span className="chip bg-sol text-acopio-900">{h.chip}</span>
+                <span className="mt-2 block font-display text-2xl font-extrabold leading-tight tracking-tight">{h.titulo}</span>
+                <span className="mt-1 block text-sm text-white/85">{h.texto}</span>
+                <span className="mt-3 inline-flex min-h-[44px] items-center rounded-full bg-sol px-5 text-sm font-bold text-acopio-900">{h.cta} →</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {alfajores.length > 0 && (
         <section className="rounded-3xl bg-acopio-900 p-4 sm:p-6">
           {/* El blanco va solo en el encabezado y el aviso: adentro del riel las fichas son blancas y el texto tiene que seguir oscuro. */}
