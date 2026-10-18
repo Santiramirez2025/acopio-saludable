@@ -27,6 +27,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
       <div className="flex flex-wrap gap-4 text-sm">
         <Link href="/admin/pedidos" className="text-stone-600 underline">← Pedidos</Link>
         <Link href={`/admin/pedidos/${pedido.id}/qr`} className="text-acopio-700 underline">QR de reposición para imprimir</Link>
+        {pedido.pagadoAt && <a href={`/pedido/${pedido.token}/comprobante`} target="_blank" className="text-acopio-700 underline">Comprobante de pago (link para el cliente)</a>}
       </div>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
