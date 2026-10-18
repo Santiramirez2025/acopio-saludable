@@ -971,3 +971,10 @@ test("radar: solo publicaciones recientes y no avisadas", () => {
   assert.deepEqual(r.map((x) => x.id), ["a"]);
   assert.match(textoAviso(p("a", 5), "¡Qué bueno!", ahora), /@cuenta \(25\.4 mil seguidores\) publicó hace 5 min/);
 });
+
+test("un código postal solo no es un gracias", () => {
+  assert.equal(soloAgradece("3300"), false);
+  assert.equal(soloAgradece("5152"), false);
+  assert.equal(soloAgradece("👍"), true);
+  assert.equal(soloAgradece("gracias"), true);
+});

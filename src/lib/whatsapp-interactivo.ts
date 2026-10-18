@@ -252,6 +252,8 @@ export function quiereVer(texto: string): boolean {
  */
 export function postergaCompra(texto: string): boolean {
   if (texto.includes("?")) return false;
+  // Un número solo («3300») es un código postal, una cantidad o una hora, nunca un gracias.
+  if (/\d/.test(texto)) return false;
   const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   if (t.length > 160) return false;
   if (/\b(lo quiero|la quiero|quiero (el|la|los|las|uno|una)|separamel|dejamel|agregal|anotal|mandamel|como (pago|hago)|pasame (el|los) (alias|cbu|link))\b/.test(t)) return false;
@@ -280,6 +282,8 @@ export function tieneDireccion(texto: string): boolean {
 export function soloAgradece(texto: string): boolean {
   // «?» o «??» no es un gracias: está esperando la respuesta a algo que preguntó.
   if (texto.includes("?")) return false;
+  // Un número solo («3300») es un código postal, una cantidad o una hora, nunca un gracias.
+  if (/\d/.test(texto)) return false;
   const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   return /^((ok|oka|okey|dale|bueno|listo|genial|perfecto|joya|buenisimo|barbaro)\s)?(muchas\s)?(gracias|graciass+|grax|mil gracias)(\s(a vos|igualmente|che|genio|capo))?$/.test(t) || /^(ok|oka|okey|joya)$/.test(t) || t === "";
 }
