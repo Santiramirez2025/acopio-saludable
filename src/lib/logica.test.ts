@@ -892,3 +892,13 @@ test("recordatorio: corto, con pregunta, y nunca de noche", () => {
   assert.ok(!enHorario(new Date("2026-10-18T02:00:00Z")));
   assert.ok(!enHorario(new Date("2026-10-18T00:30:00Z")));
 });
+
+import { prolijo } from "./nombres";
+test("tienda: nombres del proveedor prolijos", () => {
+  assert.equal(prolijo("x1kg-DEAN FUNES"), "x 1 kg · Dean Funes");
+  assert.equal(prolijo("x100 Grs-DEAN FUNES"), "x 100 g · Dean Funes");
+  assert.equal(prolijo("Mix Clásico con cajú"), "Mix Clásico con cajú");
+  assert.equal(prolijo("x 1kg Fraccionada"), "x 1 kg Fraccionada");
+  assert.equal(prolijo("Barritas Zannas Almendras y Sal marina Sin Glutenx 12 Unid."), "Barritas Zannas Almendras y Sal marina Sin Glutenx 12 Unid.");
+  assert.equal(prolijo("x25 saq. Hurlingham Sin Gluten"), "x 25 saq. Hurlingham Sin Gluten");
+});
