@@ -18,7 +18,7 @@ import { pesos, renglonCombo } from "./precios";
 import { zonaPagaDe } from "./envios/tabla";
 import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
-import { cortada, fichasNombradas, separarOpciones } from "./whatsapp-interactivo";
+import { cortada, fichasNombradas, presentacionDe, separarOpciones } from "./whatsapp-interactivo";
 import { argumentoCombo, COMBO_ENTRADA, temaDe } from "./combos-tema";
 import type { Accion, Enlace, EnvioCotizado, Ficha, Respuesta } from "./asistente-catalogo";
 import { cotizarEnvioChat } from "./envio-chat";
@@ -610,7 +610,9 @@ export async function responderComoVendedor(
             continue;
           }
           if (!fichas.length) return null;
-          texto = "Mirá, acá tenés las opciones con precio 👇";
+          // Ya no va la lista debajo: los precios tienen que estar en el texto.
+          const tres = fichas.slice(0, 3).map((f) => `${f.nombre.replace(/^Combo /, "")} ${presentacionDe(f)} a ${f.precio}`.replace(/\s+/g, " "));
+          texto = `Te paso los precios: ${tres.join(", ")}. ¿Cuál te llevás?`;
         }
         const mostradas = sep.texto ? fichasNombradas(fichas, texto) : fichas.slice(0, 4);
         return {
