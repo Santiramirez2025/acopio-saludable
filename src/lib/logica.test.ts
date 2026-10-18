@@ -902,3 +902,14 @@ test("tienda: nombres del proveedor prolijos", () => {
   assert.equal(prolijo("Barritas Zannas Almendras y Sal marina Sin Glutenx 12 Unid."), "Barritas Zannas Almendras y Sal marina Sin Glutenx 12 Unid.");
   assert.equal(prolijo("x25 saq. Hurlingham Sin Gluten"), "x 25 saq. Hurlingham Sin Gluten");
 });
+
+import { factorHogar } from "./armador";
+test("mi lista: el pedido base crece con las personas del hogar", () => {
+  assert.equal(factorHogar(1), 1);
+  assert.equal(factorHogar(2), 1.5);
+  assert.equal(factorHogar(4), 2);
+  assert.equal(factorHogar(6), 3);
+  const items = armarPedido({ base: [{ codigo: "a", precio: 9000, cantidad: 1 }, { codigo: "b", precio: 9000, cantidad: 1 }], candidatos: [{ codigo: "c", precio: 5000 }], personas: 2, presupuesto: 50000, compraMinima: 35000, factor: factorHogar(2) });
+  const total = items.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  assert.ok(total >= 35000 && total <= 50000, String(total));
+});

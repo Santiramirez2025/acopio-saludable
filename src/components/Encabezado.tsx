@@ -12,7 +12,8 @@ const NAV = [
   ["/nichos", "Por negocio"],
   ["/objetivos", "Por objetivo"],
   ["/combos", "Combos"],
-  ["/armador", "Armá tu pedido"],
+  ["/mi-lista", "Lista del mes"],
+  ["/armador", "Para negocios"],
 ];
 
 const Icono = ({ d }: { d: string }) => (
