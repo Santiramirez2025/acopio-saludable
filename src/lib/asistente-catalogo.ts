@@ -13,7 +13,8 @@ export type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string;
 /** `derivar`: el vendedor pidió que siga una persona (en WhatsApp, el bot se calla a partir de acá). */
 /** `opciones`: respuestas cortas para tocar (en WhatsApp son botones; en la web, chips). */
 /** Envío cotizado para la zona que dijo la persona. costo null: «se ve con el código postal». */
-export type EnvioCotizado = { lugar: string; costo: number | null; detalle: string; propia?: boolean };
+/** alRecibir: solo Carlos Paz y alrededores (la zona sin cargo). En Córdoba capital y por correo se paga antes. */
+export type EnvioCotizado = { lugar: string; costo: number | null; detalle: string; propia?: boolean; alRecibir?: boolean };
 export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean; opciones?: string[]; envio?: EnvioCotizado; entregaGuardada?: boolean };
 
 type Indexado = ProductoTienda & { nombre: string; indice: string };

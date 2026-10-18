@@ -142,8 +142,8 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
         botones: [
           { id: corte(`${ID.pagar}${pedido.camino}`, 256), titulo: "Mercado Pago" },
           { id: corte(`${ID.transferencia}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Transferencia" },
-          // Con entrega propia se puede pagar al recibir; si no, el tercer botón es sumar algo más.
-          pedido.envio.propia
+          // Pagar al recibir solo en Carlos Paz y alrededores: en Córdoba capital hay zonas donde no conviene ir a cobrar.
+          pedido.envio.alRecibir
             ? { id: corte(`${ID.recibir}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Pago al recibir" }
             : { id: `${ID.opcion}Sumar algo más`, titulo: "Sumar algo más" },
         ],

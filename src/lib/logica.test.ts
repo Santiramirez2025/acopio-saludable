@@ -703,12 +703,14 @@ test("whatsapp: productos van en lista para tocar, pedido con botones de pago, s
   assert.deepEqual((sinZona[0] as { botones: { id: string }[] }).botones.map((b) => b.id), ["zona|Carlos Paz", "zona|Córdoba Capital", "op|Otra ciudad"]);
   assert.match((sinZona[0] as { cuerpo: string }).cuerpo, /barrio o ciudad/);
   const pedido = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Córdoba Capital", costo: 15000, detalle: "x", propia: true, totalConEnvio: "$ 50.268", transferenciaConEnvio: "$ 47.447" } });
-  assert.deepEqual((pedido[0] as { botones: { id: string; titulo: string }[] }).botones.map((b) => b.titulo), ["Mercado Pago", "Transferencia", "Pago al recibir"]);
-  assert.equal((pedido[0] as { botones: { id: string }[] }).botones[2].id, "recibir|/carrito?p=c-despensa*1~15000~Córdoba Capital");
+  // Córdoba capital: se paga antes, no hay «Pago al recibir».
+  assert.deepEqual((pedido[0] as { botones: { id: string; titulo: string }[] }).botones.map((b) => b.titulo), ["Mercado Pago", "Transferencia", "Sumar algo más"]);
   assert.match((pedido[0] as { cuerpo: string }).cuerpo, /Envío: \$\s15\.000\nTotal con envío: \$ 50\.268\nPor transferencia: \$ 47\.447/);
   assert.equal(pedido[0].tipo, "botones");
-  const b = pedido[0] as Extract<(typeof pedido)[number], { tipo: "botones" }>;
+  const cp = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Carlos Paz", costo: 0, detalle: "x", propia: true, alRecibir: true, totalConEnvio: "$ 35.268", transferenciaConEnvio: "$ 32.447" } });
+  const b = cp[0] as Extract<(typeof cp)[number], { tipo: "botones" }>;
   assert.deepEqual(b.botones.map((x) => x.titulo), ["Mercado Pago", "Transferencia", "Pago al recibir"]);
+  assert.equal(b.botones[2].id, "recibir|/carrito?p=c-despensa*1~0~Carlos Paz");
   assert.equal(b.botones[0].id, "pagar|/carrito?p=c-despensa*1");
   assert.match(textoParaPanel(b), /\[Botones: Mercado Pago · Transferencia · Pago al recibir\]/);
 

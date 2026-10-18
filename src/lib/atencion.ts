@@ -5,6 +5,7 @@
 // una persona tomó la charla o si el prospecto pidió la baja, y contesta el mismo vendedor.
 // Lo único que cambia por canal es cómo se manda la respuesta.
 
+import { zonaDeLugar } from "./envio-zona";
 import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
 import { buscarEnCatalogo, comboDelAnuncio, type Accion, type EnvioCotizado, type Respuesta } from "./asistente-catalogo";
 import { cotizarEnvioChat } from "./envio-chat";
@@ -120,6 +121,11 @@ export async function planCobroLink(camino: string): Promise<Saliente[]> {
  * Cerró la venta: Transferencia o Pago al recibir. Se crea el pedido en el panel (con lista de compra
  * a Distrimay), se le avisa a Santiago y el vendedor le pide nombre, dirección y horario para entregar.
  */
+/** Pagar al recibir solo en la zona de entrega sin cargo (Carlos Paz y alrededores). */
+function recibeEnZonaPropia(lugar: string | undefined | null): boolean {
+  return Boolean(lugar) && zonaDeLugar(String(lugar), null)?.tipo === "propia";
+}
+
 async function cerrarVenta(
   clave: string,
   nombre: string | null,
@@ -257,12 +263,15 @@ export async function atender(e: Entrada): Promise<void> {
   const toque = canal === "whatsapp" ? leerToque(e.toque) : null;
   if (toque?.tipo === "pagar") return cobrarConLink(e.clave, toque.camino);
   if (toque?.tipo === "transferencia") return cerrarVenta(e.clave, e.nombre, "TRANSFERENCIA", toque.camino, toque.envio);
-  if (toque?.tipo === "recibir") return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", toque.camino, toque.envio);
+  // Un botón viejo de «Pago al recibir» fuera de Carlos Paz y alrededores se cierra por transferencia: se cobra antes de salir.
+  if (toque?.tipo === "recibir") return cerrarVenta(e.clave, e.nombre, recibeEnZonaPropia(toque.envio?.lugar) ? "AL_RECIBIR" : "TRANSFERENCIA", toque.camino, toque.envio);
 
   // «Pago aquí» con el pedido armado: se cierra al recibir, sin preguntar zona (pagar al recibir
   // es solo en Carlos Paz y alrededores). Si en el mismo mensaje viene la dirección, queda anotada.
   const guardado = canal === "whatsapp" ? await pedidoGuardado(e.clave) : null;
-  if (guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto)) {
+  // Solo si el último envío que le dijimos no es de otra zona (Córdoba capital, correo): ahí lo ve el vendedor.
+  const ultimoEnvio = [...(await historialDe(e.clave, 9))].reverse().find((h) => h.de === "acopio" && /Envío a [^:]+:/.test(h.texto))?.texto.match(/Envío a ([^:]+):/)?.[1];
+  if (guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio))) {
     const direccion = tieneDireccion(texto) ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160) : undefined;
     console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
     return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: "Villa Carlos Paz" }, direccion || undefined);
