@@ -1,5 +1,7 @@
 "use server";
 
+import { enviarComprobante } from "./comprobante-envio";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
@@ -385,6 +387,23 @@ export async function cambiarEstadoPedido(fd: FormData) {
     destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
   }
   revalidatePath("/", "layout");
+  redirect(destino);
+}
+
+/** Botón del panel: reenvía el comprobante de pago por el WhatsApp del negocio. */
+export async function reenviarComprobante(fd: FormData) {
+  await requireAdmin();
+  const id = Number.parseInt(String(fd.get("id")), 10);
+  let destino = `/admin/pedidos/${id}?ok=1`;
+  try {
+    const pedido = await prisma.order.findUniqueOrThrow({ where: { id } });
+    if (!pedido.pagadoAt) throw new Error("El pedido todavía no está pago");
+    const via = await enviarComprobante(pedido);
+    if (!via) throw new Error("No se pudo mandar por WhatsApp: revisá el teléfono del pedido");
+    destino = `/admin/pedidos/${id}?ok=${via === "texto" ? "comprobante" : "comprobante-plantilla"}`;
+  } catch (e) {
+    destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
+  }
   redirect(destino);
 }
 
