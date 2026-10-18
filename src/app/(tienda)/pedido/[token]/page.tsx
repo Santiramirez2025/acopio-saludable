@@ -115,6 +115,9 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
         <p>{pedido.nombre} · {pedido.calle}, {pedido.ciudad}, {pedido.provincia} ({pedido.cp})</p>
         {pedido.envioPlazo && <p className="text-stone-600">{pedido.envioPlazo}</p>}
       </section>
+      {pedido.pagadoAt && pedido.estado !== "CANCELADO" && (
+        <Link href={`/pedido/${token}/comprobante`} className="btn-sec w-full justify-center">Ver comprobante de pago</Link>
+      )}
       {!pendiente && pedido.estado !== "CANCELADO" && (
         <section className="rounded-xl border border-acopio-200 bg-acopio-50 p-4 text-sm">
           <p className="font-medium text-acopio-900">¿Se te está terminando?</p>
