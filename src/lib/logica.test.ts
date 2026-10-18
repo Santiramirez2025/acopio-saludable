@@ -877,3 +877,18 @@ test("pago aquí y dirección", () => {
   for (const t of ["La dirección es Cartago 100, esquina Rosario casa blanca", "Río Salado 451 Barrio El Fantasio", "Av. San Martín 1200"]) assert.ok(tieneDireccion(t), t);
   for (const t of ["Pago aquí.", "gracias", "quiero 2 kilos"]) assert.ok(!tieneDireccion(t), t);
 });
+
+import { planRecordatorio, cerroLaCharla, enHorario, horaArgentina } from "./whatsapp-recordatorio";
+test("recordatorio: corto, con pregunta, y nunca de noche", () => {
+  const conPedido = planRecordatorio({ nombre: "Patricia Sanchez", anuncioTitulo: null, pedido: "/carrito?p=c-despensa*1" }) as { cuerpo: string; botones: { id: string }[] };
+  assert.match(conPedido.cuerpo, /^¡Hola Patricia!.*\?/);
+  assert.equal(conPedido.botones[0].id, "zona|Carlos Paz");
+  const anuncio = planRecordatorio({ nombre: "Casa Playas de Oro", anuncioTitulo: "Despensa de 4 kilos a $35.268", pedido: null }) as { cuerpo: string };
+  assert.match(anuncio.cuerpo, /^¡Hola! ¿Pudiste ver lo de la Despensa de 4 kilos\?/);
+  assert.ok(cerroLaCharla("¡De nada, María! Cualquier cosa nos escribís por acá 🙌"));
+  assert.ok(!cerroLaCharla("La nuez sale $X. ¿Para tu casa o para un negocio?"));
+  assert.equal(horaArgentina(new Date("2026-10-18T11:00:00Z")), 8);
+  assert.ok(enHorario(new Date("2026-10-18T11:00:00Z")));
+  assert.ok(!enHorario(new Date("2026-10-18T02:00:00Z")));
+  assert.ok(!enHorario(new Date("2026-10-18T00:30:00Z")));
+});

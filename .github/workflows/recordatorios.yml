@@ -1,0 +1,12 @@
+name: Recordatorios de WhatsApp
+# Cada 30 minutos entre las 8 y las 21 de Argentina (11 a 00 UTC). El endpoint igual revisa la hora.
+on:
+  schedule:
+    - cron: "5,35 11-23 * * *"
+  workflow_dispatch:
+jobs:
+  correr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - run: curl -fsS --max-time 120 https://www.acopiosaludable.com/api/whatsapp/recordatorios
