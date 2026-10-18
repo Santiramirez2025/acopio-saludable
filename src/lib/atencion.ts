@@ -217,13 +217,17 @@ export async function atender(e: Entrada): Promise<void> {
   }
   if (!texto) return;
 
-  // Freno de bucles: si del otro lado contesta un bot, o si ya le mandamos muchísimos mensajes seguidos
-  // (40 en 10 minutos: cada respuesta son 2 o 3 mensajes, y una clienta con dudas llegaba a 15 y se cortaba la venta),
-  // el vendedor se calla y la charla pasa a una persona. Dos bots hablándose es spam para WhatsApp.
-  if (esRespuestaAutomatica(texto) || (await respuestasRecientes(e.clave, 10)) >= 40) {
-    console.log("chat: respuesta automática o demasiados mensajes seguidos, pasa a una persona", cola(e.clave));
+  // Del otro lado contestó un bot (el «gracias por comunicarte» de un hotel): no se le contesta y
+  // no se avisa a nadie. La charla sigue en manos del vendedor: cuando escriba una persona, la atiende.
+  if (esRespuestaAutomatica(texto)) {
+    console.log("chat: respuesta automática, no se contesta", cola(e.clave));
+    return;
+  }
+  // Freno de bucles: 40 mensajes en 10 minutos es que algo se trabó. Se calla en silencio y retoma
+  // solo a las RETOMA_HORAS (antes le llegaba un aviso a Santiago por cada una y molestaba).
+  if ((await respuestasRecientes(e.clave, 10)) >= 40) {
+    console.log("chat: demasiados mensajes seguidos, se pausa", cola(e.clave));
     await cambiarEstado(e.clave, "persona");
-    await avisarSantiago("Charla pausada", `🤖 La charla con ${e.nombre ?? e.clave} se pausó (respondió un bot o hubo muchos mensajes seguidos). Revisala:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
     return;
   }
 
