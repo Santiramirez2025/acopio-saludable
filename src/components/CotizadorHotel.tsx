@@ -12,7 +12,7 @@ const INSUMOS = [
   ["granola", "Granola"],
   ["avena", "Avena"],
   ["cereales", "Copos y cereales"],
-  ["frutos", "Frutos secos y pasas"],
+  ["frutos", "Frutos secos"],
   ["miel", "Miel"],
   ["mermelada", "Mermelada"],
   ["te", "Té en saquitos"],
