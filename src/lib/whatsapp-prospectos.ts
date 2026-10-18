@@ -51,7 +51,7 @@ export async function crearPlantillas(): Promise<Record<string, Graph>> {
       language: IDIOMA,
       category: "MARKETING",
       components: [
-        { type: "BODY", text: p.cuerpo, example: { body_text: [["Hotel del Lago"]] } },
+        { type: "BODY", text: p.cuerpo, example: { body_text: [[p.nombre.includes("negocios") ? "Café del Lago" : "Hotel del Lago"]] } },
         { type: "BUTTONS", buttons: p.botones.map((text) => ({ type: "QUICK_REPLY", text })) },
       ],
     });
