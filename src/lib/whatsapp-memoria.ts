@@ -165,17 +165,26 @@ export async function marcarLeida(telefono: string): Promise<void> {
   await prisma.$executeRaw`UPDATE "WhatsappConversacion" SET "noLeidos" = 0 WHERE "telefono" = ${telefono}`;
 }
 
-export type Resumen = Conversacion & { ultimoTexto: string | null; ultimoDe: Mensaje["de"] | null };
+export type Resumen = Conversacion & { ultimoTexto: string | null; ultimoDe: Mensaje["de"] | null; pedido: string | null; compras: number; aCobrar: number };
 
 export async function listarConversaciones(limite = 100): Promise<Resumen[]> {
   return prisma.$queryRaw<Resumen[]>`
     SELECT c."telefono", c."nombre", c."estado", c."noLeidos", c."ultimoMensaje", c."creado", c."anuncioId", c."anuncioTitulo", c."prospecto", c."baja",
-           u."texto" AS "ultimoTexto", u."de" AS "ultimoDe"
+           c."pedido", u."texto" AS "ultimoTexto", u."de" AS "ultimoDe",
+           COALESCE(o."compras", 0)::int AS "compras", COALESCE(o."aCobrar", 0)::int AS "aCobrar"
     FROM "WhatsappConversacion" c
     LEFT JOIN LATERAL (
       SELECT m."texto", m."de" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1
     ) u ON true
-    ORDER BY (c."estado" = 'persona') DESC, c."ultimoMensaje" DESC
+    LEFT JOIN LATERAL (
+      -- Mismo cliente aunque el teléfono del pedido esté escrito distinto: se comparan los últimos 10 dígitos.
+      SELECT COUNT(*) AS "compras",
+             COUNT(*) FILTER (WHERE x."estado"::text IN ('PENDIENTE_PAGO','PAGADO','EN_COMPRA','PREPARADO','ENVIADO')) AS "aCobrar"
+      FROM "Order" x
+      WHERE x."estado"::text <> 'CANCELADO' AND length(c."telefono") >= 10
+        AND right(regexp_replace(x."telefono", '[^0-9]', '', 'g'), 10) = right(c."telefono", 10)
+    ) o ON true
+    ORDER BY (c."estado" = 'persona' AND c."noLeidos" > 0) DESC, c."ultimoMensaje" DESC
     LIMIT ${limite}
   `;
 }

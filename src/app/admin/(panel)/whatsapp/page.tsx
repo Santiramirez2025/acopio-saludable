@@ -4,7 +4,7 @@ import Link from "next/link";
 import { conversacionDe, listarConversaciones, mensajesDe, RETOMA_HORAS } from "@/lib/whatsapp-memoria";
 import { cloudActivo } from "@/lib/whatsapp-cloud";
 import { canalDe, claveValida, metaActivo, NOMBRE_CANAL, type CanalChat } from "@/lib/meta-mensajes";
-import { COLOR_CANAL, contar, cuando, etiquetaDia, FILTROS, filtroValido, iniciales, mismoDia, pasaFiltro, prefijo, telefonoLindo, type Filtro } from "@/lib/bandeja";
+import { COLOR_CANAL, contar, cuando, etapaDe, ETAPAS, etiquetaDia, FILTROS, filtroValido, iniciales, mismoDia, pasaFiltro, prefijo, teEspera, telefonoLindo, type Filtro } from "@/lib/bandeja";
 import { Composer } from "@/components/bandeja/Composer";
 import { AutoRefresco } from "@/components/bandeja/AutoRefresco";
 import { AlFinal } from "@/components/bandeja/AlFinal";
@@ -149,13 +149,15 @@ export default async function Mensajes({ searchParams }: { searchParams: Promise
                         </p>
                         {c.noLeidos > 0 && <span className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-acopio-600 px-1.5 text-[11px] font-bold text-white">{c.noLeidos}</span>}
                       </div>
-                      {(c.estado === "persona" || c.anuncioId || c.prospecto) && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {c.estado === "persona" && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">Te espera</span>}
-                          {c.anuncioId && <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-800">Anuncio</span>}
-                          {c.prospecto && <span className="rounded bg-tierra-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-tierra-700">{c.baja ? "Baja" : "Prospecto"}</span>}
-                        </div>
-                      )}
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {teEspera(c) && <span className="rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">Te espera</span>}
+                        {(() => {
+                          const e = etapaDe(c);
+                          return <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ETAPAS[e].clase}`}>{e === "negocio" && c.baja ? "Baja" : ETAPAS[e].nombre}</span>;
+                        })()}
+                        {c.estado === "persona" && !teEspera(c) && <span className="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600">En tus manos</span>}
+                        {c.anuncioId && <span className="rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700">Anuncio</span>}
+                      </div>
                     </div>
                   </Link>
                 </li>
