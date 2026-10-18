@@ -7,12 +7,14 @@ export const INSUMOS = {
   granola: { nombre: "Granola", gramos: 25, buscar: /granola/i },
   avena: { nombre: "Avena", gramos: 20, buscar: /\bavena\b/i },
   cereales: { nombre: "Copos y cereales", gramos: 25, buscar: /copos|almohadit|cereal/i },
-  frutos: { nombre: "Frutos secos y pasas", gramos: 15, buscar: /mix cl[aá]sico|mix de frutos|frutos secos|\bpasas\b/i },
+  frutos: { nombre: "Frutos secos", gramos: 15, buscar: /mix cl[aá]sico|mix de frutos|frutos secos/i },
   miel: { nombre: "Miel", gramos: 10, buscar: /\bmiel\b/i },
   mermelada: { nombre: "Mermelada", gramos: 20, buscar: /mermelada/i },
   te: { nombre: "Té en saquitos", gramos: 0, unidades: 0.5, buscar: /^t[eé]\b|\bt[eé] (negro|verde)/i },
 } as const;
 export type Insumo = keyof typeof INSUMOS;
+/** Lo que lleva el nombre del insumo pero no lo es («Galletas de avena y miel»). */
+const NO_ES = /galleta|barrita|barra |alfajor|cookie|bud[ií]n|turr[oó]n|crocante/i;
 export const INSUMO_IDS = Object.keys(INSUMOS) as Insumo[];
 
 export type Candidato = { codigo: string; producto: string; presentacion: string; precio: number; contenido: number | null; unidad: string | null };
@@ -37,17 +39,19 @@ export function cotizarDesayunos(desayunos: number, insumos: Insumo[], catalogo:
     const ins = INSUMOS[id];
     const porUnidad = "unidades" in ins;
     const opciones = catalogo
-      .filter((c) => ins.buscar.test(c.producto) && c.precio > 0)
+      .filter((c) => ins.buscar.test(c.producto) && !NO_ES.test(c.producto) && c.precio > 0)
       .map((c) => {
         const rinde = porUnidad ? unidadesDe(c) : c.unidad === "g" || c.unidad === "ml" ? c.contenido : null;
         return rinde ? { c, rinde, costo: c.precio / rinde } : null;
       })
       .filter((x): x is { c: Candidato; rinde: number; costo: number } => Boolean(x))
-      .sort((a, b) => a.costo - b.costo);
-    const mejor = opciones[0];
-    if (!mejor) continue;
     const total = desayunos * (porUnidad ? (ins as { unidades: number }).unidades : ins.gramos);
-    const cantidad = Math.max(1, Math.ceil(total / mejor.rinde));
+    // El que sale más barato para lo que hace falta, no el de mejor precio por kilo: una bolsa de 25 kg
+    // para 7 kg de avena es más cara y se vence.
+    const conCosto = opciones.map((o) => ({ ...o, cantidad: Math.max(1, Math.ceil(total / o.rinde)) })).sort((a, b) => a.cantidad * a.c.precio - b.cantidad * b.c.precio);
+    const mejor = conCosto[0];
+    if (!mejor) continue;
+    const cantidad = mejor.cantidad;
     out.push({ insumo: id, codigo: mejor.c.codigo, cantidad, necesario: porUnidad ? `${Math.ceil(total)} saquitos` : total >= 1000 ? `${(total / 1000).toFixed(1).replace(".", ",")} kg` : `${Math.ceil(total)} g` });
   }
   return out;
