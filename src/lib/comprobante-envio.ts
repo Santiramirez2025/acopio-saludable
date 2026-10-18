@@ -73,7 +73,7 @@ export async function crearPlantillaComprobante(): Promise<unknown> {
       components: [
         {
           type: "BODY",
-          text: "Hola {{1}}, recibimos el pago de tu pedido {{2}} de Acopio Saludable por {{3}}. Podés ver y guardar tu comprobante acá: {{4}}",
+          text: "Hola {{1}}, recibimos el pago de tu pedido {{2}} de Acopio Saludable por {{3}}. Tu comprobante: {{4}} . ¡Gracias por tu compra!",
           example: { body_text: [["Ana", "AS-00012", "$ 35.232", "https://www.acopiosaludable.com/pedido/abc/comprobante"]] },
         },
       ],
