@@ -945,3 +945,19 @@ test("bandeja: etapa de venta de cada charla", () => {
   assert.equal(teEspera({ ...base, estado: "persona" }), true);
   assert.equal(teEspera({ ...base, estado: "persona", ultimoDe: "persona" }), false);
 });
+
+import { comentariosDe, mensajePrivado, tieneIntencion } from "./comentarios";
+
+test("comentarios: intención de compra y lectura del webhook", () => {
+  assert.equal(tieneIntencion("Precio?"), true);
+  assert.equal(tieneIntencion("cuánto sale la despensa"), true);
+  assert.equal(tieneIntencion("Info"), true);
+  assert.equal(tieneIntencion("Qué rico 😍"), false);
+  const ig = comentariosDe("instagram", [{ changes: [{ field: "comments", value: { id: "1", text: "precio", from: { id: "9", username: "ana" }, media: { id: "m" } } }] }]);
+  assert.equal(ig.length, 1);
+  assert.equal(ig[0].canal, "instagram");
+  const fb = comentariosDe("page", [{ changes: [{ field: "feed", value: { item: "comment", verb: "add", comment_id: "2_3", post_id: "2", parent_id: "2", message: "info", from: { id: "7", name: "Juan" } } }] }]);
+  assert.equal(fb.length, 1);
+  assert.equal(fb[0].esRespuesta, false);
+  assert.match(mensajePrivado("$ 35.232"), /35\.232.*\?$/);
+});

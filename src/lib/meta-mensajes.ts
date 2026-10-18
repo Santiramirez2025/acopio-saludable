@@ -158,10 +158,10 @@ export async function conectarMeta(urlWebhook: string): Promise<Record<string, u
     const res = await fetch(`${GRAPH}/${appId}/subscriptions`, { method: "POST", body: q, signal: AbortSignal.timeout(20_000) });
     return { estado: res.status, cuerpo: await res.text() };
   };
-  salida.app_page = await suscribir("page", "messages,messaging_postbacks,messaging_referrals");
-  salida.app_instagram = await suscribir("instagram", "messages,messaging_postbacks,messaging_referral");
+  salida.app_page = await suscribir("page", "messages,messaging_postbacks,messaging_referrals,feed");
+  salida.app_instagram = await suscribir("instagram", "messages,messaging_postbacks,messaging_referral,comments");
 
-  const q = new URLSearchParams({ subscribed_fields: "messages,messaging_postbacks,messaging_referrals", access_token: p.token });
+  const q = new URLSearchParams({ subscribed_fields: "messages,messaging_postbacks,messaging_referrals,feed", access_token: p.token });
   const res = await fetch(`${GRAPH}/${p.id}/subscribed_apps`, { method: "POST", body: q, signal: AbortSignal.timeout(20_000) });
   salida.pagina_suscripta = { estado: res.status, cuerpo: await res.text() };
   return salida;

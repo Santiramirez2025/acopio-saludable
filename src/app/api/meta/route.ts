@@ -8,6 +8,8 @@ import { after, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { atender, cola } from "@/lib/atencion";
 import { metaActivo, nombreMeta, paginaMeta } from "@/lib/meta-mensajes";
+import { comentariosDe } from "@/lib/comentarios";
+import { atenderComentarios } from "@/lib/comentarios-atender";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
     console.error("meta: firma inválida");
     return NextResponse.json({ error: "firma inválida" }, { status: 401 });
   }
-  let cuerpo: { object?: string; entry?: { messaging?: Evento[] }[] };
+  let cuerpo: { object?: string; entry?: { messaging?: Evento[]; changes?: { field?: string; value?: Record<string, unknown> }[] }[] };
   try {
     cuerpo = JSON.parse(crudo);
   } catch {
@@ -54,8 +56,10 @@ export async function POST(req: Request) {
   const eventos = (cuerpo.entry ?? []).flatMap((e) => e.messaging ?? []);
   console.log("meta: webhook recibido", { objeto: cuerpo.object, eventos: eventos.length });
   if (!prefijo) return NextResponse.json({ ok: true });
+  const comentarios = comentariosDe(cuerpo.object, cuerpo.entry ?? []);
 
   after(async () => {
+    if (comentarios.length && metaActivo()) await atenderComentarios(comentarios).catch((e) => console.error("meta: comentarios falló", e));
     if (!metaActivo()) {
       console.error("meta: falta META_TOKEN, no se contesta");
       return;
