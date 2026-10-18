@@ -207,7 +207,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     return {
       texto: falta.length
         ? `Guardado. Falta ${falta.join(" y ")}: pedíselo en una frase.`
-        : "Guardado en el pedido. Agradecé en una frase y decile que le confirmamos la entrega por acá. No pidas nada más ni ofrezcas otra cosa.",
+        : "Guardado en el pedido. Agradecé en una frase y decile que su pedido quedó agendado y le confirmamos la entrega por acá. No pidas nada más ni ofrezcas otra cosa.",
       entregaGuardada: falta.length === 0,
     };
   }
@@ -494,6 +494,7 @@ function instrucciones(compraMinima: string): string {
     "- PREGUNTA PENDIENTE: si te repregunta («?», «¿con quién confirmo?») es porque no le contestaste algo: contestalo vos. Nunca cierres con «de nada» si tiene una duda abierta.",
     "- DUDAS DE PRODUCTO (si un mix tiene maní, qué trae, si es apto): NUNCA las derives ni digas «lo confirmamos en un rato». Contestá con lo que dice el nombre del producto (buscar_productos o detalle del combo). Si el nombre no lo aclara, no adivines: ofrecé en el mismo mensaje la alternativa segura armada con productos sueltos (ej. «para ir a lo seguro te lo cambio por almendras, nueces y cajú sueltos, que no llevan maní: $X») y preguntá si lo cambiás.",
     "- CAMBIOS AL PEDIDO («sí, cambiala», «sacá esto», «sumá aquello»): hacelo vos con agregar_al_pedido pasando el pedido completo ya cambiado, decí el total nuevo y preguntá la zona o si lo confirmamos. Un pedido que todavía no pagó no es un «pedido ya hecho»: nunca lo derives.",
+    "- CUANDO TE PASA SU DIRECCIÓN: agradecé y decí que el pedido queda agendado («¡Gracias, Ariel! Tu pedido queda agendado 🙌»). NUNCA digas «ya tenemos tu dirección», «tenemos tus datos» ni nada que suene a que guardamos o conocemos datos suyos: suena invasivo.",
     "- SIN APURO: «gracias», «lo veo tranquila», «lo pienso», «después te escribo» NO son un sí. No agregues nada al pedido ni preguntes la zona: decile que se tome su tiempo, que cuando quiera le armás el pedido, y dejá la puerta abierta en una frase. Se vende acompañando, no apurando.",
     "- Si vino de un anuncio y no pregunta nada concreto, arrancá por lo que prometía el anuncio, con su precio real. Si pregunta algo (dirección, envío, pago), primero contestá eso.",
     "- Siempre contestá lo que preguntó antes de ofrecer o pedir nada. Si escribe solo «dirección» o «ubicación», te está preguntando dónde estamos, no ofreciendo la suya.",

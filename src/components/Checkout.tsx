@@ -22,6 +22,24 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const consulta = useRef(0);
+  // Beneficio por recomendación: se consulta cuando ya hay email o WhatsApp, y el servidor lo vuelve a calcular al confirmar.
+  const [contacto, setContacto] = useState({ email: "", telefono: "" });
+  const [beneficio, setBeneficio] = useState<{ pct: number; texto: string | null; tipo?: string | null }>({ pct: 0, texto: null });
+  const [traeAmigo, setTraeAmigo] = useState(false);
+  useEffect(() => setTraeAmigo(/\bamigo-[a-z0-9]{4,12}\b/i.test(leerOrigen())), []);
+  useEffect(() => {
+    if (!contacto.email.includes("@") && contacto.telefono.replace(/\D/g, "").length < 8) return setBeneficio({ pct: 0, texto: null });
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch("/api/recomendacion", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...contacto, origen: leerOrigen() }) });
+        setBeneficio(await r.json());
+      } catch {
+        setBeneficio({ pct: 0, texto: null });
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [contacto]);
+  const leerContacto = (e: React.FocusEvent<HTMLInputElement>) => setContacto((c) => ({ ...c, [e.target.name]: e.target.value.trim() }));
   const cpValido = /^[A-Za-z]?\d{4}[A-Za-z]{0,3}$/.test(cp.trim());
 
   // El envío se calcula solo apenas hay provincia y código postal, y se recalcula si cambia el carrito.
@@ -65,10 +83,11 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
   const opcion = envio?.opciones.find((o) => o.id === opcionId);
   const subtotal = cotizacion.subtotal;
   const descuento = medio === "TRANSFERENCIA" ? Math.round(subtotal * descuentoTransferenciaPct) / 100 : 0;
+  const descuentoAmigo = beneficio.pct > 0 ? Math.round(subtotal * beneficio.pct) / 100 : 0;
   // Mismo cálculo que el servidor: con tarjeta el envío lleva la comisión adentro.
   const precioEnvio = (p: number) => envioQueSeCobra(p, medio === "MERCADOPAGO" ? "MERCADOPAGO" : "TRANSFERENCIA", comisionPagoPct);
   const envioCobrado = precioEnvio(opcion?.precio ?? 0);
-  const total = subtotal - descuento + envioCobrado;
+  const total = subtotal - descuento - descuentoAmigo + envioCobrado;
 
   async function confirmar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -95,10 +114,13 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
       <div className="space-y-6 lg:col-span-2">
         <fieldset className="rounded-xl border border-tierra-200 bg-white p-4">
           <legend className="px-1 font-display text-lg font-semibold">1. Tus datos</legend>
+          {traeAmigo && beneficio.tipo !== "premio" && (
+            <p className="mb-3 rounded-lg bg-acopio-50 px-3 py-2 text-sm text-acopio-800">Te recomendó un amigo: si es tu primera compra, tenés 5% de descuento. Se aplica solo al poner tu email o WhatsApp.</p>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2"><label className="etiqueta" htmlFor="nombre">Nombre y apellido o razón social</label><input className="campo" id="nombre" name="nombre" autoComplete="name" required minLength={3} /></div>
-            <div><label className="etiqueta" htmlFor="email">Email</label><input className="campo" id="email" name="email" type="email" autoComplete="email" required /></div>
-            <div><label className="etiqueta" htmlFor="telefono">WhatsApp (con código de área)</label><input className="campo" id="telefono" name="telefono" type="tel" autoComplete="tel" required /></div>
+            <div><label className="etiqueta" htmlFor="email">Email</label><input className="campo" id="email" name="email" type="email" autoComplete="email" required onBlur={leerContacto} /></div>
+            <div><label className="etiqueta" htmlFor="telefono">WhatsApp (con código de área)</label><input className="campo" id="telefono" name="telefono" type="tel" autoComplete="tel" required onBlur={leerContacto} /></div>
           </div>
         </fieldset>
 
@@ -174,6 +196,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
         <dl className="space-y-1 text-sm">
           <div className="flex justify-between"><dt>Productos ({cotizacion.unidades})</dt><dd className="tabular-nums">{pesosCliente(subtotal)}</dd></div>
           {descuento > 0 && <div className="flex justify-between text-acopio-700"><dt>Descuento por transferencia</dt><dd className="tabular-nums">− {pesosCliente(descuento)}</dd></div>}
+          {descuentoAmigo > 0 && <div className="flex justify-between text-acopio-700"><dt>{beneficio.texto}</dt><dd className="tabular-nums">− {pesosCliente(descuentoAmigo)}</dd></div>}
           <div className="flex justify-between"><dt>Envío</dt><dd className="tabular-nums">{opcion ? (envioCobrado > 0 ? pesosCliente(envioCobrado) : "Sin cargo") : "A calcular"}</dd></div>
           <div className="flex justify-between border-t border-tierra-200 pt-2 text-xl font-semibold"><dt>Total</dt><dd className="tabular-nums">{pesosCliente(total)}</dd></div>
         </dl>

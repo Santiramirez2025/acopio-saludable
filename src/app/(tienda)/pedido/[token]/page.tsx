@@ -105,7 +105,7 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
         </ul>
         <dl className="space-y-1 border-t border-tierra-200 p-4 text-sm">
           <div className="flex justify-between"><dt>Subtotal</dt><dd className="tabular-nums">{pesos(Number(pedido.subtotal))}</dd></div>
-          {Number(pedido.descuento) > 0 && <div className="flex justify-between text-acopio-700"><dt>Descuento por transferencia</dt><dd className="tabular-nums">− {pesos(Number(pedido.descuento))}</dd></div>}
+          {Number(pedido.descuento) > 0 && <div className="flex justify-between text-acopio-700"><dt>{pedido.medioPago === "TRANSFERENCIA" ? "Descuentos" : "Descuento"}</dt><dd className="tabular-nums">− {pesos(Number(pedido.descuento))}</dd></div>}
           <div className="flex justify-between"><dt>{pedido.envioNombre}</dt><dd className="tabular-nums">{Number(pedido.envioCobrado) > 0 ? pesos(Number(pedido.envioCobrado)) : "Sin cargo"}</dd></div>
           <div className="flex justify-between pt-1 text-lg font-semibold"><dt>Total</dt><dd className="tabular-nums">{pesos(Number(pedido.total))}</dd></div>
         </dl>
@@ -124,11 +124,11 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
       )}
       {!pendiente && pedido.estado !== "CANCELADO" && (
         <section className="rounded-xl border border-tierra-200 bg-white p-4 text-sm">
-          <p className="font-medium text-stone-900">¿Le sirve a alguien más?</p>
-          <p className="mt-1 text-stone-700">Pasale tu link a quien quiera ahorrar tiempo con la compra del mes. Cuando compre, lo registramos a tu nombre.</p>
+          <p className="font-medium text-stone-900">Recomendá y ganan los dos</p>
+          <p className="mt-1 text-stone-700">Pasale tu link a quien quiera resolver la compra del mes: tiene 5% de descuento en su primera compra, y vos 5% en tu próxima por cada amigo que compre.</p>
           <a
             className="btn-sec mt-3"
-            href={`https://wa.me/?text=${encodeURIComponent(`Yo compro la despensa en Acopio Saludable y me llega a casa: ${urlSitio()}/?ref=amigo-${codigoAmigo(token)}`)}`}
+            href={`https://wa.me/?text=${encodeURIComponent(`Yo compro la despensa en Acopio Saludable y me llega a casa. Con este link tenés 5% de descuento en tu primera compra: ${urlSitio()}/?ref=amigo-${codigoAmigo(token)}`)}`}
             target="_blank"
             rel="noopener noreferrer"
           >
