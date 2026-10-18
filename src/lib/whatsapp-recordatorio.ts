@@ -32,13 +32,14 @@ export function planRecordatorio(c: Charla): Saliente {
   const nombre = primerNombre(c.nombre);
   const hola = `¡Hola${nombre ? ` ${nombre}` : ""}!`;
   if (c.pedido && !c.pedido.startsWith("orden:")) {
+    // No se le vuelve a preguntar la ciudad: muchas veces ya la dijo (a Jose le pasó).
     return {
       tipo: "botones",
-      cuerpo: `${hola} Te dejamos el pedido guardado 🙌 ¿De qué barrio o ciudad sos? Así te pasamos el envío y te llega esta semana.`,
+      cuerpo: `${hola} Te dejamos el pedido guardado 🙌 ¿Lo cerramos así te llega esta semana?`,
       botones: [
-        { id: `${ID.zona}Carlos Paz`, titulo: "Carlos Paz y zona" },
-        { id: `${ID.zona}Córdoba Capital`, titulo: "Córdoba Capital" },
-        { id: `${ID.opcion}Otra ciudad`, titulo: "Otra ciudad" },
+        { id: `${ID.opcion}Sí, cerrémoslo`, titulo: "Sí, cerrémoslo" },
+        { id: `${ID.opcion}Tengo una duda`, titulo: "Tengo una duda" },
+        { id: `${ID.opcion}Lo veo después`, titulo: "Lo veo después" },
       ],
     };
   }
