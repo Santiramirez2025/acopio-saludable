@@ -15,14 +15,53 @@ export type ResumenCharla = {
   baja: boolean;
   ultimoTexto: string | null;
   ultimoDe: "cliente" | "bot" | "persona" | null;
+  /** Pedido armado en la charla y todavía sin cerrar. */
+  pedido?: string | null;
+  /** Pedidos hechos con este teléfono (sin cancelados) y cuántos esperan cobro o entrega. */
+  compras?: number;
+  aCobrar?: number;
 };
+
+/**
+ * En qué punto de la venta está cada charla, para no mezclar clientes:
+ * a cobrar (hizo el pedido y falta cobrar o entregar), cliente (ya compró), para cerrar (tiene un
+ * pedido armado), negocio (prospección), consulta (escribió hace poco) y fría (más de 3 días sin moverse).
+ */
+export type Etapa = "cobrar" | "cliente" | "cerrar" | "negocio" | "consulta" | "fria";
+
+export const ETAPAS: Record<Etapa, { nombre: string; clase: string }> = {
+  cobrar: { nombre: "A cobrar", clase: "bg-rose-100 text-rose-800" },
+  cliente: { nombre: "Cliente", clase: "bg-emerald-100 text-emerald-800" },
+  cerrar: { nombre: "Para cerrar", clase: "bg-amber-100 text-amber-900" },
+  negocio: { nombre: "Negocio", clase: "bg-tierra-100 text-tierra-700" },
+  consulta: { nombre: "Consulta", clase: "bg-sky-100 text-sky-800" },
+  fria: { nombre: "Fría", clase: "bg-stone-100 text-stone-600" },
+};
+
+const TRES_DIAS = 3 * 86_400_000;
+
+export function etapaDe(c: ResumenCharla, ahora = new Date()): Etapa {
+  if ((c.aCobrar ?? 0) > 0) return "cobrar";
+  if ((c.compras ?? 0) > 0) return "cliente";
+  if (c.pedido) return "cerrar";
+  if (c.prospecto) return "negocio";
+  return ahora.getTime() - new Date(c.ultimoMensaje).getTime() > TRES_DIAS ? "fria" : "consulta";
+}
+
+/** Te espera de verdad: la charla está en tus manos y lo último lo escribió el cliente. */
+export const teEspera = (c: ResumenCharla) => c.estado === "persona" && c.ultimoDe === "cliente";
 
 export const FILTROS = [
   ["todas", "Todas"],
-  ["sin-leer", "Sin leer"],
   ["persona", "Te esperan"],
+  ["cobrar", "A cobrar"],
+  ["cerrar", "Para cerrar"],
+  ["cliente", "Clientes"],
+  ["consulta", "Consultas"],
+  ["negocio", "Negocios"],
+  ["fria", "Frías"],
+  ["sin-leer", "Sin leer"],
   ["anuncios", "De anuncios"],
-  ["prospectos", "Prospectos"],
   ["whatsapp", "WhatsApp"],
   ["messenger", "Messenger"],
   ["instagram", "Instagram"],
@@ -41,9 +80,9 @@ export function pasaFiltro(c: ResumenCharla, f: Filtro, q = ""): boolean {
   const ok =
     f === "todas" ||
     (f === "sin-leer" && c.noLeidos > 0) ||
-    (f === "persona" && c.estado === "persona") ||
+    (f === "persona" && teEspera(c)) ||
     (f === "anuncios" && Boolean(c.anuncioId)) ||
-    (f === "prospectos" && Boolean(c.prospecto)) ||
+    ((f === "cobrar" || f === "cerrar" || f === "cliente" || f === "consulta" || f === "negocio" || f === "fria") && etapaDe(c) === f) ||
     f === canal;
   if (!ok) return false;
   const t = sinAcentos(q.trim());

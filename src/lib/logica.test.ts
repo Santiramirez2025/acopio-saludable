@@ -930,3 +930,18 @@ test("cotizador hoteles: desayunos del período y envases que hacen falta", () =
   ]);
   assert.deepEqual(avena.map((x) => [x.codigo, x.cantidad]), [["a3", 3]]);
 });
+
+import { etapaDe, teEspera } from "./bandeja";
+
+test("bandeja: etapa de venta de cada charla", () => {
+  const ahora = new Date("2026-10-18T18:00:00Z");
+  const base: ResumenCharla = { telefono: "5493541519630", nombre: "Ana", estado: "bot", noLeidos: 0, ultimoMensaje: new Date("2026-10-18T17:00:00Z"), anuncioId: null, anuncioTitulo: null, prospecto: null, baja: false, ultimoTexto: "hola", ultimoDe: "cliente" };
+  assert.equal(etapaDe(base, ahora), "consulta");
+  assert.equal(etapaDe({ ...base, ultimoMensaje: new Date("2026-10-10T00:00:00Z") }, ahora), "fria");
+  assert.equal(etapaDe({ ...base, pedido: "/carrito?p=1*1" }, ahora), "cerrar");
+  assert.equal(etapaDe({ ...base, compras: 1, aCobrar: 1 }, ahora), "cobrar");
+  assert.equal(etapaDe({ ...base, compras: 2, aCobrar: 0 }, ahora), "cliente");
+  assert.equal(etapaDe({ ...base, prospecto: "hotel" }, ahora), "negocio");
+  assert.equal(teEspera({ ...base, estado: "persona" }), true);
+  assert.equal(teEspera({ ...base, estado: "persona", ultimoDe: "persona" }), false);
+});
