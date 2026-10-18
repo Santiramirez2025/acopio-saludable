@@ -19,6 +19,8 @@ export default async function Pagina() {
         <p>Podés arrepentirte de tu compra dentro de los 10 días corridos desde que recibiste el pedido, sin dar explicaciones. Para hacerlo, escribinos por cualquiera de estos medios con tu número de pedido:</p>
         <DatosContacto />
         <p>El producto tiene que estar cerrado, sin uso y en su envase original. Coordinamos el retiro o la devolución y te reintegramos el importe por el mismo medio de pago.</p>
+        <h2 id="envio-devolucion">La devolución no te cuesta nada</h2>
+        <p>El envío de vuelta corre por nuestra cuenta: te mandamos por mail o WhatsApp la etiqueta del correo para imprimir y despachás el paquete en la sucursal. No cobramos cargos de reposición. Si preferís, en lugar del reintegro te lo cambiamos por otro producto.</p>
         <h2>Llegó dañado, vencido o equivocado</h2>
         <p>Avisanos dentro de las 48 horas de recibido, con una foto del producto y del envase. Te lo reponemos sin cargo o te devolvemos el dinero, lo que prefieras.</p>
         <h2>Lo que no tiene cambio</h2>
@@ -30,7 +32,7 @@ export default async function Pagina() {
         <h2>Falta de un producto</h2>
         <p>Si el proveedor no entrega algo de tu pedido, te avisamos y elegís entre un reemplazo o el reintegro de ese producto.</p>
         <h2>Reintegros</h2>
-        <p>Se hacen por el mismo medio con el que pagaste. Con Mercado Pago, el plazo de acreditación depende de la tarjeta; por transferencia, lo hacemos dentro de los 5 días hábiles.</p>
+        <p>Se hacen por el mismo medio con el que pagaste. Con Mercado Pago, el plazo de acreditación depende de la tarjeta; por transferencia, lo hacemos dentro de los 7 días de recibida la devolución.</p>
       </Prosa>
     </div>
   );
