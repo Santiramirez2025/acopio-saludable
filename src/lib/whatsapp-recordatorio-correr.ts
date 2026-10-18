@@ -13,15 +13,16 @@ export async function correrRecordatorios(ahora = new Date()): Promise<{ enHorar
   let fallidos = 0;
   for (const p of await pendientes()) {
     const s = planRecordatorio(p);
-    // Se registra antes de mandar: si Meta tarda y la corrida se repite, no sale dos veces.
-    await registrarRecordatorio(p.telefono, textoParaPanel(s));
+    // Se reserva antes de mandar, con un id fijo por charla y último mensaje del cliente:
+    // si dos corridas se pisan, solo una lo inserta y solo esa lo manda.
+    if (!(await registrarRecordatorio(p.telefono, p.cliente, textoParaPanel(s)))) continue;
     if (await enviarSaliente(p.telefono, s)) enviados++;
     else fallidos++;
   }
   return { enHorario: true, enviados, fallidos };
 }
 
-export type Pendiente = Charla & { telefono: string; ultimoBot: string };
+export type Pendiente = Charla & { telefono: string; ultimoBot: string; cliente: Date };
 
 /** Charlas que esperan el recordatorio ahora. */
 export async function pendientes(): Promise<Pendiente[]> {
@@ -37,7 +38,7 @@ export async function pendientes(): Promise<Pendiente[]> {
         AND (c."pedido" IS NULL OR c."pedido" NOT LIKE 'orden:%')
         AND c."ultimoMensaje" > now() - interval '1 day'
     )
-    SELECT u."telefono", u."nombre", u."anuncioTitulo", u."pedido", u.ultimo_texto AS "ultimoBot"
+    SELECT u."telefono", u."nombre", u."anuncioTitulo", u."pedido", u.ultimo_texto AS "ultimoBot", u.cliente AS "cliente"
     FROM ult u
     WHERE u.ultimo_de = 'bot'
       AND u.cliente > now() - (${RECORDATORIO.ventanaHoras} * interval '1 hour')
@@ -52,9 +53,25 @@ export async function pendientes(): Promise<Pendiente[]> {
   return filas.filter((f) => !cerroLaCharla(f.ultimoBot ?? ""));
 }
 
-/** Se guarda con id «rec.…»: así se sabe que ya se le recordó desde su último mensaje. */
-export async function registrarRecordatorio(telefono: string, texto: string): Promise<void> {
-  const id = `rec.${Date.now().toString(36)}.${Math.random().toString(36).slice(2, 8)}`;
-  await prisma.$executeRaw`INSERT INTO "WhatsappMensaje" ("id", "telefono", "de", "texto") VALUES (${id}, ${telefono}, 'bot', ${texto})`;
+/** Se guarda con id «rec.<teléfono>.<último mensaje del cliente>»: uno solo por charla y respuesta. */
+export async function registrarRecordatorio(telefono: string, cliente: Date, texto: string): Promise<boolean> {
+  const id = `rec.${telefono}.${new Date(cliente).getTime()}`;
+  const n = await prisma.$executeRaw`INSERT INTO "WhatsappMensaje" ("id", "telefono", "de", "texto") VALUES (${id}, ${telefono}, 'bot', ${texto}) ON CONFLICT ("id") DO NOTHING`;
+  if (!n) return false;
   await prisma.$executeRaw`UPDATE "WhatsappConversacion" SET "ultimoMensaje" = now() WHERE "telefono" = ${telefono}`;
+  return true;
+}
+
+// Además del programador, cada aviso de WhatsApp (mensajes, entregas, leídos) lo dispara,
+// como mucho cada 10 minutos por instancia. Así no depende de que el programador ande.
+let ultimaCorrida = 0;
+export async function correrRecordatoriosSiToca(): Promise<void> {
+  if (Date.now() - ultimaCorrida < 10 * 60_000) return;
+  ultimaCorrida = Date.now();
+  try {
+    const r = await correrRecordatorios();
+    if (r.enviados || r.fallidos) console.log("whatsapp: recordatorios", r);
+  } catch (e) {
+    console.error("whatsapp: recordatorios fallaron", e);
+  }
 }

@@ -19,6 +19,7 @@ import { after, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { atender, cola } from "@/lib/atencion";
 import { cloudActivo } from "@/lib/whatsapp-cloud";
+import { correrRecordatoriosSiToca } from "@/lib/whatsapp-recordatorio-correr";
 import { leerEntrante, type Entrante as EntranteMedia } from "@/lib/whatsapp-media";
 
 export const dynamic = "force-dynamic";
@@ -95,6 +96,7 @@ export async function POST(req: Request) {
         }
       }),
     );
+    await correrRecordatoriosSiToca();
   });
 
   return NextResponse.json({ ok: true });
