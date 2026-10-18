@@ -12,6 +12,7 @@ import { enviarEmail, escaparHtml } from "./email";
 import { SITIO, urlSitio } from "./sitio";
 import { linkSeguimiento } from "./envios/seguimiento";
 import { ErrorPedido, envioQueSeCobra, listaDeCompra, NOMBRE_MEDIO, numeroPedido, validarCliente } from "./pedido-calculos";
+import { beneficioRecomendacion } from "./recomendacion-db";
 import { ORDEN_PROVEEDORES, PROVEEDORES, proveedorDe } from "./proveedores";
 
 export * from "./pedido-calculos";
@@ -81,8 +82,9 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
   };
 }
 
-export function totales(subtotal: number, envio: number, medioPago: MedioPago, cfg: Config) {
-  const descuento = medioPago === "TRANSFERENCIA" ? redondear2((subtotal * cfg.descuentoTransferenciaPct) / 100) : 0;
+export function totales(subtotal: number, envio: number, medioPago: MedioPago, cfg: Config, extraPct = 0) {
+  // El extra es el beneficio por recomendación: se suma al de transferencia, sobre los productos.
+  const descuento = redondear2((medioPago === "TRANSFERENCIA" ? (subtotal * cfg.descuentoTransferenciaPct) / 100 : 0) + (subtotal * extraPct) / 100);
   // Con tarjeta el envío va con la comisión adentro; por transferencia sale lo que cuesta.
   const envioCobrado = envioQueSeCobra(envio, medioPago, cfg.comisionPagoPct);
   const total = redondear2(subtotal - descuento + envioCobrado);
@@ -109,7 +111,9 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
   if (!opcion) throw new ErrorPedido("Esa opción de envío ya no está disponible. Volvé a elegir el envío.");
 
   const subtotal = prep.cotizacion.subtotal;
-  const { descuento, envioCobrado, total, comisionPago } = totales(subtotal, opcion.precio, medioPago, cfg);
+  const origenCrudo = typeof args.origen === "string" ? args.origen : "";
+  const beneficio = await beneficioRecomendacion({ telefono: cliente.telefono, email: cliente.email, origen: origenCrudo }).catch(() => null);
+  const { descuento, envioCobrado, total, comisionPago } = totales(subtotal, opcion.precio, medioPago, cfg, beneficio?.pct ?? 0);
   const pedido = await prisma.order.create({
     data: {
       token: randomBytes(18).toString("base64url"),
@@ -133,8 +137,9 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
       eventos: { create: { estado: "PENDIENTE_PAGO", nota: "Pedido recibido" } },
     },
   });
-  const origenWeb = typeof args.origen === "string" && args.origen.trim() ? args.origen.replace(/[^\p{L}\p{N} ./:·_()>→-]/gu, "").slice(0, 200) : "web · directo";
-  await guardarOrigen(pedido.id, origenWeb);
+  const origenWeb = origenCrudo.trim() ? origenCrudo.replace(/[^\p{L}\p{N} ./:·_()>→-]/gu, "").slice(0, 200) : "web · directo";
+  // La marca del beneficio va al final para que no se corte y el premio no se pueda usar dos veces.
+  await guardarOrigen(pedido.id, beneficio?.marca ? `${origenWeb.slice(0, 170)} · ${beneficio.marca}` : origenWeb);
   await avisarPedidoRecibido(pedido, cfg);
   await avisarVenta(pedido, "Nueva venta en la web").catch((e) => console.error("aviso de venta web falló", e));
   return pedido;

@@ -224,7 +224,7 @@ export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
     falta,
     progresoPct: cfg.compraMinima > 0 ? Math.min(100, Math.round((subtotal / cfg.compraMinima) * 100)) : 100,
     puedePagar: subtotal > 0 && falta === 0,
-    conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? redondear2(subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) : null,
+    conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? Math.round(subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) : null,
     gananciaReventa: redondear2(gananciaReventa),
     corte: proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null,
   };
