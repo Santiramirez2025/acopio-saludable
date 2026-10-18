@@ -6,6 +6,7 @@ import { leerConfig } from "./config";
 import { proximoCorte } from "./corte";
 import { calcularCombo, renglonCombo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
 import { wherePublicado, esSinTacc } from "./filtros-producto";
+import { prolijo } from "./nombres";
 
 export type ProductoTienda = {
   codigo: string;
@@ -34,9 +35,9 @@ export function aTienda(p: Product, reglas: ReglasPrecio = {}): ProductoTienda {
   const precio = precioVenta(Number(p.precioPublico), reglas.recargoPrecioPct ?? 0);
   return {
     codigo: p.codigo,
-    producto: p.producto,
+    producto: prolijo(p.producto),
     marca: p.marca,
-    presentacion: p.presentacion,
+    presentacion: prolijo(p.presentacion),
     categoria: p.categoria,
     formato: p.formato,
     precio,
