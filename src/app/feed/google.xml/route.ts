@@ -13,7 +13,8 @@ export async function GET() {
   const cfg = await leerConfig();
   const base = urlSitio();
   const filas = await prisma.product.findMany({ where: { AND: [wherePublicado(cfg.margenMinimoPct), { fotoUrl: { not: null } }, { categoria: { not: "Congelados" } }] }, orderBy: { codigo: "asc" } });
-  const items = filas.map((f) => {
+  // Google rechaza como «drogas ilegales» todo lo que nombre cannabis o cáñamo, aunque sea harina o semilla: no se manda.
+  const items = filas.filter((f) => !/can+abis|c[aá]ñamo|hemp/i.test(`${f.producto} ${f.presentacion}`)).map((f) => {
     const p = aTienda(f, cfg);
     const foto = p.fotoUrl!.startsWith("/") ? `${base}${p.fotoUrl}` : p.fotoUrl!;
     const titulo = `${p.producto} ${p.presentacion}`.slice(0, 150);
