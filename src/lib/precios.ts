@@ -24,7 +24,8 @@ export type CalculoCombo = {
 export function calcularCombo(lineas: LineaCombo[], descuentoPct: number, margenMinimoPct: number): CalculoCombo {
   const precioLista = redondear2(lineas.reduce((s, l) => s + l.precio * l.cantidad, 0));
   const costo = redondear2(lineas.reduce((s, l) => s + l.costo * l.cantidad, 0));
-  const precioCombo = redondear2(precioLista * (1 - descuentoPct / 100));
+  // En pesos enteros: «$ 35.231,70» en una tarjeta se ve descuidado.
+  const precioCombo = Math.round(precioLista * (1 - descuentoPct / 100));
   const m = margenPct(precioCombo, costo);
   return { precioLista, precioCombo, costo, margenPct: m, bloqueado: m < margenMinimoPct };
 }

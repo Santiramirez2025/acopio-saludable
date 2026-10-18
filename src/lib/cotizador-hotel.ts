@@ -8,13 +8,13 @@ export const INSUMOS = {
   avena: { nombre: "Avena", gramos: 20, buscar: /\bavena\b/i },
   cereales: { nombre: "Copos y cereales", gramos: 25, buscar: /copos|almohadit|cereal/i },
   frutos: { nombre: "Frutos secos", gramos: 15, buscar: /mix cl[aá]sico|mix de frutos|frutos secos/i },
-  miel: { nombre: "Miel", gramos: 10, buscar: /\bmiel\b/i },
+  miel: { nombre: "Miel", gramos: 10, buscar: /^miel\b/i },
   mermelada: { nombre: "Mermelada", gramos: 20, buscar: /mermelada/i },
   te: { nombre: "Té en saquitos", gramos: 0, unidades: 0.5, buscar: /^t[eé]\b|\bt[eé] (negro|verde)/i },
 } as const;
 export type Insumo = keyof typeof INSUMOS;
 /** Lo que lleva el nombre del insumo pero no lo es («Galletas de avena y miel»). */
-const NO_ES = /galleta|barrita|barra |alfajor|cookie|bud[ií]n|turr[oó]n|crocante/i;
+const NO_ES = /galleta|barrita|barra |alfajor|cookie|bud[ií]n|turr[oó]n|crocante|inflado|copos? .*miel/i;
 export const INSUMO_IDS = Object.keys(INSUMOS) as Insumo[];
 
 export type Candidato = { codigo: string; producto: string; presentacion: string; precio: number; contenido: number | null; unidad: string | null };

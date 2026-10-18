@@ -126,6 +126,6 @@ export const OCULTOS_PROPIOS = ["TG-ALFAJORFS"];
 /** Fotos propias, generadas con el estilo de los anuncios (public/img/productos/prov y combos/v2). */
 const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !["TG-ALFAJORFS", "LG-SAL"].includes(c)));
 export const fotoProducto = (codigo: string) => (CON_FOTO.has(codigo) ? `/img/productos/prov/${codigo.toLowerCase()}.webp` : null);
-export const fotoCombo = (slug: string) => `/img/combos/v2/${slug}.webp`;
+export const fotoCombo = (slug: string) => `/img/combos/v3/${slug}.webp`;
 
 OCULTAR.codigos.push(...Object.keys(REEMPLAZOS));

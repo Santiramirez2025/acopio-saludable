@@ -10,13 +10,7 @@ import { PedidoEditable } from "@/components/PedidoEditable";
 
 type Props = { params: Promise<{ id: string }> };
 
-const PORTADAS: Record<string, string> = {
-  familias: "/img/portadas/familias.webp",
-  hoteleria: "/img/portadas/hoteleria.webp",
-  cafeterias: "/img/portadas/hoteleria.webp",
-  gimnasios: "/img/portadas/gimnasios.webp",
-  kioscos: "/img/portadas/gimnasios.webp",
-};
+const PORTADAS: Record<string, string> = Object.fromEntries(["hoteleria", "gimnasios", "familias", "dieteticas", "cafeterias", "rotiserias", "kioscos", "oficinas"].map((n) => [n, `/img/nichos/${n}.webp`]));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
