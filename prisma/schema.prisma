@@ -197,6 +197,8 @@ model Order {
   envioNombre   String
   envioPlazo    String?
   envioOrigen   String // "propia" | "tabla" | "micorreo" | "andreani"
+  // De dónde vino el pedido: «google / cpc / campaña», «meta (fbclid)», «compartido», «whatsapp · anuncio: …».
+  origen        String?
   pesoTotalG    Int
   bultos        Int
   tracking      String?

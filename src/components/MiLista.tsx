@@ -49,7 +49,7 @@ export function MiLista({ compraMinima, sitio }: { compraMinima: number; sitio: 
     }
   }
 
-  const link = resultado ? `${sitio}${enlacePedido(resultado.lineas.map((l) => ({ tipo: "producto" as const, id: l.producto.codigo, cantidad: l.cantidad })))}` : "";
+  const link = resultado ? `${sitio}${enlacePedido(resultado.lineas.map((l) => ({ tipo: "producto" as const, id: l.producto.codigo, cantidad: l.cantidad })))}&ref=lista-compartida` : "";
   const textoCompartir = `Mi lista saludable del mes en Acopio Saludable (${pesosCliente(resultado?.total ?? 0)}): ${link}`;
   async function copiar() {
     try {
