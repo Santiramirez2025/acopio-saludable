@@ -48,7 +48,7 @@ export default async function Comprobante({ params }: { params: Promise<{ token:
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Comprobante de pago</p>
               <p className="font-display text-2xl font-bold text-acopio-900 tabular-nums">{numero}</p>
-              <p className="text-sm text-stone-600">{FECHA.format(pedido.pagadoAt!)} h</p>
+              <p className="text-sm text-stone-600">{FECHA.format(pedido.pagadoAt!)}</p>
             </div>
             <span className="-rotate-6 rounded-lg border-2 border-emerald-600 px-3 py-1 font-display text-lg font-extrabold tracking-wider text-emerald-700">PAGADO</span>
           </div>
