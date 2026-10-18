@@ -913,3 +913,15 @@ test("mi lista: el pedido base crece con las personas del hogar", () => {
   const total = items.reduce((s, i) => s + i.precio * i.cantidad, 0);
   assert.ok(total >= 35000 && total <= 50000, String(total));
 });
+
+import { cotizarDesayunos, desayunosDe } from "./cotizador-hotel";
+test("cotizador hoteles: desayunos del período y envases que hacen falta", () => {
+  assert.equal(desayunosDe(20, 60, 30), 360);
+  const cat = [
+    { codigo: "g1", producto: "Granola con pasta de maní", presentacion: "x 1 kg", precio: 14000, contenido: 1000, unidad: "g" },
+    { codigo: "g2", producto: "Granola Tradicional", presentacion: "x 500 g", precio: 9000, contenido: 500, unidad: "g" },
+    { codigo: "t", producto: "Te Negro Seleccion", presentacion: "x 25 saq. Hurlingham", precio: 770, contenido: null, unidad: null },
+  ];
+  const r = cotizarDesayunos(360, ["granola", "te"], cat);
+  assert.deepEqual(r.map((x) => [x.codigo, x.cantidad]), [["g1", 9], ["t", 8]]);
+});

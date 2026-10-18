@@ -42,6 +42,12 @@ export default async function Estadisticas({ searchParams }: { searchParams: Pro
     fila.contribucion += Number(p.total) - Number(p.costoProductos) - Number(p.costoEnvioReal) - Number(p.comisionPago) - Number(p.costoPackaging);
     canales.set(c, fila);
   }
+  // Recomendaciones: pedidos que llegaron con el link «amigo-…» de otro cliente.
+  const conAmigo = pedidos.map((p) => ({ p, codigo: (origenDe.get(p.id) ?? "").match(/amigo-([a-z0-9]{4,12})/)?.[1] })).filter((x) => x.codigo);
+  const referentes = conAmigo.length
+    ? await prisma.$queryRaw<{ codigo: string; id: number; nombre: string; telefono: string }[]>`SELECT lower(left(regexp_replace("token", '[^A-Za-z0-9]', '', 'g'), 8)) AS codigo, "id", "nombre", "telefono" FROM "Order" WHERE lower(left(regexp_replace("token", '[^A-Za-z0-9]', '', 'g'), 8)) = ANY(${conAmigo.map((x) => x.codigo!)})`
+    : [];
+  const recomendaciones = conAmigo.map(({ p, codigo }) => ({ p, ref: referentes.find((r) => r.codigo === codigo), nuevo: esNuevo.get(p.id) }));
   const filasCanal = [...canales.entries()].sort((a, b) => b[1].contribucion - a[1].contribucion);
   const serie = serieDiaria(r.porDia, diaLocal(desde), diaLocal(new Date()));
   const tiles = [
@@ -117,6 +123,21 @@ export default async function Estadisticas({ searchParams }: { searchParams: Pro
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="tarjeta text-sm">
+            <h2 className="mb-1 text-sm font-semibold">Recomendaciones confirmadas</h2>
+            {recomendaciones.length ? (
+              <ul className="space-y-1">
+                {recomendaciones.map(({ p, ref, nuevo }) => (
+                  <li key={p.id}>
+                    <Link href={`/admin/pedidos/${p.id}`} className="underline">{p.nombre}</Link> compró {pesos(Number(p.total))}{nuevo ? " (primera compra)" : ""} recomendado por {ref ? <Link href={`/admin/pedidos/${ref.id}`} className="underline">{ref.nombre}</Link> : "un código que no encontramos"}.
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-stone-600">Todavía ninguna. Cada pedido pagado tiene un botón «Recomendar por WhatsApp» con el link del cliente.</p>
+            )}
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
