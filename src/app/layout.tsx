@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: SITIO.nombre, statusBarStyle: "default" },
   openGraph: { siteName: SITIO.nombre, locale: "es_AR", type: "website", images: [{ url: "/og.jpg", width: 1200, height: 630, alt: SITIO.nombre }] },
   twitter: { card: "summary_large_image" },
+  // Merchant Center (cuenta Argentina 5876333161) verifica el sitio con esta etiqueta: no quitarla.
+  verification: { google: "7QhRhkOB07JZFK2ZFGazcA9Ygm9BBMZp80VEYgrIoCE" },
   other: VERIF_META ? { "facebook-domain-verification": VERIF_META } : undefined,
   robots: { index: true, follow: true, googleBot: { "max-image-preview": "large", "max-snippet": -1 } },
 };
