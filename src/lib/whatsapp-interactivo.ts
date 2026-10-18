@@ -325,13 +325,14 @@ export function planVer(combos: { slug: string; nombre: string; precio: string; 
 
 /** «¿Qué trae?» de un combo: la lista completa y el botón para llevarlo. Fijo, sin modelo. */
 export function planTrae(c: { slug: string; nombre: string; precio: string; argumento: string; renglones: string[] }): Saliente[] {
-  const cuerpo = [`El combo ${c.nombre} trae:`, ...c.renglones.map((r) => `• ${r}`), "", `Todo por ${c.precio}${c.argumento ? ` (${c.argumento})` : ""} y ya llega a la compra mínima. Lo encargás por acá y te llega a tu casa.`].join("\n");
+  const cuerpo = [`El combo ${c.nombre} trae:`, ...c.renglones.map((r) => `• ${r}`), "", `Todo por ${c.precio}${c.argumento ? ` (${c.argumento})` : ""} y ya llega a la compra mínima. ¿Lo querés así o te armamos uno a tu gusto?`].join("\n");
   return [
     {
       tipo: "botones",
       cuerpo: corte(cuerpo, TOPE.cuerpo),
       botones: [
         { id: corte(`${ID.quiero}c|${c.slug}`, TOPE.id), titulo: "Lo quiero 🛒" },
+        { id: `${ID.opcion}Quiero armar mi propio combo`, titulo: "Armar el mío ✏️" },
         { id: `${ID.opcion}Ver otros combos`, titulo: "Ver otros combos" },
       ],
     },
