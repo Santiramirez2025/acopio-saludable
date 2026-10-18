@@ -18,9 +18,11 @@ export function armarPedido(args: {
   personas: number;
   presupuesto: number;
   compraMinima: number;
+  /** Para hogares: cuánto se multiplica el pedido base (1 persona = 1). Si no viene, va por plazas de negocio. */
+  factor?: number;
 }): ItemArmador[] {
   const techo = Math.max(args.compraMinima, args.presupuesto);
-  const factor = factorPorPersonas(args.personas);
+  const factor = args.factor ?? factorPorPersonas(args.personas);
   const vistos = new Set<string>();
   let items: ItemArmador[] = [];
   for (const b of args.base) {
@@ -86,4 +88,20 @@ export function armarPedido(args: {
     }
   }
   return items;
+}
+
+/** Lista del mes para un hogar: qué combos son la base según lo que quiere resolver. */
+export const OBJETIVOS_LISTA = {
+  desayunos: { nombre: "Desayunos y meriendas", combos: ["desayuno-30-dias", "mate-y-merienda", "arranque-gym"] },
+  snacks: { nombre: "Snacks saludables", combos: ["picada-y-snacks", "mixes-del-mes", "alacena-de-frutos-secos"] },
+  despensa: { nombre: "Despensa completa", combos: ["despensa-4-kilos", "alacena-de-frutos-secos", "guisos-y-legumbres", "desayuno-30-dias"] },
+} as const;
+export type ObjetivoLista = keyof typeof OBJETIVOS_LISTA;
+
+/** 1 persona = el pedido base; 2 = una vez y media; 3 o 4 = el doble; 5 o más = el triple. */
+export function factorHogar(personas: number): number {
+  if (personas <= 1) return 1;
+  if (personas === 2) return 1.5;
+  if (personas <= 4) return 2;
+  return 3;
 }

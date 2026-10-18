@@ -71,7 +71,7 @@ export default async function Home() {
               <span aria-hidden="true">→</span>
             </Link>
             <div className="mt-4 flex flex-wrap gap-2.5">
-              <Link href="/armador" className="btn-comprar min-w-0 flex-1 whitespace-nowrap sm:flex-none">Armame un pedido</Link>
+              <Link href="/mi-lista" className="btn-comprar min-w-0 flex-1 whitespace-nowrap sm:flex-none">Armá tu lista del mes</Link>
               <Link href="/catalogo" className="inline-flex min-h-[48px] min-w-0 flex-1 items-center whitespace-nowrap justify-center rounded-full border border-white/30 px-5 text-sm font-semibold hover:bg-white/10 sm:flex-none">Ver catálogo</Link>
             </div>
           </div>
