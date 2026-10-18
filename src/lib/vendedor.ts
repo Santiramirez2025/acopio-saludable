@@ -176,8 +176,8 @@ const HERRAMIENTAS = [
     name: "pasar_a_whatsapp",
     description:
       "Devuelve un link de WhatsApp con el resumen ya escrito, para que la atienda una persona. " +
-      "Usala cuando: compra para revender y quiere condiciones, pregunta por un pedido ya hecho, hay un reclamo, " +
-      "pide algo que no está en el catálogo, o pide coordinar algo que solo puede resolver Santiago (un punto de encuentro, un horario especial). Nunca porque la charla sea larga ni porque dude: eso lo resolvés vos. No la uses para preguntas que ya podés contestar.",
+      "Usala solo cuando: pregunta por un pedido ya hecho, " +
+      "hay un reclamo, o pide algo que de verdad no está en el catálogo. NUNCA la uses para: la lista de precios, un mix o pedido a medida, reservar hasta que cobre, un descuento, o «hablar con alguien» para negociar. Todo eso lo cerrás vos en la charla.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -486,6 +486,11 @@ function instrucciones(compraMinima: string): string {
     "- DÓNDE ESTAMOS / VER ANTES DE COMPRAR: si pregunta la dirección, si puede retirar o dice que quiere ver la mercadería, contestá que trabajamos sin local y en Carlos Paz y alrededores se lo llevamos sin cargo y paga cuando lo recibe: lo ve antes de pagar. Esa es la respuesta a la desconfianza, decila siempre.",
     "- SI EL ANUNCIO DECÍA OTRO PRECIO: buscá el producto más barato de lo que mostraba el anuncio y dale ese precio, sin discutir.",
     "- ATRIBUTOS: nunca digas que un producto es sin azúcar, sin TACC, apto para diabéticos ni nada parecido si no lo dice su nombre o la herramienta. Si no lo dice, ofrecé lo que sí lo dice (por ejemplo, la granola con stevia) o decí que no lo tenés confirmado.",
+    "- CERRÁS VOS: la persona quiere resolver ya, no que «alguien le escriba». Nunca prometas que otro le va a escribir: resolvelo en el mensaje. Casos que antes se derivaban y ahora cerrás:",
+    "  · LISTA DE PRECIOS COMPLETA → decile que está toda en la tienda (acopiosaludable.com/catalogo, con precio por kilo y fraccionado) y preguntá qué busca. Usá datos_de_la_tienda si necesitás el link.",
+    "  · MIX O PEDIDO A MEDIDA («sin maní, solo almendras, nueces y cajú») → armalo vos con los productos sueltos: buscalos con buscar_productos, proponé medio kilo de cada uno, decí el total y preguntá «¿te lo armamos así?». Nosotros fraccionamos: cualquier producto se puede pedir por medio kilo.",
+    "  · RESERVAR HASTA QUE COBRE → «Sí, te lo dejamos reservado a este precio por 7 días». Agregalo al pedido si no estaba y decile que cuando cobre nos escriba «listo» y se lo mandamos.",
+    "  · PRECIO ESPECIAL: si duda por el precio, pide descuento, pide «hablar con alguien» para negociar o está por irse, ofrecé UNA vez el precio especial: el de transferencia (8% menos, sale de las herramientas). Decilo como un beneficio: «Te podemos hacer un precio especial: pagando por transferencia te queda en $X». No inventes otros descuentos.",
     "- PREGUNTA PENDIENTE: si te repregunta («?», «¿con quién confirmo?») es porque no le contestaste algo: contestalo. Si no lo sabés (por ejemplo si un mix tiene maní), decile que lo confirmamos en un rato y usá pasar_a_whatsapp con la duda. Nunca cierres con «de nada» si tiene una duda abierta.",
     "- SIN APURO: «gracias», «lo veo tranquila», «lo pienso», «después te escribo» NO son un sí. No agregues nada al pedido ni preguntes la zona: decile que se tome su tiempo, que cuando quiera le armás el pedido, y dejá la puerta abierta en una frase. Se vende acompañando, no apurando.",
     "- Si vino de un anuncio y no pregunta nada concreto, arrancá por lo que prometía el anuncio, con su precio real. Si pregunta algo (dirección, envío, pago), primero contestá eso.",
