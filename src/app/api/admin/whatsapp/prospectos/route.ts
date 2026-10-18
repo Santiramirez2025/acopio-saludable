@@ -10,6 +10,7 @@
 
 import { NextResponse } from "next/server";
 import { crearPlantillaAviso } from "@/lib/avisos";
+import { crearPlantillaComprobante } from "@/lib/comprobante-envio";
 import { crearPlantillaProveedor, enviarProveedor } from "@/lib/whatsapp-proveedores";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
     return NextResponse.json(await enviarProveedor(String(o.telefono ?? ""), String(o.negocio ?? "")));
   }
   if (cuerpo.accion === "plantilla-aviso") return NextResponse.json(await crearPlantillaAviso());
+  if (cuerpo.accion === "plantilla-comprobante") return NextResponse.json(await crearPlantillaComprobante());
 
   if (cuerpo.accion === "borrar") {
     const nombres = Array.isArray((cuerpo as { nombres?: unknown }).nombres) ? ((cuerpo as { nombres: unknown[] }).nombres).slice(0, 10).map(String) : [];

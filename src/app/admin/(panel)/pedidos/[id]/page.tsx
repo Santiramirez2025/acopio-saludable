@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
 import { ESTADOS, MARGEN_FLACO_PCT, linkWhatsapp, margenNeto, nombreEstado, numeroPedido } from "@/lib/pedidos";
-import { cambiarEstadoPedido, reemplazarEnPedido } from "@/lib/acciones";
+import { cambiarEstadoPedido, reemplazarEnPedido, reenviarComprobante } from "@/lib/acciones";
 import { leerConfig } from "@/lib/config";
 import { linkSeguimiento } from "@/lib/envios/seguimiento";
 
@@ -27,7 +27,13 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
       <div className="flex flex-wrap gap-4 text-sm">
         <Link href="/admin/pedidos" className="text-stone-600 underline">← Pedidos</Link>
         <Link href={`/admin/pedidos/${pedido.id}/qr`} className="text-acopio-700 underline">QR de reposición para imprimir</Link>
-        {pedido.pagadoAt && <a href={`/pedido/${pedido.token}/comprobante`} target="_blank" className="text-acopio-700 underline">Comprobante de pago (link para el cliente)</a>}
+        {pedido.pagadoAt && <a href={`/pedido/${pedido.token}/comprobante`} target="_blank" className="text-acopio-700 underline">Ver comprobante</a>}
+        {pedido.pagadoAt && (
+          <form action={reenviarComprobante}>
+            <input type="hidden" name="id" value={pedido.id} />
+            <button className="rounded-md bg-[#25D366] px-3 py-1 font-medium text-white">Enviar comprobante por WhatsApp</button>
+          </form>
+        )}
       </div>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -40,7 +46,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
           <Link href={`/pedido/${pedido.token}`} className="btn-sec">Ver como cliente</Link>
         </div>
       </div>
-      {ok && <p className="rounded-md bg-acopio-100 px-3 py-2 text-sm text-acopio-700">Pedido actualizado.</p>}
+      {ok && <p className="rounded-md bg-acopio-100 px-3 py-2 text-sm text-acopio-700">{ok === "comprobante" ? "Comprobante enviado por WhatsApp ✅ (quedó en el chat)." : ok === "comprobante-plantilla" ? "Comprobante enviado por WhatsApp con la plantilla (la charla estaba cerrada) ✅" : "Pedido actualizado."}</p>}
       {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">No se guardó: {error}</p>}
       {sinPeso > 0 && <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">{sinPeso} producto(s) de este pedido no tienen peso cargado: el envío se calculó con 500 g por unidad.</p>}
 

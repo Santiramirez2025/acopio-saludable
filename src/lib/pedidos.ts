@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { MedioPago, Order } from "@prisma/client";
 import { prisma } from "./prisma";
-import { enviarTexto } from "./whatsapp-cloud";
+import { enviarComprobante, urlComprobante } from "./comprobante-envio";
 import { leerConfig, type Config } from "./config";
 import { pesos, precioVenta, redondear2 } from "./precios";
 import { cotizarCarrito, estaPublicado, comboVigente, sanearLineas, type Cotizacion } from "./tienda";
@@ -161,8 +161,8 @@ export async function confirmarPago(orderId: number, nota: string, mpPaymentId?:
   if (confirmado) {
     const pedido = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
     await avisarVenta(pedido, "Pago confirmado").catch((e) => console.error("aviso de pago falló", e));
-    const comprobante = `${urlSitio()}/pedido/${pedido.token}/comprobante`;
-    await enviarComprobanteWhatsapp(pedido, comprobante).catch((e) => console.error("comprobante por WhatsApp falló", e));
+    const comprobante = urlComprobante(pedido.token);
+    await enviarComprobante(pedido).catch((e) => console.error("comprobante por WhatsApp falló", e));
     if (pedido.email) await enviarEmail({
       para: pedido.email,
       asunto: `Recibimos tu pago · Pedido ${numeroPedido(pedido.id)}`,
@@ -171,15 +171,6 @@ export async function confirmarPago(orderId: number, nota: string, mpPaymentId?:
     });
   }
   return confirmado;
-}
-
-/** El comprobante por WhatsApp. Solo sale si la charla está abierta (Meta no deja escribir pasadas 24 horas). */
-async function enviarComprobanteWhatsapp(pedido: Order, url: string): Promise<boolean> {
-  const d = pedido.telefono.replace(/\D/g, "");
-  if (d.length < 10) return false;
-  const tel = `549${d.slice(-10)}`;
-  const primer = pedido.nombre.trim().split(/\s+/)[0] ?? "";
-  return enviarTexto(tel, `¡Gracias${primer && !/cliente/i.test(primer) ? `, ${primer}` : ""}! Recibimos el pago de tu pedido ${numeroPedido(pedido.id)} por ${pesos(Number(pedido.total))} ✅\n\nAcá tenés tu comprobante, guardalo en el celu: ${url}`);
 }
 
 /** Consulta un pago en Mercado Pago y, si está aprobado y coincide con el pedido, lo confirma. */
