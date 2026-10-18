@@ -15,7 +15,7 @@ export async function cotizarEnvioChat(lugar: string, provincia: string | null, 
   const zona = zonaDeLugar(lugar, provincia);
   if (!zona) return null;
   if (zona.tipo === "propia" && cfg.entregaPropiaActiva) {
-    return { lugar, costo: 0, propia: true, detalle: `Envío a ${lugar}: sin cargo, te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.` };
+    return { lugar, costo: 0, propia: true, alRecibir: true, detalle: `Envío a ${lugar}: sin cargo, te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.` };
   }
   const zp = zonaPagaDe(cfg.tabla);
   if (zona.tipo === "capital" && cfg.entregaPropiaActiva && zp) {
