@@ -4,7 +4,7 @@
 
 import type { Order } from "@prisma/client";
 import { enviarTexto } from "./whatsapp-cloud";
-import { registrarSalida } from "./whatsapp-memoria";
+import { registrarSalida, ventanaAbierta } from "./whatsapp-memoria";
 import { numeroPedido } from "./pedido-calculos";
 import { pesos } from "./precios";
 import { urlSitio } from "./sitio";
@@ -52,7 +52,7 @@ export async function enviarComprobante(p: Order): Promise<"texto" | "plantilla"
   const nombre = primerNombre(p);
   const texto = `¡Gracias${nombre ? `, ${nombre}` : ""}! Recibimos el pago de tu pedido ${numeroPedido(p.id)} por ${pesos(Number(p.total))} ✅\n\nAcá tenés tu comprobante, guardalo en el celu: ${url}`;
   let via: "texto" | "plantilla" | null = null;
-  if (await enviarTexto(tel, texto)) via = "texto";
+  if ((await ventanaAbierta(tel).catch(() => false)) && (await enviarTexto(tel, texto))) via = "texto";
   else if (await plantilla(tel, p, url)) via = "plantilla";
   if (via) await registrarSalida(tel, "persona", texto).catch(() => undefined);
   return via;
