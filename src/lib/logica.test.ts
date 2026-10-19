@@ -980,3 +980,7 @@ test("un código postal solo no es un gracias", () => {
   assert.equal(soloAgradece("👍"), true);
   assert.equal(soloAgradece("gracias"), true);
 });
+
+test("recordatorio: no se insiste después de un no", () => {
+  assert.ok(cerroLaCharla("Gracias a vos, Carlos. Cuando quieras armamos el mix a medida, acá estamos para ayudarte."));
+});

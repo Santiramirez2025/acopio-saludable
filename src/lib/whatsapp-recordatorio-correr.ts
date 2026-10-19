@@ -45,7 +45,7 @@ export async function pendientes(): Promise<Pendiente[]> {
       AND u.ultimo_fecha < now() - (${RECORDATORIO.horasSinRespuesta} * interval '1 hour')
       AND NOT EXISTS (
         SELECT 1 FROM "WhatsappMensaje" r
-        WHERE r."telefono" = u."telefono" AND r."id" LIKE 'rec.%' AND r."fecha" > u.cliente
+        WHERE r."telefono" = u."telefono" AND r."id" LIKE 'rec.%' AND r."fecha" > now() - interval '7 days'
       )
     ORDER BY u.cliente DESC
     LIMIT ${RECORDATORIO.porCorrida}

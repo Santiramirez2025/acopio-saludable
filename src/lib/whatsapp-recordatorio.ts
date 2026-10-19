@@ -3,7 +3,7 @@
 // Un solo mensaje corto, 3 horas o más después de la última respuesta del vendedor, y siempre
 // entre las 8 y las 21 (hora de Argentina): a la noche no se molesta, se espera a la mañana.
 // Solo dentro de las 24 horas desde el último mensaje del cliente, que es la ventana en la que
-// WhatsApp deja escribir sin plantilla. Uno por charla: si no contesta, no se insiste.
+// WhatsApp deja escribir sin plantilla. Uno por charla por semana: si no contesta o dice que no, no se insiste.
 
 import { primerNombre, ID, type Saliente } from "./whatsapp-interactivo";
 
@@ -22,7 +22,7 @@ export function enHorario(ahora = new Date()): boolean {
 /** Cuando el último mensaje del vendedor ya cerró la charla, no se recuerda nada. */
 export function cerroLaCharla(ultimoBot: string): boolean {
   const t = ultimoBot.trim();
-  return /^¡?(De nada|Dale)\b/i.test(t) || /te escribe alguien del equipo/i.test(t) || /Tu pedido es el|Anotado:|Ya lo tenemos/i.test(t);
+  return /^¡?(De nada|Dale|Gracias a vos)\b/i.test(t) || /cuando quieras|acá estamos/i.test(t) || /te escribe alguien del equipo/i.test(t) || /Tu pedido es el|Anotado:|Ya lo tenemos/i.test(t);
 }
 
 type Charla = { nombre: string | null; anuncioTitulo: string | null; pedido: string | null };
