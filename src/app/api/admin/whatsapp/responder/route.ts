@@ -9,7 +9,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { enviarPorCanal } from "@/lib/atencion";
 import { claveValida } from "@/lib/meta-mensajes";
-import { cambiarEstado, guardarPedido, marcarLeida, registrarSalida } from "@/lib/whatsapp-memoria";
+import { cambiarEstado, guardarPedido, marcarLeida, registrarSalida, ventanaAbierta } from "@/lib/whatsapp-memoria";
 import { enviarSaliente } from "@/lib/whatsapp-cloud";
 import { ID, planVer, textoParaPanel, type Saliente } from "@/lib/whatsapp-interactivo";
 import { combosTienda } from "@/lib/tienda";
@@ -79,6 +79,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  // Fuera de las 24 horas Meta acepta el texto pero no lo entrega: se avisa en vez de perderlo callado.
+  if (/^\d+$/.test(telefono) && !(await ventanaAbierta(telefono).catch(() => true))) {
+    return NextResponse.json({ error: "Pasaron más de 24 horas desde su último mensaje: WhatsApp no entrega texto libre. Hace falta una plantilla." }, { status: 409 });
+  }
   // Contestar a mano toma la charla: el bot no se mete hasta que se la devuelvan.
   await cambiarEstado(telefono, "persona");
   const enviado = await enviarPorCanal(telefono, texto);
