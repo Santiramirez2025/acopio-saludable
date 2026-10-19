@@ -12,7 +12,7 @@
 import { leerConfig } from "./config";
 import { SALUDO_GENERAL } from "./whatsapp-saludo";
 import { catalogo, hallarCombos, hallarProductos } from "./asistente-catalogo";
-import { combosTienda } from "./tienda";
+import { combosTienda, productosTienda } from "./tienda";
 import { ofertasDelProveedor } from "./ofertas";
 import { pesos, renglonCombo } from "./precios";
 import { zonaPagaDe } from "./envios/tabla";
@@ -164,7 +164,7 @@ const HERRAMIENTAS = [
   {
     name: "pedido_para_negocio",
     description:
-      "Devuelve el link al pedido sugerido de un rubro (hotelería y cabañas, gimnasios, dietéticas, cafeterías, rotiserías, kioscos, oficinas, familias). " +
+      "Devuelve los productos del pedido sugerido de un rubro, con precio y reventa (hotelería y cabañas, gimnasios, dietéticas, cafeterías, rotiserías, kioscos, oficinas, familias). " +
       "Usala cuando la persona compra para un negocio y conviene mostrarle el pedido armado de su rubro.",
     input_schema: {
       type: "object" as const,
@@ -424,9 +424,25 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const id = mapa.find(([re]) => re.test(rubro))?.[1];
     if (!id) return { texto: `No tengo un pedido armado para «${rubro}». Hay para: ${NICHOS.map((n) => n.nombre).join(", ")}. Ofrecé el más parecido o armalo a medida.` };
     const nicho = NICHOS.find((n) => n.id === id)!;
+    // Los productos del pedido sugerido, con precio y reventa: se le muestran en el chat, no un link.
+    const [pedido] = await combosTienda({ tipo: "PEDIDO_NICHO", nicho: id, activo: true });
+    const items = (pedido?.items ?? []).filter((i) => i.producto.precio > 0).slice(0, 6);
+    if (!items.length) {
+      const sueltos = await productosTienda({ where: { nichos: { has: id } }, take: 6 });
+      items.push(...sueltos.map((producto) => ({ producto, cantidad: 1 })));
+    }
+    const lineas = items.map(({ producto: p, cantidad }) => {
+      const gana = p.sugerido ? ` · lo vende a ${pesos(p.sugerido)} y gana ${pesos(p.sugerido - p.precio)}` : "";
+      return `- [${p.codigo}] ${cantidad} × ${p.producto} ${p.presentacion}: ${pesos(p.precio)}${gana}`;
+    });
+    const total = items.reduce((t, i) => t + i.producto.precio * i.cantidad, 0);
     return {
-      texto: `Hay un pedido sugerido para ${nicho.nombre}, con las cantidades típicas del rubro y editable antes de confirmar. Está en /nichos/${id}. Ofrecelo en una frase.`,
-      enlaces: [{ href: `/nichos/${id}`, texto: `Pedido para ${nicho.nombre}` }],
+      texto: [
+        `Pedido típico para ${nicho.nombre} (precios de hoy, con el precio de reventa sugerido):`,
+        ...lineas,
+        `Total de este pedido: ${pesos(total)}.`,
+        "Mostrale 3 o 4 de estos productos EN EL MENSAJE, cada uno en su renglón con precio y cuánto gana revendiéndolo, y cerrá con UNA pregunta («¿Te armo este pedido?» o «¿Qué le sumarías?»). No mandes links ni la página del rubro. Si dice que sí, usá agregar_al_pedido con esos códigos.",
+      ].join("\n"),
     };
   }
 
@@ -502,7 +518,7 @@ function instrucciones(compraMinima: string): string {
     "- SIN APURO: «gracias», «lo veo tranquila», «lo pienso», «después te escribo» NO son un sí. No agregues nada al pedido ni preguntes la zona: decile que se tome su tiempo, que cuando quiera le armás el pedido, y dejá la puerta abierta en una frase. Se vende acompañando, no apurando.",
     "- Si vino de un anuncio y no pregunta nada concreto, arrancá por lo que prometía el anuncio, con su precio real. Si pregunta algo (dirección, envío, pago), primero contestá eso.",
     "- Siempre contestá lo que preguntó antes de ofrecer o pedir nada. Si escribe solo «dirección» o «ubicación», te está preguntando dónde estamos, no ofreciendo la suya.",
-    "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería), usá pedido_para_negocio y hablale de reventa: precio sugerido y cuánto gana.",
+    "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería), usá pedido_para_negocio y mostrale los productos con precio y cuánto gana revendiéndolos, directo en el mensaje. Nada de links a páginas: la gente quiere ver precios. Botones solo si ayudan a contestar rápido, nunca para posponer («Lo pienso» no va).",
     "- ALOJAMIENTOS (hotel, cabañas, apart, hostería): preguntá cuántas plazas tienen y ofrecé el cotizador de desayunos (acopiosaludable.com/cotizador-hoteles): con plazas y ocupación les da el costo por desayuno y el pedido armado, y lo pueden mandar al dueño para aprobar.",
     `- La compra mínima es ${compraMinima}. Nunca la digas como un problema («te falta plata»): es la razón por la que el combo le conviene.`,
     "- Si pregunta la dirección, el local o dónde están: trabajamos online desde Villa Carlos Paz, sin local a la calle. Se pide por acá o por la web y se lo llevamos: entrega propia en Carlos Paz y alrededores, y por correo al resto del país. Preguntale su barrio o ciudad para decirle el envío (datos_de_la_tienda) y volvé a la oferta.",
