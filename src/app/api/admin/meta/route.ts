@@ -17,7 +17,14 @@ export async function GET() {
   const p = await paginaMeta();
   if (!p) return NextResponse.json({ error: "El token no ve la página de Acopio" }, { status: 502 });
   const res = await fetch(`https://graph.facebook.com/v21.0/${p.id}/subscribed_apps`, { headers: { authorization: `Bearer ${p.token}` } });
-  return NextResponse.json({ pagina: p.id, instagram: p.instagram, suscripciones: await res.json() });
+  // Diagnóstico: qué permisos tiene el token y si puede leer comentarios de Instagram (lo que usan el radar y la respuesta a comentarios).
+  const G = "https://graph.facebook.com/v21.0";
+  const leer = (u: string, t: string) => fetch(`${G}/${u}`, { headers: { authorization: `Bearer ${t}` } }).then((r) => r.json()).catch((e) => ({ error: String(e) }));
+  const permisos = await leer("me/permissions", process.env.META_TOKEN);
+  const media = p.instagram ? await leer(`${p.instagram}/media?fields=id,comments_count,timestamp&limit=3`, p.token) : null;
+  const primera = (media as { data?: { id: string }[] } | null)?.data?.[0]?.id;
+  const comentarios = primera ? await leer(`${primera}/comments?fields=id,text,timestamp&limit=3`, p.token) : null;
+  return NextResponse.json({ pagina: p.id, instagram: p.instagram, suscripciones: await res.json(), permisos, media, comentarios });
 }
 
 export async function POST() {
