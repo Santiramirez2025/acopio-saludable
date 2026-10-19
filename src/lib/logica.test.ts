@@ -984,3 +984,9 @@ test("un código postal solo no es un gracias", () => {
 test("recordatorio: no se insiste después de un no", () => {
   assert.ok(cerroLaCharla("Gracias a vos, Carlos. Cuando quieras armamos el mix a medida, acá estamos para ayudarte."));
 });
+
+test("seguimiento: el día de entrega es pasado mañana y nunca domingo", async () => {
+  const { diaDeEntrega } = await import("./seguimiento-dia");
+  assert.equal(diaDeEntrega(new Date("2026-10-19T15:00:00Z")), "miércoles");
+  assert.equal(diaDeEntrega(new Date("2026-10-23T15:00:00Z")), "lunes");
+});
