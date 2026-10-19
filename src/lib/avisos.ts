@@ -7,6 +7,7 @@
 import { enviarTexto } from "./whatsapp-cloud";
 import { enviarEmail, escaparHtml } from "./email";
 import { leerConfig } from "./config";
+import { ventanaAbierta } from "./whatsapp-memoria";
 
 export const AVISOS_WHATSAPP = process.env.AVISOS_WHATSAPP || "5493536561265";
 export const PLANTILLA_AVISO = "acopio_aviso_interno";
@@ -40,7 +41,7 @@ async function plantillaAviso(resumen: string): Promise<boolean> {
 export async function avisarSantiago(asunto: string, texto: string): Promise<void> {
   let ok = false;
   try {
-    ok = await enviarTexto(AVISOS_WHATSAPP, texto);
+    if (await ventanaAbierta(AVISOS_WHATSAPP).catch(() => false)) ok = await enviarTexto(AVISOS_WHATSAPP, texto);
     if (!ok) ok = await plantillaAviso(`${asunto} · ${texto}`);
   } catch (e) {
     console.error("aviso por WhatsApp falló", e);

@@ -101,6 +101,19 @@ export async function ultimoDelCliente(telefono: string): Promise<string | null>
   return filas[0]?.id ?? null;
 }
 
+/**
+ * ¿Escribió en las últimas 24 horas? Fuera de esa ventana Meta acepta el texto libre (responde 200)
+ * pero no lo entrega: hay que mandar plantilla. Sin esto los avisos y comprobantes se perdían callados.
+ */
+export async function ventanaAbierta(telefono: string): Promise<boolean> {
+  const d = telefono.replace(/\D/g, "").slice(-10);
+  const filas = await prisma.$queryRaw<{ n: bigint }[]>`
+    SELECT count(*) AS n FROM "WhatsappMensaje"
+    WHERE right(regexp_replace("telefono", '[^0-9]', '', 'g'), 10) = ${d} AND "de" = 'cliente' AND "fecha" > now() - interval '23 hours'
+  `;
+  return Number(filas[0]?.n ?? 0) > 0;
+}
+
 /** Cuántos mensajes mandó el vendedor a esta charla en los últimos minutos (freno de bucles). */
 export async function respuestasRecientes(telefono: string, minutos = 10): Promise<number> {
   const f = await prisma.$queryRaw<{ n: bigint }[]>`
