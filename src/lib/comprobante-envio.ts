@@ -6,6 +6,7 @@ import type { Order } from "@prisma/client";
 import { enviarTexto } from "./whatsapp-cloud";
 import { registrarSalida, ventanaAbierta } from "./whatsapp-memoria";
 import { numeroPedido } from "./pedido-calculos";
+import { prisma } from "./prisma";
 import { pesos } from "./precios";
 import { urlSitio } from "./sitio";
 
@@ -45,9 +46,14 @@ async function plantilla(tel: string, p: Order, url: string): Promise<boolean> {
 }
 
 /** Devuelve cómo salió: "texto", "plantilla" o null si no se pudo. */
-export async function enviarComprobante(p: Order): Promise<"texto" | "plantilla" | null> {
+export async function enviarComprobante(p: Order, forzar = false): Promise<"texto" | "plantilla" | null> {
   const tel = telefonoDe(p);
   if (!tel) return null;
+  // El aviso automático sale una vez: si el pago se confirma dos veces (webhook y panel), no se repite.
+  if (!forzar) {
+    const ya = await prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM "WhatsappMensaje" WHERE "de" <> 'cliente' AND "texto" LIKE ${`%pago de tu pedido ${numeroPedido(p.id)}%`} AND "fecha" > now() - interval '2 days'`;
+    if (Number(ya[0]?.n ?? 0) > 0) return "texto";
+  }
   const url = urlComprobante(p.token);
   const nombre = primerNombre(p);
   const texto = `¡Gracias${nombre ? `, ${nombre}` : ""}! Recibimos el pago de tu pedido ${numeroPedido(p.id)} por ${pesos(Number(p.total))} ✅\n\nAcá tenés tu comprobante, guardalo en el celu: ${url}`;

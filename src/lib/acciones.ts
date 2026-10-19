@@ -398,7 +398,7 @@ export async function reenviarComprobante(fd: FormData) {
   try {
     const pedido = await prisma.order.findUniqueOrThrow({ where: { id } });
     if (!pedido.pagadoAt) throw new Error("El pedido todavía no está pago");
-    const via = await enviarComprobante(pedido);
+    const via = await enviarComprobante(pedido, true);
     if (!via) throw new Error("No se pudo mandar por WhatsApp: revisá el teléfono del pedido");
     destino = `/admin/pedidos/${id}?ok=${via === "texto" ? "comprobante" : "comprobante-plantilla"}`;
   } catch (e) {
