@@ -128,3 +128,34 @@ export function paraWhatsapp(r: Respuesta): string {
   if (r.aviso) partes.push(r.aviso);
   return partes.filter(Boolean).join("\n\n");
 }
+
+// ---------- Archivos salientes (foto o documento desde el panel) ----------
+
+/** Sube un archivo a Meta y devuelve su id (sirve para mandarlo y, después, para verlo en el panel). */
+export async function subirMedia(bytes: ArrayBuffer, mime: string, nombre: string): Promise<string | null> {
+  const token = process.env.WHATSAPP_TOKEN;
+  const id = process.env.WHATSAPP_PHONE_ID;
+  if (!token || !id) return null;
+  const fd = new FormData();
+  fd.append("messaging_product", "whatsapp");
+  fd.append("type", mime);
+  fd.append("file", new Blob([bytes], { type: mime }), nombre);
+  const res = await fetch(`${GRAPH}/${id}/media`, { method: "POST", headers: { authorization: `Bearer ${token}` }, body: fd, signal: AbortSignal.timeout(60_000) }).catch(() => null);
+  if (!res?.ok) {
+    console.error("media: Meta rechazó la subida", res?.status, res ? (await res.text()).slice(0, 300) : "sin respuesta");
+    return null;
+  }
+  const j = (await res.json()) as { id?: string };
+  return j.id ?? null;
+}
+
+/** Manda una foto (con texto opcional) o un documento ya subido. */
+export async function enviarMedia(a: string, tipo: "image" | "document", mediaId: string, caption: string, nombreArchivo?: string): Promise<boolean> {
+  const media = tipo === "image" ? { id: mediaId, ...(caption ? { caption: caption.slice(0, 1024) } : {}) } : { id: mediaId, filename: nombreArchivo ?? "archivo", ...(caption ? { caption: caption.slice(0, 1024) } : {}) };
+  for (const destino of variantesArgentinas(a)) {
+    const r = await graph("messages", { messaging_product: "whatsapp", recipient_type: "individual", to: destino, type: tipo, [tipo]: media }, "archivo");
+    if (r.ok) return true;
+    if (r.codigo !== 131030) return false;
+  }
+  return false;
+}

@@ -10,7 +10,8 @@ import { authOptions } from "@/lib/auth";
 import { enviarPorCanal } from "@/lib/atencion";
 import { claveValida } from "@/lib/meta-mensajes";
 import { cambiarEstado, guardarPedido, marcarLeida, registrarSalida, ventanaAbierta } from "@/lib/whatsapp-memoria";
-import { enviarSaliente } from "@/lib/whatsapp-cloud";
+import { enviarMedia, enviarSaliente, subirMedia } from "@/lib/whatsapp-cloud";
+import { marca } from "@/lib/whatsapp-media";
 import { ID, planVer, textoParaPanel, type Saliente } from "@/lib/whatsapp-interactivo";
 import { combosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
@@ -22,6 +23,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  // Un archivo (foto o documento) llega como multipart: se sube a Meta y se manda con el texto como pie.
+  if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) return responderConArchivo(req);
   let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown; pedido?: unknown; zonas?: unknown; combos?: unknown };
   try {
     cuerpo = await req.json();
@@ -93,5 +96,34 @@ export async function POST(req: Request) {
     );
   }
   await registrarSalida(telefono, "persona", texto);
+  return NextResponse.json({ ok: true });
+}
+
+const TOPE_ARCHIVO = 15 * 1024 * 1024;
+const IMAGENES = new Set(["image/jpeg", "image/png"]);
+const DOCUMENTOS = new Set(["application/pdf", "image/webp", "text/plain", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
+
+/** Foto o archivo desde el panel: solo WhatsApp y con la ventana de 24 h abierta. */
+async function responderConArchivo(req: Request) {
+  const fd = await req.formData().catch(() => null);
+  if (!fd) return NextResponse.json({ error: "Formulario inválido" }, { status: 400 });
+  const telefono = claveValida(String(fd.get("telefono") ?? "")) ?? "";
+  const archivo = fd.get("archivo");
+  const caption = String(fd.get("texto") ?? "").trim().slice(0, 1024);
+  if (!telefono || !/^\d+$/.test(telefono)) return NextResponse.json({ error: "Los archivos solo se mandan por WhatsApp" }, { status: 400 });
+  if (!(archivo instanceof File) || !archivo.size) return NextResponse.json({ error: "Falta el archivo" }, { status: 400 });
+  if (archivo.size > TOPE_ARCHIVO) return NextResponse.json({ error: "El archivo pesa más de 15 MB" }, { status: 400 });
+  const mime = archivo.type || "application/octet-stream";
+  const tipo = IMAGENES.has(mime) ? "image" : DOCUMENTOS.has(mime) ? "document" : null;
+  if (!tipo) return NextResponse.json({ error: "Formato no admitido: mandá JPG, PNG o PDF" }, { status: 400 });
+  if (!(await ventanaAbierta(telefono).catch(() => true))) {
+    return NextResponse.json({ error: "Pasaron más de 24 horas desde su último mensaje: WhatsApp no deja mandar archivos. Hace falta una plantilla." }, { status: 409 });
+  }
+  const mediaId = await subirMedia(await archivo.arrayBuffer(), mime, archivo.name || "archivo");
+  if (!mediaId) return NextResponse.json({ error: "Meta no aceptó el archivo" }, { status: 502 });
+  await cambiarEstado(telefono, "persona");
+  const enviado = await enviarMedia(telefono, tipo, mediaId, caption, archivo.name);
+  if (!enviado) return NextResponse.json({ error: "Meta rechazó el envío del archivo" }, { status: 502 });
+  await registrarSalida(telefono, "persona", `${marca(tipo, mediaId)} ${caption || (tipo === "document" ? archivo.name : "")}`.trim());
   return NextResponse.json({ ok: true });
 }

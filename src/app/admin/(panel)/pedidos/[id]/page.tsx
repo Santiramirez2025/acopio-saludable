@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
 import { ESTADOS, MARGEN_FLACO_PCT, linkWhatsapp, margenNeto, nombreEstado, numeroPedido } from "@/lib/pedidos";
-import { cambiarEstadoPedido, reemplazarEnPedido, reenviarComprobante } from "@/lib/acciones";
+import { borrarPedido, cambiarEstadoPedido, reemplazarEnPedido, reenviarComprobante } from "@/lib/acciones";
 import { leerConfig } from "@/lib/config";
 import { linkSeguimiento } from "@/lib/envios/seguimiento";
 
@@ -116,6 +116,13 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
             <button className="btn w-full">Actualizar</button>
             {pedido.estado === "PENDIENTE_PAGO" && <p className="text-xs text-stone-600">Al pasar a Pagado se confirma el pedido y se le avisa al cliente por email.</p>}
           </form>
+          {pedido.estado === "CANCELADO" && (
+            <form action={borrarPedido} className="tarjeta text-sm">
+              <input type="hidden" name="id" value={pedido.id} />
+              <p className="mb-2 text-xs text-stone-600">Cancelado. Si era una prueba o un duplicado, se puede borrar del todo.</p>
+              <button className="btn w-full bg-red-700 hover:bg-red-800">Borrar este pedido</button>
+            </form>
+          )}
           <dl className="tarjeta space-y-1 text-sm">
             <h2 className="mb-1 text-sm font-semibold">Números del pedido</h2>
             {fila("Subtotal", pesos(Number(pedido.subtotal)))}

@@ -566,3 +566,14 @@ export async function reemplazarEnPedido(fd: FormData) {
   revalidatePath("/admin/pedidos", "layout");
   redirect(destino);
 }
+
+/** Borra un pedido cancelado (pruebas, duplicados). Los ítems y el historial se van con él. */
+export async function borrarPedido(fd: FormData) {
+  await requireAdmin();
+  const id = Number.parseInt(String(fd.get("id")), 10);
+  const pedido = await prisma.order.findUnique({ where: { id } });
+  if (!pedido || pedido.estado !== "CANCELADO") redirect(`/admin/pedidos/${id}?error=${encodeURIComponent("Solo se borran pedidos cancelados")}`);
+  await prisma.order.delete({ where: { id } });
+  revalidatePath("/admin/pedidos");
+  redirect("/admin/pedidos?ok=1");
+}
