@@ -264,7 +264,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const entrada_ = esSinTacc ? undefined : todos.find((c) => c.slug === COMBO_ENTRADA);
     const lineas = (c: (typeof todos)[number], rol: string) =>
       `- ${rol}: slug ${c.slug} · ${c.nombre} · ${pesos(Math.round(c.precio))}${(() => { const a = argumentoCombo(c, cfg.descuentoTransferenciaPct, pesos); return [a.porKilo, a.transferencia].filter(Boolean).map((x) => ` · ${x}`).join(""); })()}` +
-      `${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""} · trae ${c.items.length} productos: ${c.items.slice(0, 6).map((i) => `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${i.producto.producto}`).join(", ")}${c.items.length > 6 ? "…" : ""}`;
+      `${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""} · trae ${c.items.length} productos: ${c.items.slice(0, 6).map((i) => `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${i.producto.producto}`).join(", ")}${c.items.length > 6 ? "…" : ""}${cantidadCombo(c)}`;
     const texto = [
       tema ? `Tema detectado: ${tema.nombre}.` : "No hay un combo específico para eso.",
       ...elegidos.map((c, i) => lineas(c, i === 0 ? "RECOMENDADO" : "alternativa")),
@@ -273,7 +273,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
         ? "Busca SIN TACC: todo lo que ofrezcas tiene que ser sin TACC. Si el combo le parece caro, no ofrezcas la Despensa: armale algo a medida con buscar_productos (solo_sin_tacc: true) o completar_el_minimo que llegue al mínimo."
         : "",
       elegidos.length
-        ? "Ofrecé el RECOMENDADO: nombre, precio, el precio por kilo (si lo tiene) o por transferencia, y 2 o 3 cosas que trae. Si pidió un producto puntual, decí también su precio suelto en media frase."
+        ? "Ofrecé el RECOMENDADO en dos frases cortas, vendiendo: qué trae en cantidad concreta («un kilo de cada uno», «te dura todo el mes»), el precio y el de transferencia, y la pregunta. No enumeres de más ni expliques: «La Alacena te trae un kilo de nuez, un kilo de mix con cajú y uno de pasas: te dura todo el mes. $43.247, o $39.787 por transferencia, y te llega sin cargo. ¿Te la separo?». Si pidió un producto puntual, decí también su precio suelto en media frase."
         : "Ofrecé el producto que pidió (buscalo con buscar_productos) y, para llegar al mínimo, la entrada más barata.",
     ].filter(Boolean).join("\n");
     const fichas: Ficha[] = elegidos.map((c) => ({
@@ -542,6 +542,16 @@ function instrucciones(compraMinima: string): string {
     "- Terminá SIEMPRE con una última línea así: OPCIONES: opción 1 | opción 2 | opción 3",
     "  Son las respuestas a la pregunta con la que terminaste (hasta 3), escritas como las diría la persona, de hasta 20 caracteres cada una. Ejemplos: a «¿Para tu casa o para un negocio?» → «Para mi casa» | «Para un negocio»; a «¿Te la separo?» → «Sí, separala» | «¿Qué trae?» | «Lo pienso». Solo se muestran si el mensaje termina en pregunta.",
   ].join("\n");
+}
+
+/** «4 kilos en total, 1 kilo de cada uno»: el argumento de cantidad que vende el combo. */
+function cantidadCombo(c: { items: { cantidad: number; producto: { contenido: number | null; unidad: string | null } }[] }): string {
+  const gramos = c.items.map((i) => (i.producto.unidad === "g" && i.producto.contenido ? i.producto.contenido * i.cantidad : 0));
+  if (gramos.some((g) => !g)) return "";
+  const total = gramos.reduce((s, g) => s + g, 0) / 1000;
+  const unKiloCadaUno = c.items.every((i) => i.cantidad === 1 && i.producto.contenido === 1000);
+  const medioKiloCadaUno = c.items.every((i) => i.cantidad === 1 && i.producto.contenido === 500);
+  return ` · ${total % 1 === 0 ? total : total.toFixed(1)} kilos en total${unKiloCadaUno ? " (1 kilo de cada uno, dura todo el mes)" : medioKiloCadaUno ? " (medio kilo de cada uno)" : ""}`;
 }
 
 type Bloque = { type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> };
