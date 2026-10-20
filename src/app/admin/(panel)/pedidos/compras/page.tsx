@@ -1,5 +1,5 @@
 // Compras y reparto: todo lo que hay que comprar para los pedidos abiertos, sumado por producto
-// y partido por proveedor (Todo Granolas, La Granja del Centro, Distrimay), y la lista de entregas con dirección, horario y cómo paga cada uno.
+// y partido por proveedor (La Granja del Centro, mixes propios, Distrimay), y la lista de entregas con dirección, horario y cómo paga cada uno.
 // Para salir a comprar y a repartir con una sola hoja (se imprime con Ctrl/Cmd + P).
 
 import Link from "next/link";
@@ -50,8 +50,13 @@ export default async function ComprasYReparto({ searchParams }: { searchParams: 
           <div key={proveedor.id} className="space-y-2 break-inside-avoid">
             <h3 className="font-semibold">{proveedor.nombre} <span className="text-sm font-normal text-stone-600">· {proveedor.que}</span></h3>
             <p className="text-sm text-stone-700">
-              {proveedor.como} ·{" "}
-              <a href={`https://wa.me/${proveedor.contacto}`} target="_blank" rel="noopener noreferrer" className="underline">WhatsApp</a>
+              {proveedor.como}
+              {proveedor.contacto && (
+                <>
+                  {" · "}
+                  <a href={`https://wa.me/${proveedor.contacto}`} target="_blank" rel="noopener noreferrer" className="underline">WhatsApp</a>
+                </>
+              )}
             </p>
             {proveedor.id === "distrimay" && (
               <div className="rounded-lg border border-acopio-200 bg-acopio-50 p-3 text-sm print:hidden">
@@ -81,7 +86,7 @@ export default async function ComprasYReparto({ searchParams }: { searchParams: 
             </table>
           </div>
         ))}
-        {hayCompra && <p className="text-xs text-stone-600">El costo de referencia es el de Distrimay hasta que carguemos las listas de Todo Granolas y La Granja: lo real es más bajo.</p>}
+        {hayCompra && <p className="text-xs text-stone-600">El costo de referencia es el de Distrimay en los productos de marca; lo propio y lo de La Granja ya tiene su costo real.</p>}
         {hayCompra ? (
           <form action={yaComprado} className="flex flex-wrap items-center gap-3 print:hidden">
             <input type="hidden" name="ids" value={aComprar.map((p) => p.id).join(",")} />

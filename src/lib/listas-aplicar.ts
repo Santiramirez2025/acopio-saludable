@@ -19,9 +19,10 @@ export async function aplicarListaPdf(bytes: Uint8Array, nombreArchivo = "", ori
   if (!proveedor) return { error: "No parece una lista de Todo Granolas ni de La Granja del Centro." };
   const lista = parsearLista(filas);
   if (!lista.length) return { error: "No encontré renglones con código y precio en el PDF." };
+  if (proveedor === "TG") return { error: "Todo Granolas ya no es proveedor: no se aplica su lista. Los costos salen de La Granja y de las recetas propias." };
   const mapa = POR_CODIGO_PROVEEDOR[proveedor];
   const prefijo = proveedor === "LG" ? "LG-" : "TG-";
-  const nuestros = await prisma.product.findMany({ where: { codigo: { startsWith: prefijo } }, select: { codigo: true, producto: true, presentacion: true, costo: true, precioPublico: true } });
+  const nuestros = await prisma.product.findMany({ where: { codigo: { in: Object.values(mapa) } }, select: { codigo: true, producto: true, presentacion: true, costo: true, precioPublico: true } });
   const porCodigo = new Map(nuestros.map((p) => [p.codigo, p]));
   const items: { codigo: string; producto: string; costo: number; precioPublico: number }[] = [];
   const faltantes: string[] = [];

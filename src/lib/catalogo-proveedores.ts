@@ -1,7 +1,9 @@
 // El catálogo con los proveedores nuevos (octubre 2026).
 //
-// Distrimay era caro en lo que más se vende y fallaba con el stock. Esto carga los productos
-// que se compran a Todo Granolas (TG) y a La Granja del Centro (LG) con su costo real, y arma
+// Distrimay era caro en lo que más se vende y fallaba con el stock. Desde el 20/10/2026 el proveedor
+// principal es La Granja del Centro (LG) y los mixes los armamos nosotros con su mercadería: los
+// códigos TG-… quedaron por historia (fotos, links y pedidos viejos), pero su costo es el de la
+// receta propia o el de La Granja. Todo Granolas ya no es proveedor. Esto carga los productos con su costo real, y arma
 // los combos con presentaciones hogareñas que llegan justo a la compra mínima. Los códigos
 // propios (TG-…, LG-…) no chocan con los de Distrimay.
 //
@@ -44,29 +46,29 @@ const SUELTO = "Sin marca / fraccionado";
 
 export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   // ——— Todo Granolas: mixes y frutos secos ———
-  { codigo: "TG-MIXCG", codigoProveedor: "095-141", producto: "Mix Clásico con cajú y girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(5956), pesoBrutoG: 1020, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní, pasas y girasol: el mix de todos los días, con cajú." },
+  { codigo: "TG-MIXCG", codigoProveedor: "propio", producto: "Mix Clásico con cajú y girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: 0.558, costo: 7400, pesoBrutoG: 1020, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní, pasas y girasol: el mix de todos los días, con cajú." },
   // Medio kilo de los cuatro de la Despensa, para la Despensa chica (zona de reparto propio): mismo costo por kilo, 4% más caro por fraccionar.
-  { codigo: "TG-MIXCG-500", codigoProveedor: "095-141", producto: "Mix Clásico con cajú y girasol", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutos secos y mix", contenido: 500, unidad: "g", margen: mTg() * 1.04 + 0.04, costo: tg(2978), pesoBrutoG: 520, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní, pasas y girasol: el mix de todos los días, en medio kilo." },
-  { codigo: "TG-PASAS-500", codigoProveedor: "095-043", producto: "Pasas de uva negras sin semilla", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutas desecadas", contenido: 500, unidad: "g", margen: mTg() * 1.04 + 0.04, costo: tg(1705), pesoBrutoG: 520 },
+  { codigo: "TG-MIXCG-500", codigoProveedor: "propio", producto: "Mix Clásico con cajú y girasol", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutos secos y mix", contenido: 500, unidad: "g", margen: 0.62, costo: 3700, pesoBrutoG: 520, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní, pasas y girasol: el mix de todos los días, en medio kilo." },
+  { codigo: "TG-PASAS-500", codigoProveedor: "009-037", producto: "Pasas de uva negras sin semilla", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutas desecadas", contenido: 500, unidad: "g", margen: 1.179, costo: 1575, pesoBrutoG: 520 },
   { codigo: "LG-DATIL-500", codigoProveedor: "980-047", producto: "Dátiles Deglet Nour con carozo (Argelia)", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutas desecadas", contenido: 500, unidad: "g", costo: 4535, margen: 0.664, pesoBrutoG: 520, porQueLoElegimos: "Deglet Nour de Argelia: más carnoso y dulce que el egipcio, con carozo. Medio kilo." },
   { codigo: "LG-MIXSEM-500", codigoProveedor: "001-301", producto: "Mix de semillas para el desayuno", marca: SUELTO, presentacion: "x 500 g", categoria: "Semillas y granos", contenido: 500, unidad: "g", costo: 1989, margen: 0.664, pesoBrutoG: 520, porQueLoElegimos: "Lino, sésamo, girasol y chía, listas para el yogur o la ensalada. Medio kilo." },
-  { codigo: "TG-MIXC", codigoProveedor: "095-016", producto: "Mix Clásico con cajú", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(7365), pesoBrutoG: 1020 },
-  { codigo: "TG-MIXGIR", codigoProveedor: "095-018", producto: "Mix Clásico con girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(6760), pesoBrutoG: 1020 },
+  { codigo: "TG-MIXC", codigoProveedor: "propio", producto: "Mix Clásico con cajú", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: 0.658, costo: 8600, pesoBrutoG: 1020 },
+  { codigo: "TG-MIXGIR", codigoProveedor: "propio", producto: "Mix Clásico con girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: 0.77, costo: 7400, pesoBrutoG: 1020 },
   { codigo: "TG-MIXT", codigoProveedor: "095-015", producto: "Mix Tropical con cajú", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(8654), pesoBrutoG: 1020, porQueLoElegimos: "Con banana chips, ananá y castañas de cajú." },
   { codigo: "TG-MIXTG", codigoProveedor: "095-017", producto: "Mix Tropical con girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(7257), pesoBrutoG: 1020 },
   { codigo: "TG-MIXP", codigoProveedor: "095-020", producto: "Mix Premium sin pasas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(10240), margen: mTg(0.6), pesoBrutoG: 1020, porQueLoElegimos: "Nuez, almendra, castañas y maní, sin pasas." },
-  { codigo: "TG-MIXTSM", codigoProveedor: "095-143", producto: "Mix Tropical con cajú sin maní", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(9044), margen: mTg(0.5), pesoBrutoG: 1020, porQueLoElegimos: "Para los que no comen maní: castañas de cajú, frutas tropicales y pasas, sin una sola semilla de maní." },
+  { codigo: "TG-MIXTSM", codigoProveedor: "propio", producto: "Mix Tropical con cajú sin maní", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 12100, margen: 0.479, pesoBrutoG: 1020, porQueLoElegimos: "Para los que no comen maní: castañas de cajú, frutas tropicales y pasas, sin una sola semilla de maní." },
   { codigo: "TG-MIXXP", codigoProveedor: "095-021", producto: "Mix Extra Premium sin maní y sin pasas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(16500), margen: mTg(0.35), pesoBrutoG: 1020, porQueLoElegimos: "Solo frutos secos premium, sin maní ni pasas." },
   { codigo: "TG-MIXCERV", codigoProveedor: "095-046", producto: "Mix Cervecero premium", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(6236), pesoBrutoG: 1020, porQueLoElegimos: "Maní salado, almendras, castañas, maíz frito y semillas: la picada lista." },
-  { codigo: "TG-NUEZ", codigoProveedor: "095-010", producto: "Nuez Mariposa blanca light", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 15993, margen: 0.44 /* hoy stock de La Granja (extra light); en TG blanca light sale 14.076 */, pesoBrutoG: 1020, porQueLoElegimos: "Mariposa entera y clara, cosecha 2026." },
+  { codigo: "TG-NUEZ", codigoProveedor: "981-007", producto: "Nuez Mariposa blanca light", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 15993, margen: 0.44, pesoBrutoG: 1020, porQueLoElegimos: "Mariposa entera y clara, cosecha 2026." },
   { codigo: "TG-ALMGUARA", codigoProveedor: "095-025", producto: "Almendras Guara mediana", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 22100, margen: 0.403, pesoBrutoG: 1020, porQueLoElegimos: "Almendra argentina de tamaño mediano, dulce y crocante. Más chica que la Non Pareil y más accesible." },
-  { codigo: "TG-CAJU", codigoProveedor: "095-030", producto: "Castañas de cajú W4", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(15799), margen: mTg(0.3), pesoBrutoG: 1020 },
-  { codigo: "TG-PASAS", codigoProveedor: "095-043", producto: "Pasas de uva negras sin semilla", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(3410), pesoBrutoG: 1020 },
-  { codigo: "TG-BANANA", codigoProveedor: "095-040", producto: "Banana chips", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: tg(12526), margen: mTg(0.2), pesoBrutoG: 1020 },
+  { codigo: "TG-CAJU", codigoProveedor: "981-013", producto: "Castañas de cajú W4", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 17729, margen: 0.402, pesoBrutoG: 1020 },
+  { codigo: "TG-PASAS", codigoProveedor: "009-037", producto: "Pasas de uva negras sin semilla", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", margen: 1.095, costo: 3150, pesoBrutoG: 1020 },
+  { codigo: "TG-BANANA", codigoProveedor: "", producto: "Banana chips", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: 14870, margen: 0.35, pesoBrutoG: 1020 },
   { codigo: "TG-MANIQUESO", codigoProveedor: "095-051", producto: "Maní saborizado queso", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(4080), pesoBrutoG: 1020 },
   { codigo: "TG-MANIJAMON", codigoProveedor: "095-049", producto: "Maní saborizado jamón", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(4080), pesoBrutoG: 1020 },
   { codigo: "TG-MANIPIZZA", codigoProveedor: "095-048", producto: "Maní saborizado pizza", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(4080), pesoBrutoG: 1020 },
-  { codigo: "TG-GIRASOL", codigoProveedor: "095-054", producto: "Semillas de girasol peladas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(3192), pesoBrutoG: 1020 },
+  { codigo: "TG-GIRASOL", codigoProveedor: "001-221", producto: "Semillas de girasol peladas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", margen: 0.372, costo: 4503, pesoBrutoG: 1020 },
   { codigo: "TG-ZAPALLO", codigoProveedor: "095-055", producto: "Semillas de zapallo", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: tg(10184), margen: mTg(0.6), pesoBrutoG: 1020 },
   { codigo: "TG-QUINOAPOP", codigoProveedor: "095-056", producto: "Quinoa pop", marca: SUELTO, presentacion: "x 500 g", categoria: "Cereales y granolas", contenido: 500, unidad: "g", costo: tg(4658), margen: mTg(0.6), pesoBrutoG: 520 },
   // ——— Todo Granolas: granolas (fabricante cordobés) ———
@@ -89,6 +91,17 @@ export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   { codigo: "LG-LENTEJA", codigoProveedor: "916-505", producto: "Lentejas especiales", marca: "Marcilli", presentacion: "x 400 g", categoria: "Legumbres", contenido: 400, unidad: "g", costo: 1074, margen: 0.8, pesoBrutoG: 410 },
   { codigo: "LG-GARBANZO", codigoProveedor: "916-503", producto: "Garbanzos seleccionados", marca: "Marcilli", presentacion: "x 400 g", categoria: "Legumbres", contenido: 400, unidad: "g", costo: 606, margen: 0.9, pesoBrutoG: 410 },
   { codigo: "LG-PASASRUBIAS", codigoProveedor: "009-134", producto: "Pasas de uva rubias", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: 7650, margen: 0.6, pesoBrutoG: 1020 },
+  // ——— La Granja del Centro, compra del 20/10/2026 (reemplaza a Todo Granolas) ———
+  { codigo: "LG-GTRAD", codigoProveedor: "916-053", producto: "Granola tradicional", marca: "Marcilli", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: 6516, margen: 0.85, pesoBrutoG: 1020, porQueLoElegimos: "Avena, miel y frutos secos, crocante. De Marcilli, una marca que conocemos bien." },
+  { codigo: "LG-GPMANI", codigoProveedor: "117-004", producto: "Granola con pasta de maní", marca: "Olimar", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: 7650, margen: 0.715, pesoBrutoG: 1020 },
+  { codigo: "LG-GPROTE", codigoProveedor: "916-052", producto: "Granola proteica Sport", marca: "Marcilli", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: 7673, margen: 0.71, pesoBrutoG: 1020, objetivos: ["gym"] },
+  { codigo: "LG-AVENA", codigoProveedor: "001-295", producto: "Avena arrollada fina", marca: "Marcilli", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: 2380, margen: 0.75, pesoBrutoG: 1020, objetivos: ["gym"] },
+  { codigo: "LG-CACAO-250", codigoProveedor: "101-035", producto: "Cacao amargo especial", marca: "Alzol", presentacion: "x 250 g", categoria: "Almacen", contenido: 250, unidad: "g", costo: 2734, margen: 0.75, pesoBrutoG: 270, objetivos: ["gym"] },
+  { codigo: "LG-ALMNP", codigoProveedor: "981-025", producto: "Almendras Non Pareil", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 29362, margen: 0.36, pesoBrutoG: 1020, porQueLoElegimos: "La almendra grande de California, pareja y crocante." },
+  { codigo: "LG-ALMNP-500", codigoProveedor: "981-025", producto: "Almendras Non Pareil", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutos secos y mix", contenido: 500, unidad: "g", costo: 14681, margen: 0.4, pesoBrutoG: 520, porQueLoElegimos: "La almendra grande de California, pareja y crocante. Medio kilo." },
+  { codigo: "LG-NATUZEN-RALLADO", codigoProveedor: "917-021", producto: "Pan rallado sin TACC", marca: "Natuzen", presentacion: "x 450 g", categoria: "Sin TACC", contenido: 450, unidad: "g", costo: 2790, margen: 0.6, pesoBrutoG: 470 },
+  { codigo: "LG-NATUZEN-TAPAS", codigoProveedor: "917-009", producto: "Tapas de alfajor sin TACC", marca: "Natuzen", presentacion: "x 300 g", categoria: "Sin TACC", contenido: 300, unidad: "g", costo: 2798, margen: 0.6, pesoBrutoG: 320 },
+  { codigo: "LG-NATUZEN-PEPAS", codigoProveedor: "917-001", producto: "Galletitas pepas sin TACC", marca: "Natuzen", presentacion: "x 200 g", categoria: "Sin TACC", contenido: 200, unidad: "g", costo: 2162, margen: 0.6, pesoBrutoG: 220 },
 ];
 
 export function precioDe(p: ProductoProveedor): number {
@@ -105,15 +118,15 @@ export const COMBOS_PROVEEDORES: ComboProveedor[] = [
   { slug: "despensa-4-kilos", nombre: "Despensa de 4 kilos", descuentoPct: 16.37, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }, { codigo: "LG-MIXSEM", cantidad: 1 }] },
   // Despensa chica: 2 kilos, llega justo a la compra mínima de Carlos Paz ($20.000).
   { slug: "despensa-chica", nombre: "Despensa chica de 2 kilos", descuentoPct: 6.7, destacado: true, items: [{ codigo: "TG-MIXCG-500", cantidad: 1 }, { codigo: "LG-DATIL-500", cantidad: 1 }, { codigo: "TG-PASAS-500", cantidad: 1 }, { codigo: "LG-MIXSEM-500", cantidad: 1 }] },
-  { slug: "mixes-del-mes", nombre: "Mixes del mes", descuentoPct: 3, items: [{ codigo: "TG-MIXGIR", cantidad: 1 }, { codigo: "TG-MIXTG", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
+  { slug: "mixes-del-mes", nombre: "Mixes del mes", descuentoPct: 3, items: [{ codigo: "TG-MIXGIR", cantidad: 1 }, { codigo: "TG-MIXTSM", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "alacena-de-frutos-secos", nombre: "Alacena de frutos secos", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-NUEZ", cantidad: 1 }, { codigo: "TG-MIXC", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
-  { slug: "desayuno-30-dias", nombre: "Desayuno 30 días", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-GTRAD", cantidad: 1 }, { codigo: "TG-GPMANI", cantidad: 1 }, { codigo: "736684208707", cantidad: 1 }, { codigo: "LG-MIEL", cantidad: 1 }] },
+  { slug: "desayuno-30-dias", nombre: "Desayuno 30 días", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-GTRAD", cantidad: 1 }, { codigo: "LG-GPMANI", cantidad: 1 }, { codigo: "736684208707", cantidad: 1 }, { codigo: "LG-MIEL", cantidad: 1 }] },
   { slug: "picada-y-snacks", nombre: "Picada y snacks", descuentoPct: 3, items: [{ codigo: "TG-MIXCERV", cantidad: 1 }, { codigo: "TG-MANIQUESO", cantidad: 1 }, { codigo: "TG-MANIJAMON", cantidad: 1 }, { codigo: "TG-GIRASOL", cantidad: 1 }] },
-  { slug: "arranque-gym", nombre: "Pack gym del mes", descuentoPct: 5, items: [{ codigo: "TG-BARRA", cantidad: 6 }, { codigo: "TG-GPROTE", cantidad: 1 }, { codigo: "7798446310083", cantidad: 1 }] },
+  { slug: "arranque-gym", nombre: "Pack gym del mes", descuentoPct: 5, items: [{ codigo: "LG-GPROTE", cantidad: 1 }, { codigo: "LG-AVENA", cantidad: 1 }, { codigo: "LG-CACAO-250", cantidad: 1 }, { codigo: "LG-ALMNP-500", cantidad: 1 }, { codigo: "7798446310083", cantidad: 1 }] },
 ];
 
 /** Combos que quedaban rellenados con bolsones: se desactivan hasta rearmarlos con stock propio. */
-export const COMBOS_A_DESACTIVAR = ["merienda-sin-tacc", "guisos-y-legumbres", "especiero-completo", "reposteria-casera", "duo-magnesio", "despensa-del-gym", "alacena-sin-tacc"];
+export const COMBOS_A_DESACTIVAR = ["picada-y-snacks", "merienda-sin-tacc", "guisos-y-legumbres", "especiero-completo", "reposteria-casera", "duo-magnesio", "despensa-del-gym", "alacena-sin-tacc"];
 
 /** Lo que se saca de la vista pública: bolsones y presentaciones de negocio, y lo que no es dietética. */
 export const OCULTAR = {
@@ -132,14 +145,19 @@ export const REEMPLAZOS: Record<string, string> = {
   "5006": "LG-DATIL", "5007": "LG-DATIL", "800000000120": "LG-DATIL", "0111": "LG-DATIL",
   "149": "LG-MIXSEM", "150": "LG-MIXSEM", "522054": "LG-CHIA", "00000011": "LG-CHIA", "800000000158": "LG-LINO", "800000000159": "LG-LINO",
   "77981422628974": "TG-GIRASOL", "800000000162": "TG-GIRASOL",
-  "5000": "TG-MANIPIZZA", "000098": "TG-MANIPIZZA", "5002": "TG-MANIJAMON", "0000099": "TG-MANIJAMON", "314151": "TG-MANIQUESO", "32425262": "TG-MANIQUESO", "95668": "TG-GPMANI",
+  "5000": "TG-MANIPIZZA", "000098": "TG-MANIPIZZA", "5002": "TG-MANIJAMON", "0000099": "TG-MANIJAMON", "314151": "TG-MANIQUESO", "32425262": "TG-MANIQUESO", "95668": "LG-GPMANI",
 };
 
 /** Productos cargados que todavía no se venden (sin stock o sin foto real). */
-export const OCULTOS_PROPIOS = ["TG-ALFAJORFS"];
+export const OCULTOS_PROPIOS = [
+  // Todo Granolas ya no es proveedor: sus granolas, barras y alfajores se reemplazan por La Granja (LG-…).
+  "TG-ALFAJORFS", "TG-BARRA", "TG-GTRAD", "TG-GPMANI", "TG-GCACAO", "TG-GPROTE", "TG-GALMENDRA", "TG-GSTEVIA",
+  // Mixes y snacks que todavía no armamos ni compramos: vuelven cuando haya receta o proveedor.
+  "TG-MIXT", "TG-MIXTG", "TG-MIXP", "TG-MIXXP", "TG-MIXCERV", "TG-MANIQUESO", "TG-MANIJAMON", "TG-MANIPIZZA", "TG-QUINOAPOP", "TG-ZAPALLO",
+];
 
 /** Fotos propias, generadas con el estilo de los anuncios (public/img/productos/prov y combos/v2). */
-const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !["TG-ALFAJORFS", "LG-SAL", "TG-ALMGUARA"].includes(c)));
+const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !["TG-ALFAJORFS", "LG-SAL", "TG-ALMGUARA", "LG-AVENA", "LG-CACAO-250", "LG-ALMNP", "LG-ALMNP-500", "LG-NATUZEN-RALLADO", "LG-NATUZEN-TAPAS", "LG-NATUZEN-PEPAS"].includes(c)));
 export const fotoProducto = (codigo: string) => (CON_FOTO.has(codigo) ? `/img/productos/prov/${codigo.toLowerCase()}.webp` : null);
 export const fotoCombo = (slug: string) => `/img/combos/v3/${slug}.webp`;
 
@@ -148,5 +166,6 @@ OCULTAR.codigos.push(...Object.keys(REEMPLAZOS));
 /** Código del proveedor → código nuestro, por proveedor. */
 export const POR_CODIGO_PROVEEDOR: Record<"TG" | "LG", Record<string, string>> = { TG: {}, LG: {} };
 for (const p of PRODUCTOS_PROVEEDORES) {
-  if (p.codigoProveedor) POR_CODIGO_PROVEEDOR[p.codigo.startsWith("LG-") ? "LG" : "TG"][p.codigoProveedor] = p.codigo;
+  // Los TG-… que pasaron a La Granja llevan el código de su lista; los de 095-… son de la lista vieja de Todo Granolas.
+  if (p.codigoProveedor && p.codigoProveedor !== "propio") POR_CODIGO_PROVEEDOR[p.codigo.startsWith("LG-") || !p.codigoProveedor.startsWith("095-") ? "LG" : "TG"][p.codigoProveedor] = p.codigo;
 }

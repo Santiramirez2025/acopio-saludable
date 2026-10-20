@@ -859,9 +859,11 @@ test("gracias solo y «pregunto y te digo»", () => {
 import { proveedorDe } from "./proveedores";
 test("a quién se le compra cada cosa", () => {
   const S = "Sin marca / fraccionado";
-  assert.equal(proveedorDe({ producto: "Mix Clasico", marca: S }), "todogranolas");
-  assert.equal(proveedorDe({ producto: "Nuez Mariposa Extra Light", marca: S }), "todogranolas");
-  assert.equal(proveedorDe({ producto: "Banana Chips", marca: S }), "todogranolas");
+  assert.equal(proveedorDe({ producto: "Mix Clasico", marca: S }), "propio");
+  assert.equal(proveedorDe({ producto: "Mix Clásico con cajú", marca: S, codigo: "TG-MIXC" }), "propio");
+  assert.equal(proveedorDe({ producto: "Castañas de cajú W4", marca: S, codigo: "TG-CAJU" }), "lagranja");
+  assert.equal(proveedorDe({ producto: "Nuez Mariposa Extra Light", marca: S }), "lagranja");
+  assert.equal(proveedorDe({ producto: "Banana Chips", marca: S }), "lagranja");
   assert.equal(proveedorDe({ producto: "Avena Instantanea", marca: S }), "lagranja");
   assert.equal(proveedorDe({ producto: "Azucar Mascabo", marca: S }), "lagranja");
   assert.equal(proveedorDe({ producto: "Pasas de uva sin semillas", marca: S }), "lagranja");
