@@ -1,3 +1,4 @@
+import { whereBusqueda } from "@/lib/busqueda-sin-tilde";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -21,15 +22,7 @@ export default async function Productos({ searchParams }: { searchParams: Promis
     AND: [
       whereVista(vista, cfg.margenMinimoPct),
       categoria ? { categoria } : {},
-      q
-        ? {
-            OR: [
-              { codigo: { contains: q } },
-              { producto: { contains: q, mode: "insensitive" } },
-              { marca: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {},
+      q ? { OR: [{ codigo: { contains: q } }, await whereBusqueda(q)] } : {},
     ],
   };
   const [total, productos, categorias] = await Promise.all([
