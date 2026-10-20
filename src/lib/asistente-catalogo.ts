@@ -15,7 +15,9 @@ export type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string;
 /** Envío cotizado para la zona que dijo la persona. costo null: «se ve con el código postal». */
 /** alRecibir: solo Carlos Paz y alrededores (la zona sin cargo). En Córdoba capital y por correo se paga antes. */
 export type EnvioCotizado = { lugar: string; costo: number | null; detalle: string; propia?: boolean; alRecibir?: boolean };
-export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean; opciones?: string[]; envio?: EnvioCotizado; entregaGuardada?: boolean };
+/** `fotos`: imágenes de productos que se mandan antes del texto (cuando el cliente pide ver fotos). */
+export type Foto = { url: string; pie: string };
+export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean; opciones?: string[]; envio?: EnvioCotizado; entregaGuardada?: boolean; fotos?: Foto[] };
 
 type Indexado = ProductoTienda & { nombre: string; indice: string };
 

@@ -102,6 +102,11 @@ export type PedidoArmado = {
  * - Nada de eso → texto.
  */
 export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Saliente[] {
+  // Pidió fotos: van primero, cada una con nombre y precio al pie, y después el texto con sus botones.
+  if (r.fotos?.length) {
+    const fotos: Saliente[] = r.fotos.slice(0, 4).map((f) => ({ tipo: "imagen", url: f.url, pie: corte(f.pie, TOPE.cuerpo) }));
+    return [...fotos, ...planWhatsapp({ ...r, fotos: undefined }, pedido)];
+  }
   const texto = r.texto.trim();
   const aviso = r.aviso ? `\n\n${r.aviso}` : "";
 

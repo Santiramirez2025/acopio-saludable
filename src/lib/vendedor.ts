@@ -20,7 +20,11 @@ import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
 import { cortada, fichasNombradas, presentacionDe, separarOpciones } from "./whatsapp-interactivo";
 import { argumentoCombo, COMBO_ENTRADA, temaDe } from "./combos-tema";
-import type { Accion, Enlace, EnvioCotizado, Ficha, Respuesta } from "./asistente-catalogo";
+import type { Accion, Enlace, EnvioCotizado, Ficha, Foto, Respuesta } from "./asistente-catalogo";
+import { urlSitio } from "./sitio";
+
+/** Meta necesita una URL pública absoluta para la foto. */
+const absoluta = (u: string) => (u.startsWith("http") ? u : `${urlSitio()}${u.startsWith("/") ? "" : "/"}${u}`);
 import { cotizarEnvioChat } from "./envio-chat";
 import { completarEntrega } from "./pedidos";
 
@@ -56,6 +60,19 @@ const HERRAMIENTAS = [
         solo_sin_tacc: { type: "boolean", description: "true para traer únicamente productos marcados sin TACC." },
       },
       required: ["consulta"],
+    },
+  },
+  {
+    name: "mandar_fotos",
+    description:
+      "Manda por el chat las fotos reales (hasta 4) de los productos o combos que pide ver, con nombre y precio al pie. " +
+      "Usala cuando pida fotos, imágenes o «ver cómo es»: pasale la búsqueda o los códigos/slugs de lo que estaban hablando.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        consulta: { type: "string", description: "Qué fotos busca, por ejemplo «barritas proteicas» o «mix clásico»." },
+        codigos: { type: "array", items: { type: "string" }, description: "Códigos de productos o slugs de combos ya nombrados en la charla (hasta 4)." },
+      },
     },
   },
   {
@@ -191,7 +208,7 @@ const HERRAMIENTAS = [
   },
 ];
 
-type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[]; derivar?: boolean; envio?: EnvioCotizado; entregaGuardada?: boolean };
+type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[]; derivar?: boolean; envio?: EnvioCotizado; entregaGuardada?: boolean; fotos?: Foto[] };
 
 /** Exportada para poder probar cada herramienta sin pegarle a la API ni gastar tokens. */
 /** Lo que el vendedor sabe de la charla además del texto: por ahora, el pedido ya cerrado. */
@@ -210,6 +227,20 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
         : "Guardado en el pedido. Agradecé en una frase y decile que su pedido quedó agendado y le confirmamos la entrega por acá. No pidas nada más ni ofrezcas otra cosa.",
       entregaGuardada: falta.length === 0,
     };
+  }
+  if (nombre === "mandar_fotos") {
+    const consulta = String(entrada.consulta ?? "").trim();
+    const codigos = Array.isArray(entrada.codigos) ? entrada.codigos.map(String).slice(0, 4) : [];
+    const [porCodigo, combosTodos] = await Promise.all([codigos.length ? productosTienda({ where: { codigo: { in: codigos } } }) : Promise.resolve([]), combosTienda({ activo: true })]);
+    const combosPedidos = combosTodos.filter((c) => codigos.includes(c.slug));
+    const buscados = consulta && porCodigo.length + combosPedidos.length < 1 ? await hallarProductos(consulta, false).then((x) => x.slice(0, 4)) : [];
+    const combosBuscados = consulta && !combosPedidos.length && !porCodigo.length ? await hallarCombos(consulta).then((x) => x.slice(0, 2)) : [];
+    const fotos: Foto[] = [
+      ...combosPedidos.concat(combosBuscados).filter((c) => c.fotoUrl).map((c) => ({ url: absoluta(c.fotoUrl!), pie: `${c.nombre} · ${pesos(Math.round(c.precio))}` })),
+      ...porCodigo.concat(buscados).filter((p) => p.fotoUrl).map((p) => ({ url: absoluta(p.fotoUrl!), pie: `${p.producto} ${p.presentacion} · ${pesos(p.precio)}` })),
+    ].slice(0, 4);
+    if (!fotos.length) return { texto: "No hay fotos cargadas de eso. Decile que las ve en la web (acopiosaludable.com/catalogo) y seguí con la venta." };
+    return { texto: `Se mandan ${fotos.length} fotos: ${fotos.map((f) => f.pie).join("; ")}. Escribí una frase corta («Te paso las fotos») y seguí con la pregunta de cierre.`, fotos };
   }
   if (nombre === "buscar_productos") {
     const consulta = String(entrada.consulta ?? "");
@@ -512,6 +543,7 @@ function instrucciones(compraMinima: string): string {
     "- PREGUNTA PENDIENTE: si te repregunta («?», «¿con quién confirmo?») es porque no le contestaste algo: contestalo vos. Nunca cierres con «de nada» si tiene una duda abierta.",
     "- DUDAS DE PRODUCTO (si un mix tiene maní, qué trae, si es apto): NUNCA las derives ni digas «lo confirmamos en un rato». Contestá con lo que dice el nombre del producto (buscar_productos o detalle del combo). Si el nombre no lo aclara, no adivines: ofrecé en el mismo mensaje la alternativa segura armada con productos sueltos (ej. «para ir a lo seguro te lo cambio por almendras, nueces y cajú sueltos, que no llevan maní: $X») y preguntá si lo cambiás.",
     "- CAMBIOS AL PEDIDO («sí, cambiala», «sacá esto», «sumá aquello»): hacelo vos con agregar_al_pedido pasando el pedido completo ya cambiado, decí el total nuevo y preguntá la zona o si lo confirmamos. Un pedido que todavía no pagó no es un «pedido ya hecho»: nunca lo derives.",
+    "- FOTOS: si pide fotos, imágenes o ver cómo es algo, usá mandar_fotos con lo que estaban hablando (códigos o slugs ya nombrados, o la búsqueda). Las fotos salen solas antes de tu texto: vos escribí una frase corta («Te paso las fotos») y la pregunta de cierre. Nunca digas que no tenés fotos sin usar la herramienta.",
     "- POSVENTA: si en la charla ya quedó el pedido agendado (dirección y horario dados), no vuelvas a ofrecer combos ni a pedir datos. Contestá lo que pregunte en una o dos frases (qué más vendemos, horarios, cómo pagar) y, si quiere sumar algo, decile el precio y que va en el mismo reparto; agregalo con agregar_al_pedido. Cerrá con una pregunta corta solo si hace falta.",
     "- SEGUIMIENTO: si contesta «Sí, agendalo» al mensaje de seguimiento, retomá su pedido guardado: decile en una línea qué tiene y el total, y seguí con la zona o la forma de pago. Si contesta «Más adelante», agradecé corto y no insistas.",
     "- CUANDO TE PASA SU DIRECCIÓN: agradecé y decí que el pedido queda agendado («¡Gracias, Ariel! Tu pedido queda agendado 🙌»). NUNCA digas «ya tenemos tu dirección», «tenemos tus datos» ni nada que suene a que guardamos o conocemos datos suyos: suena invasivo.",
@@ -593,6 +625,7 @@ export async function responderComoVendedor(
   let derivar = false;
   let envio: EnvioCotizado | undefined;
   let entregaGuardada = false;
+  let fotos: Foto[] = [];
   try {
     for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -659,6 +692,7 @@ export async function responderComoVendedor(
           derivar: derivar || undefined,
           envio,
           entregaGuardada: entregaGuardada || undefined,
+          fotos: fotos.length ? fotos : undefined,
         };
       }
 
@@ -667,6 +701,7 @@ export async function responderComoVendedor(
         const r = await correrHerramienta(u.name ?? "", u.input ?? {}, canal, ctx);
         if (r.entregaGuardada) entregaGuardada = true;
         if (r.fichas?.length) fichas = [...r.fichas, ...fichas.filter((f) => !r.fichas!.some((n) => n.href === f.href))].slice(0, 8);
+        if (r.fotos?.length) fotos = r.fotos;
         if (r.acciones?.length) acciones = r.acciones;
         if (r.enlaces?.length) enlaces = r.enlaces;
         if (r.derivar) derivar = true;
