@@ -5,8 +5,10 @@
 // los combos con presentaciones hogareñas que llegan justo a la compra mínima. Los códigos
 // propios (TG-…, LG-…) no chocan con los de Distrimay.
 //
-// Costos: Todo Granolas lista 2 más 21% de IVA (la lista dice «sin IVA»; si resulta final, el
-// margen es mayor y se corrige acá). La Granja ya viene con IVA.
+// Costos: Todo Granolas cobra el precio de lista tal cual (la lista dice «sin IVA», pero el ticket
+// del 19/10/2026 salió a precio de lista, sin IVA agregado). La Granja también viene final.
+// Los márgenes de TG se recalcularon para que los precios de venta queden iguales a los de antes
+// (cuando el costo se cargaba con un 21% de más).
 //
 // Precio = costo × (1 + margen). El margen por defecto es el de una dietética en fraccionado
 // (75%); los de ticket alto (nuez, almendra, cajú, arándanos) y las granolas llevan menos para
@@ -31,45 +33,46 @@ export type ProductoProveedor = {
   porQueLoElegimos?: string;
 };
 
-const IVA = 1.21;
-const tg = (sinIva: number) => Math.round(sinIva * IVA);
-const SUELTO = "Sin marca / fraccionado";
-
 export const MARGEN_FRACCIONADO = 0.6;
+const IVA = 1.21;
+const tg = (lista: number) => lista;
+/** Margen que deja el mismo precio de venta que tenía el producto cuando el costo llevaba el 21% de más. */
+const mTg = (m = MARGEN_FRACCIONADO) => Math.round(((1 + m) * IVA - 1) * 1000) / 1000;
+const SUELTO = "Sin marca / fraccionado";
 
 export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   // ——— Todo Granolas: mixes y frutos secos ———
-  { codigo: "TG-MIXCG", producto: "Mix Clásico con cajú y girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(5956), pesoBrutoG: 1020, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní, pasas y girasol: el mix de todos los días, con cajú." },
-  { codigo: "TG-MIXC", producto: "Mix Clásico con cajú", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(7365), pesoBrutoG: 1020 },
-  { codigo: "TG-MIXGIR", producto: "Mix Clásico con girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(6760), pesoBrutoG: 1020 },
-  { codigo: "TG-MIXT", producto: "Mix Tropical con cajú", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(8654), pesoBrutoG: 1020, porQueLoElegimos: "Con banana chips, ananá y castañas de cajú." },
-  { codigo: "TG-MIXTG", producto: "Mix Tropical con girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(7257), pesoBrutoG: 1020 },
-  { codigo: "TG-MIXP", producto: "Mix Premium sin pasas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(10240), margen: 0.6, pesoBrutoG: 1020, porQueLoElegimos: "Nuez, almendra, castañas y maní, sin pasas." },
-  { codigo: "TG-MIXTSM", producto: "Mix Tropical con cajú sin maní", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(9044), margen: 0.5, pesoBrutoG: 1020, porQueLoElegimos: "Para los que no comen maní: castañas de cajú, frutas tropicales y pasas, sin una sola semilla de maní." },
-  { codigo: "TG-MIXXP", producto: "Mix Extra Premium sin maní y sin pasas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(16500), margen: 0.35, pesoBrutoG: 1020, porQueLoElegimos: "Solo frutos secos premium, sin maní ni pasas." },
-  { codigo: "TG-MIXCERV", producto: "Mix Cervecero premium", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(6236), pesoBrutoG: 1020, porQueLoElegimos: "Maní salado, almendras, castañas, maíz frito y semillas: la picada lista." },
-  { codigo: "TG-NUEZ", producto: "Nuez Mariposa blanca light", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(14076), margen: 0.25, pesoBrutoG: 1020, porQueLoElegimos: "Mariposa entera y clara, cosecha 2026." },
-  { codigo: "TG-CAJU", producto: "Castañas de cajú W4", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(15799), margen: 0.3, pesoBrutoG: 1020 },
-  { codigo: "TG-PASAS", producto: "Pasas de uva negras sin semilla", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: tg(3410), pesoBrutoG: 1020 },
-  { codigo: "TG-BANANA", producto: "Banana chips", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: tg(12526), margen: 0.2, pesoBrutoG: 1020 },
-  { codigo: "TG-MANIQUESO", producto: "Maní saborizado queso", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(4080), pesoBrutoG: 1020 },
-  { codigo: "TG-MANIJAMON", producto: "Maní saborizado jamón", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(4080), pesoBrutoG: 1020 },
-  { codigo: "TG-MANIPIZZA", producto: "Maní saborizado pizza", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(4080), pesoBrutoG: 1020 },
-  { codigo: "TG-GIRASOL", producto: "Semillas de girasol peladas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: tg(3192), pesoBrutoG: 1020 },
-  { codigo: "TG-ZAPALLO", producto: "Semillas de zapallo", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: tg(10184), margen: 0.6, pesoBrutoG: 1020 },
-  { codigo: "TG-QUINOAPOP", producto: "Quinoa pop", marca: SUELTO, presentacion: "x 500 g", categoria: "Cereales y granolas", contenido: 500, unidad: "g", costo: tg(4658), margen: 0.6, pesoBrutoG: 520 },
+  { codigo: "TG-MIXCG", producto: "Mix Clásico con cajú y girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(5956), pesoBrutoG: 1020, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní, pasas y girasol: el mix de todos los días, con cajú." },
+  { codigo: "TG-MIXC", producto: "Mix Clásico con cajú", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(7365), pesoBrutoG: 1020 },
+  { codigo: "TG-MIXGIR", producto: "Mix Clásico con girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(6760), pesoBrutoG: 1020 },
+  { codigo: "TG-MIXT", producto: "Mix Tropical con cajú", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(8654), pesoBrutoG: 1020, porQueLoElegimos: "Con banana chips, ananá y castañas de cajú." },
+  { codigo: "TG-MIXTG", producto: "Mix Tropical con girasol", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(7257), pesoBrutoG: 1020 },
+  { codigo: "TG-MIXP", producto: "Mix Premium sin pasas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(10240), margen: mTg(0.6), pesoBrutoG: 1020, porQueLoElegimos: "Nuez, almendra, castañas y maní, sin pasas." },
+  { codigo: "TG-MIXTSM", producto: "Mix Tropical con cajú sin maní", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(9044), margen: mTg(0.5), pesoBrutoG: 1020, porQueLoElegimos: "Para los que no comen maní: castañas de cajú, frutas tropicales y pasas, sin una sola semilla de maní." },
+  { codigo: "TG-MIXXP", producto: "Mix Extra Premium sin maní y sin pasas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(16500), margen: mTg(0.35), pesoBrutoG: 1020, porQueLoElegimos: "Solo frutos secos premium, sin maní ni pasas." },
+  { codigo: "TG-MIXCERV", producto: "Mix Cervecero premium", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(6236), pesoBrutoG: 1020, porQueLoElegimos: "Maní salado, almendras, castañas, maíz frito y semillas: la picada lista." },
+  { codigo: "TG-NUEZ", producto: "Nuez Mariposa blanca light", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 15993, margen: 0.44 /* hoy stock de La Granja (extra light); en TG blanca light sale 14.076 */, pesoBrutoG: 1020, porQueLoElegimos: "Mariposa entera y clara, cosecha 2026." },
+  { codigo: "TG-CAJU", producto: "Castañas de cajú W4", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(15799), margen: mTg(0.3), pesoBrutoG: 1020 },
+  { codigo: "TG-PASAS", producto: "Pasas de uva negras sin semilla", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(3410), pesoBrutoG: 1020 },
+  { codigo: "TG-BANANA", producto: "Banana chips", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: tg(12526), margen: mTg(0.2), pesoBrutoG: 1020 },
+  { codigo: "TG-MANIQUESO", producto: "Maní saborizado queso", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(4080), pesoBrutoG: 1020 },
+  { codigo: "TG-MANIJAMON", producto: "Maní saborizado jamón", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(4080), pesoBrutoG: 1020 },
+  { codigo: "TG-MANIPIZZA", producto: "Maní saborizado pizza", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(4080), pesoBrutoG: 1020 },
+  { codigo: "TG-GIRASOL", producto: "Semillas de girasol peladas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(3192), pesoBrutoG: 1020 },
+  { codigo: "TG-ZAPALLO", producto: "Semillas de zapallo", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: tg(10184), margen: mTg(0.6), pesoBrutoG: 1020 },
+  { codigo: "TG-QUINOAPOP", producto: "Quinoa pop", marca: SUELTO, presentacion: "x 500 g", categoria: "Cereales y granolas", contenido: 500, unidad: "g", costo: tg(4658), margen: mTg(0.6), pesoBrutoG: 520 },
   // ——— Todo Granolas: granolas (fabricante cordobés) ———
-  { codigo: "TG-GTRAD", producto: "Granola Tradicional", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6460), margen: 0.55, pesoBrutoG: 1020, porQueLoElegimos: "Hecha en Córdoba, con avena, miel y frutos secos." },
-  { codigo: "TG-GPMANI", producto: "Granola con pasta de maní", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6996), margen: 0.55, pesoBrutoG: 1020 },
-  { codigo: "TG-GCACAO", producto: "Granola cacao y coco", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6996), margen: 0.55, pesoBrutoG: 1020 },
-  { codigo: "TG-GPROTE", producto: "Granola proteica", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6996), margen: 0.55, pesoBrutoG: 1020, objetivos: ["gym"] },
-  { codigo: "TG-GALMENDRA", producto: "Granola con almendras", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6996), margen: 0.55, pesoBrutoG: 1020 },
-  { codigo: "TG-GSTEVIA", producto: "Granola con stevia (sin azúcar, vegana)", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(7657), margen: 0.55, pesoBrutoG: 1020 },
+  { codigo: "TG-GTRAD", producto: "Granola Tradicional", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6460), margen: mTg(0.55), pesoBrutoG: 1020, porQueLoElegimos: "Hecha en Córdoba, con avena, miel y frutos secos." },
+  { codigo: "TG-GPMANI", producto: "Granola con pasta de maní", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6996), margen: mTg(0.55), pesoBrutoG: 1020 },
+  { codigo: "TG-GCACAO", producto: "Granola cacao y coco", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6996), margen: mTg(0.55), pesoBrutoG: 1020 },
+  { codigo: "TG-GPROTE", producto: "Granola proteica", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6996), margen: mTg(0.55), pesoBrutoG: 1020, objetivos: ["gym"] },
+  { codigo: "TG-GALMENDRA", producto: "Granola con almendras", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6996), margen: mTg(0.55), pesoBrutoG: 1020 },
+  { codigo: "TG-GSTEVIA", producto: "Granola con stevia (sin azúcar, vegana)", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(7657), margen: mTg(0.55), pesoBrutoG: 1020 },
   // ——— Todo Granolas: snacks ———
-  { codigo: "TG-BARRA", producto: "Barra proteica Power", marca: "Todo Granolas", presentacion: "x unidad", categoria: "Almacen", contenido: 40, unidad: "g", costo: Math.round(tg(19656) / 10), margen: 0.5, pesoBrutoG: 45, objetivos: ["gym"] },
-  { codigo: "TG-ALFAJORFS", producto: "Alfajor de frutos secos", marca: "Todo Granolas", presentacion: "x unidad", categoria: "Galletas, alfajores y discos", contenido: 50, unidad: "g", costo: Math.round(tg(16700) / 12), margen: 0.6, pesoBrutoG: 55 },
+  { codigo: "TG-BARRA", producto: "Barra proteica Power", marca: "Todo Granolas", presentacion: "x unidad", categoria: "Almacen", contenido: 40, unidad: "g", costo: Math.round(tg(19656) / 10), margen: mTg(0.5), pesoBrutoG: 45, objetivos: ["gym"] },
+  { codigo: "TG-ALFAJORFS", producto: "Alfajor de frutos secos", marca: "Todo Granolas", presentacion: "x unidad", categoria: "Galletas, alfajores y discos", contenido: 50, unidad: "g", costo: Math.round(tg(16700) / 12), margen: mTg(0.6), pesoBrutoG: 55 },
   // ——— La Granja del Centro (con IVA) ———
-  { codigo: "LG-DATIL", producto: "Dátiles con carozo", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: 6151, pesoBrutoG: 1020 },
+  { codigo: "LG-DATIL", producto: "Dátiles Deglet Nour con carozo (Argelia)", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: 9069, margen: 0.085 /* precio de hoy $9.842: decidir si sube */, pesoBrutoG: 1020, porQueLoElegimos: "Deglet Nour de Argelia: más carnoso y dulce que el egipcio, con carozo." },
   { codigo: "LG-MIXSEM", producto: "Mix de semillas para el desayuno", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: 3978, pesoBrutoG: 1020, porQueLoElegimos: "Lino, sésamo, girasol y chía, listas para el yogur o la ensalada." },
   { codigo: "LG-CHIA", producto: "Semillas de chía", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: 5440, pesoBrutoG: 1020 },
   { codigo: "LG-LINO", producto: "Semillas de lino", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: 3791, pesoBrutoG: 1020 },
