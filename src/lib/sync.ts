@@ -80,13 +80,15 @@ async function crearNuevo(tx: Tx, e: Entrante, costo: number, precioPublico: num
 export type ResumenSync = { id: number; recibidos: number; descartados: number; aplicados: number; pendientes: number; nuevos: number; desaparecidos: number; sinCambios: number; avisos: string[] };
 
 /** Recibe una lectura de precios, calcula el diff, aplica lo que corresponde y deja pendiente el resto. */
-export async function registrarSync(args: { origen: string; modo: unknown; completo: unknown; items: unknown }): Promise<ResumenSync> {
+export async function registrarSync(args: { origen: string; modo: unknown; completo: unknown; items: unknown; prefijo?: "TG-" | "LG-" }): Promise<ResumenSync> {
   const { items: entrantes, descartados } = sanearEntrantes(args.items);
   if (!entrantes.length) throw new Error("La actualización no trae productos válidos");
   const modo = entrantes.some((e) => e.costo !== null) ? "costos" : "publicos";
   const cfg = await prisma.setting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
   // Los productos de otros proveedores (TG-…, LG-…) no vienen en la lista de Distrimay: no son «desaparecidos».
-  const actuales = (await prisma.product.findMany({ where: { NOT: [{ codigo: { startsWith: "TG-" } }, { codigo: { startsWith: "LG-" } }] }, select: { codigo: true, producto: true, costo: true, precioPublico: true, estado: true, fotoUrl: true } })).map((p) => ({
+  // Las listas de TG y LG solo miran sus propios productos; la de Distrimay, todo lo demás.
+  const where = args.prefijo ? { codigo: { startsWith: args.prefijo } } : { NOT: [{ codigo: { startsWith: "TG-" } }, { codigo: { startsWith: "LG-" } }] };
+  const actuales = (await prisma.product.findMany({ where, select: { codigo: true, producto: true, costo: true, precioPublico: true, estado: true, fotoUrl: true } })).map((p) => ({
     ...p,
     costo: Number(p.costo),
     precioPublico: Number(p.precioPublico),
