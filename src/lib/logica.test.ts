@@ -1029,3 +1029,28 @@ test("la zona dicha antes se reutiliza", () => {
   assert.equal(lugarDelHistorial([{ de: "acopio", texto: "Envío a San Roque: sin cargo." }, { de: "yo", texto: "dale" }]), "San Roque");
   assert.equal(lugarDelHistorial([{ de: "yo", texto: "hola" }]), null);
 });
+
+import { productosDe, sugerirDelStock, EN_STOCK } from "./en-stock";
+
+test("stock: ofrece lo que combina y no repite lo que lleva", () => {
+  const cat = [
+    { codigo: "TG-NUEZ", producto: "Nuez Mariposa blanca light", marca: "Sin marca", presentacion: "x 1 kg", precio: 23000 },
+    { codigo: "LG-DATIL-500", producto: "Dátiles Deglet Nour con carozo (Argelia)", marca: "Sin marca", presentacion: "x 500 g", precio: 7500 },
+    { codigo: "LG-DATIL", producto: "Dátiles Deglet Nour con carozo (Argelia)", marca: "Sin marca", presentacion: "x 1 kg", precio: 14500 },
+    { codigo: "LG-MIEL", producto: "Miel de abejas pura", marca: "Los Dos Zánganos", presentacion: "x 500 g", precio: 11000 },
+    { codigo: "TG-GTRAD", producto: "Granola Tradicional", marca: "Todo Granolas", presentacion: "x 1 kg", precio: 12000 },
+    { codigo: "TG-MIXC", producto: "Mix Clásico con cajú", marca: "Sin marca", presentacion: "x 1 kg", precio: 15000 },
+  ];
+  const despensa = sugerirDelStock("Despensa: mix clásico, pasas, semillas", cat);
+  assert.equal(despensa[0].producto.codigo, "LG-DATIL-500"); // dátiles primero, el de 500 g
+  assert.equal(despensa[1].producto.codigo, "TG-NUEZ");
+  const conNuez = sugerirDelStock("nuez mariposa 1 kg", cat);
+  assert.ok(!conNuez.some((s) => s.producto.codigo === "TG-NUEZ"));
+  const desayuno = sugerirDelStock("granola tradicional", cat);
+  assert.equal(desayuno[0].producto.codigo, "LG-MIEL");
+  // Todo Granolas no cuenta como stock; el mix con cajú no es «cajú».
+  const caju = EN_STOCK.find((i) => i.id === "caju")!;
+  assert.equal(productosDe(caju, cat).length, 0);
+  const granola = EN_STOCK.find((i) => i.id === "granola")!;
+  assert.equal(productosDe(granola, cat).length, 0);
+});

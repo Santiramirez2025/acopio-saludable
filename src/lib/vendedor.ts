@@ -26,6 +26,7 @@ import { urlSitio } from "./sitio";
 /** Meta necesita una URL pública absoluta para la foto. */
 const absoluta = (u: string) => (u.startsWith("http") ? u : `${urlSitio()}${u.startsWith("/") ? "" : "/"}${u}`);
 import { cotizarEnvioChat } from "./envio-chat";
+import { EN_STOCK, productosDe, sugerirDelStock } from "./en-stock";
 import { completarEntrega } from "./pedidos";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
@@ -178,6 +179,20 @@ const HERRAMIENTAS = [
         },
       },
       required: ["items"],
+    },
+  },
+  {
+    name: "ver_stock",
+    description:
+      "Lo que tenemos en mano ahora (recién llegado), con código y precio, elegido para que combine con lo que lleva. " +
+      "Usala para la venta adicional, SOLO cuando ya está cerrado lo que vino a buscar (pedido armado y zona o pago resueltos), o si pregunta «¿qué más tienen?».",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        lleva: { type: "string", description: "Lo que lleva o vino a buscar, con lo que trae el combo si es un combo (ej. «Despensa: mix, dátiles, pasas, semillas»)." },
+        solo_sin_tacc: { type: "boolean", description: "true si busca sin TACC." },
+      },
+      required: ["lleva"],
     },
   },
   {
@@ -371,15 +386,30 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     return { texto, fichas, enlaces: [{ href: "/ofertas", texto: "Ver todas las bajas" }] };
   }
 
+  if (nombre === "ver_stock") {
+    const lleva = String(entrada.lleva ?? "").slice(0, 300);
+    const sugeridas = sugerirDelStock(lleva, await catalogo(), 2, entrada.solo_sin_tacc === true);
+    if (!sugeridas.length) return { texto: "No hay nada en stock que combine con lo que lleva. No ofrezcas nada más: cerrá cálido." };
+    return {
+      texto: [
+        "En stock, para sumar (va en el mismo envío):",
+        ...sugeridas.map(({ item, producto: p }) => `- codigo ${p.codigo} · ${p.producto} ${p.presentacion} · ${pesos(p.precio)} · ${item.gancho}`),
+        "Ofrecé UNA sola, la que más combine, en una frase con su precio y un porqué concreto («ya que va el reparto…», «para acompañar la granola…»), y preguntá si se la sumás. Si dice que sí, agregar_al_pedido. Si dice que no o no contesta eso, no insistas.",
+      ].join("\n"),
+    };
+  }
+
   if (nombre === "completar_el_minimo") {
     const falta = Math.max(0, Math.round(Number(entrada.falta) || 0));
     if (!falta) return { texto: "Ya llega a la compra mínima: no hace falta completar nada. Cerrá la venta." };
     const afin = String(entrada.afin_a ?? "").trim();
     const todos = await catalogo();
+    const enMano = new Set(EN_STOCK.flatMap((i) => productosDe(i, todos).map((p) => p.codigo)));
     // Lo que sirve es lo que cierra el hueco de una, no lo más caro ni lo más barato del catálogo.
     const cerca = todos
       .filter((p) => p.precio >= falta * 0.45 && p.precio <= falta * 1.6)
-      .map((p) => ({ p, d: Math.abs(p.precio - falta) }))
+      // Lo que tenemos en mano va primero: sale hoy y rota el stock.
+      .map((p) => ({ p, d: Math.abs(p.precio - falta) * (enMano.has(p.codigo) ? 0.5 : 1) }))
       .sort((a, b) => a.d - b.d)
       .map((x) => x.p);
     const afines = afin ? await hallarProductos(afin) : [];
@@ -530,7 +560,7 @@ function instrucciones(compraMinima: string): string {
     "   Si en vez de la zona te pasa directamente la dirección (calle y número), NO le preguntes el barrio ni la ciudad: usá costo_envio con la ciudad que diga, y si no dice ninguna, con «Villa Carlos Paz». Nunca le pidas un dato que ya te dio: releé la charla antes de preguntar.",
     "   Si dice «pago aquí», «pago cuando me lo traés» o «al recibir» y es de Carlos Paz y alrededores, ya eligió pagar al recibir: no ofrezcas otra forma de pago ni preguntes nada más.",
     "   PAGAR AL RECIBIR ES SOLO EN CARLOS PAZ Y ALREDEDORES (la zona con envío sin cargo). En Córdoba capital y en envíos por correo se paga antes de salir: si pide pagar al recibir, decile amable que para su zona se abona antes, por transferencia (con descuento) o Mercado Pago, y que apenas se acredita sale el pedido. Nunca le ofrezcas pagar al recibir fuera de Carlos Paz.",
-    "5. Un solo intento de sumar algo más, después de que acepta. Si dice que no, cerrá cálido.",
+    "5. VENTA ADICIONAL, como un vendedor experto: primero se cierra lo que vino a buscar. Nunca ofrezcas otra cosa mientras está decidiendo el combo o el producto, ni antes de resolver zona y pago. Con eso cerrado, si la charla da (contesta con ganas, compra para la familia o un negocio, pregunta «¿qué más tienen?», o el pedido va en el reparto propio y sumar no le cuesta envío), usá ver_stock con lo que lleva y ofrecé UNA cosa que combine, en una frase con precio y porqué: «Ya que va el reparto, nos llegaron nueces mariposa de cosecha nueva a $X el kilo, ¿te sumo una?». Si contestó cortante, está apurado o duda del precio, no ofrezcas nada. Una sola vez por pedido: si dice que no, cerrá cálido.",
     "- PRECIOS POR KILO: si pide «precios por kilo» (lo que manda el anuncio) o «lista de precios», usá buscar_productos y pasale 4 precios por kilo de hoy, uno por renglón, que representen la gama: un mix, la nuez, la almendra y el cajú (o lo que pidió). Presentalos como «Te paso precios por kilo de hoy:» y cerrá con «¿Qué estás buscando? Te armo el pedido». NUNCA digas «los más económicos», «los más baratos» ni nada que suene a que no puede pagar; si querés destacar uno, decí «el que más sale» o «el más pedido». El combo NO va en ese primer mensaje: lo ofrecés cuando contesta («para mi casa» → la Despensa, que sale menos el kilo). No aplica a negocios ni alojamientos: con ellos usá pedido_para_negocio.",
     "- LO QUE ÉL ELIGE: si nombra productos puntuales («solo nuez, almendras y castañas»), o dice que el combo es mucho («4 kilos es mucho»), si está en Carlos Paz ofrecé la Despensa chica (2 kilos, medio kilo de cada uno); si no, cotizá esos productos (podés ofrecer medio kilo), sumalos y, si no llega al mínimo, ofrecé completar con algo de lo que pidió. No vuelvas a ofrecerle el combo.",
     "- CIUDADES: si nombra una ciudad conocida, la provincia la sabés vos (La Plata, Mar del Plata, Bahía Blanca → Buenos Aires; Rosario → Santa Fe; Mendoza, Salta, Neuquén…). Nunca le preguntes en qué provincia queda: usá costo_envio directo. Preguntá solo si el nombre existe en varias provincias y no hay pista.",
@@ -547,7 +577,7 @@ function instrucciones(compraMinima: string): string {
     "- DUDAS DE PRODUCTO (si un mix tiene maní, qué trae, si es apto): NUNCA las derives ni digas «lo confirmamos en un rato». Contestá con lo que dice el nombre del producto (buscar_productos o detalle del combo). Si el nombre no lo aclara, no adivines: ofrecé en el mismo mensaje la alternativa segura armada con productos sueltos (ej. «para ir a lo seguro te lo cambio por almendras, nueces y cajú sueltos, que no llevan maní: $X») y preguntá si lo cambiás.",
     "- CAMBIOS AL PEDIDO («sí, cambiala», «sacá esto», «sumá aquello»): hacelo vos con agregar_al_pedido pasando el pedido completo ya cambiado, decí el total nuevo y preguntá la zona o si lo confirmamos. Un pedido que todavía no pagó no es un «pedido ya hecho»: nunca lo derives.",
     "- FOTOS: si pide fotos, imágenes o ver cómo es algo, usá mandar_fotos con lo que estaban hablando (códigos o slugs ya nombrados, o la búsqueda). Las fotos salen solas antes de tu texto: vos escribí una frase corta («Te paso las fotos») y la pregunta de cierre. Nunca digas que no tenés fotos sin usar la herramienta.",
-    "- POSVENTA: si en la charla ya quedó el pedido agendado (dirección y horario dados), no vuelvas a ofrecer combos ni a pedir datos. Contestá lo que pregunte en una o dos frases (qué más vendemos, horarios, cómo pagar) y, si quiere sumar algo, decile el precio y que va en el mismo reparto; agregalo con agregar_al_pedido. Cerrá con una pregunta corta solo si hace falta.",
+    "- POSVENTA: si en la charla ya quedó el pedido agendado (dirección y horario dados), no vuelvas a ofrecer combos ni a pedir datos. Contestá lo que pregunte en una o dos frases (qué más vendemos, horarios, cómo pagar) y, si quiere sumar algo o pregunta qué más hay, usá ver_stock, decile el precio y que va en el mismo reparto; agregalo con agregar_al_pedido. Si todavía no le ofreciste nada adicional y la charla da, este es el momento de la venta adicional (regla 5). Cerrá con una pregunta corta solo si hace falta.",
     "- SEGUIMIENTO: si contesta «Sí, agendalo» al mensaje de seguimiento, retomá su pedido guardado: decile en una línea qué tiene y el total, y seguí con la zona o la forma de pago. Si contesta «Más adelante», agradecé corto y no insistas.",
     "- CUANDO TE PASA SU DIRECCIÓN: agradecé y decí que el pedido queda agendado («¡Gracias, Ariel! Tu pedido queda agendado 🙌»). NUNCA digas «ya tenemos tu dirección», «tenemos tus datos» ni nada que suene a que guardamos o conocemos datos suyos: suena invasivo.",
     "- RECOMENDACIONES (si pregunta por el 5%, el link para recomendar o dice que lo recomendó alguien): quien compra por primera vez con el link de un amigo tiene 5% de descuento, y quien recomendó tiene 5% en su próxima compra por cada amigo que compre. El link para recomendar está en la página de seguimiento de su pedido (botón «Recomendar por WhatsApp»). Si nunca compró, el primer paso es su primer pedido: ofrecéselo como siempre.",
