@@ -14,6 +14,14 @@ export async function POST(req: Request) {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const b = (await req.json().catch(() => ({}))) as { items?: { codigo?: string; costo?: number; precioPublico?: number; producto?: string; crear?: boolean; fotoDe?: string }[] };
   const salida: Record<string, unknown> = {};
+  // Descuento de un combo: { combos: [{ slug, descuentoPct }] }. Sirve para mantener el precio del combo cuando sube un producto.
+  for (const c of ((b as { combos?: { slug?: string; descuentoPct?: number }[] }).combos ?? []).slice(0, 20)) {
+    const slug = String(c.slug ?? "");
+    const pct = Number(c.descuentoPct);
+    if (!slug || !Number.isFinite(pct) || pct < 0 || pct > 60) { salida[`combo:${slug}`] = "descuento inválido"; continue; }
+    const r = await prisma.combo.updateMany({ where: { slug }, data: { descuentoPct: pct } });
+    salida[`combo:${slug}`] = r.count ? { descuentoPct: pct } : "no existe";
+  }
   for (const it of (b.items ?? []).slice(0, 100)) {
     const codigo = String(it.codigo ?? "");
     let previo = await prisma.product.findUnique({ where: { codigo } });
