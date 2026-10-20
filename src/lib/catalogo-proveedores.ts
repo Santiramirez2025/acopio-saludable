@@ -95,7 +95,7 @@ export type ComboProveedor = { slug: string; nombre: string; descuentoPct: numbe
  * Los códigos sin prefijo son productos de marca que siguen viniendo de Distrimay.
  */
 export const COMBOS_PROVEEDORES: ComboProveedor[] = [
-  { slug: "despensa-4-kilos", nombre: "Despensa de 4 kilos", descuentoPct: 15.6, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }, { codigo: "LG-MIXSEM", cantidad: 1 }] },
+  { slug: "despensa-4-kilos", nombre: "Despensa de 4 kilos", descuentoPct: 16.37, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }, { codigo: "LG-MIXSEM", cantidad: 1 }] },
   { slug: "mixes-del-mes", nombre: "Mixes del mes", descuentoPct: 3, items: [{ codigo: "TG-MIXGIR", cantidad: 1 }, { codigo: "TG-MIXTG", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "alacena-de-frutos-secos", nombre: "Alacena de frutos secos", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-NUEZ", cantidad: 1 }, { codigo: "TG-MIXC", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "desayuno-30-dias", nombre: "Desayuno 30 días", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-GTRAD", cantidad: 1 }, { codigo: "TG-GPMANI", cantidad: 1 }, { codigo: "736684208707", cantidad: 1 }, { codigo: "LG-MIEL", cantidad: 1 }] },
