@@ -112,3 +112,15 @@ export function bajaPct(anterior: number, actual: number): number {
   if (!(anterior > 0) || !(actual > 0) || actual >= anterior) return 0;
   return Math.round(((anterior - actual) / anterior) * 1000) / 10;
 }
+
+/** «1 kg de Dátiles», «500 g de Pasas», «6 x Barra»: lo que trae cada renglón del combo, con su cantidad. */
+export function cuantoTrae(i: { cantidad: number; producto: { producto: string; contenido: number | null; unidad: string | null } }): string {
+  const { contenido, unidad, producto } = i.producto;
+  if (contenido && (unidad === "g" || unidad === "ml")) {
+    const total = contenido * i.cantidad;
+    const grande = unidad === "g" ? "kg" : "l";
+    const medida = total >= 1000 ? `${(total / 1000).toLocaleString("es-AR", { maximumFractionDigits: 1 })} ${grande}` : `${total} ${unidad}`;
+    return i.cantidad > 1 && contenido < 1000 ? `${i.cantidad} x ${producto} (${medida})` : `${medida} de ${producto}`;
+  }
+  return `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${producto}`;
+}
