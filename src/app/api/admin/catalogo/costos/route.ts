@@ -20,10 +20,14 @@ export async function POST(req: Request) {
     const pct = Number(c.descuentoPct);
     if (!slug || !Number.isFinite(pct) || pct < 0 || pct > 60) { salida[`combo:${slug}`] = "descuento inválido"; continue; }
     // Un combo del catálogo propio que todavía no existe: se crea desde la definición, con sus productos.
-    if (c.crear && !(await prisma.combo.findUnique({ where: { slug } }))) {
+    const existente = c.crear ? await prisma.combo.findUnique({ where: { slug }, include: { items: true } }) : null;
+    if (c.crear && (!existente || !existente.items.length)) {
       const d = COMBOS_PROVEEDORES.find((x) => x.slug === slug);
       if (!d) { salida[`combo:${slug}`] = "no está en el catálogo propio"; continue; }
-      const combo = await prisma.combo.create({ data: { slug, nombre: d.nombre, tipo: "COMBO", descuentoPct: pct, activo: true, destacado: Boolean(d.destacado), fotoUrl: fotoCombo(slug) } });
+      const faltan = (await prisma.product.findMany({ where: { codigo: { in: d.items.map((i) => i.codigo) } }, select: { codigo: true } })).map((p) => p.codigo);
+      const sinCargar = d.items.filter((i) => !faltan.includes(i.codigo)).map((i) => i.codigo);
+      if (sinCargar.length) { salida[`combo:${slug}`] = `faltan cargar los productos: ${sinCargar.join(", ")} (mandalos en items con crear:true)`; continue; }
+      const combo = existente ?? (await prisma.combo.create({ data: { slug, nombre: d.nombre, tipo: "COMBO", descuentoPct: pct, activo: true, destacado: Boolean(d.destacado), fotoUrl: fotoCombo(slug) } }));
       await prisma.comboItem.createMany({ data: d.items.map((i) => ({ comboId: combo.id, codigo: i.codigo, cantidad: i.cantidad })) });
       salida[`combo:${slug}`] = { creado: true, descuentoPct: pct };
       continue;
