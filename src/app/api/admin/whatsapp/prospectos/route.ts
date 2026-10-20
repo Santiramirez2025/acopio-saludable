@@ -13,7 +13,7 @@ import { crearPlantillaAviso } from "@/lib/avisos";
 import { crearPlantillaComprobante } from "@/lib/comprobante-envio";
 import { avisarReparto, crearPlantillaReparto } from "@/lib/aviso-reparto";
 import { crearPlantillaSeguimiento } from "@/lib/seguimiento";
-import { crearPlantillaProveedor, enviarProveedor } from "@/lib/whatsapp-proveedores";
+import { crearPlantillaPedidoProveedor, crearPlantillaProveedor, enviarPedidoProveedor, enviarProveedor } from "@/lib/whatsapp-proveedores";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { borrarPlantilla, crearPlantillas, enviarProspecto, estadoPlantillas, type ResultadoEnvio } from "@/lib/whatsapp-prospectos";
@@ -42,6 +42,11 @@ export async function POST(req: Request) {
   if (cuerpo.accion === "proveedor") {
     const o = cuerpo as { telefono?: unknown; negocio?: unknown };
     return NextResponse.json(await enviarProveedor(String(o.telefono ?? ""), String(o.negocio ?? "")));
+  }
+  if (cuerpo.accion === "plantilla-pedido-proveedor") return NextResponse.json(await crearPlantillaPedidoProveedor());
+  if (cuerpo.accion === "pedido-proveedor") {
+    const o = cuerpo as { telefono?: unknown; nombre?: unknown; dia?: unknown; pedido?: unknown };
+    return NextResponse.json(await enviarPedidoProveedor(String(o.telefono ?? ""), String(o.nombre ?? ""), String(o.dia ?? ""), String(o.pedido ?? "")));
   }
   if (cuerpo.accion === "plantilla-aviso") return NextResponse.json(await crearPlantillaAviso());
   if (cuerpo.accion === "plantilla-seguimiento") return NextResponse.json(await crearPlantillaSeguimiento());

@@ -6,6 +6,7 @@
 
 import { prisma } from "./prisma";
 import { graph } from "./whatsapp-prospectos";
+import { registrarSalida } from "./whatsapp-memoria";
 
 export const PLANTILLA_PROVEEDOR = "acopio_proveedor_v1";
 export const MARCA_PROVEEDOR = "proveedor";
@@ -50,4 +51,48 @@ export async function enviarProveedor(telefono: string, negocio: string) {
     INSERT INTO "WhatsappMensaje" ("id", "telefono", "de", "texto") VALUES (${idSalida}, ${tel}, 'persona', ${TEXTO_PROVEEDOR(nombre)})
   `;
   return { telefono: tel, ok: true };
+}
+
+// ---------- Pedido a un proveedor (fuera de la ventana de 24 h) ----------
+// Para avisarle a La Granja (o a quien sea) qué retiramos y cuándo, aunque hace días que no nos escriben.
+
+export const PLANTILLA_PEDIDO_PROVEEDOR = "acopio_pedido_proveedor_v1";
+
+export const TEXTO_PEDIDO_PROVEEDOR = (nombre: string, dia: string, pedido: string) =>
+  `Hola ${nombre}, buen día. Soy Santiago, de Acopio Saludable (Villa Carlos Paz). Les paso el pedido para retirar el ${dia}, así lo tienen preparado: ${pedido}. ¿Me confirman por acá si está todo y si algo falta o cambió de precio? ¡Muchas gracias!`;
+
+export async function crearPlantillaPedidoProveedor() {
+  const token = process.env.WHATSAPP_TOKEN;
+  const waba = process.env.WHATSAPP_WABA_ID;
+  if (!token || !waba) return { error: "faltan WHATSAPP_TOKEN o WHATSAPP_WABA_ID" };
+  const res = await fetch(`https://graph.facebook.com/v21.0/${waba}/message_templates`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      name: PLANTILLA_PEDIDO_PROVEEDOR,
+      language: "es_AR",
+      category: "UTILITY",
+      components: [{ type: "BODY", text: TEXTO_PEDIDO_PROVEEDOR("{{1}}", "{{2}}", "{{3}}"), example: { body_text: [["Agustín", "miércoles 21/10 a la mañana", "981-007 Nuez mariposa extra light x 4 kg · 981-013 Castaña de cajú SK3 x 3 kg"]] } }],
+    }),
+  });
+  return res.json();
+}
+
+/** Parámetros de plantilla: sin saltos de línea ni tabs (Meta los rechaza). */
+const limpio = (s: string) => s.replace(/\s+/g, " ").trim();
+
+export async function enviarPedidoProveedor(telefono: string, nombre: string, dia: string, pedido: string) {
+  const tel = telefono.replace(/\D/g, "");
+  const token = process.env.WHATSAPP_TOKEN;
+  const id = process.env.WHATSAPP_PHONE_ID;
+  if (!tel || !token || !id) return { ok: false, error: "faltan datos" };
+  const p = (text: string) => ({ type: "text", text: limpio(text) });
+  const res = await fetch(`https://graph.facebook.com/v21.0/${id}/messages`, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({ messaging_product: "whatsapp", to: tel, type: "template", template: { name: PLANTILLA_PEDIDO_PROVEEDOR, language: { code: "es_AR" }, components: [{ type: "body", parameters: [p(nombre), p(dia), p(pedido)] }] } }),
+  }).catch(() => null);
+  const cuerpo = res ? await res.text() : "sin respuesta";
+  if (res?.ok) await registrarSalida(tel, "persona", TEXTO_PEDIDO_PROVEEDOR(limpio(nombre), limpio(dia), limpio(pedido))).catch(() => undefined);
+  return { ok: Boolean(res?.ok), status: res?.status ?? 0, detalle: cuerpo.slice(0, 400) };
 }
