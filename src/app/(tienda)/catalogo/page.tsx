@@ -1,3 +1,4 @@
+import { whereBusqueda } from "@/lib/busqueda-sin-tilde";
 import { Foto } from "@/components/Foto";
 import type { Metadata } from "next";
 import { pesos } from "@/lib/precios";
@@ -80,9 +81,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
       nicho ? { nichos: { has: nicho } } : {},
       objetivo ? { objetivos: { has: objetivo } } : {},
       min !== undefined || max !== undefined ? { precioPublico: { gte: min, lte: max } } : {},
-      q
-        ? { OR: [{ producto: { contains: q, mode: "insensitive" } }, { marca: { contains: q, mode: "insensitive" } }, { presentacion: { contains: q, mode: "insensitive" } }, { codigo: q }] }
-        : {},
+      q ? await whereBusqueda(q) : {},
     ],
   };
   const distintos = (campo: "categoria" | "marca" | "formato") =>

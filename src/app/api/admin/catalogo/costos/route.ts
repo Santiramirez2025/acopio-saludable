@@ -6,16 +6,33 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { margenPct } from "@/lib/precios";
+import { PRODUCTOS_PROVEEDORES, precioDe } from "@/lib/catalogo-proveedores";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { items?: { codigo?: string; costo?: number; precioPublico?: number; producto?: string }[] };
+  const b = (await req.json().catch(() => ({}))) as { items?: { codigo?: string; costo?: number; precioPublico?: number; producto?: string; crear?: boolean; fotoDe?: string }[] };
   const salida: Record<string, unknown> = {};
   for (const it of (b.items ?? []).slice(0, 100)) {
     const codigo = String(it.codigo ?? "");
-    const previo = await prisma.product.findUnique({ where: { codigo } });
+    let previo = await prisma.product.findUnique({ where: { codigo } });
+    // Un producto del catálogo propio que todavía no está cargado: se crea desde la definición (foto copiada de `fotoDe`).
+    if (!previo && it.crear) {
+      const d = PRODUCTOS_PROVEEDORES.find((p) => p.codigo === codigo);
+      if (!d) { salida[codigo] = "no está en el catálogo propio"; continue; }
+      const modelo = it.fotoDe ? await prisma.product.findUnique({ where: { codigo: String(it.fotoDe) } }) : null;
+      const precio = precioDe(d);
+      previo = await prisma.product.create({
+        data: {
+          codigo, producto: d.producto, marca: d.marca, presentacion: d.presentacion, categoria: d.categoria, formato: "Fraccionado",
+          costo: d.costo, precioPublico: precio, margenPct: margenPct(precio, d.costo), contenido: d.contenido, unidad: d.unidad, pesoBrutoG: d.pesoBrutoG ?? null,
+          pesoEstimado: false, estado: "ACTIVO", visible: true, nichos: d.nichos ?? [], objetivos: d.objetivos ?? [], porQueLoElegimos: d.porQueLoElegimos ?? null,
+          fotoUrl: modelo?.fotoUrl ?? null, fotos: modelo?.fotos ?? [],
+        },
+      });
+      await prisma.priceHistory.create({ data: { codigo, costo: d.costo, precioPublico: precio, origen: "manual" } });
+    }
     if (!previo) { salida[codigo] = "no existe"; continue; }
     const costo = Number.isFinite(it.costo) && Number(it.costo) >= 0 ? Number(it.costo) : Number(previo.costo);
     const precioPublico = Number.isFinite(it.precioPublico) && Number(it.precioPublico) > 0 ? Number(it.precioPublico) : Number(previo.precioPublico);

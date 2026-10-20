@@ -52,6 +52,7 @@ export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   { codigo: "TG-MIXXP", producto: "Mix Extra Premium sin maní y sin pasas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(16500), margen: mTg(0.35), pesoBrutoG: 1020, porQueLoElegimos: "Solo frutos secos premium, sin maní ni pasas." },
   { codigo: "TG-MIXCERV", producto: "Mix Cervecero premium", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(6236), pesoBrutoG: 1020, porQueLoElegimos: "Maní salado, almendras, castañas, maíz frito y semillas: la picada lista." },
   { codigo: "TG-NUEZ", producto: "Nuez Mariposa blanca light", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 15993, margen: 0.44 /* hoy stock de La Granja (extra light); en TG blanca light sale 14.076 */, pesoBrutoG: 1020, porQueLoElegimos: "Mariposa entera y clara, cosecha 2026." },
+  { codigo: "TG-ALMGUARA", producto: "Almendras Guara mediana", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 22100, margen: 0.403, pesoBrutoG: 1020, porQueLoElegimos: "Almendra argentina de tamaño mediano, dulce y crocante. Más chica que la Non Pareil y más accesible." },
   { codigo: "TG-CAJU", producto: "Castañas de cajú W4", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: tg(15799), margen: mTg(0.3), pesoBrutoG: 1020 },
   { codigo: "TG-PASAS", producto: "Pasas de uva negras sin semilla", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(3410), pesoBrutoG: 1020 },
   { codigo: "TG-BANANA", producto: "Banana chips", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: tg(12526), margen: mTg(0.2), pesoBrutoG: 1020 },
@@ -72,7 +73,7 @@ export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   { codigo: "TG-BARRA", producto: "Barra proteica Power", marca: "Todo Granolas", presentacion: "x unidad", categoria: "Almacen", contenido: 40, unidad: "g", costo: Math.round(tg(19656) / 10), margen: mTg(0.5), pesoBrutoG: 45, objetivos: ["gym"] },
   { codigo: "TG-ALFAJORFS", producto: "Alfajor de frutos secos", marca: "Todo Granolas", presentacion: "x unidad", categoria: "Galletas, alfajores y discos", contenido: 50, unidad: "g", costo: Math.round(tg(16700) / 12), margen: mTg(0.6), pesoBrutoG: 55 },
   // ——— La Granja del Centro (con IVA) ———
-  { codigo: "LG-DATIL", producto: "Dátiles Deglet Nour con carozo (Argelia)", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: 9069, margen: 0.085 /* precio de hoy $9.842: decidir si sube */, pesoBrutoG: 1020, porQueLoElegimos: "Deglet Nour de Argelia: más carnoso y dulce que el egipcio, con carozo." },
+  { codigo: "LG-DATIL", producto: "Dátiles Deglet Nour con carozo (Argelia)", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutas desecadas", contenido: 1000, unidad: "g", costo: 9069, margen: 0.6 /* $14.510 suelto; la Despensa mantiene su precio con más descuento */, pesoBrutoG: 1020, porQueLoElegimos: "Deglet Nour de Argelia: más carnoso y dulce que el egipcio, con carozo." },
   { codigo: "LG-MIXSEM", producto: "Mix de semillas para el desayuno", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: 3978, pesoBrutoG: 1020, porQueLoElegimos: "Lino, sésamo, girasol y chía, listas para el yogur o la ensalada." },
   { codigo: "LG-CHIA", producto: "Semillas de chía", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: 5440, pesoBrutoG: 1020 },
   { codigo: "LG-LINO", producto: "Semillas de lino", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: 3791, pesoBrutoG: 1020 },
@@ -94,7 +95,7 @@ export type ComboProveedor = { slug: string; nombre: string; descuentoPct: numbe
  * Los códigos sin prefijo son productos de marca que siguen viniendo de Distrimay.
  */
 export const COMBOS_PROVEEDORES: ComboProveedor[] = [
-  { slug: "despensa-4-kilos", nombre: "Despensa de 4 kilos", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }, { codigo: "LG-MIXSEM", cantidad: 1 }] },
+  { slug: "despensa-4-kilos", nombre: "Despensa de 4 kilos", descuentoPct: 15.6, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }, { codigo: "LG-MIXSEM", cantidad: 1 }] },
   { slug: "mixes-del-mes", nombre: "Mixes del mes", descuentoPct: 3, items: [{ codigo: "TG-MIXGIR", cantidad: 1 }, { codigo: "TG-MIXTG", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "alacena-de-frutos-secos", nombre: "Alacena de frutos secos", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-NUEZ", cantidad: 1 }, { codigo: "TG-MIXC", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "desayuno-30-dias", nombre: "Desayuno 30 días", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-GTRAD", cantidad: 1 }, { codigo: "TG-GPMANI", cantidad: 1 }, { codigo: "736684208707", cantidad: 1 }, { codigo: "LG-MIEL", cantidad: 1 }] },
@@ -129,7 +130,7 @@ export const REEMPLAZOS: Record<string, string> = {
 export const OCULTOS_PROPIOS = ["TG-ALFAJORFS"];
 
 /** Fotos propias, generadas con el estilo de los anuncios (public/img/productos/prov y combos/v2). */
-const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !["TG-ALFAJORFS", "LG-SAL"].includes(c)));
+const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !["TG-ALFAJORFS", "LG-SAL", "TG-ALMGUARA"].includes(c)));
 export const fotoProducto = (codigo: string) => (CON_FOTO.has(codigo) ? `/img/productos/prov/${codigo.toLowerCase()}.webp` : null);
 export const fotoCombo = (slug: string) => `/img/combos/v3/${slug}.webp`;
 
