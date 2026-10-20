@@ -10,7 +10,7 @@ type Item = { id: string; nombre: string; busca: RegExp; excluir?: RegExp; marca
 
 export const EN_STOCK: Item[] = [
   { id: "mix", nombre: "Mixes propios", busca: /^mix\b/i, excluir: /semilla|cervecero|premium|tropical con/i, gancho: "los armamos en el día" },
-  { id: "nuez", nombre: "Nuez mariposa", busca: /\bnuez\b|\bnueces\b/i, excluir: /mix|granola|alfajor|barra|pasta|harina|aceite/i, gancho: "recién llegada, cosecha nueva" },
+  { id: "nuez", nombre: "Nuez mariposa", busca: /\bnuez\b|\bnueces\b/i, excluir: /mix|granola|alfajor|barra|pasta|harina|aceite|moscada/i, gancho: "recién llegada, cosecha nueva" },
   { id: "almendra", nombre: "Almendras", busca: /almendra/i, excluir: /mix|granola|leche|bebida|pasta|harina|alfajor|barra/i, gancho: "Non Pareil, las grandes" },
   { id: "caju", nombre: "Castañas de cajú", busca: /caj[uú]/i, excluir: /mix|granola|alfajor|barra|pasta/i, gancho: "enteras, recién llegadas" },
   { id: "pasas", nombre: "Pasas de uva", busca: /^pasas/i, gancho: "negras y rubias, sin semilla" },
@@ -36,12 +36,16 @@ const COMBINA: { si: RegExp; ofrecer: string[] }[] = [
 ];
 const POR_DEFECTO = ["nuez", "datil", "miel", "almendra"];
 
+/** Lo que compramos en mano además de lo propio (TG-…, LG-…): discos de arroz Rincón Integral de la compra del 20/10. */
+const OTROS_EN_MANO = new Set(["7798173140021", "7798173140014", "7798173140038"]);
+const esNuestro = (codigo: string) => codigo.startsWith("TG-") || codigo.startsWith("LG-") || OTROS_EN_MANO.has(codigo);
+
 type Prod = { codigo: string; producto: string; marca: string; presentacion: string; precio: number; sinTacc?: boolean };
 
 /** Los productos del catálogo que corresponden a un ítem en stock (el más barato primero: el de 500 g si existe). */
 export function productosDe(item: Item, catalogo: Prod[]): Prod[] {
   return catalogo
-    .filter((p) => p.precio > 0 && item.busca.test(p.producto) && !(item.excluir?.test(p.producto)) && (!item.marca || item.marca.test(p.marca)) && !/todo granolas/i.test(p.marca))
+    .filter((p) => p.precio > 0 && esNuestro(p.codigo) && item.busca.test(p.producto) && !(item.excluir?.test(p.producto)) && (!item.marca || item.marca.test(p.marca)) && !/todo granolas/i.test(p.marca))
     .sort((a, b) => a.precio - b.precio);
 }
 
@@ -67,8 +71,8 @@ export function sugerirDelStock(pedido: string, catalogo: Prod[], cuantos = 2, s
 }
 
 /** ¿Este producto está entre lo que tenemos en mano? Es la misma regla que usa el vendedor. */
-export function estaEnStock(p: { producto: string; marca: string }): boolean {
-  return !/todo granolas/i.test(p.marca) && EN_STOCK.some((i) => i.busca.test(p.producto) && !i.excluir?.test(p.producto) && (!i.marca || i.marca.test(p.marca)));
+export function estaEnStock(p: { codigo: string; producto: string; marca: string }): boolean {
+  return esNuestro(p.codigo) && !/todo granolas/i.test(p.marca) && EN_STOCK.some((i) => i.busca.test(p.producto) && !i.excluir?.test(p.producto) && (!i.marca || i.marca.test(p.marca)));
 }
 
 /** Todo lo que está en stock, en el orden de la vidriera (lo que más vende primero) y del más chico al más grande. */
