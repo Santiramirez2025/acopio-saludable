@@ -22,7 +22,8 @@ import { pesos, renglonCombo } from "./precios";
 import { urlSitio } from "./sitio";
 import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
 import { cambiarEstado, estadoDe, guardarPedido, respuestasRecientes, historialDe, pedidoGuardado, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
-import { contextoProspecto, darDeBaja, datosProspecto, esBaja } from "./whatsapp-prospectos";
+import { contextoProspecto, darDeBaja, datosProspecto, enviarProspecto, esBaja } from "./whatsapp-prospectos";
+import { derivacion } from "./derivacion";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
@@ -212,6 +213,21 @@ export async function atender(e: Entrada): Promise<void> {
     await darDeBaja(e.clave);
     await responder(e.clave, "Perfecto, no le escribimos más. ¡Gracias por responder y que tengan una buena temporada!");
     return;
+  }
+  // El negocio nos deriva al dueño o a quien compra: si manda el número, se le escribe a esa persona
+  // con el mismo mensaje; si solo avisa que lo va a pasar, se le pide. Nunca se le vende al que deriva.
+  if (prospecto.prospecto && e.texto !== null) {
+    const d = derivacion(texto);
+    if (d) {
+      if (d.telefono) {
+        const r = await enviarProspecto(d.telefono, `${prospecto.negocio ?? e.nombre ?? ""}${d.nombre ? ` (${d.nombre})` : ""}`.trim(), prospecto.prospecto, true);
+        await responder(e.clave, r.ok ? `¡Gracias! Le escribo ${d.nombre ? `a ${d.nombre}` : "directo"} ahora mismo. Buen día.` : `¡Gracias! Le escribo ${d.nombre ? `a ${d.nombre}` : "a ese número"} en un rato. Buen día.`);
+        if (!r.ok) await avisarSantiago("Derivación sin enviar", `🏪 ${prospecto.negocio ?? e.clave} pasó el contacto ${d.nombre ?? ""} ${d.telefono} pero no se pudo escribir (${r.motivo ?? "error"}).\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
+      } else {
+        await responder(e.clave, `¡Gracias! Pasame el número${d.nombre ? ` de ${d.nombre}` : ""} y le escribo directo, así no te molesto más por acá.`);
+      }
+      return;
+    }
   }
 
   // Audio, foto sin texto, video, archivo: el vendedor no lo puede leer. Se le pide que lo escriba
@@ -447,3 +463,4 @@ export async function pensar(c: {
   }
   return { salientes, respuesta, derivar, conIA: Boolean(r), guardarPedido: pedido?.camino, aPersona: Boolean(r?.entregaGuardada) };
 }
+
