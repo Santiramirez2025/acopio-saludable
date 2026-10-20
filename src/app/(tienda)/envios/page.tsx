@@ -32,7 +32,7 @@ export default async function Pagina() {
         <h2>Productos congelados</h2>
         <p>Solo se entregan en la zona de entrega propia. No se envían por correo porque necesitan cadena de frío.</p>
         <h2>Compra mínima</h2>
-        <p>{pesos(cfg.compraMinima)} por pedido, combinando los productos y combos que quieras.</p>
+        <p>{pesos(cfg.compraMinima)} por pedido, combinando los productos y combos que quieras.{cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? ` En Villa Carlos Paz y el sur de Punilla (reparto propio), ${pesos(cfg.compraMinimaPropia)}.` : ""}</p>
         <h2>Si no estás cuando llegamos</h2>
         <p>Te escribimos para coordinar una nueva entrega. En envíos por correo, el aviso de visita y el retiro en sucursal siguen las reglas de cada correo.</p>
       </Prosa>

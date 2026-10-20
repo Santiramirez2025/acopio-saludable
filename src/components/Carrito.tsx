@@ -109,7 +109,11 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
       {!compacta && (
         <div className="mb-1 flex justify-between text-sm">
           <span className="font-medium">
-            {falta > 0 ? `Te faltan ${pesosCliente(falta)} para la compra mínima` : "Llegaste a la compra mínima"}
+            {falta > 0
+              ? subtotal >= cotizacion.compraMinimaPropia && cotizacion.compraMinimaPropia < compraMinima
+                ? `Ya podés pedir si estás en Carlos Paz (mínimo ${pesosCliente(cotizacion.compraMinimaPropia)}) · faltan ${pesosCliente(falta)} para envíos`
+                : `Te faltan ${pesosCliente(falta)} para la compra mínima`
+              : "Llegaste a la compra mínima"}
           </span>
           <span className="tabular-nums text-stone-600">
             {pesosCliente(subtotal)} / {pesosCliente(compraMinima)}

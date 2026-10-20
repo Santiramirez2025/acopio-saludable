@@ -6,7 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { margenPct } from "@/lib/precios";
-import { PRODUCTOS_PROVEEDORES, precioDe } from "@/lib/catalogo-proveedores";
+import { COMBOS_PROVEEDORES, PRODUCTOS_PROVEEDORES, fotoCombo, precioDe } from "@/lib/catalogo-proveedores";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +15,19 @@ export async function POST(req: Request) {
   const b = (await req.json().catch(() => ({}))) as { items?: { codigo?: string; costo?: number; precioPublico?: number; producto?: string; crear?: boolean; fotoDe?: string }[] };
   const salida: Record<string, unknown> = {};
   // Descuento de un combo: { combos: [{ slug, descuentoPct }] }. Sirve para mantener el precio del combo cuando sube un producto.
-  for (const c of ((b as { combos?: { slug?: string; descuentoPct?: number }[] }).combos ?? []).slice(0, 20)) {
+  for (const c of ((b as { combos?: { slug?: string; descuentoPct?: number; crear?: boolean }[] }).combos ?? []).slice(0, 20)) {
     const slug = String(c.slug ?? "");
     const pct = Number(c.descuentoPct);
     if (!slug || !Number.isFinite(pct) || pct < 0 || pct > 60) { salida[`combo:${slug}`] = "descuento inválido"; continue; }
+    // Un combo del catálogo propio que todavía no existe: se crea desde la definición, con sus productos.
+    if (c.crear && !(await prisma.combo.findUnique({ where: { slug } }))) {
+      const d = COMBOS_PROVEEDORES.find((x) => x.slug === slug);
+      if (!d) { salida[`combo:${slug}`] = "no está en el catálogo propio"; continue; }
+      const combo = await prisma.combo.create({ data: { slug, nombre: d.nombre, tipo: "COMBO", descuentoPct: pct, activo: true, destacado: Boolean(d.destacado), fotoUrl: fotoCombo(slug) } });
+      await prisma.comboItem.createMany({ data: d.items.map((i) => ({ comboId: combo.id, codigo: i.codigo, cantidad: i.cantidad })) });
+      salida[`combo:${slug}`] = { creado: true, descuentoPct: pct };
+      continue;
+    }
     const r = await prisma.combo.updateMany({ where: { slug }, data: { descuentoPct: pct } });
     salida[`combo:${slug}`] = r.count ? { descuentoPct: pct } : "no existe";
   }

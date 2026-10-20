@@ -57,7 +57,7 @@ export default async function Home() {
               Llená tu despensa de una sola vez.
             </h1>
             <p className="mt-3 max-w-md text-[15px] text-white/80 sm:text-[17px]">
-              Frutos secos, cereales, suplementos, snacks y especias por volumen, para tu casa o tu negocio. Desde {pesos(cfg.compraMinima)} por pedido, con envíos a todo el país.
+              Frutos secos, cereales, suplementos, snacks y especias por volumen, para tu casa o tu negocio. Desde {pesos(cfg.compraMinima)} por pedido con envíos a todo el país{cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? <>, y desde {pesos(cfg.compraMinimaPropia)} en Villa Carlos Paz</> : null}.
             </p>
             <p className="mt-5 text-sm font-semibold text-sol">¿Para quién comprás?</p>
             <div className="riel mt-2 md:mx-0 md:flex-wrap md:px-0">

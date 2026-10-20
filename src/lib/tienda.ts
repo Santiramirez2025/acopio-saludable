@@ -152,9 +152,13 @@ export type Cotizacion = {
   subtotal: number;
   unidades: number;
   compraMinima: number;
+  /** Mínimo en la zona de reparto propio; con él se cotiza cuando el CP o el lugar ya se conocen. */
+  compraMinimaPropia: number;
   falta: number;
   progresoPct: number;
   puedePagar: boolean;
+  /** Llega al mínimo de la zona propia (sirve para no frenar antes de conocer el CP). */
+  puedePagarEnZona: boolean;
   /** Total con el descuento por transferencia; null si no hay descuento. */
   conTransferencia: number | null;
   /** Lo que ganaría revendiendo todo al precio sugerido; 0 si el sugerido está apagado. */
@@ -164,9 +168,12 @@ export type Cotizacion = {
 };
 
 /** El precio siempre se calcula en el servidor: el navegador solo manda qué y cuánto. */
-export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
+/** `minimo` fuerza la compra mínima (la de la zona propia cuando ya se sabe que entrega en Carlos Paz). */
+export async function cotizarCarrito(entrada: unknown, minimo?: number): Promise<Cotizacion> {
   const lineasEntrada = sanearLineas(entrada);
   const cfg = await leerConfig();
+  const compraMinima = minimo ?? cfg.compraMinima;
+  const minimoPropia = Math.min(cfg.compraMinimaPropia, cfg.compraMinima);
   const codigos = lineasEntrada.filter((l) => l.tipo === "producto").map((l) => l.id);
   const slugs = lineasEntrada.filter((l) => l.tipo === "combo").map((l) => l.id);
   const [productos, combos] = await Promise.all([
@@ -215,15 +222,17 @@ export async function cotizarCarrito(entrada: unknown): Promise<Cotizacion> {
     }
   }
   const subtotal = redondear2(lineas.reduce((s, l) => s + l.subtotal, 0));
-  const falta = Math.max(0, redondear2(cfg.compraMinima - subtotal));
+  const falta = Math.max(0, redondear2(compraMinima - subtotal));
   return {
     lineas,
     subtotal,
     unidades: lineas.filter((l) => l.disponible).reduce((s, l) => s + l.cantidad, 0),
-    compraMinima: cfg.compraMinima,
+    compraMinima,
+    compraMinimaPropia: minimoPropia,
     falta,
-    progresoPct: cfg.compraMinima > 0 ? Math.min(100, Math.round((subtotal / cfg.compraMinima) * 100)) : 100,
+    progresoPct: compraMinima > 0 ? Math.min(100, Math.round((subtotal / compraMinima) * 100)) : 100,
     puedePagar: subtotal > 0 && falta === 0,
+    puedePagarEnZona: subtotal > 0 && subtotal >= minimoPropia,
     conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? Math.round(subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) : null,
     gananciaReventa: redondear2(gananciaReventa),
     corte: proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null,

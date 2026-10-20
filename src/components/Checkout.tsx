@@ -8,7 +8,7 @@ import { pesosCliente, useCarrito } from "./Carrito";
 import { envioQueSeCobra } from "@/lib/pedido-calculos";
 
 type Opcion = { id: string; nombre: string; modalidad: string; precio: number; plazo: string; masBarata: boolean };
-type Envio = { opciones: Opcion[]; pesoTotalKg: number; bultos: number };
+type Envio = { opciones: Opcion[]; pesoTotalKg: number; bultos: number; puedePagar: boolean; compraMinima: number; falta: number };
 
 export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, comisionPagoPct }: { provincias: string[]; mpDisponible: boolean; descuentoTransferenciaPct: number; comisionPagoPct: number }) {
   const { lineas, listo, cotizacion } = useCarrito();
@@ -71,10 +71,11 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
   }, [listo, lineas, provincia, cp, cpValido]);
 
   if (!listo || (lineas.length > 0 && !cotizacion)) return <p className="text-stone-600">Cargando…</p>;
-  if (!cotizacion?.puedePagar) {
+  // Antes de saber el código postal se frena solo si no llega ni al mínimo de Carlos Paz; con el CP, el servidor decide.
+  if (!cotizacion?.puedePagarEnZona) {
     return (
       <div className="rounded-xl border border-tierra-200 bg-white p-6">
-        <p className="font-medium">{lineas.length ? `Te faltan ${pesosCliente(cotizacion?.falta ?? 0)} para llegar a la compra mínima.` : "Tu carrito está vacío."}</p>
+        <p className="font-medium">{lineas.length ? `Te faltan ${pesosCliente(Math.max(0, (cotizacion?.compraMinimaPropia ?? 0) - (cotizacion?.subtotal ?? 0)))} para llegar a la compra mínima.` : "Tu carrito está vacío."}</p>
         <Link href={lineas.length ? "/carrito" : "/catalogo"} className="btn mt-3">{lineas.length ? "Volver al carrito" : "Ver catálogo"}</Link>
       </div>
     );
@@ -93,6 +94,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
     e.preventDefault();
     setError("");
     if (!opcion) return setError("Elegí una opción de envío");
+    if (envio && !envio.puedePagar) return setError(`El pedido no llega a la compra mínima de ${pesosCliente(envio.compraMinima)} para tu zona`);
     setEnviando(true);
     const f = new FormData(e.currentTarget);
     const cliente = Object.fromEntries(["nombre", "email", "telefono", "calle", "ciudad", "notas"].map((k) => [k, f.get(k)]));
@@ -147,6 +149,10 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
               <p className="text-sm text-red-700">{errorEnvio}</p>
             ) : !envio ? (
               <p className="text-sm text-stone-600">Calculando envío…</p>
+            ) : !envio.puedePagar ? (
+              <p className="text-sm text-red-700">
+                Para tu zona la compra mínima es {pesosCliente(envio.compraMinima)}: te faltan {pesosCliente(envio.falta)}. En Villa Carlos Paz y el sur de Punilla es {pesosCliente(cotizacion.compraMinimaPropia)}. <Link href="/carrito" className="underline">Volver al carrito</Link>
+              </p>
             ) : (
               <div className={`space-y-2 ${cotizandoEnvio ? "opacity-60" : ""}`}>
                 <p className="text-xs text-stone-600">{envio.bultos} {envio.bultos === 1 ? "bulto" : "bultos"} · {envio.pesoTotalKg} kg aprox.</p>
