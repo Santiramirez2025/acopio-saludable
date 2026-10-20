@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { margenPct } from "@/lib/precios";
+import { estaEnStock } from "@/lib/en-stock";
 import { COMBOS_A_DESACTIVAR, COMBOS_PROVEEDORES, OCULTAR, OCULTOS_PROPIOS, PRODUCTOS_PROVEEDORES, REEMPLAZOS, fotoCombo, fotoProducto, precioDe } from "@/lib/catalogo-proveedores";
 
 export const dynamic = "force-dynamic";
@@ -97,6 +98,12 @@ export async function POST(req: Request) {
   await prisma.combo.updateMany({ where: { slug: { in: COMBOS_A_DESACTIVAR } }, data: { activo: false } });
   await prisma.product.updateMany({ where: { codigo: { in: ocultar.map((p) => p.codigo) } }, data: { visible: false, ocultoMotivo: OCULTAR.motivo } });
 
+  // Destacados = lo que tenemos en mano: va primero en el catálogo y en la home, sin cartel aparte.
+  const todos = await prisma.product.findMany({ select: { codigo: true, producto: true, marca: true, gancho: true } });
+  const destacar = todos.filter((p) => estaEnStock(p)).map((p) => p.codigo);
+  await prisma.product.updateMany({ where: { gancho: true, codigo: { notIn: destacar } }, data: { gancho: false } });
+  await prisma.product.updateMany({ where: { codigo: { in: destacar } }, data: { gancho: true } });
+
   revalidatePath("/", "layout");
-  return NextResponse.json({ aplicado: true, ...resumen });
+  return NextResponse.json({ aplicado: true, destacados: destacar.length, ...resumen });
 }
