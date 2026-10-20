@@ -302,8 +302,9 @@ export async function atender(e: Entrada): Promise<void> {
   if (canal === "whatsapp") {
     await responderWhatsapp(e.clave, p.salientes);
     if (p.guardarPedido) await guardarPedido(e.clave, p.guardarPedido);
-    // Ya pasó los datos de entrega: la sigue Santiago (el aviso con todo ya le llegó).
-    if (p.aPersona) await cambiarEstado(e.clave, "persona");
+    // Ya pasó los datos de entrega: el aviso le llegó a Santiago, pero la charla sigue con el vendedor,
+    // que contesta las dudas de posventa («¿venden algo más?») sin volver a vender ni a pedir datos.
+    void p.aPersona;
     return;
   }
   const salida = paraWhatsapp(p.respuesta);
