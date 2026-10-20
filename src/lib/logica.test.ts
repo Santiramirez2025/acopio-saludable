@@ -1011,10 +1011,21 @@ test("derivación al dueño: con y sin número", () => {
   assert.equal(derivacion("¿Cuánto sale el kilo de nuez?"), null);
 });
 
-import { planWhatsapp } from "./whatsapp-interactivo";
 test("fotos pedidas: salen antes del texto, con pie", () => {
   const plan = planWhatsapp({ texto: "Te paso las fotos. ¿Te armo la caja?", fotos: [{ url: "https://x/a.jpg", pie: "Barrita · $2.657" }, { url: "https://x/b.jpg", pie: "Granola · $9.000" }] }, null);
   assert.equal(plan[0].tipo, "imagen");
   assert.equal(plan[1].tipo, "imagen");
   assert.ok(plan.length >= 3 && plan[2].tipo !== "imagen");
+});
+
+import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
+test("el pedido acumula: lo nuevo se suma y lo repetido pisa la cantidad", () => {
+  const previas = [{ tipo: "producto" as const, id: "TG-MIXC", cantidad: 1 }, { tipo: "combo" as const, id: "despensa-chica", cantidad: 1 }];
+  const r = sumarLineas(previas, [{ tipo: "producto", id: "TG-MIXCERV-500", cantidad: 1 }, { tipo: "producto", id: "TG-MIXC", cantidad: 2 }]);
+  assert.deepEqual(r.map((l) => `${l.id}x${l.cantidad}`), ["TG-MIXCx2", "despensa-chicax1", "TG-MIXCERV-500x1"]);
+});
+test("la zona dicha antes se reutiliza", () => {
+  assert.equal(lugarDelHistorial([{ de: "yo", texto: "Carlos Paz" }, { de: "acopio", texto: "Listo, pagás al recibir." }, { de: "yo", texto: "Y quiero el mix cervecero" }]), "Carlos Paz");
+  assert.equal(lugarDelHistorial([{ de: "acopio", texto: "Envío a San Roque: sin cargo." }, { de: "yo", texto: "dale" }]), "San Roque");
+  assert.equal(lugarDelHistorial([{ de: "yo", texto: "hola" }]), null);
 });
