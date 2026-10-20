@@ -20,6 +20,8 @@ export async function POST(req: Request) {
       bultos: p.bultos.length,
       subtotal: p.cotizacion.subtotal,
       puedePagar: p.cotizacion.puedePagar,
+      compraMinima: p.cotizacion.compraMinima,
+      falta: p.cotizacion.falta,
     });
   } catch (e) {
     if (e instanceof ErrorPedido) return NextResponse.json({ error: e.message }, { status: 400 });

@@ -122,6 +122,8 @@ model ComboItem {
 model Setting {
   id                       Int      @id @default(1)
   compraMinima             Decimal  @default(60000) @db.Decimal(12, 2)
+  // Compra mínima en la zona de reparto propio (Villa Carlos Paz y sur de Punilla).
+  compraMinimaPropia       Decimal  @default(20000) @db.Decimal(12, 2)
   margenMinimoPct          Decimal  @default(12) @db.Decimal(5, 2)
   descuentoTransferenciaPct Decimal @default(0) @db.Decimal(5, 2)
   // Recargo sobre el precio base para formar el precio de lista (cubre la comisión del medio de pago). 0 = sin recargo.

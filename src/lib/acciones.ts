@@ -161,6 +161,8 @@ export async function guardarConfig(fd: FormData) {
   let destino = "/admin/configuracion?ok=1";
   try {
     const envio = textoONull(fd, "envioGratisDesde");
+    // Columna nueva: por SQL directo hasta que el cliente de Prisma se regenere con ella.
+    await prisma.$executeRaw`UPDATE "Setting" SET "compraMinimaPropia" = ${numero(fd, "compraMinimaPropia", { min: 0 })} WHERE "id" = 1`;
     await prisma.setting.update({
       where: { id: 1 },
       data: {

@@ -74,9 +74,10 @@ async function responderWhatsapp(clave: string, salientes: Saliente[]): Promise<
 /** El pedido armado, cotizado por el servidor: los precios nunca salen del modelo. Con el envío si ya se sabe la zona. */
 async function pedidoDe(lineas: { tipo: "producto" | "combo"; id: string; cantidad: number }[], envio?: EnvioCotizado | null): Promise<PedidoArmado | null> {
   if (!lineas.length) return null;
-  const cot = await cotizarCarrito(lineas);
-  if (!cot.lineas.length) return null;
   const cfg = envio ? await leerConfig() : null;
+  // Si ya se sabe que entrega en Carlos Paz, rige el mínimo de la zona propia.
+  const cot = await cotizarCarrito(lineas, cfg && envio?.propia && envio.costo === 0 ? cfg.compraMinimaPropia : undefined);
+  if (!cot.lineas.length) return null;
   return {
     camino: enlacePedido(lineas),
     renglones: cot.lineas.filter((l) => l.disponible).map((l) => `${l.cantidad > 1 ? `${l.cantidad} x ` : ""}${l.nombre} — ${pesos(l.subtotal)}`),

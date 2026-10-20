@@ -34,7 +34,7 @@ export default async function TiendaLayout({ children }: { children: React.React
         <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-sol focus:px-4 focus:py-3 focus:font-bold focus:text-acopio-900">Saltar al contenido</a>
         {/* La compra mínima tiene que saberse antes de elegir, no al llegar al checkout. Va arriba de todo, en cada página. */}
         <p className="bg-acopio-700 px-4 py-2 text-center text-[13px] leading-snug text-white">
-          Compra mínima <b className="font-bold text-sol">{pesos(cfg.compraMinima)}</b> por pedido
+          Compra mínima <b className="font-bold text-sol">{pesos(cfg.compraMinima)}</b> por pedido{cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? <> · en Carlos Paz desde <b className="font-bold text-sol">{pesos(cfg.compraMinimaPropia)}</b></> : null}
           <span className="hidden sm:inline"> · {cfg.entregaPropiaActiva ? "Entrega sin cargo en Villa Carlos Paz y el sur de Punilla · " : ""}Envíos a todo el país</span>
         </p>
         <Encabezado />

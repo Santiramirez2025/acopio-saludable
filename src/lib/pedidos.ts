@@ -7,7 +7,7 @@ import { pesos, precioVenta, redondear2 } from "./precios";
 import { cotizarCarrito, estaPublicado, comboVigente, sanearLineas, type Cotizacion } from "./tienda";
 import { armarBultos, PESO_POR_DEFECTO_G } from "./envios/bultos";
 import { cotizarEnvio } from "./envios/cotizar";
-import { normalizarCp, zonaDeProvincia } from "./envios/geo";
+import { cpEnLista, normalizarCp, zonaDeProvincia } from "./envios/geo";
 import type { Bulto, OpcionEnvio } from "./envios/tipos";
 import { enviarEmail, escaparHtml } from "./email";
 import { SITIO, urlSitio } from "./sitio";
@@ -62,7 +62,9 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
   const cp = normalizarCp(cpCrudo);
   if (!cp) throw new ErrorPedido("Revisá el código postal (4 números)");
   if (!zonaDeProvincia(provincia)) throw new ErrorPedido("Elegí la provincia");
-  const [cotizacion, renglones] = await Promise.all([cotizarCarrito(entrada), expandirCarrito(entrada, c)]);
+  // En la zona de reparto propio (sin cargo) la compra mínima es más baja.
+  const minimo = c.entregaPropiaActiva && cpEnLista(cp, c.cpEntregaPropia) ? Math.min(c.compraMinimaPropia, c.compraMinima) : c.compraMinima;
+  const [cotizacion, renglones] = await Promise.all([cotizarCarrito(entrada, minimo), expandirCarrito(entrada, c)]);
   if (!renglones.length) throw new ErrorPedido("Tu carrito está vacío");
   const bultos = armarBultos(renglones.map((r) => ({ pesoG: r.pesoG ?? PESO_POR_DEFECTO_G, cantidad: r.cantidad })));
   const todas = await cotizarEnvio(
@@ -107,7 +109,7 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
   if (medioPago === "MERCADOPAGO" && !args.mpDisponible) throw new ErrorPedido("Mercado Pago no está disponible en este momento. Elegí transferencia.");
   const cfg = await leerConfig();
   const prep = await prepararEnvio(args.lineas, cliente.cp, cliente.provincia, cfg);
-  if (!prep.cotizacion.puedePagar) throw new ErrorPedido(`El pedido no llega a la compra mínima de ${pesos(cfg.compraMinima)}`);
+  if (!prep.cotizacion.puedePagar) throw new ErrorPedido(`El pedido no llega a la compra mínima de ${pesos(prep.cotizacion.compraMinima)} para tu zona`);
   const opcion = prep.opciones.find((o) => o.id === args.envioOpcionId);
   if (!opcion) throw new ErrorPedido("Esa opción de envío ya no está disponible. Volvé a elegir el envío.");
 
