@@ -1010,3 +1010,11 @@ test("derivación al dueño: con y sin número", () => {
   assert.equal(derivacion("Sí, pasame precios"), null);
   assert.equal(derivacion("¿Cuánto sale el kilo de nuez?"), null);
 });
+
+import { planWhatsapp } from "./whatsapp-interactivo";
+test("fotos pedidas: salen antes del texto, con pie", () => {
+  const plan = planWhatsapp({ texto: "Te paso las fotos. ¿Te armo la caja?", fotos: [{ url: "https://x/a.jpg", pie: "Barrita · $2.657" }, { url: "https://x/b.jpg", pie: "Granola · $9.000" }] }, null);
+  assert.equal(plan[0].tipo, "imagen");
+  assert.equal(plan[1].tipo, "imagen");
+  assert.ok(plan.length >= 3 && plan[2].tipo !== "imagen");
+});
