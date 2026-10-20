@@ -17,7 +17,7 @@ export type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string;
 export type EnvioCotizado = { lugar: string; costo: number | null; detalle: string; propia?: boolean; alRecibir?: boolean };
 /** `fotos`: imágenes de productos que se mandan antes del texto (cuando el cliente pide ver fotos). */
 export type Foto = { url: string; pie: string };
-export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean; opciones?: string[]; envio?: EnvioCotizado; entregaGuardada?: boolean; fotos?: Foto[] };
+export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean; opciones?: string[]; envio?: EnvioCotizado; entregaGuardada?: boolean; fotos?: Foto[]; /** agregar_al_pedido con reemplazar: true: el pedido se arma de nuevo en vez de sumarse al guardado. */ reemplazaPedido?: boolean };
 
 type Indexado = ProductoTienda & { nombre: string; indice: string };
 

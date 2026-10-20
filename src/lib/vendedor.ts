@@ -157,10 +157,12 @@ const HERRAMIENTAS = [
     description:
       "Le deja botones para sumar productos o combos al pedido con un toque, sin salir del chat. " +
       "Usá los códigos exactos que te dio buscar_productos o los slugs de ver_combos: si inventás uno, se descarta. " +
-      "Usala siempre que la persona acepte una sugerencia o elija algo. Arma el pedido COMPLETO: incluí todo lo que ya eligió antes en la charla, no solo lo nuevo.",
+      "Usala siempre que la persona acepte una sugerencia o elija algo. Lo que mandes se SUMA a lo que ya tenía en el pedido; " +
+      "si quita o cambia algo («sacá las pasas», «en vez de X, Y»), mandá el pedido completo como queda y reemplazar: true.",
     input_schema: {
       type: "object" as const,
       properties: {
+        reemplazar: { type: "boolean", description: "true solo si el pedido se arma de nuevo (quitó o cambió algo). Si no, lo nuevo se suma a lo guardado." },
         items: {
           type: "array",
           description: "Hasta 4 cosas para sumar al pedido.",
@@ -208,7 +210,7 @@ const HERRAMIENTAS = [
   },
 ];
 
-type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[]; derivar?: boolean; envio?: EnvioCotizado; entregaGuardada?: boolean; fotos?: Foto[] };
+type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: Enlace[]; derivar?: boolean; envio?: EnvioCotizado; entregaGuardada?: boolean; fotos?: Foto[]; reemplazaPedido?: boolean };
 
 /** Exportada para poder probar cada herramienta sin pegarle a la API ni gastar tokens. */
 /** Lo que el vendedor sabe de la charla además del texto: por ahora, el pedido ya cerrado. */
@@ -437,6 +439,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
         .filter(Boolean)
         .join(" "),
       acciones,
+      reemplazaPedido: entrada.reemplazar === true,
     };
   }
 
@@ -626,6 +629,7 @@ export async function responderComoVendedor(
   let envio: EnvioCotizado | undefined;
   let entregaGuardada = false;
   let fotos: Foto[] = [];
+  let reemplazaPedido = false;
   try {
     for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -693,6 +697,7 @@ export async function responderComoVendedor(
           envio,
           entregaGuardada: entregaGuardada || undefined,
           fotos: fotos.length ? fotos : undefined,
+          reemplazaPedido: reemplazaPedido || undefined,
         };
       }
 
@@ -702,7 +707,10 @@ export async function responderComoVendedor(
         if (r.entregaGuardada) entregaGuardada = true;
         if (r.fichas?.length) fichas = [...r.fichas, ...fichas.filter((f) => !r.fichas!.some((n) => n.href === f.href))].slice(0, 8);
         if (r.fotos?.length) fotos = r.fotos;
-        if (r.acciones?.length) acciones = r.acciones;
+        if (r.acciones?.length) {
+          acciones = r.acciones;
+          reemplazaPedido = r.reemplazaPedido === true;
+        }
         if (r.enlaces?.length) enlaces = r.enlaces;
         if (r.derivar) derivar = true;
         if (r.envio) envio = r.envio;

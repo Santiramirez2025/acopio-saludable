@@ -14,6 +14,7 @@ import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
 import { primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
+import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
 import { avisarSantiago } from "./avisos";
@@ -447,8 +448,16 @@ export async function pensar(c: {
   // Pedir una persona deriva siempre, conteste la IA o el buscador.
   const derivar = Boolean(respuesta.derivar) || pidePersona(c.texto);
   // El pedido: el que acaba de armar, o el guardado si recién ahora cotizó el envío.
-  const lineas = respuesta.acciones?.length ? lineasDeAcciones(respuesta.acciones) : respuesta.envio && c.pedidoGuardado ? lineasDeCamino(c.pedidoGuardado) : [];
-  const pedido = await pedidoDe(lineas, respuesta.envio);
+  // Lo nuevo se suma a lo que ya tenía guardado (a Julieta el mix cervecero le borró el resto del pedido);
+  // solo se arma de nuevo si el vendedor dijo que quitó o cambió algo.
+  const previas = c.pedidoGuardado ? lineasDeCamino(c.pedidoGuardado) : [];
+  const nuevas = respuesta.acciones?.length ? lineasDeAcciones(respuesta.acciones) : [];
+  const lineas = nuevas.length ? (respuesta.reemplazaPedido ? nuevas : sumarLineas(previas, nuevas)) : respuesta.envio && previas.length ? previas : [];
+  // Si ya dijo de dónde es, el envío sale solo: no se le vuelve a preguntar la ciudad.
+  const lugarSabido = respuesta.envio ? null : lugarDelHistorial(c.historial);
+  const envio = respuesta.envio ?? (lineas.length && lugarSabido ? await cotizarEnvioChat(lugarSabido, null, 0).catch(() => null) : null) ?? undefined;
+  if (!respuesta.envio && envio) respuesta = { ...respuesta, envio };
+  const pedido = await pedidoDe(lineas, envio);
   let salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, pedido);
   // Sin repetir: si el resumen del pedido o la pregunta de la zona ya salieron en los últimos
   // mensajes, no se mandan de nuevo. A Juan le llegó tres veces lo mismo y eso molesta.
@@ -463,4 +472,5 @@ export async function pensar(c: {
   }
   return { salientes, respuesta, derivar, conIA: Boolean(r), guardarPedido: pedido?.camino, aPersona: Boolean(r?.entregaGuardada) };
 }
+
 
