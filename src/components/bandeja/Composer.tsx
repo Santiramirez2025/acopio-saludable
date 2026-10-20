@@ -22,6 +22,29 @@ export function Composer({ clave, estado, noLeidos, canal, ventanaCerrada }: Pro
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const area = useRef<HTMLTextAreaElement>(null);
+  const archivo = useRef<HTMLInputElement>(null);
+
+  // Foto o PDF: se manda enseguida, con lo que haya escrito como pie.
+  async function mandarArchivo(f: File) {
+    setEnviando(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("telefono", clave);
+      fd.append("archivo", f);
+      fd.append("texto", texto);
+      const r = await fetch("/api/admin/whatsapp/responder", { method: "POST", body: fd });
+      const datos = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(datos.error || "No se pudo mandar el archivo");
+      setTexto("");
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo mandar el archivo");
+    } finally {
+      setEnviando(false);
+      if (archivo.current) archivo.current.value = "";
+    }
+  }
 
   async function llamar(cuerpo: Record<string, unknown>, silencioso = false) {
     if (!silencioso) {
@@ -84,6 +107,14 @@ export function Composer({ clave, estado, noLeidos, canal, ventanaCerrada }: Pro
           placeholder={ventanaCerrada ? "Pasaron más de 24 h: Meta no deja escribir hasta que vuelva a escribir." : `Escribí por ${canal}… (Enter manda, Shift+Enter baja de línea)`}
           className="campo min-h-[52px] flex-1 resize-none"
         />
+        {canal === "WhatsApp" && (
+          <>
+            <input ref={archivo} type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f && !enviando) void mandarArchivo(f); }} />
+            <button type="button" disabled={enviando || ventanaCerrada} onClick={() => archivo.current?.click()} className="btn min-h-[52px] bg-stone-100 px-3 text-lg text-stone-800 hover:bg-stone-200" aria-label="Adjuntar foto o PDF" title="Adjuntar foto o PDF">
+              📎
+            </button>
+          </>
+        )}
         <button type="submit" disabled={enviando || !texto.trim() || ventanaCerrada} className="btn-comprar min-h-[52px] px-4" aria-label="Enviar">
           {enviando ? "…" : "Enviar"}
         </button>
