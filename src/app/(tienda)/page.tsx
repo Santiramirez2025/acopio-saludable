@@ -13,6 +13,7 @@ import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
 import { ListaCombo, RielOfertas, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 import { ofertasDelProveedor } from "@/lib/ofertas";
+import { vidrieraDeStock } from "@/lib/en-stock";
 
 // Portadas propias de las góndolas; las demás usan la foto de un producto.
 
@@ -26,7 +27,7 @@ export default async function Home() {
     productosTienda({ where: { AND: [WHERE_SIN_TACC, { producto: { contains: "alfajor", mode: "insensitive" } }, { fotoUrl: { not: null } }] }, orderBy: [{ precioPublico: "asc" }], take: 4 }),
     productosTienda({ where: { AND: [WHERE_SIN_TACC, { fotoUrl: { not: null } }] }, take: 8 }),
     prisma.product.count({ where: { AND: [publicado, WHERE_SIN_TACC] } }),
-    productosTienda({ where: { gancho: true }, take: 8 }),
+    productosTienda({ where: { gancho: true }, take: 60 }),
     combosTienda({ tipo: "COMBO", activo: true }),
     combosTienda({ tipo: "PEDIDO_NICHO", activo: true }),
     prisma.product.findMany({ where: { AND: [publicado, { fotoUrl: { not: null } }] }, distinct: ["categoria"], orderBy: [{ categoria: "asc" }, { gancho: "desc" }, { vendidos: "desc" }, { precioPublico: "desc" }], select: { categoria: true, fotoUrl: true } }),
@@ -35,6 +36,8 @@ export default async function Home() {
     ofertasDelProveedor(8),
   ]);
   const seVende = new Set(vendibles.map((v) => v.codigo));
+  // Los destacados son lo que tenemos en mano: uno por producto, con foto, y lo que más se vende primero.
+  const vidriera = (() => { const v = vidrieraDeStock(ganchos, true); return (v.length >= 4 ? v : ganchos).slice(0, 8); })();
   // El precio más bajo por alfajor suelto entre las cajas: es el número del aviso de la promo.
   const alfajorDesde = Math.min(...alfajores.map((p) => precioPorUnidadSuelta(p.precio, p.presentacion) ?? p.precio));
   const disponibles = combos.filter((c) => c.disponible);
@@ -80,6 +83,14 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {vidriera.length > 0 && (
+        <section>
+          <TituloSeccion href="/catalogo" enlace="Ver todo el catálogo">Los que más se llevan</TituloSeccion>
+          <p className="-mt-1 mb-3 max-w-2xl text-sm text-stone-700">Frutos secos, mixes y granolas, fraccionados en el día.{cfg.entregaPropiaActiva ? ` En Carlos Paz y alrededores te lo llevamos en ${cfg.plazoEntregaPropia}.` : ""}</p>
+          <RielProductos productos={vidriera} />
+        </section>
+      )}
 
       <section aria-labelledby="herramientas">
         <h2 id="herramientas" className="sr-only">Armá tu compra</h2>
@@ -166,13 +177,6 @@ export default async function Home() {
               );
             })}
           </div>
-        </section>
-      )}
-
-      {ganchos.length > 0 && (
-        <section>
-          <TituloSeccion href="/catalogo" enlace="Ver catálogo">Los que más se llevan</TituloSeccion>
-          <RielProductos productos={ganchos} />
         </section>
       )}
 

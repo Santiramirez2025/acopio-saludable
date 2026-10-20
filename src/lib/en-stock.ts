@@ -9,9 +9,11 @@
 type Item = { id: string; nombre: string; busca: RegExp; excluir?: RegExp; marca?: RegExp; gancho: string };
 
 export const EN_STOCK: Item[] = [
+  { id: "mix", nombre: "Mixes propios", busca: /^mix\b/i, excluir: /semilla|cervecero|premium|tropical con/i, gancho: "los armamos en el día" },
   { id: "nuez", nombre: "Nuez mariposa", busca: /\bnuez\b|\bnueces\b/i, excluir: /mix|granola|alfajor|barra|pasta|harina|aceite/i, gancho: "recién llegada, cosecha nueva" },
   { id: "almendra", nombre: "Almendras", busca: /almendra/i, excluir: /mix|granola|leche|bebida|pasta|harina|alfajor|barra/i, gancho: "Non Pareil, las grandes" },
   { id: "caju", nombre: "Castañas de cajú", busca: /caj[uú]/i, excluir: /mix|granola|alfajor|barra|pasta/i, gancho: "enteras, recién llegadas" },
+  { id: "pasas", nombre: "Pasas de uva", busca: /^pasas/i, gancho: "negras y rubias, sin semilla" },
   { id: "datil", nombre: "Dátiles", busca: /d[aá]til/i, excluir: /mix|barra|alfajor/i, gancho: "Deglet Nour, los más dulces" },
   { id: "miel", nombre: "Miel", busca: /\bmiel\b/i, excluir: /granola|barra|alfajor|galle|mostaza/i, gancho: "pura, de Los Dos Zánganos" },
   { id: "granola", nombre: "Granola", busca: /granola/i, marca: /marcilli|olimar/i, gancho: "para el desayuno" },
@@ -60,6 +62,24 @@ export function sugerirDelStock(pedido: string, catalogo: Prod[], cuantos = 2, s
     if (item.busca.source !== "." ? item.busca.test(pedido) : item.marca?.test(pedido)) continue;
     const p = productosDe(item, catalogo).filter((x) => !soloSinTacc || x.sinTacc)[0];
     if (p) out.push({ item, producto: p });
+  }
+  return out;
+}
+
+/** ¿Este producto está entre lo que tenemos en mano? Es la misma regla que usa el vendedor. */
+export function estaEnStock(p: { producto: string; marca: string }): boolean {
+  return !/todo granolas/i.test(p.marca) && EN_STOCK.some((i) => i.busca.test(p.producto) && !i.excluir?.test(p.producto) && (!i.marca || i.marca.test(p.marca)));
+}
+
+/** Todo lo que está en stock, en el orden de la vidriera (lo que más vende primero) y del más chico al más grande. */
+export function vidrieraDeStock<P extends Prod & { fotoUrl?: string | null }>(catalogo: P[], unoPorItem = false): P[] {
+  const out: P[] = [];
+  const vistos = new Set<string>();
+  for (const item of EN_STOCK) {
+    const suyos = (productosDe(item, catalogo) as P[]).filter((p) => !vistos.has(p.codigo));
+    // En la vidriera de la home va uno por producto, el que tiene foto y el de 1 kg si existe.
+    const elegidos = unoPorItem ? suyos.sort((a, b) => Number(Boolean(b.fotoUrl)) - Number(Boolean(a.fotoUrl))).slice(0, 1) : suyos;
+    for (const p of elegidos) { vistos.add(p.codigo); out.push(p); }
   }
   return out;
 }
