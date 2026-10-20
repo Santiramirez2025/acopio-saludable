@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/seguimiento",
       "schedule": "0 14 * * 1-6"
+    },
+    {
+      "path": "/api/cron/listas",
+      "schedule": "40 10 * * 1-6"
     }
   ]
 }

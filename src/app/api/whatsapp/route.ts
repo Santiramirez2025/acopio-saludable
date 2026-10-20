@@ -18,7 +18,9 @@
 import { after, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { atender, cola } from "@/lib/atencion";
-import { cloudActivo } from "@/lib/whatsapp-cloud";
+import { cloudActivo, enviarTexto } from "@/lib/whatsapp-cloud";
+import { AVISOS_WHATSAPP } from "@/lib/avisos";
+import { aplicarListaPdf, resumenLista } from "@/lib/listas-aplicar";
 import { correrRecordatoriosSiToca } from "@/lib/whatsapp-recordatorio-correr";
 import { leerEntrante, type Entrante as EntranteMedia } from "@/lib/whatsapp-media";
 
@@ -103,6 +105,11 @@ export async function POST(req: Request) {
 }
 
 async function atenderWhatsapp(m: Entrante, nombre: string | null): Promise<void> {
+  // Santiago reenvía la lista de precios en PDF al número de Acopio: se lee y se aplica sola.
+  if (m.type === "document" && m.from === AVISOS_WHATSAPP && /pdf/i.test(m.document?.mime_type ?? m.document?.filename ?? "")) {
+    await listaPorWhatsapp(m);
+    return;
+  }
   if (!cloudActivo()) {
     console.error("whatsapp: faltan WHATSAPP_TOKEN o WHATSAPP_PHONE_ID, no se contesta");
     return;
@@ -120,4 +127,21 @@ async function atenderWhatsapp(m: Entrante, nombre: string | null): Promise<void
     tipo: m.type,
     anuncio: ref ? { id: ref.source_id ?? null, titulo: ref.headline ?? null, texto: ref.body ?? null, ctwaClid: ref.ctwa_clid ?? null } : null,
   });
+}
+
+async function listaPorWhatsapp(m: Entrante): Promise<void> {
+  const id = m.document?.id;
+  const token = process.env.WHATSAPP_TOKEN;
+  if (!id || !token) return;
+  const auth = { authorization: `Bearer ${token}` };
+  try {
+    const meta = (await fetch(`https://graph.facebook.com/v21.0/${id}`, { headers: auth }).then((r) => r.json())) as { url?: string };
+    if (!meta.url) throw new Error("sin url");
+    const buf = await fetch(meta.url, { headers: auth, signal: AbortSignal.timeout(60_000) }).then((r) => r.arrayBuffer());
+    const r = await aplicarListaPdf(new Uint8Array(buf), m.document?.filename ?? "", "whatsapp");
+    await enviarTexto(m.from, "error" in r ? `No pude leer la lista: ${r.error}` : r.cambios.length ? resumenLista(r) : `📋 Lista leída (${r.mapeados} productos nuestros): sin cambios de precio.`);
+  } catch (e) {
+    console.error("lista por whatsapp falló", e);
+    await enviarTexto(m.from, "No pude leer el PDF. Probá de nuevo o subilo desde el panel.");
+  }
 }

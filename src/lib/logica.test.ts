@@ -990,3 +990,14 @@ test("seguimiento: el día de entrega es pasado mañana y nunca domingo", async 
   assert.equal(diaDeEntrega(new Date("2026-10-19T15:00:00Z")), "miércoles");
   assert.equal(diaDeEntrega(new Date("2026-10-23T15:00:00Z")), "lunes");
 });
+
+test("listas de precios: lee renglones de Todo Granolas y La Granja", async () => {
+  const { parsearLista, detectarProveedor, leerPrecio } = await import("./listas-pdf");
+  const filas = ["  981-007 NUEZ MARIPOSA EXTRA LIGHT X 1 KG $ 15,993.45 $ 15,993.45", "095-016 MIX CLASICO ( CON CAJU ) X1 KG $ 7,364.63 $ 7,364.63", "LISTA DE PRECIOS Desde , Precios#2", "  980-047   DATILES DEGLET NOUR C/CAROZO X 5KG - ARGELIA   $   9,068.53   $   45,342.64"];
+  const l = parsearLista(filas);
+  assert.deepEqual(l.map((x) => [x.codigo, x.precio]), [["981-007", 15993.45], ["095-016", 7364.63], ["980-047", 9068.53]]);
+  assert.equal(l[2].nombre, "DATILES DEGLET NOUR C/CAROZO X 5KG - ARGELIA");
+  assert.equal(detectarProveedor("PRECIOS MAYORISTAS REFERENCIAL"), "LG");
+  assert.equal(detectarProveedor("LISTA DISTRIBUIDORES ... TODO GRANOLAS"), "TG");
+  assert.equal(leerPrecio("1.234,50"), 1234.5);
+});
