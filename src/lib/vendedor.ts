@@ -14,7 +14,7 @@ import { SALUDO_GENERAL } from "./whatsapp-saludo";
 import { catalogo, hallarCombos, hallarProductos } from "./asistente-catalogo";
 import { combosTienda, productosTienda } from "./tienda";
 import { ofertasDelProveedor } from "./ofertas";
-import { pesos, renglonCombo } from "./precios";
+import { cuantoTrae, pesos, renglonCombo } from "./precios";
 import { zonaPagaDe } from "./envios/tabla";
 import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
@@ -312,7 +312,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const entrada_ = esSinTacc ? undefined : todos.find((c) => c.slug === COMBO_ENTRADA);
     const lineas = (c: (typeof todos)[number], rol: string) =>
       `- ${rol}: slug ${c.slug} · ${c.nombre} · ${pesos(Math.round(c.precio))}${(() => { const a = argumentoCombo(c, cfg.descuentoTransferenciaPct, pesos); return [a.porKilo, a.transferencia].filter(Boolean).map((x) => ` · ${x}`).join(""); })()}` +
-      `${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""} · trae ${c.items.length} productos: ${c.items.slice(0, 6).map((i) => `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${i.producto.producto}`).join(", ")}${c.items.length > 6 ? "…" : ""}${cantidadCombo(c)}`;
+      `${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""} · trae ${c.items.length} productos: ${c.items.slice(0, 6).map((i) => cuantoTrae(i)).join(", ")}${c.items.length > 6 ? "…" : ""}${cantidadCombo(c)}`;
     const texto = [
       tema ? `Tema detectado: ${tema.nombre}.` : "No hay un combo específico para eso.",
       ...elegidos.map((c, i) => lineas(c, i === 0 ? "RECOMENDADO" : "alternativa")),
@@ -550,7 +550,7 @@ function instrucciones(compraMinima: string): string {
     "- Como mucho un emoji y solo si suma.",
     "",
     "CÓMO VENDÉS: COMBO PRIMERO",
-    "1. Apenas dice qué busca (un producto, una categoría, «sin tacc», «para el desayuno»), usá recomendar_combo y ofrecé el RECOMENDADO: nombre, precio y 2 cosas que trae, y la pregunta. El precio por transferencia y el resto de lo que trae, cuando pregunte o en el mensaje siguiente. Si pidió un producto puntual, dale primero su precio suelto.",
+    "1. Apenas dice qué busca (un producto, una categoría, «sin tacc», «para el desayuno»), usá recomendar_combo y ofrecé el RECOMENDADO: nombre, precio, qué trae y la pregunta. Cuando digas qué trae, decí SIEMPRE la cantidad de cada cosa, como viene en la herramienta («1 kg de mix, 1 kg de dátiles, 1 kg de pasas y 1 kg de semillas»), nunca «1 kilo de mix, dátiles, pasas y semillas»: se entiende que es un kilo en total. El precio por transferencia y el resto de lo que trae, cuando pregunte o en el mensaje siguiente. Si pidió un producto puntual, dale primero su precio suelto.",
     "   El argumento es siempre el mismo y es verdad: el combo resuelve la compra del mes, tiene 5% menos que comprando suelto y llega solo a la compra mínima, así no tiene que andar sumando.",
     "   Ejemplo: «Busco productos sin tacc» → «Para sin TACC te conviene la Caja Sin TACC del mes: trae alfajores, barritas, pasta de maní y miel por $66.778, y por transferencia te queda en $61.436. ¿Te la separo?»",
     "2. Si dice que es caro, que es mucho o duda: bajá un escalón, al combo de entrada (la Despensa de 4 kilos; en Villa Carlos Paz y el sur de Punilla, la Despensa chica de 2 kilos; nunca si busca sin TACC), o armale algo a medida que llegue justo al mínimo con completar_el_minimo. Nunca discutas el precio.",

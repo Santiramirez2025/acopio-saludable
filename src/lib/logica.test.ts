@@ -1056,3 +1056,13 @@ test("stock: ofrece lo que combina y no repite lo que lleva", () => {
   const granola = EN_STOCK.find((i) => i.id === "granola")!;
   assert.equal(productosDe(granola, cat).length, 0);
 });
+
+import { cuantoTrae } from "./precios";
+
+test("combo: cada renglón dice su cantidad", () => {
+  assert.equal(cuantoTrae({ cantidad: 1, producto: { producto: "Dátiles", contenido: 1000, unidad: "g" } }), "1 kg de Dátiles");
+  assert.equal(cuantoTrae({ cantidad: 1, producto: { producto: "Pasas", contenido: 500, unidad: "g" } }), "500 g de Pasas");
+  assert.equal(cuantoTrae({ cantidad: 2, producto: { producto: "Mix", contenido: 1000, unidad: "g" } }), "2 kg de Mix");
+  assert.equal(cuantoTrae({ cantidad: 6, producto: { producto: "Barra", contenido: 40, unidad: "g" } }), "6 x Barra (240 g)");
+  assert.equal(cuantoTrae({ cantidad: 1, producto: { producto: "Pack", contenido: null, unidad: null } }), "Pack");
+});
