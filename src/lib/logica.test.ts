@@ -1001,3 +1001,12 @@ test("listas de precios: lee renglones de Todo Granolas y La Granja", async () =
   assert.equal(detectarProveedor("LISTA DISTRIBUIDORES ... TODO GRANOLAS"), "TG");
   assert.equal(leerPrecio("1.234,50"), 1234.5);
 });
+
+import { derivacion } from "./derivacion";
+test("derivación al dueño: con y sin número", () => {
+  assert.deepEqual(derivacion("Hola buenos días, te paso el número de uno de los dueños para que te puedas comunicar mejor, su nombre es lourdes"), { telefono: null, nombre: "Lourdes" });
+  assert.deepEqual(derivacion("👤 Contacto: Lourdes Pérez +54 9 3541 55-1234"), { telefono: "5493541551234", nombre: "Lourdes Pérez" });
+  assert.deepEqual(derivacion("hablá con la encargada, Marta: 3541551234"), { telefono: "5493541551234", nombre: "Marta" });
+  assert.equal(derivacion("Sí, pasame precios"), null);
+  assert.equal(derivacion("¿Cuánto sale el kilo de nuez?"), null);
+});
