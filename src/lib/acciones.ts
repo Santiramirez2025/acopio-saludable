@@ -9,7 +9,7 @@ import { requireAdmin } from "./auth";
 import { calcularCombo, descuentoMaximo, margenPct } from "./precios";
 import { leerItemsCombo, slugDesdeNombre } from "./combos";
 import type { EstadoPedido } from "@prisma/client";
-import { ESTADOS, avisarDespachado, confirmarPago, marcarComprados, reemplazarProducto } from "./pedidos";
+import { ESTADOS, avisarDespachado, confirmarPago, registrarCobroAlRecibir, marcarComprados, reemplazarProducto } from "./pedidos";
 import { ZONAS, normalizarCp, validarListaCp } from "./envios/geo";
 import { generarTokenSync, registrarSync, resolverPendientes, textoResumen } from "./sync";
 import { codigoMarcador } from "./marcador";
@@ -370,8 +370,13 @@ export async function cambiarEstadoPedido(fd: FormData) {
     const nota = textoONull(fd, "nota")?.slice(0, 300) ?? null;
     const tracking = textoONull(fd, "tracking")?.slice(0, 80) ?? null;
     if (estado === "PENDIENTE_PAGO" && pedido.estado !== "PENDIENTE_PAGO") throw new Error("Un pedido ya pagado no puede volver a pendiente");
-    if (pedido.estado === "PENDIENTE_PAGO" && estado !== "PENDIENTE_PAGO" && estado !== "CANCELADO") {
-      // Salir de "pendiente" siempre pasa por la confirmación de pago (suma vendidos y avisa al cliente).
+    // Pago al recibir: prepararlo o despacharlo NO es cobrarlo. Se cobra recién al entregarlo, y sin
+    // mandarle «recibimos tu pago» al cliente (pagó en mano). Antes, pasarlo a Enviado le avisaba que estaba pago.
+    const alRecibir = pedido.medioPago === "AL_RECIBIR";
+    if (alRecibir && estado === "ENTREGADO" && !pedido.pagadoAt) {
+      await registrarCobroAlRecibir(id, nota ?? "Cobrado al entregar");
+    } else if (pedido.estado === "PENDIENTE_PAGO" && estado !== "PENDIENTE_PAGO" && estado !== "CANCELADO" && (!alRecibir || estado === "PAGADO")) {
+      // Salir de "pendiente" pasa por la confirmación de pago (suma vendidos y avisa al cliente).
       await confirmarPago(id, nota ?? (pedido.medioPago === "TRANSFERENCIA" ? "Transferencia verificada" : "Pago confirmado a mano"));
     }
     if (estado !== "PAGADO" || pedido.estado !== "PENDIENTE_PAGO") {
