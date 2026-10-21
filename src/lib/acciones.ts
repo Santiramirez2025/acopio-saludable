@@ -9,7 +9,8 @@ import { requireAdmin } from "./auth";
 import { calcularCombo, descuentoMaximo, margenPct } from "./precios";
 import { leerItemsCombo, slugDesdeNombre } from "./combos";
 import type { EstadoPedido } from "@prisma/client";
-import { ESTADOS, avisarDespachado, confirmarPago, registrarCobroAlRecibir, marcarComprados, reemplazarProducto } from "./pedidos";
+import { avisarDespachoWhatsapp } from "./aviso-despacho";
+import { ESTADOS, avisarDespachado, confirmarPago, registrarCobroAlRecibir, registrarPago, marcarComprados, reemplazarProducto } from "./pedidos";
 import { ZONAS, normalizarCp, validarListaCp } from "./envios/geo";
 import { generarTokenSync, registrarSync, resolverPendientes, textoResumen } from "./sync";
 import { codigoMarcador } from "./marcador";
@@ -370,16 +371,21 @@ export async function cambiarEstadoPedido(fd: FormData) {
     const nota = textoONull(fd, "nota")?.slice(0, 300) ?? null;
     const tracking = textoONull(fd, "tracking")?.slice(0, 80) ?? null;
     if (estado === "PENDIENTE_PAGO" && pedido.estado !== "PENDIENTE_PAGO") throw new Error("Un pedido ya pagado no puede volver a pendiente");
-    // Pago al recibir: prepararlo o despacharlo NO es cobrarlo. Se cobra recién al entregarlo, y sin
-    // mandarle «recibimos tu pago» al cliente (pagó en mano). Antes, pasarlo a Enviado le avisaba que estaba pago.
+    // El estado del pedido (en compra, preparado, enviado, entregado) y el pago van por separado:
+    // mover el pedido NUNCA lo marca como pagado. El pago se registra eligiendo «Pagado» o con el botón
+    // «Registrar pago». Única excepción: pago al recibir entregado = cobrado en mano, sin avisarle nada.
+    // (El 21/10 pasar a Julieta a Enviado le mandó el comprobante de pago sin haber pagado.)
     const alRecibir = pedido.medioPago === "AL_RECIBIR";
     if (alRecibir && estado === "ENTREGADO" && !pedido.pagadoAt) {
       await registrarCobroAlRecibir(id, nota ?? "Cobrado al entregar");
-    } else if (pedido.estado === "PENDIENTE_PAGO" && estado !== "PENDIENTE_PAGO" && estado !== "CANCELADO" && (!alRecibir || estado === "PAGADO")) {
-      // Salir de "pendiente" pasa por la confirmación de pago (suma vendidos y avisa al cliente).
-      await confirmarPago(id, nota ?? (pedido.medioPago === "TRANSFERENCIA" ? "Transferencia verificada" : "Pago confirmado a mano"));
+    } else if (estado === "PAGADO" && !pedido.pagadoAt) {
+      if (pedido.estado === "PENDIENTE_PAGO") await confirmarPago(id, nota ?? (pedido.medioPago === "TRANSFERENCIA" ? "Transferencia verificada" : "Pago confirmado a mano"));
+      else await registrarPago(id, nota ?? "Pago registrado a mano");
     }
-    if (estado !== "PAGADO" || pedido.estado !== "PENDIENTE_PAGO") {
+    // Elegir «Pagado» con el pedido ya en marcha registra el pago pero no lo hace retroceder de estado.
+    if (estado === "PAGADO" && pedido.estado !== "PENDIENTE_PAGO") {
+      if (tracking) await prisma.order.update({ where: { id }, data: { tracking } });
+    } else if (estado !== "PAGADO" || pedido.estado !== "PENDIENTE_PAGO") {
       const cambio = estado !== pedido.estado && !(pedido.estado === "PENDIENTE_PAGO" && estado === "PAGADO");
       await prisma.$transaction([
         prisma.order.update({ where: { id }, data: { estado, tracking: tracking ?? pedido.tracking } }),
@@ -389,7 +395,30 @@ export async function cambiarEstadoPedido(fd: FormData) {
       await prisma.order.update({ where: { id }, data: { tracking } });
     }
     // Al despachar, el cliente tiene que enterarse solo: si no, el seguimiento vive únicamente en el panel.
-    if (estado === "ENVIADO" && pedido.estado !== "ENVIADO") await avisarDespachado(id);
+    if (estado === "ENVIADO" && pedido.estado !== "ENVIADO") {
+      await avisarDespachado(id);
+      // Por WhatsApp: «ya salió», cómo paga, y el link para recomendar (5% + 5%).
+      const actual = await prisma.order.findUnique({ where: { id } });
+      if (actual) await avisarDespachoWhatsapp(actual).catch((e) => console.error("aviso de despacho por WhatsApp falló", e));
+    }
+  } catch (e) {
+    destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
+  }
+  revalidatePath("/", "layout");
+  redirect(destino);
+}
+
+/** Botón del panel: registra el pago sin tocar el estado del pedido (puede estar preparado o enviado). */
+export async function registrarPagoPedido(fd: FormData) {
+  await requireAdmin();
+  const id = Number.parseInt(String(fd.get("id")), 10);
+  let destino = `/admin/pedidos/${id}?ok=1`;
+  try {
+    const pedido = await prisma.order.findUniqueOrThrow({ where: { id } });
+    if (pedido.pagadoAt) throw new Error("Ese pedido ya figura como pagado");
+    if (pedido.estado === "CANCELADO") throw new Error("El pedido está cancelado");
+    if (pedido.estado === "PENDIENTE_PAGO") await confirmarPago(id, "Pago registrado a mano");
+    else await registrarPago(id, "Pago registrado a mano");
   } catch (e) {
     destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
   }

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
 import { ESTADOS, MARGEN_FLACO_PCT, linkWhatsapp, margenNeto, nombreEstado, numeroPedido } from "@/lib/pedidos";
-import { borrarPedido, cambiarEstadoPedido, reemplazarEnPedido, reenviarComprobante } from "@/lib/acciones";
+import { borrarPedido, cambiarEstadoPedido, reemplazarEnPedido, reenviarComprobante, registrarPagoPedido } from "@/lib/acciones";
 import { leerConfig } from "@/lib/config";
 import { linkSeguimiento } from "@/lib/envios/seguimiento";
 
@@ -27,6 +27,12 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
       <div className="flex flex-wrap gap-4 text-sm">
         <Link href="/admin/pedidos" className="text-stone-600 underline">← Pedidos</Link>
         <Link href={`/admin/pedidos/${pedido.id}/qr`} className="text-acopio-700 underline">QR de reposición para imprimir</Link>
+        {!pedido.pagadoAt && pedido.estado !== "CANCELADO" && (
+          <form action={registrarPagoPedido}>
+            <input type="hidden" name="id" value={pedido.id} />
+            <button className="rounded-md bg-acopio-700 px-3 py-1 font-medium text-white">Registrar pago</button>
+          </form>
+        )}
         {pedido.pagadoAt && <a href={`/pedido/${pedido.token}/comprobante`} target="_blank" className="text-acopio-700 underline">Ver comprobante</a>}
         {pedido.pagadoAt && (
           <form action={reenviarComprobante}>
@@ -37,7 +43,16 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
       </div>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">Pedido {numero} <span className="chip bg-acopio-100 text-acopio-700">{nombreEstado(pedido.estado)}</span></h1>
+          <h1 className="text-xl font-semibold">
+            Pedido {numero} <span className="chip bg-acopio-100 text-acopio-700">{nombreEstado(pedido.estado)}</span>{" "}
+            {/* El pago va aparte del estado: un pedido puede estar enviado y todavía sin cobrar. */}
+            {pedido.estado !== "CANCELADO" &&
+              (pedido.pagadoAt ? (
+                <span className="chip bg-acopio-600 text-white">Pagado {pedido.pagadoAt.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Cordoba" })}</span>
+              ) : (
+                <span className="chip bg-sol text-acopio-900">{pedido.medioPago === "AL_RECIBIR" ? "Cobra al entregar" : "Pago pendiente"}</span>
+              ))}
+          </h1>
           <p className="text-sm text-stone-600">{pedido.createdAt.toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba" })} · {pedido.medioPago === "MERCADOPAGO" ? `Mercado Pago${pedido.mpPaymentId ? ` (pago ${pedido.mpPaymentId})` : ""}` : NOMBRE_MEDIO[pedido.medioPago]}</p>
         </div>
         <div className="flex flex-wrap gap-2">
