@@ -15,6 +15,7 @@ export type Fila = { id: string; titulo: string; descripcion?: string };
 export type Saliente =
   | { tipo: "texto"; texto: string }
   | { tipo: "imagen"; url: string; pie?: string }
+  | { tipo: "video"; url: string; pie?: string }
   | { tipo: "botones"; cuerpo: string; botones: Boton[]; pie?: string }
   | { tipo: "lista"; cuerpo: string; boton: string; secciones: { titulo: string; filas: Fila[] }[] }
   | { tipo: "cta"; cuerpo: string; texto: string; url: string; pie?: string };
@@ -104,7 +105,7 @@ export type PedidoArmado = {
 export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Saliente[] {
   // Pidió fotos: van primero, cada una con nombre y precio al pie, y después el texto con sus botones.
   if (r.fotos?.length) {
-    const fotos: Saliente[] = r.fotos.slice(0, 4).map((f) => ({ tipo: "imagen", url: f.url, pie: corte(f.pie, TOPE.cuerpo) }));
+    const fotos: Saliente[] = r.fotos.slice(0, 4).map((f) => ({ tipo: /\.mp4($|\?)/i.test(f.url) ? "video" : "imagen", url: f.url, pie: corte(f.pie, TOPE.cuerpo) }));
     return [...fotos, ...planWhatsapp({ ...r, fotos: undefined }, pedido)];
   }
   const texto = r.texto.trim();
@@ -367,6 +368,8 @@ export function cuerpoGraph(s: Saliente, to: string): Record<string, unknown> {
       return { ...base, type: "text", text: { body: s.texto.slice(0, 4000), preview_url: false } };
     case "imagen":
       return { ...base, type: "image", image: { link: s.url, ...(s.pie ? { caption: corte(s.pie, 1024) } : {}) } };
+    case "video":
+      return { ...base, type: "video", video: { link: s.url, ...(s.pie ? { caption: corte(s.pie, 1024) } : {}) } };
     case "botones":
       return {
         ...base,
@@ -415,6 +418,8 @@ export function textoParaPanel(s: Saliente): string {
       return s.texto;
     case "imagen":
       return `[Foto] ${s.pie ?? ""}`.trim();
+    case "video":
+      return `[Video] ${s.pie ?? ""}`.trim();
     case "botones":
       return `${s.cuerpo}\n[Botones: ${s.botones.map((b) => b.titulo).join(" · ")}]`;
     case "lista":
@@ -430,6 +435,7 @@ export function comoTexto(s: Saliente): string {
     case "texto":
       return s.texto;
     case "imagen":
+    case "video":
       return s.pie ?? "";
     case "botones":
       return s.cuerpo;

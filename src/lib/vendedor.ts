@@ -27,7 +27,7 @@ import { urlSitio } from "./sitio";
 const absoluta = (u: string) => (u.startsWith("http") ? u : `${urlSitio()}${u.startsWith("/") ? "" : "/"}${u}`);
 import { cotizarEnvioChat } from "./envio-chat";
 import { EN_STOCK, productosDe, sugerirDelStock } from "./en-stock";
-import { fotosReales, imagenCombo, imagenProducto, pideFotosReales } from "./galeria";
+import { fotoRealDe, fotosReales, imagenCombo, imagenProducto, pideFotosReales } from "./galeria";
 import { completarEntrega } from "./pedidos";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
@@ -255,8 +255,11 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const combosBuscados = consulta && !pideFotosReales(consulta) && !combosPedidos.length && !porCodigo.length ? await hallarCombos(consulta).then((x) => x.slice(0, 2)) : [];
     // Las imágenes con diseño propio (galería) mandan; si no hay, la foto de la tienda.
     const reales = pideFotosReales(consulta) ? fotosReales().map((f) => ({ url: absoluta(f.url), pie: f.pie })) : [];
+    // La foto real de la mercadería en nuestra mesa va primero: es lo que pide quien quiere «ver cómo es».
+    const realProducto = [consulta, ...porCodigo.map((p) => `${p.producto} ${p.presentacion}`)].map((t) => fotoRealDe(t)).find(Boolean);
     const fotos: Foto[] = [
       ...reales,
+      ...(realProducto ? [{ url: absoluta(realProducto.url), pie: `Foto real · ${realProducto.pie}` }] : []),
       ...combosPedidos.concat(combosBuscados).filter((c) => imagenCombo(c.slug) || c.fotoUrl).map((c) => ({ url: absoluta(imagenCombo(c.slug) ?? c.fotoUrl!), pie: `${c.nombre} · ${pesos(Math.round(c.precio))}` })),
       ...porCodigo.concat(buscados).filter((p) => imagenProducto(p.codigo) || p.fotoUrl).map((p) => ({ url: absoluta(imagenProducto(p.codigo) ?? p.fotoUrl!), pie: `${p.producto} ${p.presentacion} · ${pesos(p.precio)}` })),
     ].filter((f, i, a) => a.findIndex((o) => o.url === f.url) === i).slice(0, 4);

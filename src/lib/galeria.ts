@@ -34,6 +34,33 @@ const PRODUCTOS: Record<string, string> = {
   "LG-PASASRUBIAS": "producto-pasas",
 };
 
+/** Video corto (30 s) de cómo armamos el pedido, para el «¿cómo llega?» y la desconfianza. */
+export const VIDEO_ARMAMOS = { url: "/video/asi-armamos-tu-pedido.mp4", pie: "Así armamos tu pedido: guantes, balanza y bolsa kraft, el mismo día que sale" };
+
+/** Fotos reales de la mercadería en la mesa de fraccionado (public/img/reales), por producto. */
+const REALES_PRODUCTO: [RegExp, string, string][] = [
+  [/mix.*500|500.*mix/i, "real-mix-500", "Mix clásico 500 g, recién fraccionado"],
+  [/\bmix\b/i, "real-mix", "Mix clásico 1 kg, armado en el día"],
+  [/almendra.*500|500.*almendra/i, "real-almendras-500", "Almendras Non Pareil 500 g"],
+  [/almendra/i, "real-almendras", "Almendras Non Pareil 1 kg"],
+  [/caj[uú]|casta[ñn]a/i, "real-caju", "Castañas de cajú 1 kg"],
+  [/\bnuez|\bnueces/i, "real-nuez", "Nuez mariposa light 1 kg"],
+  [/d[aá]til/i, "real-datiles", "Dátiles Deglet Nour 1 kg"],
+  [/\bpasas?\b/i, "real-pasas", "Pasas de uva"],
+  [/banana/i, "real-banana", "Banana chips 1 kg"],
+  [/girasol/i, "real-girasol", "Girasol pelado 1 kg"],
+  [/granola.*prote|prote.*granola/i, "real-granola-proteica", "Granola proteica 1 kg"],
+  [/granola/i, "real-granola", "Granola tradicional 1 kg"],
+  [/\bmiel\b/i, "real-miel", "Miel pura Los Dos Zánganos"],
+  [/semilla/i, "real-semillas", "Mix de semillas 1 kg"],
+];
+
+/** La foto real del producto que se nombra (la primera que coincide), o null. */
+export function fotoRealDe(texto: string): { url: string; pie: string } | null {
+  const r = REALES_PRODUCTO.find(([re]) => re.test(texto));
+  return r ? { url: `/img/reales/${r[1]}.jpg`, pie: r[2] } : null;
+}
+
 /** Fotos reales: cómo armamos y cómo llega el pedido. Para la desconfianza y el «¿cómo llega?». */
 export const REALES = [
   { archivo: "real-asi-llega", pie: "Así llega tu pedido: en bolsa kraft, fraccionado y con una nota para vos" },
@@ -57,7 +84,7 @@ export function pideFotosReales(consulta: string): boolean {
 }
 
 export function fotosReales(): { url: string; pie: string }[] {
-  return REALES.map((r) => ({ url: url(r.archivo), pie: r.pie }));
+  return [VIDEO_ARMAMOS, ...REALES.slice(0, 1).map((r) => ({ url: url(r.archivo), pie: r.pie }))];
 }
 
 // ---------- Imágenes en el momento justo ----------

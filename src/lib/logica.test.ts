@@ -1128,3 +1128,16 @@ test("precios redondos: $35.227 se vende como $35.000", async () => {
   assert.equal(precioRedondo(1237), 1250);
   assert.equal(precioVenta(32600, 8), 35000);
 });
+
+test("fotos reales por producto y video de cómo armamos", async () => {
+  const { fotoRealDe, fotosReales } = await import("./galeria");
+  assert.equal(fotoRealDe("almendras 500 g")?.url, "/img/reales/real-almendras-500.jpg");
+  assert.equal(fotoRealDe("Castañas de cajú W4")?.url, "/img/reales/real-caju.jpg");
+  assert.equal(fotoRealDe("granola proteica")?.url, "/img/reales/real-granola-proteica.jpg");
+  assert.equal(fotoRealDe("tostadas de arroz"), null);
+  assert.ok(fotosReales()[0].url.endsWith(".mp4"));
+  const { planWhatsapp, cuerpoGraph } = await import("./whatsapp-interactivo");
+  const s = planWhatsapp({ texto: "Te paso", fotos: [{ url: "https://x/video/a.mp4", pie: "Así armamos" }] } as never, null as never);
+  assert.equal(s[0].tipo, "video");
+  assert.equal((cuerpoGraph(s[0], "549") as { type: string }).type, "video");
+});
