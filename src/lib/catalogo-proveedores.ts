@@ -157,7 +157,7 @@ export const OCULTOS_PROPIOS = [
 ];
 
 /** Fotos propias, generadas con el estilo de los anuncios (public/img/productos/prov y combos/v2). */
-const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !["TG-ALFAJORFS", "LG-SAL", "TG-ALMGUARA", "LG-AVENA", "LG-CACAO-250", "LG-ALMNP", "LG-ALMNP-500", "LG-NATUZEN-RALLADO", "LG-NATUZEN-TAPAS", "LG-NATUZEN-PEPAS"].includes(c)));
+const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !["TG-ALFAJORFS", "LG-SAL"].includes(c)));
 export const fotoProducto = (codigo: string) => (CON_FOTO.has(codigo) ? `/img/productos/prov/${codigo.toLowerCase()}.webp` : null);
 export const fotoCombo = (slug: string) => `/img/combos/v3/${slug}.webp`;
 
