@@ -29,6 +29,7 @@ import { derivacion } from "./derivacion";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFoto } from "./ver-foto";
+import { prisma } from "./prisma";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
 
 const SALUD =
@@ -439,8 +440,18 @@ export async function pensar(c: {
       : "";
   // Venta ya cerrada: lo que mande ahora (dirección, horario) va al pedido.
   const ordenId = c.pedidoGuardado?.startsWith("orden:") ? Number(c.pedidoGuardado.slice(6)) || undefined : undefined;
+  // En qué anda el pedido: si ya salió o ya lo recibió, no se le habla de agendar ni de «te avisamos cuando salga».
+  const estadoOrden = ordenId ? (await prisma.order.findUnique({ where: { id: ordenId }, select: { estado: true } }).catch(() => null))?.estado : null;
+  const enQueAnda =
+    estadoOrden === "ENTREGADO"
+      ? " YA LO RECIBIÓ: si agradece o comenta, agradecé corto y cálido y nada más. No digas que está agendado, no ofrezcas avisar cuando salga y no mandes fotos de cómo llega."
+      : estadoOrden === "ENVIADO"
+        ? " YA SALIÓ y va en camino: no digas que está agendado ni ofrezcas avisar cuando salga."
+        : estadoOrden === "CANCELADO"
+          ? " Ese pedido se canceló."
+          : "";
   const cerrado = ordenId
-    ? `<pedido_cerrado>Ya cerró la compra (pedido ${numeroPedido(ordenId)}). Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
+    ? `<pedido_cerrado>Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";
   const r = vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId }) : null;
 
@@ -480,7 +491,7 @@ export async function pensar(c: {
   if (!respuesta.envio && envio) respuesta = { ...respuesta, envio };
   const pedido = await pedidoDe(lineas, envio);
   // Imágenes en el momento justo (duda, combo nombrado, producto cotizado, pedido agendado), sin saturar.
-  if (c.canal === "whatsapp" && !derivar && !respuesta.fotos?.length) {
+  if (c.canal === "whatsapp" && !derivar && !respuesta.fotos?.length && estadoOrden !== "ENTREGADO" && estadoOrden !== "ENVIADO") {
     const combos = [
       ...(respuesta.acciones ?? []).filter((a) => a.clase === "combo").map((a) => a.id),
       ...(respuesta.fichas ?? []).map((f) => f.href.match(/^\/combos\/(.+)$/)?.[1]).filter((x): x is string => Boolean(x)),
