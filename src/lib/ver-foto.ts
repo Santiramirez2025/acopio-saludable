@@ -30,7 +30,7 @@ export async function describirFotoConMotivo(mediaId: string): Promise<{ texto: 
       headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
         model: process.env.VENDEDOR_MODELO || "claude-haiku-5-5",
-        max_tokens: 200,
+        max_tokens: 400,
         messages: [
           {
             role: "user",
@@ -50,9 +50,9 @@ export async function describirFotoConMotivo(mediaId: string): Promise<{ texto: 
       signal: AbortSignal.timeout(25_000),
     });
     if (!res.ok) return { texto: null, motivo: `modelo ${res.status} ${(await res.text()).slice(0, 300)}` };
-    const j = (await res.json()) as { content?: { type: string; text?: string }[] };
+    const j = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string };
     const t = (j.content ?? []).map((b) => b.text ?? "").join(" ").replace(/\s+/g, " ").trim();
-    return t ? { texto: t.slice(0, 300) } : { texto: null, motivo: "respuesta vacía" };
+    return t ? { texto: t.slice(0, 300) } : { texto: null, motivo: `respuesta vacía (${j.stop_reason}; ${(j.content ?? []).map((b) => b.type).join(",")}; ${tipo}; ${bytes.byteLength} bytes)` };
   } catch (e) {
     return { texto: null, motivo: String(e).slice(0, 200) };
   }
