@@ -175,6 +175,26 @@ export async function confirmarPago(orderId: number, nota: string, mpPaymentId?:
   return confirmado;
 }
 
+/**
+ * Pago al recibir: se cobra en mano al entregar. Registra el cobro (fecha, vendidos y aviso interno)
+ * sin mandarle al cliente «recibimos tu pago»: ya lo sabe, nos pagó en la puerta.
+ */
+export async function registrarCobroAlRecibir(orderId: number, nota: string): Promise<boolean> {
+  const hecho = await prisma.$transaction(async (tx) => {
+    const r = await tx.order.updateMany({ where: { id: orderId, pagadoAt: null }, data: { pagadoAt: new Date() } });
+    if (r.count === 0) return false;
+    await tx.orderEvent.create({ data: { orderId, estado: "PAGADO", nota } });
+    const items = await tx.orderItem.findMany({ where: { orderId } });
+    for (const i of items) await tx.product.updateMany({ where: { codigo: i.codigo }, data: { vendidos: { increment: i.cantidad } } });
+    return true;
+  });
+  if (hecho) {
+    const pedido = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+    await avisarVenta(pedido, "Cobrado al entregar").catch((e) => console.error("aviso de cobro falló", e));
+  }
+  return hecho;
+}
+
 /** Consulta un pago en Mercado Pago y, si está aprobado y coincide con el pedido, lo confirma. */
 export async function procesarPagoMp(pago: { id: number; status: string; external_reference: string | null; transaction_amount: number; currency_id: string }): Promise<"confirmado" | "ignorado"> {
   if (pago.status !== "approved" || !pago.external_reference) return "ignorado";
