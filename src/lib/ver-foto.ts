@@ -6,19 +6,24 @@ const GRAPH = "https://graph.facebook.com/v21.0";
 
 /** Describe en una línea qué muestra la foto, pensando en qué quiere comprar. null si no se pudo. */
 export async function describirFoto(mediaId: string): Promise<string | null> {
+  return (await describirFotoConMotivo(mediaId)).texto;
+}
+
+/** Igual que describirFoto pero dice por qué falló (para probarla desde el panel). */
+export async function describirFotoConMotivo(mediaId: string): Promise<{ texto: string | null; motivo?: string }> {
   const token = process.env.WHATSAPP_TOKEN;
   const clave = process.env.ANTHROPIC_API_KEY;
-  if (!token || !clave || !/^\d{5,30}$/.test(mediaId)) return null;
+  if (!token || !clave || !/^\d{5,30}$/.test(mediaId)) return { texto: null, motivo: !token ? "falta WHATSAPP_TOKEN" : !clave ? "falta ANTHROPIC_API_KEY" : "id inválido" };
   try {
     const auth = { authorization: `Bearer ${token}` };
     const meta = await fetch(`${GRAPH}/${mediaId}`, { headers: auth, signal: AbortSignal.timeout(10_000) });
-    if (!meta.ok) return null;
+    if (!meta.ok) return { texto: null, motivo: `meta ${meta.status}` };
     const { url, mime_type } = (await meta.json()) as { url?: string; mime_type?: string };
-    if (!url) return null;
+    if (!url) return { texto: null, motivo: "sin url" };
     const archivo = await fetch(url, { headers: auth, signal: AbortSignal.timeout(20_000) });
-    if (!archivo.ok) return null;
+    if (!archivo.ok) return { texto: null, motivo: `descarga ${archivo.status}` };
     const bytes = await archivo.arrayBuffer();
-    if (bytes.byteLength > 4_500_000) return null;
+    if (bytes.byteLength > 3_700_000) return { texto: null, motivo: `muy pesada ${bytes.byteLength}` };
     const tipo = /png|webp|gif/.test(mime_type ?? "") ? mime_type! : "image/jpeg";
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -44,11 +49,11 @@ export async function describirFoto(mediaId: string): Promise<string | null> {
       }),
       signal: AbortSignal.timeout(25_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { texto: null, motivo: `modelo ${res.status} ${(await res.text()).slice(0, 300)}` };
     const j = (await res.json()) as { content?: { type: string; text?: string }[] };
     const t = (j.content ?? []).map((b) => b.text ?? "").join(" ").replace(/\s+/g, " ").trim();
-    return t ? t.slice(0, 300) : null;
-  } catch {
-    return null;
+    return t ? { texto: t.slice(0, 300) } : { texto: null, motivo: "respuesta vacía" };
+  } catch (e) {
+    return { texto: null, motivo: String(e).slice(0, 200) };
   }
 }

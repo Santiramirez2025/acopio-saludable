@@ -28,7 +28,7 @@ import { contextoProspecto, darDeBaja, datosProspecto, enviarProspecto, esBaja }
 import { derivacion } from "./derivacion";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
-import { describirFoto } from "./ver-foto";
+import { describirFotoConMotivo } from "./ver-foto";
 import { prisma } from "./prisma";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
 
@@ -236,10 +236,28 @@ export async function atender(e: Entrada): Promise<void> {
 
   // Audio, foto sin texto, video, archivo: el vendedor no lo puede leer. Se le pide que lo escriba
   // y le llega el aviso a Santiago, que lo puede escuchar o ver en el panel.
+  // Ráfaga: «Hola» + «quiero precios» llegan juntos. Se espera un momento y, si entró otro mensaje
+  // después de este, contesta ese (que ve toda la ráfaga) y este se calla: así no salen dos respuestas iguales.
+  await new Promise((r) => setTimeout(r, 6000));
+  const ultimo = await prisma
+    .$queryRaw<{ id: string }[]>`SELECT "id" FROM "WhatsappMensaje" WHERE "telefono" = ${e.clave} AND "de" = 'cliente' ORDER BY "fecha" DESC LIMIT 1`
+    .then((f) => f[0] ?? null)
+    .catch(() => null);
+  if (ultimo && ultimo.id !== e.idMensaje) {
+    console.log("chat: llegó otro mensaje enseguida, contesta ese", cola(e.clave));
+    return;
+  }
+
   // Una foto sin texto (la captura del anuncio, un producto): el vendedor la mira y sigue la charla.
   if (e.texto === null && e.tipo === "image") {
     const id = /^\[foto·(\d+)\]/.exec(e.guardar ?? "")?.[1];
-    const vista = id ? await describirFoto(id) : null;
+    const r = id ? await describirFotoConMotivo(id) : { texto: null, motivo: "sin id" };
+    const vista = r.texto;
+    if (!vista) {
+      console.log("chat: no se pudo ver la foto", cola(e.clave), r.motivo);
+      // Sin vista igual se sigue la charla con lo que venía diciendo (no un «contame qué buscás» suelto).
+      texto = "[Mandó una foto: no la pudiste ver. Si por lo que venía hablando se entiende qué es, seguí con eso; si no, pedile en una frase el nombre o la marca del producto.]";
+    }
     if (vista) {
       texto = `[Mandó una foto: ${vista}]`;
       console.log("chat: foto descripta", cola(e.clave), vista.slice(0, 80));
@@ -252,18 +270,6 @@ export async function atender(e: Entrada): Promise<void> {
     return;
   }
   if (!texto) return;
-
-  // Ráfaga: «Hola» + «quiero precios» llegan juntos. Se espera un momento y, si entró otro mensaje
-  // después de este, contesta ese (que ve toda la ráfaga) y este se calla: así no salen dos respuestas iguales.
-  await new Promise((r) => setTimeout(r, 6000));
-  const ultimo = await prisma
-    .$queryRaw<{ id: string }[]>`SELECT "id" FROM "WhatsappMensaje" WHERE "telefono" = ${e.clave} AND "de" = 'cliente' ORDER BY "fecha" DESC LIMIT 1`
-    .then((f) => f[0] ?? null)
-    .catch(() => null);
-  if (ultimo && ultimo.id !== e.idMensaje) {
-    console.log("chat: llegó otro mensaje enseguida, contesta ese", cola(e.clave));
-    return;
-  }
 
   // Del otro lado contestó un bot (el «gracias por comunicarte» de un hotel): no se le contesta y
   // no se avisa a nadie. La charla sigue en manos del vendedor: cuando escriba una persona, la atiende.
