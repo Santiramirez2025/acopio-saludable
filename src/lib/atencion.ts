@@ -310,6 +310,16 @@ export async function atender(e: Entrada): Promise<void> {
   });
   console.log("chat: respuesta armada", { canal, de: cola(e.clave), conIA: p.conIA, ms: Date.now() - inicio, derivar: p.derivar, tipos: p.salientes.map((x) => x.tipo) });
 
+  // Dice «agendado» pero no hay pedido creado (no llegó al mínimo o no eligió cómo pagar): a Lilita le
+  // pasó eso y el pedido nunca llegó al panel. Que Santiago se entere y lo cierre a mano.
+  const dichoAhora = p.salientes.map((x) => textoParaPanel(x)).join(" ");
+  if (!guardado?.startsWith("orden:") && /agendad|confirmad/i.test(dichoAhora)) {
+    await avisarSantiago(
+      `Venta por cerrar: ${e.nombre ?? e.clave}`,
+      `🛒 El vendedor le dijo a ${e.nombre ?? e.clave} que el pedido queda agendado, pero no hay pedido creado en el panel (falta llegar al mínimo o elegir cómo paga). Revisalo: ${urlSitio()}/admin/whatsapp?c=${e.clave}`,
+    ).catch((err) => console.error("aviso de venta por cerrar falló", err));
+  }
+
   if (p.derivar) {
     await responder(e.clave, DERIVADO);
     await cambiarEstado(e.clave, "persona");
