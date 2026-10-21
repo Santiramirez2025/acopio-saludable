@@ -43,7 +43,7 @@ export default async function Pedidos({ searchParams }: { searchParams: Promise<
                   <td className="px-3 py-2"><Link href={`/admin/pedidos/${p.id}`} className="font-medium text-acopio-700 underline">{numeroPedido(p.id)}</Link><div className="text-xs text-stone-600">{p.createdAt.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Cordoba" })}</div></td>
                   <td className="px-3 py-2">{p.nombre}<div className="text-xs text-stone-600">{p.ciudad}, {p.provincia}</div></td>
                   <td className="px-3 py-2"><span className={`chip ${p.estado === "PENDIENTE_PAGO" ? "bg-amber-100 text-amber-800" : p.estado === "CANCELADO" ? "bg-stone-200 text-stone-600" : "bg-acopio-100 text-acopio-700"}`}>{nombreEstado(p.estado)}</span></td>
-                  <td className="px-3 py-2">{NOMBRE_MEDIO[p.medioPago]}</td>
+                  <td className="px-3 py-2">{NOMBRE_MEDIO[p.medioPago]}{p.estado !== "CANCELADO" && <span className={`ml-1 text-xs font-semibold ${p.pagadoAt ? "text-acopio-700" : "text-tierra-700"}`}>· {p.pagadoAt ? "pagado" : "sin cobrar"}</span>}</td>
                   <td className="px-3 py-2">{p.envioNombre}</td>
                   <td className="px-3 py-2 text-right tabular-nums">{pesos(Number(p.total))}</td>
                   <td className={`px-3 py-2 text-right tabular-nums ${m.alerta === "perdida" ? "font-semibold text-red-600" : m.alerta === "flaco" ? "font-semibold text-amber-700" : ""}`}>{pesos(m.neto)} <span className="text-xs text-stone-600">({m.netoPct.toFixed(1)}%)</span></td>
