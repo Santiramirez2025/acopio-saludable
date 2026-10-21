@@ -434,7 +434,7 @@ test("precio de lista y de transferencia: el recargo cubre la comisión y la tra
   const { precioVenta, precioTransferencia } = await import("./precios");
   assert.equal(precioVenta(10000, 8), 10800);
   assert.equal(precioVenta(10000, 0), 10000);
-  assert.equal(precioTransferencia(10800, 8), 9936);
+  assert.equal(precioTransferencia(10800, 8), 9900);
   assert.equal(precioTransferencia(10800, 0), null);
   // Cobrado por Mercado Pago al instante (7,61%) queda prácticamente el precio base.
   assert.ok(Math.abs(10800 * (1 - 0.0761) - 10000) < 30);
@@ -1119,4 +1119,12 @@ test("despacho sin referidos; gracias con referidos", () => {
   assert.match(g, /Gracias por tu compra, Lilita/);
   assert.match(g, /5%/);
   assert.match(link, /\?ref=amigo-/);
+});
+
+test("precios redondos: $35.227 se vende como $35.000", async () => {
+  const { precioRedondo, precioVenta } = await import("./precios");
+  assert.equal(precioRedondo(35227), 35000);
+  assert.equal(precioRedondo(15430), 15400);
+  assert.equal(precioRedondo(1237), 1250);
+  assert.equal(precioVenta(32600, 8), 35000);
 });
