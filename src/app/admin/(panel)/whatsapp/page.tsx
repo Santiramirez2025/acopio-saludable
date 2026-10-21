@@ -66,7 +66,7 @@ export default async function Mensajes({ searchParams }: { searchParams: Promise
   const abierta = sp.c ? claveValida(sp.c) : null;
 
   const [todas, charla, mensajes] = await Promise.all([
-    listarConversaciones(300),
+    listarConversaciones(150),
     abierta ? conversacionDe(abierta) : null,
     abierta ? mensajesDe(abierta) : [],
   ]);
@@ -80,7 +80,7 @@ export default async function Mensajes({ searchParams }: { searchParams: Promise
 
   return (
     <div className="-mx-4 -my-6 sm:mx-0 sm:my-0">
-      <AutoRefresco segundos={10} />
+      <AutoRefresco segundos={30} />
       <div className="flex h-[calc(100dvh-140px)] min-h-[520px] overflow-hidden border-stone-200 bg-white sm:rounded-2xl sm:border">
         {/* Lista */}
         <aside className={`${abierta ? "hidden md:flex" : "flex"} w-full flex-col border-r border-stone-200 md:w-[360px] md:shrink-0`}>
