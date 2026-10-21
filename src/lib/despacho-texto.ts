@@ -10,8 +10,8 @@ function primerNombre(nombre: string): string {
   return n && !/cliente/i.test(n) ? n : "";
 }
 
-/** Los dos mensajes del despacho. Puro: se prueba sin mandar nada. */
-export function mensajesDespacho(p: Pick<Order, "id" | "nombre" | "medioPago" | "pagadoAt" | "total" | "token">, sitio: string): [string, string] {
+/** «Ya salió»: solo el aviso y cómo paga. Nada de referidos: no se mezcla con la venta en curso. */
+export function mensajeDespacho(p: Pick<Order, "id" | "nombre" | "medioPago" | "pagadoAt" | "total">): string {
   const nombre = primerNombre(p.nombre);
   const pago =
     p.pagadoAt
@@ -19,8 +19,16 @@ export function mensajesDespacho(p: Pick<Order, "id" | "nombre" | "medioPago" | 
       : p.medioPago === "AL_RECIBIR"
         ? `Lo pagás cuando te llega: ${pesos(Number(p.total))}, en efectivo o por transferencia.`
         : `Queda pendiente el pago de ${pesos(Number(p.total))}.`;
-  const uno = `¡${nombre ? `${nombre}, t` : "T"}u pedido ${numeroPedido(p.id)} ya salió! 🚚 ${pago}\n\nUn regalo para vos 🎁 Si nos recomendás, tu amigo tiene 5% en su primera compra y vos 5% en la próxima por cada uno que compre. Reenviale el mensaje de abajo 👇`;
+  return `¡${nombre ? `${nombre}, t` : "T"}u pedido ${numeroPedido(p.id)} ya salió! 🚚 ${pago}`;
+}
+
+/**
+ * Gracias + referidos: SOLO con el pedido pagado y entregado. Recién ahí, con la venta cerrada y la
+ * experiencia completa, se le ofrece recomendar (5% para el amigo, 5% para él).
+ */
+export function mensajesGracias(p: Pick<Order, "id" | "nombre" | "token">, sitio: string): [string, string] {
+  const nombre = primerNombre(p.nombre);
+  const uno = `¡Gracias por tu compra${nombre ? `, ${nombre}` : ""}! 💚 Esperamos que disfrutes tu pedido ${numeroPedido(p.id)}.\n\nUn regalo para vos 🎁 Si nos recomendás, tu amigo tiene 5% en su primera compra y vos 5% en la próxima por cada uno que compre. Reenviale el mensaje de abajo 👇`;
   const dos = `Yo compro la despensa en Acopio Saludable (Villa Carlos Paz): frutos secos, mixes y granolas, y me la traen a casa. Con este link tenés 5% de descuento en tu primera compra 👉 ${sitio}/?ref=amigo-${codigoAmigo(p.token)}`;
   return [uno, dos];
 }
-

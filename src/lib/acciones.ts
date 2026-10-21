@@ -9,7 +9,7 @@ import { requireAdmin } from "./auth";
 import { calcularCombo, descuentoMaximo, margenPct } from "./precios";
 import { leerItemsCombo, slugDesdeNombre } from "./combos";
 import type { EstadoPedido } from "@prisma/client";
-import { avisarDespachoWhatsapp } from "./aviso-despacho";
+import { agradecerConReferidos, avisarDespachoWhatsapp } from "./aviso-despacho";
 import { ESTADOS, avisarDespachado, confirmarPago, registrarCobroAlRecibir, registrarPago, marcarComprados, reemplazarProducto } from "./pedidos";
 import { ZONAS, normalizarCp, validarListaCp } from "./envios/geo";
 import { generarTokenSync, registrarSync, resolverPendientes, textoResumen } from "./sync";
@@ -397,9 +397,14 @@ export async function cambiarEstadoPedido(fd: FormData) {
     // Al despachar, el cliente tiene que enterarse solo: si no, el seguimiento vive únicamente en el panel.
     if (estado === "ENVIADO" && pedido.estado !== "ENVIADO") {
       await avisarDespachado(id);
-      // Por WhatsApp: «ya salió», cómo paga, y el link para recomendar (5% + 5%).
+      // Por WhatsApp: «ya salió» y cómo paga. Sin referidos: eso va recién con el pedido pagado y entregado.
       const actual = await prisma.order.findUnique({ where: { id } });
       if (actual) await avisarDespachoWhatsapp(actual).catch((e) => console.error("aviso de despacho por WhatsApp falló", e));
+    }
+    // Pagado y entregado: recién ahí, gracias + referidos.
+    if (estado === "ENTREGADO" && pedido.estado !== "ENTREGADO") {
+      const actual = await prisma.order.findUnique({ where: { id } });
+      if (actual) await agradecerConReferidos(actual).catch((e) => console.error("gracias con referidos falló", e));
     }
   } catch (e) {
     destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
