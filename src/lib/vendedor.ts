@@ -27,6 +27,7 @@ import { urlSitio } from "./sitio";
 const absoluta = (u: string) => (u.startsWith("http") ? u : `${urlSitio()}${u.startsWith("/") ? "" : "/"}${u}`);
 import { cotizarEnvioChat } from "./envio-chat";
 import { EN_STOCK, productosDe, sugerirDelStock } from "./en-stock";
+import { fotosReales, imagenCombo, imagenProducto, pideFotosReales } from "./galeria";
 import { completarEntrega } from "./pedidos";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
@@ -66,7 +67,7 @@ const HERRAMIENTAS = [
   {
     name: "mandar_fotos",
     description:
-      "Manda por el chat las fotos reales (hasta 4) de los productos o combos que pide ver, con nombre y precio al pie. " +
+      "Manda por el chat las imágenes (hasta 4) de los productos o combos que pide ver, con nombre y precio al pie. Si pregunta cómo llega, cómo lo arman o el empaque, pasale consulta «cómo llega» y van fotos reales del pedido armado. " +
       "Usala cuando pida fotos, imágenes o «ver cómo es»: pasale la búsqueda o los códigos/slugs de lo que estaban hablando.",
     input_schema: {
       type: "object" as const,
@@ -250,12 +251,15 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const codigos = Array.isArray(entrada.codigos) ? entrada.codigos.map(String).slice(0, 4) : [];
     const [porCodigo, combosTodos] = await Promise.all([codigos.length ? productosTienda({ where: { codigo: { in: codigos } } }) : Promise.resolve([]), combosTienda({ activo: true })]);
     const combosPedidos = combosTodos.filter((c) => codigos.includes(c.slug));
-    const buscados = consulta && porCodigo.length + combosPedidos.length < 1 ? await hallarProductos(consulta, false).then((x) => x.slice(0, 4)) : [];
-    const combosBuscados = consulta && !combosPedidos.length && !porCodigo.length ? await hallarCombos(consulta).then((x) => x.slice(0, 2)) : [];
+    const buscados = consulta && !pideFotosReales(consulta) && porCodigo.length + combosPedidos.length < 1 ? await hallarProductos(consulta, false).then((x) => x.slice(0, 4)) : [];
+    const combosBuscados = consulta && !pideFotosReales(consulta) && !combosPedidos.length && !porCodigo.length ? await hallarCombos(consulta).then((x) => x.slice(0, 2)) : [];
+    // Las imágenes con diseño propio (galería) mandan; si no hay, la foto de la tienda.
+    const reales = pideFotosReales(consulta) ? fotosReales().map((f) => ({ url: absoluta(f.url), pie: f.pie })) : [];
     const fotos: Foto[] = [
-      ...combosPedidos.concat(combosBuscados).filter((c) => c.fotoUrl).map((c) => ({ url: absoluta(c.fotoUrl!), pie: `${c.nombre} · ${pesos(Math.round(c.precio))}` })),
-      ...porCodigo.concat(buscados).filter((p) => p.fotoUrl).map((p) => ({ url: absoluta(p.fotoUrl!), pie: `${p.producto} ${p.presentacion} · ${pesos(p.precio)}` })),
-    ].slice(0, 4);
+      ...reales,
+      ...combosPedidos.concat(combosBuscados).filter((c) => imagenCombo(c.slug) || c.fotoUrl).map((c) => ({ url: absoluta(imagenCombo(c.slug) ?? c.fotoUrl!), pie: `${c.nombre} · ${pesos(Math.round(c.precio))}` })),
+      ...porCodigo.concat(buscados).filter((p) => imagenProducto(p.codigo) || p.fotoUrl).map((p) => ({ url: absoluta(imagenProducto(p.codigo) ?? p.fotoUrl!), pie: `${p.producto} ${p.presentacion} · ${pesos(p.precio)}` })),
+    ].filter((f, i, a) => a.findIndex((o) => o.url === f.url) === i).slice(0, 4);
     if (!fotos.length) return { texto: "No hay fotos cargadas de eso. Decile que las ve en la web (acopiosaludable.com/catalogo) y seguí con la venta." };
     return { texto: `Se mandan ${fotos.length} fotos: ${fotos.map((f) => f.pie).join("; ")}. Escribí una frase corta («Te paso las fotos») y seguí con la pregunta de cierre.`, fotos };
   }
@@ -331,6 +335,9 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       precio: pesos(Math.round(c.precio)),
       foto: c.fotoUrl,
     }));
+    // Por WhatsApp, el combo recomendado va con su imagen: la foto vende más que el texto.
+    const imagen = canal === "whatsapp" && elegidos[0] ? imagenCombo(elegidos[0].slug) : null;
+    if (imagen) return { texto: `${texto}\nLa imagen del ${elegidos[0].nombre} sale sola antes de tu texto: no la anuncies.`, fichas, fotos: [{ url: absoluta(imagen), pie: elegidos[0].nombre }] };
     return { texto, fichas };
   }
 
@@ -576,7 +583,7 @@ function instrucciones(compraMinima: string): string {
     "- PREGUNTA PENDIENTE: si te repregunta («?», «¿con quién confirmo?») es porque no le contestaste algo: contestalo vos. Nunca cierres con «de nada» si tiene una duda abierta.",
     "- DUDAS DE PRODUCTO (si un mix tiene maní, qué trae, si es apto): NUNCA las derives ni digas «lo confirmamos en un rato». Contestá con lo que dice el nombre del producto (buscar_productos o detalle del combo). Si el nombre no lo aclara, no adivines: ofrecé en el mismo mensaje la alternativa segura armada con productos sueltos (ej. «para ir a lo seguro te lo cambio por almendras, nueces y cajú sueltos, que no llevan maní: $X») y preguntá si lo cambiás.",
     "- CAMBIOS AL PEDIDO («sí, cambiala», «sacá esto», «sumá aquello»): hacelo vos con agregar_al_pedido pasando el pedido completo ya cambiado, decí el total nuevo y preguntá la zona o si lo confirmamos. Un pedido que todavía no pagó no es un «pedido ya hecho»: nunca lo derives.",
-    "- FOTOS: si pide fotos, imágenes o ver cómo es algo, usá mandar_fotos con lo que estaban hablando (códigos o slugs ya nombrados, o la búsqueda). Las fotos salen solas antes de tu texto: vos escribí una frase corta («Te paso las fotos») y la pregunta de cierre. Nunca digas que no tenés fotos sin usar la herramienta.",
+    "- FOTOS: si pide fotos, imágenes o ver cómo es algo, usá mandar_fotos. Si duda, pregunta cómo llega o si somos de verdad, mandá las fotos reales del pedido armado (mandar_fotos con consulta «cómo llega»): la imagen convence más que cualquier texto. con lo que estaban hablando (códigos o slugs ya nombrados, o la búsqueda). Las fotos salen solas antes de tu texto: vos escribí una frase corta («Te paso las fotos») y la pregunta de cierre. Nunca digas que no tenés fotos sin usar la herramienta.",
     "- POSVENTA: si en la charla ya quedó el pedido agendado (dirección y horario dados), no vuelvas a ofrecer combos ni a pedir datos. Contestá lo que pregunte en una o dos frases (qué más vendemos, horarios, cómo pagar) y, si quiere sumar algo o pregunta qué más hay, usá ver_stock, decile el precio y que va en el mismo reparto; agregalo con agregar_al_pedido. Si todavía no le ofreciste nada adicional y la charla da, este es el momento de la venta adicional (regla 5). Cerrá con una pregunta corta solo si hace falta.",
     "- SEGUIMIENTO: si contesta «Sí, agendalo» al mensaje de seguimiento, retomá su pedido guardado: decile en una línea qué tiene y el total, y seguí con la zona o la forma de pago. Si contesta «Más adelante», agradecé corto y no insistas.",
     "- CUANDO TE PASA SU DIRECCIÓN: agradecé y decí que el pedido queda agendado («¡Gracias, Ariel! Tu pedido queda agendado 🙌»). NUNCA digas «ya tenemos tu dirección», «tenemos tus datos» ni nada que suene a que guardamos o conocemos datos suyos: suena invasivo.",

@@ -1066,3 +1066,18 @@ test("combo: cada renglón dice su cantidad", () => {
   assert.equal(cuantoTrae({ cantidad: 6, producto: { producto: "Barra", contenido: 40, unidad: "g" } }), "6 x Barra (240 g)");
   assert.equal(cuantoTrae({ cantidad: 1, producto: { producto: "Pack", contenido: null, unidad: null } }), "Pack");
 });
+
+import { imagenCombo, imagenProducto, pideFotosReales, fotosReales } from "./galeria";
+import { existsSync } from "node:fs";
+
+test("galería: cada imagen mapeada existe y se reconoce el «cómo llega»", () => {
+  for (const s of ["despensa-4-kilos", "despensa-chica", "alacena-de-frutos-secos", "desayuno-30-dias", "mixes-del-mes", "arranque-gym"]) {
+    const u = imagenCombo(s)!;
+    assert.ok(existsSync(`public${u}`), u);
+  }
+  for (const c of ["TG-NUEZ", "LG-ALMNP", "TG-CAJU", "TG-MIXCG", "LG-DATIL", "TG-PASAS"]) assert.ok(existsSync(`public${imagenProducto(c)}`), c);
+  for (const f of fotosReales()) assert.ok(existsSync(`public${f.url}`), f.url);
+  assert.equal(imagenCombo("no-existe"), null);
+  assert.ok(pideFotosReales("¿cómo llega el pedido?"));
+  assert.ok(!pideFotosReales("nueces"));
+});
