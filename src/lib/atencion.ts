@@ -253,6 +253,18 @@ export async function atender(e: Entrada): Promise<void> {
   }
   if (!texto) return;
 
+  // Ráfaga: «Hola» + «quiero precios» llegan juntos. Se espera un momento y, si entró otro mensaje
+  // después de este, contesta ese (que ve toda la ráfaga) y este se calla: así no salen dos respuestas iguales.
+  await new Promise((r) => setTimeout(r, 6000));
+  const ultimo = await prisma
+    .$queryRaw<{ id: string }[]>`SELECT "id" FROM "WhatsappMensaje" WHERE "telefono" = ${e.clave} AND "de" = 'cliente' ORDER BY "fecha" DESC LIMIT 1`
+    .then((f) => f[0] ?? null)
+    .catch(() => null);
+  if (ultimo && ultimo.id !== e.idMensaje) {
+    console.log("chat: llegó otro mensaje enseguida, contesta ese", cola(e.clave));
+    return;
+  }
+
   // Del otro lado contestó un bot (el «gracias por comunicarte» de un hotel): no se le contesta y
   // no se avisa a nadie. La charla sigue en manos del vendedor: cuando escriba una persona, la atiende.
   if (esRespuestaAutomatica(texto)) {
