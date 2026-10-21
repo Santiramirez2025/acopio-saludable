@@ -1081,3 +1081,28 @@ test("galería: cada imagen mapeada existe y se reconoce el «cómo llega»", ()
   assert.ok(pideFotosReales("¿cómo llega el pedido?"));
   assert.ok(!pideFotosReales("nueces"));
 });
+
+import { fotosOportunas } from "./galeria";
+
+test("imágenes oportunas: en el momento justo y sin repetir", () => {
+  const vacio: { de: "yo" | "acopio"; texto: string }[] = [];
+  // Duda → foto real
+  assert.equal(fotosOportunas({ entrante: "¿es confiable?", respuesta: "Somos de Carlos Paz", historial: vacio })[0].url, "/img/galeria/real-asi-llega.jpg");
+  // Combo nombrado → su imagen
+  assert.equal(fotosOportunas({ entrante: "qué me recomendás", respuesta: "Te conviene la Despensa de 4 kilos a $35.227", historial: vacio })[0].url, "/img/galeria/combo-despensa-4-kilos.jpg");
+  // Producto preguntado y cotizado → su imagen
+  assert.equal(fotosOportunas({ entrante: "precio nueces?", respuesta: "La nuez sale $24.872 el kilo", historial: vacio })[0].url, "/img/galeria/producto-nuez.jpg");
+  // Ya se mandó → no se repite
+  const conFoto = [{ de: "acopio" as const, texto: "[Foto] Despensa de 4 kilos" }];
+  assert.equal(fotosOportunas({ entrante: "y la despensa?", respuesta: "La Despensa de 4 kilos sale $35.227", historial: conFoto }).length, 0);
+  // Tope de 3 por charla
+  const tres = ["a", "b", "c"].map((x) => ({ de: "acopio" as const, texto: `[Foto] ${x}` }));
+  assert.equal(fotosOportunas({ entrante: "¿es confiable?", respuesta: "sí", historial: tres }).length, 0);
+  // Charla común sin disparador → nada
+  assert.equal(fotosOportunas({ entrante: "hola", respuesta: "¡Hola! ¿Qué estás buscando?", historial: vacio }).length, 0);
+});
+
+test("imágenes oportunas: el primer «precios por kilo» va con la imagen del mix", () => {
+  const r = fotosOportunas({ entrante: "Hola, quiero precios por kilo", respuesta: "Te paso precios por kilo de hoy: Mix clásico $12.451", historial: [] });
+  assert.equal(r[0].url, "/img/galeria/producto-mix-clasico.jpg");
+});
