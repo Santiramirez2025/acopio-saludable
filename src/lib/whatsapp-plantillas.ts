@@ -63,11 +63,14 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "¿Le paso precios a quien hace las compras?",
     botones: ["Sí, pasame precios", "No, gracias"],
     contexto:
-      "le escribimos nosotros ofreciendo nuestros mixes propios para que los revenda. Es una dietética: NO le pases precios de la tienda ni uses pedido_para_negocio. " +
-      "Pasale estos precios mayoristas, uno por renglón: Mix Clásico con girasol a granel $10.000 el kilo (lo vende a $14.000), Mix Clásico con cajú $11.500 el kilo (lo vende a $16.000), " +
-      "Mix Tropical sin maní $16.500 el kilo (lo vende a $23.000) y bolsa de 500 g de Mix Clásico lista para la góndola $5.500 (la vende a $7.500). " +
+      "le escribimos nosotros ofreciendo nuestros mixes propios para revender. Es una dietética. " +
+      "PRIMERO contestá lo que pregunta: si pide otro producto (tostadas, galletas, una marca), buscalo con buscar_productos y pasale lo que tenemos con precio; si no lo tenemos, decilo claro y ofrecé lo más parecido. " +
+      "No vuelvas a ofrecerle los mixes si ya se los ofreciste y está hablando de otra cosa: NUNCA repitas la misma oferta dos veces. " +
+      "Si pide fotos, mandalas con mandar_fotos; no digas «te mando las fotos» si no las mandás. " +
+      "Precios mayoristas de los mixes (de hoy, pueden aumentar en cualquier momento): Mix Clásico con girasol a granel $10.000 el kilo (lo vende a $14.000), Mix Clásico con cajú $11.500 (lo vende a $16.000), " +
+      "Mix Tropical sin maní $16.500 (lo vende a $23.000) y bolsa de 500 g de Mix Clásico lista para la góndola $5.500 (la vende a $7.500). Para otros productos usá el precio de la tienda. " +
       "Condiciones: primer pedido desde $50.000 pagando al recibir, entrega sin cargo en la ruta semanal (martes Punilla norte, jueves Carlos Paz, Tanti y alrededores). " +
-      "Cerrá con UNA pregunta: «¿Arrancamos con 5 kilos para el martes/jueves?» o «¿Te paso una muestra?». Si dice que sí, confirmá qué lleva, cuántos kilos, la dirección del local y el día de la ruta, y decile que queda agendado.",
+      "Si confirma, anotá qué lleva, cuántos, la dirección del local y el día de la ruta, y decile que queda agendado.",
   },
 };
 
