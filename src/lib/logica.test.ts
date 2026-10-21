@@ -1107,15 +1107,16 @@ test("imágenes oportunas: el primer «precios por kilo» va con la imagen del m
   assert.equal(r[0].url, "/img/galeria/producto-mix-clasico.jpg");
 });
 
-import { mensajesDespacho } from "./despacho-texto";
+import { mensajeDespacho, mensajesGracias } from "./despacho-texto";
 
-test("despacho: dice cómo paga y trae el link de recomendación", () => {
+test("despacho sin referidos; gracias con referidos", () => {
   const base = { id: 17, nombre: "Lilita", medioPago: "AL_RECIBIR" as const, pagadoAt: null, total: 15400 as unknown as never, token: "abc123" };
-  const [uno, dos] = mensajesDespacho(base, "https://www.acopiosaludable.com");
-  assert.match(uno, /Lilita, tu pedido AS-00017 ya salió/);
-  assert.match(uno, /Lo pagás cuando te llega/);
-  assert.match(uno, /5%/);
-  assert.match(dos, /\?ref=amigo-/);
-  const [pago] = mensajesDespacho({ ...base, pagadoAt: new Date() }, "https://x");
-  assert.match(pago, /Ya está pago/);
+  const d = mensajeDespacho(base);
+  assert.match(d, /Lilita, tu pedido AS-00017 ya salió/);
+  assert.match(d, /Lo pagás cuando te llega/);
+  assert.doesNotMatch(d, /5%|recomend/i);
+  const [g, link] = mensajesGracias(base, "https://www.acopiosaludable.com");
+  assert.match(g, /Gracias por tu compra, Lilita/);
+  assert.match(g, /5%/);
+  assert.match(link, /\?ref=amigo-/);
 });
