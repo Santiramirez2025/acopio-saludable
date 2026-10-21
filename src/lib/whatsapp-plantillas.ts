@@ -10,7 +10,7 @@ export type Rubro = "hotel" | "cabañas / complejo" | "departamentos / alquiler 
 type Plantilla = { nombre: string; cuerpo: string; botones: [string, string]; contexto: string };
 
 /** Qué plantilla le toca a cada rubro y qué tiene que saber el vendedor cuando contestan. */
-export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio", Plantilla> = {
+export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" | "dietetica", Plantilla> = {
   desayuno: {
     nombre: "acopio_alojamientos_desayuno_v2",
     cuerpo:
@@ -55,12 +55,27 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio",
       "le escribimos nosotros ofreciendo productos para que revenda en el mostrador (granola proteica, barras, frutos secos). Atendelo como cliente de negocio: " +
       "usá pedido_para_negocio con «gimnasio», hablale de reventa (precio sugerido y cuánto gana por unidad) y preguntá cuántos socios tiene para armarle el pedido.",
   },
+  dietetica: {
+    nombre: "acopio_negocios_dietetica_v1",
+    cuerpo:
+      "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
+      "Armamos mixes de frutos secos propios en el día (clásico, con cajú y tropical sin maní) y se los vendemos a las dietéticas de Punilla a granel o fraccionados, listos para la góndola. Entrega sin cargo en nuestra ruta semanal y el primer pedido se paga al recibir.\n\n" +
+      "¿Le paso precios a quien hace las compras?",
+    botones: ["Sí, pasame precios", "No, gracias"],
+    contexto:
+      "le escribimos nosotros ofreciendo nuestros mixes propios para que los revenda. Es una dietética: NO le pases precios de la tienda ni uses pedido_para_negocio. " +
+      "Pasale estos precios mayoristas, uno por renglón: Mix Clásico con girasol a granel $10.000 el kilo (lo vende a $14.000), Mix Clásico con cajú $11.500 el kilo (lo vende a $16.000), " +
+      "Mix Tropical sin maní $16.500 el kilo (lo vende a $23.000) y bolsa de 500 g de Mix Clásico lista para la góndola $5.500 (la vende a $7.500). " +
+      "Condiciones: primer pedido desde $50.000 pagando al recibir, entrega sin cargo en la ruta semanal (martes Punilla norte, jueves Carlos Paz, Tanti y alrededores). " +
+      "Cerrá con UNA pregunta: «¿Arrancamos con 5 kilos para el martes/jueves?» o «¿Te paso una muestra?». Si dice que sí, confirmá qué lleva, cuántos kilos, la dirección del local y el día de la ruta, y decile que queda agendado.",
+  },
 };
 
 export function plantillaDe(rubro: string): keyof typeof PLANTILLAS {
   if (rubro === "hotel" || rubro === "hostel") return "desayuno";
   if (/gimnas|yoga|pilates|crossfit|funcional/i.test(rubro)) return "gimnasio";
-  if (/caf|panad|pastel|helad|vianda|restaur|almac|natural|diet/i.test(rubro)) return "gastronomia";
+  if (/diet|almac[eé]n natural|naturista|granel|herbor/i.test(rubro)) return "dietetica";
+  if (/caf|panad|pastel|helad|vianda|restaur|almac|natural/i.test(rubro)) return "gastronomia";
   return "kit";
 }
 
