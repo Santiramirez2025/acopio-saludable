@@ -187,7 +187,8 @@ export async function listarConversaciones(limite = 100): Promise<Resumen[]> {
            COALESCE(o."compras", 0)::int AS "compras", COALESCE(o."aCobrar", 0)::int AS "aCobrar"
     FROM "WhatsappConversacion" c
     LEFT JOIN LATERAL (
-      SELECT m."texto", m."de" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1
+      -- Solo el comienzo: en la lista se ve una línea y la base se cobra por lo que transfiere.
+      SELECT left(m."texto", 160) AS "texto", m."de" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1
     ) u ON true
     LEFT JOIN LATERAL (
       -- Mismo cliente aunque el teléfono del pedido esté escrito distinto: se comparan los últimos 10 dígitos.
@@ -210,7 +211,7 @@ export async function conversacionDe(telefono: string): Promise<Conversacion | n
   return filas[0] ?? null;
 }
 
-export async function mensajesDe(telefono: string, limite = 200): Promise<Mensaje[]> {
+export async function mensajesDe(telefono: string, limite = 80): Promise<Mensaje[]> {
   const filas = await prisma.$queryRaw<Mensaje[]>`
     SELECT "id", "telefono", "de", "texto", "fecha" FROM "WhatsappMensaje"
     WHERE "telefono" = ${telefono}
