@@ -28,6 +28,7 @@ import { contextoProspecto, darDeBaja, datosProspecto, enviarProspecto, esBaja }
 import { derivacion } from "./derivacion";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
+import { describirFoto } from "./ver-foto";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
 
 const SALUD =
@@ -176,7 +177,7 @@ async function cerrarVenta(
 
 export async function atender(e: Entrada): Promise<void> {
   const canal = canalDe(e.clave);
-  const texto = e.texto !== null ? e.texto.trim().slice(0, 400) : `[${e.tipo}]`;
+  let texto = e.texto !== null ? e.texto.trim().slice(0, 400) : `[${e.tipo}]`;
   const nuevo = await registrarEntrante(e.idMensaje, e.clave, e.nombre, (e.guardar ?? texto).slice(0, 600));
   if (!nuevo) {
     console.log("chat: repetido, se ignora", e.idMensaje);
@@ -234,7 +235,16 @@ export async function atender(e: Entrada): Promise<void> {
 
   // Audio, foto sin texto, video, archivo: el vendedor no lo puede leer. Se le pide que lo escriba
   // y le llega el aviso a Santiago, que lo puede escuchar o ver en el panel.
-  if (e.texto === null) {
+  // Una foto sin texto (la captura del anuncio, un producto): el vendedor la mira y sigue la charla.
+  if (e.texto === null && e.tipo === "image") {
+    const id = /^\[foto·(\d+)\]/.exec(e.guardar ?? "")?.[1];
+    const vista = id ? await describirFoto(id) : null;
+    if (vista) {
+      texto = `[Mandó una foto: ${vista}]`;
+      console.log("chat: foto descripta", cola(e.clave), vista.slice(0, 80));
+    }
+  }
+  if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:")) {
     await responder(e.clave, respuestaMedio(e.tipo));
     const que = NOMBRE_MEDIO[e.tipo as keyof typeof NOMBRE_MEDIO] ?? e.tipo;
     await avisarSantiago(`Mandó ${que}`, `📎 ${e.nombre ?? e.clave} mandó ${que === "foto" ? "una foto" : `un ${que}`}. Miralo en el panel:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
