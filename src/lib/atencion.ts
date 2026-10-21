@@ -18,6 +18,7 @@ import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
 import { avisarSantiago } from "./avisos";
+import { fotosOportunas } from "./galeria";
 import { leerConfig } from "./config";
 import { pesos, renglonCombo } from "./precios";
 import { urlSitio } from "./sitio";
@@ -468,6 +469,15 @@ export async function pensar(c: {
   const envio = respuesta.envio ?? (lineas.length && lugarSabido ? await cotizarEnvioChat(lugarSabido, null, 0).catch(() => null) : null) ?? undefined;
   if (!respuesta.envio && envio) respuesta = { ...respuesta, envio };
   const pedido = await pedidoDe(lineas, envio);
+  // Imágenes en el momento justo (duda, combo nombrado, producto cotizado, pedido agendado), sin saturar.
+  if (c.canal === "whatsapp" && !derivar && !respuesta.fotos?.length) {
+    const combos = [
+      ...(respuesta.acciones ?? []).filter((a) => a.clase === "combo").map((a) => a.id),
+      ...(respuesta.fichas ?? []).map((f) => f.href.match(/^\/combos\/(.+)$/)?.[1]).filter((x): x is string => Boolean(x)),
+    ];
+    const oportunas = fotosOportunas({ entrante: c.texto, respuesta: respuesta.texto, combos, historial: c.historial });
+    if (oportunas.length) respuesta = { ...respuesta, fotos: oportunas.map((f) => ({ url: `${urlSitio()}${f.url}`, pie: f.pie })) };
+  }
   let salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, pedido);
   // Sin repetir: si el resumen del pedido o la pregunta de la zona ya salieron en los últimos
   // mensajes, no se mandan de nuevo. A Juan le llegó tres veces lo mismo y eso molesta.
