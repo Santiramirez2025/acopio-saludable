@@ -4,6 +4,19 @@ export function redondear2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+/**
+ * Precio redondo para vender: «$35.000» se lee y se recuerda mejor que «$35.227».
+ * Al más cercano de: $50 abajo de $2.000, $100 abajo de $20.000 y $500 de ahí para arriba.
+ */
+export function pasoRedondo(n: number): number {
+  return n < 2000 ? 50 : n < 20000 ? 100 : 500;
+}
+export function precioRedondo(n: number, hacia: "cerca" | "arriba" = "cerca"): number {
+  if (!(n > 0)) return n;
+  const paso = pasoRedondo(n);
+  return (hacia === "arriba" ? Math.ceil(n / paso - 1e-9) : Math.round(n / paso)) * paso;
+}
+
 /** Margen bruto en % = (precio - costo) / precio * 100. */
 export function margenPct(precio: number, costo: number): number {
   if (!(precio > 0)) return 0;
@@ -24,10 +37,13 @@ export type CalculoCombo = {
 export function calcularCombo(lineas: LineaCombo[], descuentoPct: number, margenMinimoPct: number): CalculoCombo {
   const precioLista = redondear2(lineas.reduce((s, l) => s + l.precio * l.cantidad, 0));
   const costo = redondear2(lineas.reduce((s, l) => s + l.costo * l.cantidad, 0));
-  // En pesos enteros: «$ 35.231,70» en una tarjeta se ve descuidado.
-  const precioCombo = Math.round(precioLista * (1 - descuentoPct / 100));
+  // Precio redondo: «$ 35.000», no «$ 35.231,70». Si redondear hacia abajo perfora el margen, se redondea hacia arriba.
+  const exacto = precioLista * (1 - descuentoPct / 100);
+  let precioCombo = precioRedondo(exacto);
+  if (margenPct(precioCombo, costo) < margenMinimoPct && margenPct(exacto, costo) >= margenMinimoPct) precioCombo = precioRedondo(exacto, "arriba");
   const m = margenPct(precioCombo, costo);
-  return { precioLista, precioCombo, costo, margenPct: m, bloqueado: m < margenMinimoPct };
+  // Se bloquea por el descuento elegido, no por el redondeo.
+  return { precioLista, precioCombo, costo, margenPct: m, bloqueado: margenPct(exacto, costo) < margenMinimoPct };
 }
 
 /** Descuento máximo (en %) que puede tener un combo sin perforar el margen mínimo. */
@@ -90,12 +106,12 @@ export function precioSugerido(precio: number, recargoPct: number): { sugerido: 
 
 /** Precio de lista de la tienda: el precio base más el recargo que cubre la comisión del medio de pago, en pesos enteros. */
 export function precioVenta(base: number, recargoPct: number): number {
-  return recargoPct > 0 ? Math.round(base * (1 + recargoPct / 100)) : base;
+  return precioRedondo(recargoPct > 0 ? base * (1 + recargoPct / 100) : base);
 }
 
 /** Lo que paga quien transfiere; null si no hay descuento. */
 export function precioTransferencia(precio: number, descuentoPct: number): number | null {
-  return descuentoPct > 0 ? Math.round(precio * (1 - descuentoPct / 100)) : null;
+  return descuentoPct > 0 ? precioRedondo(precio * (1 - descuentoPct / 100)) : null;
 }
 
 /**
