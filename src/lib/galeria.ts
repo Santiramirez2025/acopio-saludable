@@ -151,6 +151,11 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
       }
     }
   }
+  // 4b. Vuelve por la reactivación o un seguimiento («Sí, pasame precios») y le contestamos con precios: entra por los ojos.
+  if (/pasame precios|pasame los precios|agendalo/i.test(a.entrante) && /\$\s?\d/.test(a.respuesta)) {
+    const f = candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
+    if (f) return [f];
+  }
   // 5. Primera respuesta con precios (el «precios por kilo» del anuncio): entra por los ojos con lo más pedido.
   if (!nuestros.length && /\$\s?\d/.test(a.respuesta)) {
     const f = candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");

@@ -29,6 +29,7 @@ import { derivacion } from "./derivacion";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
+import { REALES } from "./galeria";
 import { prisma } from "./prisma";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
 
@@ -412,7 +413,8 @@ export async function pensar(c: {
     return { salientes, respuesta: { texto: salientes[0] ? textoParaPanel(salientes[0]) : "" }, derivar: false, conIA: false };
   }
   if (!c.toque && !preguntaAbierta && postergaCompra(c.texto)) {
-    const salientes = planSinApuro(c.nombre, urlSitio());
+    const yaMandoReal = c.historial.some((h) => h.de === "acopio" && h.texto.includes("Así llega tu pedido"));
+    const salientes = planSinApuro(c.nombre, urlSitio(), yaMandoReal ? undefined : `${urlSitio()}${REALES[0] ? "/img/galeria/real-asi-llega.jpg" : ""}`);
     return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
   }
   // «Ver los productos»: se muestran, sin preguntar ni gastar el modelo. Primero el de entrada, después por precio.
