@@ -36,27 +36,37 @@ export async function leerCuenta(username: string, cantidad = 3): Promise<{ ok: 
   }
 }
 
-async function escribirComentario(p: Publicacion): Promise<string | null> {
+/** Escribe el comentario. Devuelve también el motivo si no hay comentario, para poder diagnosticarlo. */
+export async function escribirComentarioConMotivo(p: Publicacion): Promise<{ texto: string | null; motivo?: string }> {
   const clave = process.env.ANTHROPIC_API_KEY;
-  if (!clave) return null;
+  if (!clave) return { texto: null, motivo: "falta ANTHROPIC_API_KEY" };
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: process.env.VENDEDOR_MODELO || "claude-haiku-5-5", max_tokens: 200, messages: [{ role: "user", content: pedidoComentario(p) }] }),
-      signal: AbortSignal.timeout(20_000),
+      body: JSON.stringify({ model: process.env.VENDEDOR_MODELO || "claude-haiku-5-5", max_tokens: 300, messages: [{ role: "user", content: pedidoComentario(p) }] }),
+      signal: AbortSignal.timeout(25_000),
     });
     if (!res.ok) {
-      console.error("radar: el modelo rechazó el comentario", res.status, (await res.text()).slice(0, 300));
-      return null;
+      const cuerpo = (await res.text()).slice(0, 300);
+      console.error("radar: el modelo rechazó el comentario", res.status, cuerpo);
+      return { texto: null, motivo: `modelo ${res.status}: ${cuerpo}` };
     }
-    const j = (await res.json()) as { content?: { type: string; text?: string }[] };
-    const t = (j.content ?? []).map((b) => b.text ?? "").join("").trim().replace(/^["«]|["»]$/g, "");
-    return !t || /NO_COMENTAR/.test(t) ? null : t.slice(0, 220);
+    const j = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string };
+    const t = (j.content ?? []).filter((b) => b.type === "text").map((b) => b.text ?? "").join("").trim().replace(/^["«]|["»]$/g, "");
+    if (!t) return { texto: null, motivo: `vacío (${j.stop_reason}; ${(j.content ?? []).map((b) => b.type).join(",")})` };
+    if (/NO_COMENTAR/.test(t)) return { texto: null, motivo: "el modelo eligió no comentar" };
+    return { texto: t.slice(0, 220) };
   } catch (e) {
     console.error("radar: falló escribir el comentario", e);
-    return null;
+    return { texto: null, motivo: String(e).slice(0, 200) };
   }
+}
+
+async function escribirComentario(p: Publicacion): Promise<string | null> {
+  const r = await escribirComentarioConMotivo(p);
+  if (!r.texto) console.log("radar: sin comentario", p.username, r.motivo);
+  return r.texto;
 }
 
 /** Una pasada del radar. Como mucho cada 10 minutos, de 9 a 22 y con tope diario de avisos. */
