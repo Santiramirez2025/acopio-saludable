@@ -1209,3 +1209,22 @@ test("temporada: el pan dulce lleva al combo navideño y la demanda cuenta lo qu
   assert.deepEqual(d[0], { que: "nuez", veces: 3 });
   assert.ok(d.some((x) => x.que === "sin TACC"));
 });
+
+// Salud de las tareas automáticas.
+import { tareasVencidas } from "./salud-reglas";
+
+test("salud: avisa la tarea del día que no corrió y no molesta antes de hora ni el domingo", () => {
+  const jueves11 = new Date("2026-10-22T14:30:00Z"); // 11:30 en Córdoba
+  const hoy = (h: number) => new Date(Date.UTC(2026, 9, 22, h + 3, 0));
+  const corridas = [
+    { nombre: "listas", ok: true, detalle: null, fecha: hoy(7.67) },
+    { nombre: "organico", ok: true, detalle: null, fecha: hoy(9) },
+    { nombre: "reactivacion", ok: false, detalle: "error", fecha: hoy(9.5) },
+    { nombre: "radar", ok: true, detalle: null, fecha: new Date(jueves11.getTime() - 10 * 60_000) },
+  ];
+  const v = tareasVencidas(corridas, jueves11).map((t) => t.nombre);
+  assert.deepEqual(v, ["reactivacion"], "la que falló sí; el seguimiento (11:00) todavía tiene margen hasta las 12");
+  assert.ok(tareasVencidas(corridas, new Date("2026-10-22T15:30:00Z")).some((t) => t.nombre === "seguimiento"));
+  const domingo = new Date("2026-10-25T15:00:00Z");
+  assert.deepEqual(tareasVencidas([{ nombre: "radar", ok: true, detalle: null, fecha: domingo }], domingo).map((t) => t.nombre), []);
+});

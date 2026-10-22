@@ -46,11 +46,15 @@ async function escribirComentario(p: Publicacion): Promise<string | null> {
       body: JSON.stringify({ model: process.env.VENDEDOR_MODELO || "claude-haiku-5-5", max_tokens: 200, messages: [{ role: "user", content: pedidoComentario(p) }] }),
       signal: AbortSignal.timeout(20_000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("radar: el modelo rechazó el comentario", res.status, (await res.text()).slice(0, 300));
+      return null;
+    }
     const j = (await res.json()) as { content?: { type: string; text?: string }[] };
     const t = (j.content ?? []).map((b) => b.text ?? "").join("").trim().replace(/^["«]|["»]$/g, "");
     return !t || /NO_COMENTAR/.test(t) ? null : t.slice(0, 220);
-  } catch {
+  } catch (e) {
+    console.error("radar: falló escribir el comentario", e);
     return null;
   }
 }

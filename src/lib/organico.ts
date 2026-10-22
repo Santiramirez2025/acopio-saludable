@@ -11,6 +11,7 @@
 import { prisma } from "./prisma";
 import { avisarSantiago } from "./avisos";
 import { analizarCharlas } from "./aprendizaje";
+import { estadoTexto } from "./salud";
 import { enviarProspecto } from "./whatsapp-prospectos";
 import { demanda, diasHasta, proximaTemporada, temporadaActual } from "./temporada";
 import { bloqueLecciones, celular, elegirHoy, parecidas, POR_DIA, type Candidato, type Resultado } from "./organico-reglas";
@@ -230,6 +231,7 @@ export async function correrOrganico(opciones: { avisar?: boolean; cantidad?: nu
   const pedido = demanda(textos.map((t) => t.texto)).slice(0, 6);
   const temp = temporadaActual();
   const prox = proximaTemporada();
+  const sistema = await estadoTexto().catch(() => "");
   if (opciones.avisar !== false) {
     const texto = [
       `🌱 Captación de hoy`,
@@ -241,6 +243,7 @@ export async function correrOrganico(opciones: { avisar?: boolean; cantidad?: nu
       temp ? `🎄 Temporada: ${temp.nombre}${diasHasta(temp) > 0 ? `, faltan ${diasHasta(temp)} días` : ""}. Combos destacados en la tienda y el vendedor los ofrece primero.` : "",
       prox && prox.empiezaEn <= 21 ? `📅 En ${prox.empiezaEn} días empieza ${prox.t.nombre}: hay que preparar combos y contenido.` : "",
       lecciones.length ? `Lecciones nuevas para el vendedor:\n${lecciones.map((l) => `• ${l.texto}`).join("\n")}` : "Sin lecciones nuevas (ayer no hubo un patrón claro).",
+      sistema ? `Tareas automáticas (última corrida):\n${sistema}` : "",
       Number(quedan) < POR_DIA * 2 ? `⚠️ Quedan ${quedan} negocios en la lista: cargá más o poné GOOGLE_PLACES_KEY para que se reabastezca sola.` : "",
     ].filter(Boolean).join("\n");
     await avisarSantiago("Captación de hoy", texto);
