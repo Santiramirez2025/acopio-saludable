@@ -8,8 +8,19 @@ import { medir } from "@/lib/medicion";
 export function PaginaVista() {
   const ruta = usePathname();
   const primera = useRef(true);
+  // Cada toque a un link de WhatsApp cuenta como contacto: es por donde entra la mayoría de las ventas.
+  useEffect(() => {
+    if (location.pathname.startsWith("/admin")) return;
+    const alTocar = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement | null)?.closest?.("a");
+      if (a && /wa\.me|api\.whatsapp|whatsapp\.com\/send/.test(a.href)) medir("contacto");
+    };
+    document.addEventListener("click", alTocar, true);
+    return () => document.removeEventListener("click", alTocar, true);
+  }, []);
   useEffect(() => {
     if (primera.current) { primera.current = false; return; }
+    if (ruta.startsWith("/admin")) return;
     (window as Window & { fbq?: (...a: unknown[]) => void }).fbq?.("track", "PageView");
   }, [ruta]);
   return null;
