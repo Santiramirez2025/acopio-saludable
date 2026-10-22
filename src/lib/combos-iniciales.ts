@@ -19,19 +19,19 @@ export const COMBOS_INICIALES: {
   // --- Navidad y fin de año (ver temporada.ts). Se crean solos en el deploy y salen de la tienda el 1/1. ---
   {
     slug: "pan-dulce-casero", nombre: "Kit Pan Dulce casero", tipo: "COMBO", destacado: true, descuentoPct: 5,
-    vigenteDesde: "2026-10-22", vigenteHasta: "2026-12-31",
-    // Nuez, pasas negras y rubias, almendras y chips de chocolate: todo lo que lleva un pan dulce de 2 a 3 kilos.
-    items: [["707"], ["TG-PASAS-500"], ["7643289"], ["702"], ["800000000154"]],
+    vigenteDesde: "2026-10-20", vigenteHasta: "2026-12-31",
+    // Nuez, pasas y chips de chocolate: lo que lleva el pan dulce casero, para varias tandas.
+    items: [["TG-NUEZ"], ["TG-PASAS"], ["800000000154"]],
   },
   {
     slug: "mesa-navidena", nombre: "Mesa navideña de frutos secos", tipo: "COMBO", destacado: true, descuentoPct: 5,
-    vigenteDesde: "2026-10-22", vigenteHasta: "2026-12-31",
-    items: [["TG-MIXXP"], ["234152"], ["5007"], ["800000000161"], ["982106546"], ["702"]],
+    vigenteDesde: "2026-10-20", vigenteHasta: "2026-12-31",
+    items: [["TG-MIXC"], ["234152"], ["LG-DATIL-500"], ["800000000161"], ["982106546"], ["702"]],
   },
   {
     slug: "regalo-navideno", nombre: "Bolsa regalo navideña", tipo: "COMBO", destacado: true, descuentoPct: 5,
-    vigenteDesde: "2026-10-22", vigenteHasta: "2026-12-31",
-    items: [["TG-MIXTSM"], ["707"], ["5007"]],
+    vigenteDesde: "2026-10-20", vigenteHasta: "2026-12-31",
+    items: [["TG-MIXTSM"], ["982106546"], ["LG-DATIL-500"]],
   },
   { slug: "duo-magnesio", nombre: "Dúo Magnesio", tipo: "COMBO", destacado: true, items: [["3622"], ["10041"]] },
   {
