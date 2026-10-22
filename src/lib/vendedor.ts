@@ -9,6 +9,7 @@
 // 3) Las instrucciones y las herramientas van con cache_control: son idénticas en cada mensaje,
 //    así que se cobran una vez cada cinco minutos en lugar de una vez por mensaje.
 
+import { bloqueLeccionesVendedor } from "./organico";
 import { leerConfig } from "./config";
 import { SALUDO_GENERAL } from "./whatsapp-saludo";
 import { catalogo, hallarCombos, hallarProductos } from "./asistente-catalogo";
@@ -542,7 +543,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
   return { texto: "Herramienta desconocida." };
 }
 
-function instrucciones(compraMinima: string): string {
+function instrucciones(compraMinima: string, lecciones = ""): string {
   return [
     "Sos del equipo de ventas de Acopio Saludable, una distribuidora de alimentos saludables (frutos secos, semillas, granolas y sin TACC) de Villa Carlos Paz, Córdoba, con envíos a todo el país. Atendés el chat de la web, WhatsApp, Messenger e Instagram.",
     "La persona tiene que sentir que le escribe alguien de verdad que sabe del tema y la quiere ayudar, no un sistema.",
@@ -619,7 +620,7 @@ function instrucciones(compraMinima: string): string {
     "- Texto plano, sin markdown, sin asteriscos y sin links: los productos que buscaste y el pedido armado se le muestran solos con botones debajo de tu texto. No los repitas uno por uno.",
     "- Terminá SIEMPRE con una última línea así: OPCIONES: opción 1 | opción 2 | opción 3",
     "  Son las respuestas a la pregunta con la que terminaste (hasta 3), escritas como las diría la persona, de hasta 20 caracteres cada una. Ejemplos: a «¿Para tu casa o para un negocio?» → «Para mi casa» | «Para un negocio»; a «¿Te la separo?» → «Sí, separala» | «¿Qué trae?» | «Lo pienso». Solo se muestran si el mensaje termina en pregunta.",
-  ].join("\n");
+  ].join("\n") + lecciones;
 }
 
 /** «4 kilos en total, 1 kilo de cada uno»: el argumento de cantidad que vende el combo. */
@@ -656,6 +657,8 @@ export async function responderComoVendedor(
   if (!clave) return null;
 
   const cfg = await leerConfig();
+  // Lo que el sistema aprendió de las charlas reales (cambia una vez por día: el caché del prompt se renueva ahí).
+  const lecciones = await bloqueLeccionesVendedor();
   // El carrito va pegado al mensaje y no en las instrucciones: así las instrucciones
   // y las herramientas no cambian nunca y el caché del prompt sirve de verdad.
   const carritoTxt = contexto(carrito);
@@ -683,7 +686,7 @@ export async function responderComoVendedor(
           max_tokens: 500,
           // El cache_control al final del system cubre las herramientas y las instrucciones:
           // son el 90% de lo que se manda y no cambian entre mensajes.
-          system: [{ type: "text", text: instrucciones(pesos(cfg.compraMinima)), cache_control: { type: "ephemeral" } }],
+          system: [{ type: "text", text: instrucciones(pesos(cfg.compraMinima), lecciones), cache_control: { type: "ephemeral" } }],
           tools: HERRAMIENTAS,
           // En la última vuelta ya no puede pedir más herramientas: tiene que contestar con lo que tiene.
           // Antes, si se quedaba sin vueltas, devolvía null y contestaba el buscador viejo.

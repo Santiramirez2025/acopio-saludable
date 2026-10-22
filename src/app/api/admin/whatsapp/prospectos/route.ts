@@ -14,6 +14,7 @@ import { crearPlantillaComprobante } from "@/lib/comprobante-envio";
 import { avisarReparto, crearPlantillaReparto } from "@/lib/aviso-reparto";
 import { crearPlantillaSeguimiento } from "@/lib/seguimiento";
 import { correrReactivacion, crearPlantillaReactivacion } from "@/lib/reactivacion";
+import { cargarSemilla, correrOrganico, leccionesActivas, type Semilla } from "@/lib/organico";
 import { crearPlantillaPedidoProveedor, crearPlantillaProveedor, enviarPedidoProveedor, enviarProveedor } from "@/lib/whatsapp-proveedores";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -31,7 +32,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  let cuerpo: { accion?: unknown; lista?: unknown; forzar?: unknown };
+  let cuerpo: { accion?: unknown; lista?: unknown; forzar?: unknown; cantidad?: unknown };
   try {
     cuerpo = await req.json();
   } catch {
@@ -53,6 +54,10 @@ export async function POST(req: Request) {
   if (cuerpo.accion === "plantilla-seguimiento") return NextResponse.json(await crearPlantillaSeguimiento());
   if (cuerpo.accion === "plantilla-reactivacion") return NextResponse.json(await crearPlantillaReactivacion());
   if (cuerpo.accion === "reactivacion") return NextResponse.json(await correrReactivacion());
+  // Captación orgánica: cargar negocios a la lista, correr el día ahora, ver las lecciones.
+  if (cuerpo.accion === "semilla") return NextResponse.json(await cargarSemilla(Array.isArray(cuerpo.lista) ? (cuerpo.lista as Semilla[]) : []));
+  if (cuerpo.accion === "organico") return NextResponse.json(await correrOrganico({ cantidad: typeof cuerpo.cantidad === "number" ? cuerpo.cantidad : undefined }));
+  if (cuerpo.accion === "lecciones") return NextResponse.json(await leccionesActivas());
   if (cuerpo.accion === "plantilla-reparto") return NextResponse.json(await crearPlantillaReparto());
   if (cuerpo.accion === "reparto") {
     const r: Record<string, unknown> = {};

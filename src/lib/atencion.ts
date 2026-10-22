@@ -29,6 +29,7 @@ import { derivacion } from "./derivacion";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
+import { transcribirAudio } from "./oir-audio";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
@@ -264,7 +265,18 @@ export async function atender(e: Entrada): Promise<void> {
       console.log("chat: foto descripta", cola(e.clave), vista.slice(0, 80));
     }
   }
-  if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:")) {
+  // Un audio: se transcribe y entra a la charla como texto. Si no se pudo (sin clave, falló), se le pide que lo escriba, como antes.
+  if (e.texto === null && e.tipo === "audio") {
+    const id = /^\[audio·([^\]\s]+)\]/.exec(e.guardar ?? "")?.[1];
+    const r = id ? await transcribirAudio(id) : { texto: null, motivo: "sin id" };
+    if (r.texto) {
+      texto = `[Mandó un audio que dice: «${r.texto}»]`;
+      console.log("chat: audio transcripto", cola(e.clave), r.texto.slice(0, 80));
+      // Queda en el mensaje del cliente, así Santiago lo lee en el panel sin escucharlo y el vendedor lo ve en el historial.
+      await prisma.$executeRaw`UPDATE "WhatsappMensaje" SET "texto" = "texto" || ${` 🎤 «${r.texto}»`} WHERE "id" = ${e.idMensaje}`.catch(() => null);
+    } else console.log("chat: no se pudo oír el audio", cola(e.clave), r.motivo);
+  }
+  if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:") && !texto.startsWith("[Mandó un audio que dice:")) {
     await responder(e.clave, respuestaMedio(e.tipo));
     const que = NOMBRE_MEDIO[e.tipo as keyof typeof NOMBRE_MEDIO] ?? e.tipo;
     await avisarSantiago(`Mandó ${que}`, `📎 ${e.nombre ?? e.clave} mandó ${que === "foto" ? "una foto" : `un ${que}`}. Miralo en el panel:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);

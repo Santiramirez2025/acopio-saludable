@@ -1144,3 +1144,46 @@ test("fotos reales por producto y video de cómo armamos", async () => {
   assert.equal(s[0].tipo, "video");
   assert.equal((cuerpoGraph(s[0], "549") as { type: string }).type, "video");
 });
+
+// Captación orgánica: elegir a quién escribir y no repetir lecciones.
+import { bloqueLecciones, celular, elegirHoy, parecidas, puntajeRubro } from "./organico-reglas";
+
+test("celular: lo que viene de Google queda en formato WhatsApp", () => {
+  assert.equal(celular("+54 3541 64-2177"), "5493541642177");
+  assert.equal(celular("+54 9 351 808-0305"), "5493518080305");
+  assert.equal(celular("0351 15 559-0099"), "5493515590099");
+  assert.equal(celular("011 4647-3089"), "5491146473089");
+  assert.equal(celular("4647-3089"), null);
+  assert.equal(celular(""), null);
+});
+
+test("elegirHoy: reparte entre rubros, prefiere el que responde y no pasa el tope por rubro", () => {
+  const c = (rubro: string, n: number) => Array.from({ length: n }, (_, i) => ({ telefono: `${rubro}${i}`, negocio: `${rubro} ${i}`, rubro, localidad: null, rating: 5 - i * 0.1, resenas: 100 - i }));
+  const candidatos = [...c("dietética", 10), ...c("gimnasio", 10), ...c("hotel", 10)];
+  const resultados = [
+    { rubro: "dietética", enviados: 20, respondieron: 8 },
+    { rubro: "gimnasio", enviados: 20, respondieron: 1 },
+    { rubro: "hotel", enviados: 0, respondieron: 0 },
+  ];
+  const hoy = elegirHoy(candidatos, resultados, 8, () => 0.5);
+  assert.equal(hoy.length, 8);
+  const porRubro = (r: string) => hoy.filter((h) => h.rubro === r).length;
+  assert.ok(porRubro("dietética") <= 4 && porRubro("dietética") >= 3);
+  assert.ok(porRubro("gimnasio") >= 1, "el que menos responde sigue recibiendo algo");
+  assert.equal(hoy[0].rubro, "dietética");
+  assert.equal(hoy.find((h) => h.rubro === "dietética")?.negocio, "dietética 0", "dentro del rubro, el mejor puntuado primero");
+  assert.ok(puntajeRubro(resultados[0]) > puntajeRubro(resultados[2]) && puntajeRubro(resultados[2]) > puntajeRubro(resultados[1]));
+});
+
+test("elegirHoy: con pocos candidatos no inventa ni repite", () => {
+  const hoy = elegirHoy([{ telefono: "1", negocio: "a", rubro: "x", localidad: null, rating: null, resenas: null }], [], 8, () => 0);
+  assert.equal(hoy.length, 1);
+});
+
+test("lecciones: parecidas detecta la misma regla dicha distinto y el bloque entra a las instrucciones", () => {
+  assert.ok(parecidas("Cuando pregunta el precio del mix, dale el precio y ofrecé la Despensa en la misma frase", "Si pregunta precio del mix: precio y la Despensa en la misma frase"));
+  assert.ok(!parecidas("Cuando pregunta el precio del mix, dale el precio", "Pedí la dirección antes de hablar de pago"));
+  assert.equal(bloqueLecciones([]), "");
+  const b = bloqueLecciones([{ texto: "Pedí la dirección apenas dice «lo quiero»", evidencia: "3 charlas" }]);
+  assert.ok(b.includes("LO QUE APRENDIMOS") && b.includes("- Pedí la dirección apenas dice «lo quiero» (3 charlas)"));
+});
