@@ -309,15 +309,24 @@ export function planDeNada(nombre: string | null): Saliente[] {
   return [{ tipo: "texto", texto: `¡De nada${quien}! Cualquier cosa nos escribís por acá 🙌` }];
 }
 
-export function planSinApuro(nombre: string | null, tienda: string): Saliente[] {
+export function planSinApuro(nombre: string | null, tienda: string, fotoReal?: string): Saliente[] {
   const n = primerNombre(nombre);
   const quien = n ? `, ${n}` : "";
-  return [{
-    tipo: "cta",
-    cuerpo: `¡Dale${quien}! Miralo con calma, no hay apuro 🙌 Cuando quieras nos escribís y encargás todo por acá. Si te surge cualquier duda, estamos.`,
-    texto: "Ver la tienda",
-    url: tienda,
-  }];
+  // «Lo pienso» es donde más se corta la venta. En vez de soltar, una foto real y una sola pregunta de cierre blando.
+  const foto: Saliente[] = fotoReal ? [{ tipo: "imagen", url: fotoReal, pie: "Así llega tu pedido: lo ves y recién ahí pagás" }] : [];
+  return [
+    ...foto,
+    {
+      tipo: "botones",
+      cuerpo: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. Si querés, te lo llevamos mañana sin compromiso: lo ves en tu puerta y recién ahí decidís si lo pagás.`,
+      botones: [
+        { id: `${ID.opcion}Sí, traémelo mañana`, titulo: "Sí, traémelo mañana" },
+        { id: `${ID.opcion}Tengo una duda`, titulo: "Tengo una duda" },
+        { id: `${ID.opcion}Más adelante`, titulo: "Más adelante" },
+      ],
+      pie: tienda.replace(/^https?:\/\//, ""),
+    },
+  ];
 }
 
 export function planVer(combos: { slug: string; nombre: string; precio: string; argumento: string }[], _tienda?: string): Saliente[] {

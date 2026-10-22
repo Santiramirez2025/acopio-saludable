@@ -830,8 +830,11 @@ test("postergar la compra: se le da tiempo, sin pedido ni zonas", () => {
   for (const t of ["Gracias por pasarme veo traquila y te escribo para encargarte", "Lo veo tranquila y te aviso", "lo voy a pensar", "después te escribo", "Bueno gracias, mañana te confirmo", "lo consulto con mi marido y te aviso", "cualquier cosa te escribo", "voy a mirarlo con calma"]) assert.ok(postergaCompra(t), t);
   for (const t of ["dale, lo quiero", "hola", "lo veo tranquila, ¿hacen envío a Tanti?", "gracias", "Sí, dejámelo listo", "quiero la despensa", "Carlos Paz"]) assert.ok(!postergaCompra(t), t);
   const [s] = planSinApuro("Gloria Pérez", "https://x.com");
-  assert.equal(s.tipo, "cta");
-  assert.ok(s.tipo === "cta" && s.cuerpo.startsWith("¡Dale, Gloria!"));
+  assert.equal(s.tipo, "botones");
+  assert.ok(s.tipo === "botones" && s.cuerpo.startsWith("¡Dale, Gloria!") && s.botones[0].titulo === "Sí, traémelo mañana");
+  const [foto, b] = planSinApuro("Ana", "https://x.com", "https://x.com/img/galeria/real-asi-llega.jpg");
+  assert.equal(foto.tipo, "imagen");
+  assert.equal(b.tipo, "botones");
 });
 
 import { leerEntrante, partirMarca, sinIds } from "./whatsapp-media";
