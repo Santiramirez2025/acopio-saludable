@@ -10,6 +10,8 @@ export type Tema = { id: string; nombre: string; patron: RegExp; slugs: string[]
 
 /** El orden importa: gana el primero que coincide. Sin TACC va antes que todo lo demás. */
 export const TEMAS: Tema[] = [
+  // De temporada: solo ofrece lo que esté vigente (el combo fuera de fecha no está disponible y se saltea).
+  { id: "navidad", nombre: "Navidad y fin de año", patron: /\b(navid|pan dulce|panes dulces|fiestas|fin de ano|ano nuevo|nochebuena|noche buena|regalo|canasta|mesa dulce|turron|para las fiestas)/, slugs: ["pan-dulce-casero", "mesa-navidena", "regalo-navideno", "alacena-de-frutos-secos"] },
   { id: "sintacc-dulce", nombre: "sin TACC dulce", patron: /\b(alfajor|merienda|galletit|dulce)\w*\b.*\b(sin tacc|sin gluten|celiac)|\b(sin tacc|sin gluten|celiac)\w*\b.*\b(alfajor|merienda|galletit|dulce)/, slugs: ["merienda-sin-tacc", "alfajores-sin-tacc", "caja-sin-tacc-del-mes"] },
   { id: "sintacc", nombre: "sin TACC", patron: /\b(sin tacc|stacc|s\/tacc|sin gluten|celiac|libre de gluten)/, slugs: ["caja-sin-tacc-del-mes", "alacena-sin-tacc", "merienda-sin-tacc"] },
   { id: "gym", nombre: "gimnasio y proteína", patron: /\b(gym|gimnas|proteina|whey|creatina|entren|musculo|masa muscular|fitness|deport)/, slugs: ["arranque-gym", "despensa-del-gym"] },

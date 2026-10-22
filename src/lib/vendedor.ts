@@ -10,6 +10,7 @@
 //    así que se cobran una vez cada cinco minutos en lugar de una vez por mensaje.
 
 import { bloqueLeccionesVendedor } from "./organico";
+import { bloqueTemporada } from "./temporada";
 import { leerConfig } from "./config";
 import { SALUDO_GENERAL } from "./whatsapp-saludo";
 import { catalogo, hallarCombos, hallarProductos } from "./asistente-catalogo";
@@ -659,7 +660,7 @@ export async function responderComoVendedor(
 
   const cfg = await leerConfig();
   // Lo que el sistema aprendió de las charlas reales (cambia una vez por día: el caché del prompt se renueva ahí).
-  const lecciones = await bloqueLeccionesVendedor();
+  const lecciones = (await bloqueLeccionesVendedor()) + bloqueTemporada();
   // El carrito va pegado al mensaje y no en las instrucciones: así las instrucciones
   // y las herramientas no cambian nunca y el caché del prompt sirve de verdad.
   const carritoTxt = contexto(carrito);
