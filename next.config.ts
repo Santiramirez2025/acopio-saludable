@@ -31,7 +31,10 @@ const nextConfig: NextConfig = {
   },
   // Las piezas de anuncios se suben a Meta desde el navegador: necesitan CORS abierto.
   async headers() {
-    return [{ source: "/img/anuncios/:file*", headers: [{ key: "Access-Control-Allow-Origin", value: "*" }] }];
+    return [
+      { source: "/img/anuncios/:file*", headers: [{ key: "Access-Control-Allow-Origin", value: "*" }] },
+      { source: "/video/:file*", headers: [{ key: "Access-Control-Allow-Origin", value: "*" }] },
+    ];
   },
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
 };
