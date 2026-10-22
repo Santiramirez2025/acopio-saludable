@@ -12,6 +12,7 @@ import { prisma } from "./prisma";
 import { avisarSantiago } from "./avisos";
 import { analizarCharlas } from "./aprendizaje";
 import { enviarProspecto } from "./whatsapp-prospectos";
+import { demanda, diasHasta, proximaTemporada, temporadaActual } from "./temporada";
 import { bloqueLecciones, celular, elegirHoy, parecidas, POR_DIA, type Candidato, type Resultado } from "./organico-reglas";
 
 const MODELO = process.env.VENDEDOR_MODELO || "claude-haiku-5-5";
@@ -224,6 +225,11 @@ export async function correrOrganico(opciones: { avisar?: boolean; cantidad?: nu
   });
   const rubros = await resultadosPorRubro();
   const [{ n: quedan }] = await prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM "Prospecto" WHERE "estado" = 'nuevo'`;
+  // Lo que más pide la gente esta semana (de los mensajes de clientes) y la fecha que se viene.
+  const textos = await prisma.$queryRaw<{ texto: string }[]>`SELECT "texto" FROM "WhatsappMensaje" WHERE "de" = 'cliente' AND "fecha" > now() - interval '7 days' LIMIT 5000`;
+  const pedido = demanda(textos.map((t) => t.texto)).slice(0, 6);
+  const temp = temporadaActual();
+  const prox = proximaTemporada();
   if (opciones.avisar !== false) {
     const texto = [
       `🌱 Captación de hoy`,
@@ -231,6 +237,9 @@ export async function correrOrganico(opciones: { avisar?: boolean; cantidad?: nu
       fallidos ? `${fallidos} números no tenían WhatsApp.` : "",
       `Desde ayer: ${medido.respondieron} contestaron, ${medido.interesados} pidieron precios, ${medido.clientes} compraron.`,
       `Qué rubro responde: ${rubros.filter((r) => r.enviados).map((r) => `${r.rubro} ${r.respondieron}/${r.enviados}`).join(" · ") || "todavía sin datos"}.`,
+      pedido.length ? `Lo más pedido esta semana: ${pedido.map((p) => `${p.que} (${p.veces})`).join(", ")}.` : "",
+      temp ? `🎄 Temporada: ${temp.nombre}${diasHasta(temp) > 0 ? `, faltan ${diasHasta(temp)} días` : ""}. Combos destacados en la tienda y el vendedor los ofrece primero.` : "",
+      prox && prox.empiezaEn <= 21 ? `📅 En ${prox.empiezaEn} días empieza ${prox.t.nombre}: hay que preparar combos y contenido.` : "",
       lecciones.length ? `Lecciones nuevas para el vendedor:\n${lecciones.map((l) => `• ${l.texto}`).join("\n")}` : "Sin lecciones nuevas (ayer no hubo un patrón claro).",
       Number(quedan) < POR_DIA * 2 ? `⚠️ Quedan ${quedan} negocios en la lista: cargá más o poné GOOGLE_PLACES_KEY para que se reabastezca sola.` : "",
     ].filter(Boolean).join("\n");

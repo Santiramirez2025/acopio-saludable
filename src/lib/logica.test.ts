@@ -1187,3 +1187,25 @@ test("lecciones: parecidas detecta la misma regla dicha distinto y el bloque ent
   const b = bloqueLecciones([{ texto: "Pedí la dirección apenas dice «lo quiero»", evidencia: "3 charlas" }]);
   assert.ok(b.includes("LO QUE APRENDIMOS") && b.includes("- Pedí la dirección apenas dice «lo quiero» (3 charlas)"));
 });
+
+// Temporadas: qué fecha rige y qué pide la gente.
+import { bloqueTemporada, demanda, diasHasta, proximaTemporada, temporadaActual } from "./temporada";
+
+test("temporada: Navidad rige en noviembre y diciembre, con los días que faltan", () => {
+  const nov = new Date("2026-11-10T15:00:00Z");
+  assert.equal(temporadaActual(nov)?.id, "navidad");
+  assert.equal(diasHasta(temporadaActual(nov)!, nov), 44);
+  assert.ok(bloqueTemporada(nov).includes("NAVIDAD") && bloqueTemporada(nov).includes("faltan 44 días"));
+  assert.equal(temporadaActual(new Date("2027-01-10T15:00:00Z"))?.id, "verano");
+  assert.equal(temporadaActual(new Date("2026-06-10T15:00:00Z")), null);
+  assert.equal(proximaTemporada(new Date("2026-10-22T15:00:00Z"))?.t.id, "navidad");
+  assert.equal(proximaTemporada(new Date("2026-10-22T15:00:00Z"))?.empiezaEn, 10);
+});
+
+test("temporada: el pan dulce lleva al combo navideño y la demanda cuenta lo que piden", () => {
+  assert.equal(temaDe("nueces para el pan dulce de fin de año")?.id, "navidad");
+  assert.equal(temaDe("quiero nueces")?.id, "frutos-secos");
+  const d = demanda(["Precio de nueces?", "nuez x kilo", "almendras y nueces", "algo sin TACC"]);
+  assert.deepEqual(d[0], { que: "nuez", veces: 3 });
+  assert.ok(d.some((x) => x.que === "sin TACC"));
+});

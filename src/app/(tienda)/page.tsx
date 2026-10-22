@@ -14,6 +14,7 @@ import { BotonCargarPedido } from "@/components/Carrito";
 import { ListaCombo, RielOfertas, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 import { ofertasDelProveedor } from "@/lib/ofertas";
 import { vidrieraDeStock } from "@/lib/en-stock";
+import { diasHasta, temporadaActual } from "@/lib/temporada";
 
 // Portadas propias de las góndolas; las demás usan la foto de un producto.
 
@@ -41,6 +42,10 @@ export default async function Home() {
   // El precio más bajo por alfajor suelto entre las cajas: es el número del aviso de la promo.
   const alfajorDesde = Math.min(...alfajores.map((p) => precioPorUnidadSuelta(p.precio, p.presentacion) ?? p.precio));
   const disponibles = combos.filter((c) => c.disponible);
+  // La fecha que se viene (Navidad, verano...): sus combos van arriba de todo mientras dura.
+  const temporada = temporadaActual();
+  const deTemporada = temporada ? temporada.slugs.map((s) => disponibles.find((c) => c.slug === s)).filter((c): c is (typeof disponibles)[number] => Boolean(c)) : [];
+  const faltanDias = temporada ? diasHasta(temporada) : 0;
   const portada = new Map(portadas.map((p) => [p.categoria, p.fotoUrl]));
   const categorias = conteos.filter((c) => c.categoria !== "Sin categoría");
   const pasos = [
@@ -83,6 +88,21 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {temporada && deTemporada.length > 0 && (
+        <section className="rounded-3xl bg-gradient-to-br from-[#7a1f1f] to-acopio-900 p-4 sm:p-6">
+          <div className="fondo-oscuro mb-3 text-white">
+            <span className="chip bg-sol text-acopio-900">{temporada.nombre}{faltanDias > 0 && faltanDias <= 60 ? ` · faltan ${faltanDias} días` : ""}</span>
+            <h2 className="mt-2 text-balance font-display text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">{temporada.titulo}</h2>
+            <p className="mt-1 max-w-2xl text-[15px] text-white/80">{temporada.bajada}</p>
+          </div>
+          <div className="riel lg:mx-0 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0">
+            {deTemporada.map((c) => (
+              <TarjetaCombo key={c.slug} c={c} llegaAlMinimo={c.precio >= cfg.compraMinima} className="w-[78%] shrink-0 snap-start sm:w-[44%] lg:w-auto" />
+            ))}
+          </div>
+        </section>
+      )}
 
       {vidriera.length > 0 && (
         <section>

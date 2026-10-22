@@ -42,6 +42,8 @@ async function main() {
         nicho: c.nicho,
         destacado: c.destacado ?? false,
         descuentoPct: c.descuentoPct ?? 0,
+        vigenteDesde: c.vigenteDesde ? new Date(`${c.vigenteDesde}T00:00:00-03:00`) : null,
+        vigenteHasta: c.vigenteHasta ? new Date(`${c.vigenteHasta}T23:59:59-03:00`) : null,
         items: { create: c.items.filter(([codigo]) => codigos.has(codigo)).map(([codigo, cantidad]) => ({ codigo, cantidad: cantidad ?? 1 })) },
       },
     });
