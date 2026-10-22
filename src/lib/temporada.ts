@@ -24,7 +24,8 @@ export const TEMPORADAS: Temporada[] = [
   {
     id: "navidad",
     nombre: "Navidad y fin de año",
-    desde: "11-01",
+    // Arranca en octubre: el pan dulce casero se planea con tiempo y es cuando más se buscan nueces.
+    desde: "10-20",
     hasta: "12-31",
     dia: "12-24",
     slugs: ["pan-dulce-casero", "mesa-navidena", "regalo-navideno"],

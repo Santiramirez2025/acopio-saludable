@@ -1198,8 +1198,8 @@ test("temporada: Navidad rige en noviembre y diciembre, con los días que faltan
   assert.ok(bloqueTemporada(nov).includes("NAVIDAD") && bloqueTemporada(nov).includes("faltan 44 días"));
   assert.equal(temporadaActual(new Date("2027-01-10T15:00:00Z"))?.id, "verano");
   assert.equal(temporadaActual(new Date("2026-06-10T15:00:00Z")), null);
-  assert.equal(proximaTemporada(new Date("2026-10-22T15:00:00Z"))?.t.id, "navidad");
-  assert.equal(proximaTemporada(new Date("2026-10-22T15:00:00Z"))?.empiezaEn, 10);
+  assert.equal(temporadaActual(new Date("2026-10-22T15:00:00Z"))?.id, "navidad");
+  assert.equal(proximaTemporada(new Date("2026-12-20T15:00:00Z"))?.t.id, "verano");
 });
 
 test("temporada: el pan dulce lleva al combo navideño y la demanda cuenta lo que piden", () => {
