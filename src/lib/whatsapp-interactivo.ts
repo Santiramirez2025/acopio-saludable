@@ -297,7 +297,9 @@ export function soloAgradece(texto: string): boolean {
 /** La respuesta a «lo veo tranquila»: cálida, corta, sin pedido ni zonas. Solo la tienda, por si quiere ir mirando. */
 /** El nombre de pila, si el perfil de WhatsApp es de una persona. «casa playas de oro» o «Hotel X» no: «¡De nada, casa!» queda mal. */
 export function primerNombre(nombre: string | null | undefined): string | null {
-  const p = (nombre ?? "").trim().split(/\s+/)[0]?.replace(/[^\p{L}]/gu, "") ?? "";
+  const crudo = (nombre ?? "").trim();
+  if (/@|gmail|hotmail|yahoo|outlook/i.test(crudo)) return null;
+  const p = crudo.split(/\s+/)[0]?.replace(/[^\p{L}]/gu, "") ?? "";
   if (p.length < 2 || p.length > 20) return null;
   if (/^(casa|hotel|cabañas?|cabanas?|complejo|depto|departamentos?|apart|hostel|hosteria|hostería|posada|resort|spa|kiosco|almacen|almacén|dietetica|dietética|tienda|negocio|empresa|distribuidora|gym|gimnasio|lic|dr|dra|la|el|los|las|mi|mis|info|ventas|administracion|administración)$/i.test(p)) return null;
   return p[0].toUpperCase() + p.slice(1);
