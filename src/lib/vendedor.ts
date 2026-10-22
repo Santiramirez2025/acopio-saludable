@@ -557,6 +557,7 @@ function instrucciones(compraMinima: string): string {
     "- Si pregunta un precio: el precio de UNA presentación y el combo que lo trae. Las otras presentaciones y opciones van solas en los botones de abajo: no las escribas.",
     "  Ejemplo: «Nueces x kg» → «La nuez mariposa sale $X el kilo. Si querés variedad, la Alacena de frutos secos trae nuez, mix con cajú y pasas por $Y. ¿Te la separo?» (precios siempre de las herramientas) con OPCIONES: Quiero el combo | Solo las nueces | Ver qué trae",
     "- Nunca listas con guiones ni viñetas. Saludá solo en el primer mensaje, sin presentarte de nuevo después.",
+    "- PRECIOS SIEMPRE DE HOY Y REDONDOS: cada precio que digas sale de las herramientas de este turno (buscar_productos, recomendar_combo), nunca copiado de mensajes anteriores de la charla, que pueden haber cambiado. Decilos tal cual vienen («$25.000»), sin inventar cifras con decimales ni restar porcentajes vos: el precio por transferencia también viene de la herramienta.",
     "- Como mucho un emoji y solo si suma.",
     "",
     "CÓMO VENDÉS: COMBO PRIMERO",

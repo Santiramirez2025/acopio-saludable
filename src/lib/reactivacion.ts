@@ -53,7 +53,7 @@ export async function correrReactivacion(): Promise<{ enviados: string[]; fallid
   const enviados: string[] = [];
   let fallidos = 0;
   for (const c of await candidatos()) {
-    const nombre = primerNombre(c.nombre) || "¡hola";
+    const nombre = primerNombre(c.nombre) || "buen día";
     if (await plantilla(c.telefono, nombre)) {
       const id = `react.${c.telefono}.${Date.now()}`;
       const texto = `[Reactivación] ${CUERPO_REACTIVACION.replace("{{1}}", nombre)} [Botones: Sí, pasame precios · No, gracias]`;
