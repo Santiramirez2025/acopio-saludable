@@ -81,9 +81,11 @@ async function responderWhatsapp(clave: string, salientes: Saliente[]): Promise<
 /** El pedido armado, cotizado por el servidor: los precios nunca salen del modelo. Con el envío si ya se sabe la zona. */
 async function pedidoDe(lineas: { tipo: "producto" | "combo"; id: string; cantidad: number }[], envio?: EnvioCotizado | null): Promise<PedidoArmado | null> {
   if (!lineas.length) return null;
-  const cfg = envio ? await leerConfig() : null;
-  // Si ya se sabe que entrega en Carlos Paz, rige el mínimo de la zona propia.
-  const cot = await cotizarCarrito(lineas, cfg && envio?.propia && envio.costo === 0 ? cfg.compraMinimaPropia : undefined);
+  const cfg = await leerConfig();
+  // Si ya se sabe que entrega en Carlos Paz, rige el mínimo de la zona propia. Si todavía no se sabe la zona,
+  // también: la mayoría es de Carlos Paz y decirle «te faltan $10.000» cuando ya llega le corta la compra
+  // (pasó con Vilma). Si después resulta de otra zona, al cotizar el envío rige el mínimo general.
+  const cot = await cotizarCarrito(lineas, !envio || (envio.propia && envio.costo === 0) ? cfg.compraMinimaPropia : undefined);
   if (!cot.lineas.length) return null;
   return {
     camino: enlacePedido(lineas),
@@ -96,7 +98,7 @@ async function pedidoDe(lineas: { tipo: "producto" | "combo"; id: string; cantid
           ...envio,
           totalConEnvio: envio.costo !== null && envio.costo > 0 ? pesos(cot.subtotal + envio.costo) : null,
           transferenciaConEnvio:
-            cot.conTransferencia && cfg && cfg.descuentoTransferenciaPct > 0 ? `${pesos(cot.conTransferencia + (envio.costo ?? 0))}${envio.costo === null ? " + envío" : ""}` : null,
+            cot.conTransferencia && cfg.descuentoTransferenciaPct > 0 ? `${pesos(cot.conTransferencia + (envio.costo ?? 0))}${envio.costo === null ? " + envío" : ""}` : null,
         }
       : null,
   };
@@ -217,7 +219,7 @@ export async function atender(e: Entrada): Promise<void> {
   }
   if (prospecto.prospecto && e.texto !== null && esBaja(texto)) {
     await darDeBaja(e.clave);
-    await responder(e.clave, "Perfecto, no le escribimos más. ¡Gracias por responder y que tengan una buena temporada!");
+    await responder(e.clave, "Listo, no le escribimos más. ¡Gracias por responder y que tengan una buena temporada!");
     return;
   }
   // El negocio nos deriva al dueño o a quien compra: si manda el número, se le escribe a esa persona
@@ -406,7 +408,7 @@ export async function pensar(c: {
     const envio = await cotizarEnvioChat(c.toque.lugar, null, previo ? Number(previo.total.replace(/[^\d,]/g, "").replace(",", ".")) : 0);
     const pedido = envio ? await pedidoDe(lineas, envio) : null;
     if (pedido) {
-      const texto = `¡Perfecto! ${envio!.detalle} Te dejo el resumen 👇`;
+      const texto = `¡Buenísimo! ${envio!.detalle} Te dejo el resumen 👇`;
       return { salientes: planWhatsapp({ texto }, pedido), respuesta: { texto }, derivar: false, conIA: false, guardarPedido: pedido.camino };
     }
   }
