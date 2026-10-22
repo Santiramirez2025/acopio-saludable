@@ -128,6 +128,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
             </div>
             <div><label className="etiqueta" htmlFor="tracking">Código de seguimiento</label><input className="campo" id="tracking" name="tracking" defaultValue={pedido.tracking ?? ""} /></div>
             <div><label className="etiqueta" htmlFor="nota">Nota (opcional)</label><input className="campo" id="nota" name="nota" maxLength={300} /></div>
+            <label className="flex items-center gap-2 text-xs text-stone-700"><input type="checkbox" name="silencioso" value="1" /> Sin avisar al cliente (para ordenar el panel)</label>
             <button className="btn w-full">Actualizar</button>
             {pedido.estado === "PENDIENTE_PAGO" && <p className="text-xs text-stone-600">Al pasar a Pagado se confirma el pedido y se le avisa al cliente por email.</p>}
           </form>
