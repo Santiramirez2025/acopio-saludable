@@ -1237,3 +1237,22 @@ test("lista La Granja: el precio por kilo se lleva a la presentación chica", ()
   assert.equal(costoDePresentacion(29362, 29362, 1000), 29362); // el kilo queda igual
   assert.equal(costoDePresentacion(2162, 2162, 400), 2162); // por unidad: no se toca
 });
+
+import { resumenPedido, textoRecompra } from "./recompra-reglas";
+test("recompra: resumen corto para la plantilla y códigos exactos para el vendedor", () => {
+  const despensa = [
+    { codigo: "TG-MIXCG", producto: "Mix Clásico con cajú y girasol", presentacion: "x 1 kg", cantidad: 1, comboSlug: "despensa-4-kilos" },
+    { codigo: "LG-DATIL", producto: "Dátiles", presentacion: "x 1 kg", cantidad: 1, comboSlug: "despensa-4-kilos" },
+  ];
+  assert.equal(resumenPedido(despensa), "la Despensa de 4 kilos");
+  const sueltos = [
+    { codigo: "TG-NUEZ", producto: "Nuez Mariposa", presentacion: "x 1 kg", cantidad: 1, comboSlug: null },
+    { codigo: "TG-PASAS", producto: "Pasas negras", presentacion: "x 1 kg", cantidad: 2, comboSlug: null },
+    { codigo: "LG-AVENA", producto: "Avena", presentacion: "x 1 kg", cantidad: 1, comboSlug: null },
+  ];
+  assert.equal(resumenPedido(sueltos), "tu pedido (nuez mariposa, pasas negras y más)");
+  const t = textoRecompra({ numero: "AS-00010", id: 10, nombre: "Ariel", items: sueltos, direccion: "Gran Malvina 2439, Villa Carlos Paz", total: "$ 57.663" });
+  assert.ok(t.startsWith("[Recompra pedido AS-00010 (id 10)]"));
+  assert.ok(t.includes("codigo TG-PASAS · Pasas negras x 1 kg x 2") && t.includes("Gran Malvina 2439"));
+  assert.ok(textoRecompra({ numero: "AS-1", id: 1, nombre: "Ana", items: despensa, direccion: "x", total: "$1" }).includes("combo slug despensa-4-kilos x 1"));
+});

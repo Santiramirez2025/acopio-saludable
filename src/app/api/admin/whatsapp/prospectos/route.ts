@@ -14,6 +14,7 @@ import { crearPlantillaComprobante } from "@/lib/comprobante-envio";
 import { avisarReparto, crearPlantillaReparto } from "@/lib/aviso-reparto";
 import { crearPlantillaSeguimiento } from "@/lib/seguimiento";
 import { correrReactivacion, crearPlantillaReactivacion } from "@/lib/reactivacion";
+import { correrRecompra, crearPlantillaRecompra } from "@/lib/recompra";
 import { cargarSemilla, correrOrganico, leccionesActivas, type Semilla } from "@/lib/organico";
 import { crearPlantillaPedidoProveedor, crearPlantillaProveedor, enviarPedidoProveedor, enviarProveedor } from "@/lib/whatsapp-proveedores";
 import { getServerSession } from "next-auth";
@@ -54,6 +55,8 @@ export async function POST(req: Request) {
   if (cuerpo.accion === "plantilla-seguimiento") return NextResponse.json(await crearPlantillaSeguimiento());
   if (cuerpo.accion === "plantilla-reactivacion") return NextResponse.json(await crearPlantillaReactivacion());
   if (cuerpo.accion === "reactivacion") return NextResponse.json(await correrReactivacion());
+  if (cuerpo.accion === "plantilla-recompra") return NextResponse.json(await crearPlantillaRecompra());
+  if (cuerpo.accion === "recompra") return NextResponse.json(await correrRecompra());
   // Captación orgánica: cargar negocios a la lista, correr el día ahora, ver las lecciones.
   if (cuerpo.accion === "semilla") return NextResponse.json(await cargarSemilla(Array.isArray(cuerpo.lista) ? (cuerpo.lista as Semilla[]) : []));
   if (cuerpo.accion === "organico") return NextResponse.json(await correrOrganico({ cantidad: typeof cuerpo.cantidad === "number" ? cuerpo.cantidad : undefined }));

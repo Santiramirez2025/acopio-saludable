@@ -52,6 +52,9 @@ async function correrTarea(nombre: string): Promise<void> {
   } else if (nombre === "reactivacion") {
     const { correrReactivacion } = await import("./reactivacion");
     await conRegistro("reactivacion", () => correrReactivacion());
+  } else if (nombre === "recompra") {
+    const { correrRecompra } = await import("./recompra");
+    await conRegistro("recompra", () => correrRecompra());
   } else if (nombre === "seguimiento") {
     const { correrSeguimiento } = await import("./seguimiento");
     await conRegistro("seguimiento", () => correrSeguimiento());

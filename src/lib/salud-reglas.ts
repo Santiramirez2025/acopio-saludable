@@ -7,6 +7,7 @@ export const TAREAS: Tarea[] = [
   { nombre: "listas", titulo: "Precios de La Granja (7:40)", hasta: 9, domingo: false },
   { nombre: "organico", titulo: "Captación de negocios (9:05)", hasta: 10, domingo: false },
   { nombre: "reactivacion", titulo: "Reactivación de leads (9:30)", hasta: 10.5, domingo: false },
+  { nombre: "recompra", titulo: "Recompra a 20–25 días (10:40)", hasta: 12, domingo: false },
   { nombre: "seguimiento", titulo: "Seguimiento de carritos (11:00)", hasta: 12, domingo: false },
   { nombre: "radar", titulo: "Radar de Instagram (cada 15 min)", hasta: null, domingo: true },
 ];
