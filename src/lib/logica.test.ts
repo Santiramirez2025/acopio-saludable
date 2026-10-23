@@ -1256,3 +1256,17 @@ test("recompra: resumen corto para la plantilla y códigos exactos para el vende
   assert.ok(t.includes("codigo TG-PASAS · Pasas negras x 1 kg x 2") && t.includes("Gran Malvina 2439"));
   assert.ok(textoRecompra({ numero: "AS-1", id: 1, nombre: "Ana", items: despensa, direccion: "x", total: "$1" }).includes("combo slug despensa-4-kilos x 1"));
 });
+
+import { netoCanal, precioCanal } from "./canales";
+test("canales: el precio de Mercado Libre y PedidosYa deja al menos lo mismo que la web", () => {
+  for (const web of [6500, 15400, 25000, 35000, 38500, 83000]) {
+    for (const canal of ["mercadolibre", "mercadolibre-premium", "pedidosya"] as const) {
+      const p = precioCanal(web, canal);
+      assert.ok(netoCanal(p, canal) >= web, `${canal} ${web} → ${p} deja ${netoCanal(p, canal)}`);
+      assert.ok(p % 100 === 0);
+    }
+  }
+  // La Despensa ($35.000): en ML Clásica tiene que salir bastante más cara por el envío gratis y la comisión.
+  const despensa = precioCanal(35000, "mercadolibre");
+  assert.ok(despensa > 45000 && despensa < 52000, String(despensa));
+});
