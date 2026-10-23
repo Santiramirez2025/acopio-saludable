@@ -20,7 +20,8 @@ export async function conRegistro<T>(nombre: string, tarea: () => Promise<T>, re
 /** Última corrida de cada tarea. */
 export async function ultimasCorridas(): Promise<Corrida[]> {
   return prisma.$queryRaw<Corrida[]>`
-    SELECT DISTINCT ON ("nombre") "nombre", "ok", "detalle", "fecha" FROM "CronCorrida" ORDER BY "nombre", "fecha" DESC`;
+    SELECT DISTINCT ON ("nombre") "nombre", "ok", "detalle", "fecha" FROM "CronCorrida"
+    WHERE "nombre" NOT LIKE 'reintento-%' AND "nombre" NOT LIKE 'alerta-%' ORDER BY "nombre", "fecha" DESC`;
 }
 
 /** Estado en texto, para el resumen diario y el panel. */
@@ -36,17 +37,56 @@ export async function estadoTexto(ahora = new Date()): Promise<string> {
   }).join("\n");
 }
 
-/** La llama el radar cada 15 minutos: si una tarea del día no corrió a tiempo, avisa una sola vez por día. */
+/** Corre de nuevo una tarea del día (import dinámico: evita dependencias circulares). */
+async function correrTarea(nombre: string): Promise<void> {
+  if (nombre === "listas") {
+    const { actualizarDesdeLaGranja, avisarResultadoLista } = await import("./listas-aplicar");
+    const r = await conRegistro("listas", () => actualizarDesdeLaGranja().then((x) => {
+      if ("error" in x) throw new Error(x.error);
+      return x;
+    }));
+    await avisarResultadoLista(r);
+  } else if (nombre === "organico") {
+    const { correrOrganico } = await import("./organico");
+    await conRegistro("organico", () => correrOrganico());
+  } else if (nombre === "reactivacion") {
+    const { correrReactivacion } = await import("./reactivacion");
+    await conRegistro("reactivacion", () => correrReactivacion());
+  } else if (nombre === "seguimiento") {
+    const { correrSeguimiento } = await import("./seguimiento");
+    await conRegistro("seguimiento", () => correrSeguimiento());
+  }
+}
+
+export const MAX_REINTENTOS = 3;
+
+/**
+ * La llama el radar cada 15 minutos. Si una tarea del día no corrió o falló, la vuelve a correr sola
+ * (hasta MAX_REINTENTOS veces por día, una por pasada). Solo si sigue fallando después de eso le avisa
+ * a Santiago, una vez por día y por tarea. Los errores de código los revisa Claude cada mañana.
+ */
 export async function vigilar(ahora = new Date()): Promise<string[]> {
   const ultimas = await ultimasCorridas().catch(() => null);
   if (!ultimas) return [];
-  const vencidas = tareasVencidas(ultimas, ahora);
+  const vencidas = tareasVencidas(ultimas, ahora).filter((t) => t.hasta !== null); // el radar se cura solo: es el que llama
   if (!vencidas.length) return [];
   const hoy = ahora.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Cordoba" });
-  const clave = `alerta-${hoy}`;
-  const ya = await prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM "CronCorrida" WHERE "nombre" = ${clave}`;
-  if (Number(ya[0]?.n ?? 0) > 0) return [];
-  await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${clave}, true, ${vencidas.map((t) => t.nombre).join(",")})`;
-  await avisarSantiago("Tarea automática sin correr", `⚠️ Hoy no corrió bien: ${vencidas.map((t) => t.titulo).join(", ")}. Ya quedó registrado para revisarlo.`);
-  return vencidas.map((t) => t.nombre);
+  const hechas: string[] = [];
+  for (const t of vencidas) {
+    const clave = `reintento-${t.nombre}-${hoy}`;
+    const [{ n }] = await prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM "CronCorrida" WHERE "nombre" = ${clave}`;
+    if (Number(n) < MAX_REINTENTOS) {
+      await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${clave}, true, ${`intento ${Number(n) + 1}`})`;
+      await correrTarea(t.nombre).catch((e) => console.error("salud: reintento falló", t.nombre, e));
+      hechas.push(`${t.nombre}:reintento${Number(n) + 1}`);
+      continue;
+    }
+    const alerta = `alerta-${t.nombre}-${hoy}`;
+    const [{ n: avisado }] = await prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM "CronCorrida" WHERE "nombre" = ${alerta}`;
+    if (Number(avisado) > 0) continue;
+    await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${alerta}, true, ${t.titulo})`;
+    await avisarSantiago("Tarea automática con error", `⚠️ ${t.titulo} falló ${MAX_REINTENTOS} veces hoy. Claude lo revisa y lo arregla en la revisión de la mañana; no tenés que hacer nada.`);
+    hechas.push(`${t.nombre}:aviso`);
+  }
+  return hechas;
 }
