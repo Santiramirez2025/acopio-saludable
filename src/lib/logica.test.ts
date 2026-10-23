@@ -1228,3 +1228,12 @@ test("salud: avisa la tarea del día que no corrió y no molesta antes de hora n
   const domingo = new Date("2026-10-25T15:00:00Z");
   assert.deepEqual(tareasVencidas([{ nombre: "radar", ok: true, detalle: null, fecha: domingo }], domingo).map((t) => t.nombre), []);
 });
+
+import { costoDePresentacion } from "./listas-presentacion";
+test("lista La Granja: el precio por kilo se lleva a la presentación chica", () => {
+  assert.equal(costoDePresentacion(10933, 2734, 250), 2733); // cacao 250 g
+  assert.equal(costoDePresentacion(29362, 14681, 500), 14681); // almendras 500 g
+  assert.equal(costoDePresentacion(31000, 14681, 500), 15500); // subió la lista: el medio kilo sube igual
+  assert.equal(costoDePresentacion(29362, 29362, 1000), 29362); // el kilo queda igual
+  assert.equal(costoDePresentacion(2162, 2162, 400), 2162); // por unidad: no se toca
+});

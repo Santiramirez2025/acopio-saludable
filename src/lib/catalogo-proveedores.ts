@@ -164,8 +164,12 @@ export const fotoCombo = (slug: string) => `/img/combos/v3/${slug}.webp`;
 OCULTAR.codigos.push(...Object.keys(REEMPLAZOS));
 
 /** Código del proveedor → código nuestro, por proveedor. */
-export const POR_CODIGO_PROVEEDOR: Record<"TG" | "LG", Record<string, string>> = { TG: {}, LG: {} };
+export const POR_CODIGO_PROVEEDOR: Record<"TG" | "LG", Record<string, string[]>> = { TG: {}, LG: {} };
 for (const p of PRODUCTOS_PROVEEDORES) {
   // Los TG-… que pasaron a La Granja llevan el código de su lista; los de 095-… son de la lista vieja de Todo Granolas.
-  if (p.codigoProveedor && p.codigoProveedor !== "propio") POR_CODIGO_PROVEEDOR[p.codigo.startsWith("LG-") || !p.codigoProveedor.startsWith("095-") ? "LG" : "TG"][p.codigoProveedor] = p.codigo;
+  if (p.codigoProveedor && p.codigoProveedor !== "propio") {
+    // Un mismo código del proveedor puede ser varias presentaciones nuestras (1 kg y 500 g de la misma almendra).
+    const m = POR_CODIGO_PROVEEDOR[p.codigo.startsWith("LG-") || !p.codigoProveedor.startsWith("095-") ? "LG" : "TG"];
+    (m[p.codigoProveedor] ??= []).push(p.codigo);
+  }
 }
