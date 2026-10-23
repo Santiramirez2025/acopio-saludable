@@ -30,7 +30,8 @@ export async function estadoTexto(ahora = new Date()): Promise<string> {
   return TAREAS.map((t) => {
     const u = ultimas.find((c) => c.nombre === t.nombre);
     const hora = u ? new Date(u.fecha).toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "nunca";
-    const icono = vencidas.has(t.nombre) ? "⚠️" : u && !u.ok ? "❌" : "✅";
+    const deHoy = u && new Date(u.fecha).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Cordoba" }) === ahora.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Cordoba" });
+    const icono = vencidas.has(t.nombre) ? "⚠️" : u && !u.ok ? "❌" : t.hasta !== null && !deHoy ? "⏳" : "✅";
     return `${icono} ${t.titulo}: ${hora}`;
   }).join("\n");
 }
