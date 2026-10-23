@@ -42,7 +42,7 @@ async function correrTarea(nombre: string): Promise<void> {
   if (nombre === "listas") {
     const { actualizarDesdeLaGranja, avisarResultadoLista } = await import("./listas-aplicar");
     const r = await conRegistro("listas", () => actualizarDesdeLaGranja().then((x) => {
-      if ("error" in x) throw new Error(x.error);
+      if ("error" in x && !/ya se aplic/i.test(x.error)) throw new Error(x.error); // «ya se aplicó» = la del día ya está: está bien
       return x;
     }));
     await avisarResultadoLista(r);
