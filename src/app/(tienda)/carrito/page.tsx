@@ -14,7 +14,7 @@ export default async function CarritoPagina() {
     <div>
       <Titulo sobre="Tu pedido">Carrito</Titulo>
       <PedidoCompartido />
-      <VistaCarrito />
+      <VistaCarrito whatsapp={cfg.whatsapp} />
       <div className="mt-3 lg:max-w-[calc(66.666%-0.5rem)]"><CompartirCarrito /></div>
       <section className="mt-6 rounded-xl border border-tierra-200 bg-white p-4 lg:max-w-[calc(66.666%-0.5rem)]">
         <h2 className="mb-2 text-sm font-semibold">Cuándo llega</h2>
