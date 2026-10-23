@@ -87,7 +87,11 @@ export async function registrarSync(args: { origen: string; modo: unknown; compl
   const cfg = await prisma.setting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
   // Los productos de otros proveedores (TG-…, LG-…) no vienen en la lista de Distrimay: no son «desaparecidos».
   // Las listas de TG y LG solo miran sus propios productos; la de Distrimay, todo lo demás.
-  const where = args.prefijo ? { codigo: { startsWith: args.prefijo } } : { NOT: [{ codigo: { startsWith: "TG-" } }, { codigo: { startsWith: "LG-" } }] };
+  // Los TG-… que hoy compramos en La Granja vienen en la lista de LG: también cuentan como propios de esa lista
+  // (si no, se tomaban como nuevos y el alta chocaba con el código existente: falló el cron del 23/10).
+  const where = args.prefijo
+    ? { OR: [{ codigo: { startsWith: args.prefijo } }, { codigo: { in: entrantes.map((e) => e.codigo) } }] }
+    : { NOT: [{ codigo: { startsWith: "TG-" } }, { codigo: { startsWith: "LG-" } }] };
   const actuales = (await prisma.product.findMany({ where, select: { codigo: true, producto: true, costo: true, precioPublico: true, estado: true, fotoUrl: true } })).map((p) => ({
     ...p,
     costo: Number(p.costo),
