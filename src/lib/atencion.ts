@@ -301,6 +301,10 @@ export async function atender(e: Entrada): Promise<void> {
   }
 
   // Código de la tarjeta que va en cada pedido: el vendedor lo reconoce y Santiago aplica el 10%.
+  // Pide que lo llamen: eso solo lo puede hacer Santiago. Le llega el aviso con el número para llamar.
+  if (/\b(llam(ar|ame|ás|as|en|arte|arme|en)|me (podés|podes|puede) llamar|hablar por tel)/i.test(texto)) {
+    await avisarSantiago("Pide que lo llamen", `📞 ${e.nombre ?? e.clave} pide que lo llamen: +${e.clave}\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
+  }
   if (/\bvuelvo\b/i.test(texto)) {
     await avisarSantiago("Código VUELVO", `🎟️ ${e.nombre ?? e.clave} usó el código VUELVO (10% en su segunda compra). Aplicalo al pedido:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
   }
