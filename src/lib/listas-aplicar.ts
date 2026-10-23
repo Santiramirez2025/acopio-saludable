@@ -7,6 +7,7 @@ import { prisma } from "./prisma";
 import { registrarSync } from "./sync";
 import { avisarSantiago } from "./avisos";
 import { POR_CODIGO_PROVEEDOR } from "./catalogo-proveedores";
+import { costoDePresentacion } from "./listas-presentacion";
 import { detectarProveedor, fechaDeLista, parsearLista, type Proveedor } from "./listas-pdf";
 import { filasDePdf } from "./listas-pdf-leer";
 import { pesos } from "./precios";
@@ -22,17 +23,17 @@ export async function aplicarListaPdf(bytes: Uint8Array, nombreArchivo = "", ori
   if (proveedor === "TG") return { error: "Todo Granolas ya no es proveedor: no se aplica su lista. Los costos salen de La Granja y de las recetas propias." };
   const mapa = POR_CODIGO_PROVEEDOR[proveedor];
   const prefijo = proveedor === "LG" ? "LG-" : "TG-";
-  const nuestros = await prisma.product.findMany({ where: { codigo: { in: Object.values(mapa) } }, select: { codigo: true, producto: true, presentacion: true, costo: true, precioPublico: true } });
+  const nuestros = await prisma.product.findMany({ where: { codigo: { in: Object.values(mapa).flat() } }, select: { codigo: true, producto: true, presentacion: true, costo: true, precioPublico: true, contenido: true } });
   const porCodigo = new Map(nuestros.map((p) => [p.codigo, p]));
   const items: { codigo: string; producto: string; costo: number; precioPublico: number }[] = [];
   const faltantes: string[] = [];
-  for (const [codProv, codigo] of Object.entries(mapa)) {
+  for (const [codProv, codigos] of Object.entries(mapa)) for (const codigo of codigos) {
     const r = lista.find((x) => x.codigo === codProv);
     const p = porCodigo.get(codigo);
     if (!p) continue;
     if (!r) { faltantes.push(`${p.producto} (${codProv})`); continue; }
     const costoAntes = Number(p.costo);
-    const costo = Math.round(r.precio);
+    const costo = costoDePresentacion(r.precio, costoAntes, p.contenido === null ? null : Number(p.contenido));
     // Mismo margen que tenía: el precio sube o baja en la misma proporción que el costo, redondeado a $10.
     const precioPublico = costoAntes > 0 ? Math.round((Number(p.precioPublico) * costo) / costoAntes / 10) * 10 : Number(p.precioPublico);
     items.push({ codigo, producto: p.producto, costo, precioPublico });
