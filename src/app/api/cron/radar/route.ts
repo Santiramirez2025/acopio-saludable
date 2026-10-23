@@ -6,7 +6,7 @@ import { conRegistro, vigilar } from "@/lib/salud";
 import { correrRadar } from "@/lib/radar-correr";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300; // puede reintentar una tarea del día que falló
 
 export async function GET(req: Request) {
   const secreto = process.env.CRON_SECRET;
