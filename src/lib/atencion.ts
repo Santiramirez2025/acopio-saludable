@@ -278,7 +278,14 @@ export async function atender(e: Entrada): Promise<void> {
       await prisma.$executeRaw`UPDATE "WhatsappMensaje" SET "texto" = "texto" || ${` 🎤 «${r.texto}»`} WHERE "id" = ${e.idMensaje}`.catch(() => null);
     } else console.log("chat: no se pudo oír el audio", cola(e.clave), r.motivo);
   }
-  if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:") && !texto.startsWith("[Mandó un audio que dice:")) {
+  // Un archivo (casi siempre el comprobante en PDF): el vendedor sigue la charla sabiendo qué es,
+  // en vez de un «contame qué buscás» suelto, y a Santiago le llega el aviso para revisarlo.
+  if (e.texto === null && e.tipo === "document") {
+    const nombre = (e.guardar ?? "").replace(/^\[archivo·[^\]\s]+\]\s?/, "").trim().slice(0, 80);
+    texto = `[Mandó un archivo${nombre ? ` «${nombre}»` : ""}. No lo podés abrir. Si venían hablando de pagar, transferir o del comprobante, es el comprobante: agradecé y decile que Santiago lo revisa y le confirma por acá (no confirmes el pago vos). Si no, seguí con lo que venían hablando.]`;
+    await avisarSantiago("Mandó un archivo", `📎 ${e.nombre ?? e.clave} mandó un archivo${nombre ? ` (${nombre})` : ""}: si es un comprobante, revisá la transferencia y pasá el pedido a Pagado.\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
+  }
+  if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:") && !texto.startsWith("[Mandó un audio que dice:") && !texto.startsWith("[Mandó un archivo")) {
     await responder(e.clave, respuestaMedio(e.tipo));
     const que = NOMBRE_MEDIO[e.tipo as keyof typeof NOMBRE_MEDIO] ?? e.tipo;
     await avisarSantiago(`Mandó ${que}`, `📎 ${e.nombre ?? e.clave} mandó ${que === "foto" ? "una foto" : `un ${que}`}. Miralo en el panel:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
