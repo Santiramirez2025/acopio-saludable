@@ -17,6 +17,10 @@
       "schedule": "5 12 * * 1-6"
     },
     {
+      "path": "/api/cron/recompra",
+      "schedule": "40 13 * * 1-6"
+    },
+    {
       "path": "/api/cron/reactivacion",
       "schedule": "30 12 * * 1-6"
     }
