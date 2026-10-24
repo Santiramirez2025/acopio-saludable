@@ -1279,3 +1279,11 @@ test("la primera respuesta se presenta como asistente con IA, una sola vez", asy
   assert.ok(conPresentacion("El mix sale $15.400. ¿Te lo separo?").startsWith("¡Hola! Soy el asistente con IA"));
   assert.equal(conPresentacion(a), a);
 });
+
+test("Mercado Libre: la respuesta no lleva contacto ni links y nunca «perfecto»", async () => {
+  const { textoRespuestaMl } = await import("./mercadolibre-reglas");
+  assert.equal(textoRespuestaMl("¡Hola! Escribinos al WhatsApp 3541 123456"), null);
+  assert.equal(textoRespuestaMl("¡Hola! Miralo en www.acopiosaludable.com"), null);
+  assert.equal(textoRespuestaMl("¡Hola! Perfecto, trae 1 kg de cada uno. Saludos, Acopio Saludable"), "¡Hola! trae 1 kg de cada uno. Saludos, Acopio Saludable");
+  assert.ok(textoRespuestaMl("¡Hola! Sí, el mix trae nueces, almendras y cajú. Podés comprarlo ahora y te llega por Mercado Envíos."));
+});
