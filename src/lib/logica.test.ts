@@ -1268,5 +1268,5 @@ test("canales: el precio de Mercado Libre y PedidosYa deja al menos lo mismo que
   }
   // La Despensa ($35.000): en ML Clásica tiene que salir bastante más cara por el envío gratis y la comisión.
   const despensa = precioCanal(35000, "mercadolibre");
-  assert.ok(despensa > 45000 && despensa < 52000, String(despensa));
+  assert.ok(despensa > 48000 && despensa < 56000, String(despensa));
 });

@@ -13,7 +13,7 @@ export type Canal = "mercadolibre" | "mercadolibre-premium" | "pedidosya";
 export const REGLAS = {
   iva: 0.21,
   iibb: 0.03,
-  ml: { clasica: 0.118, premium: 0.148, umbralEnvioGratis: 33000, envioVendedor: 6500, fijos: [[15000, 1330], [25000, 2740], [33000, 3320]] as [number, number][] },
+  ml: { clasica: 0.11, premium: 0.14, umbralEnvioGratis: 33000, envioVendedor: 9000, fijos: [[15000, 1330], [25000, 2740], [33000, 3320]] as [number, number][] },
   pedidosya: { comision: 0.3 },
 };
 
