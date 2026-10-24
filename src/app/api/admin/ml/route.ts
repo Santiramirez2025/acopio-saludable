@@ -1,6 +1,7 @@
 // Prueba y estado de Mercado Libre desde el panel (solo administrador).
 // GET: si está conectado, corre el parte (visitas, ventas, reputación, preguntas) y lo devuelve.
 import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { conectado, parteDiario } from "@/lib/mercadolibre";
@@ -12,7 +13,7 @@ export async function GET() {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const id = (process.env.ML_CLIENT_ID ?? "").trim();
   const secreto = (process.env.ML_CLIENT_SECRET ?? "").trim();
-  const credenciales = { clientId: id ? `${id.slice(0, 4)}…${id.slice(-4)}` : null, largoSecreto: secreto.length };
+  const credenciales = { clientId: id ? `${id.slice(0, 4)}…${id.slice(-4)}` : null, largoSecreto: secreto.length, huellaSecreto: secreto ? createHash("sha256").update(secreto).digest("hex").slice(0, 8) : null, entorno: process.env.VERCEL_ENV ?? null, desplegado: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null };
   if (!(await conectado())) return NextResponse.json({ conectado: false, credenciales });
   try {
     return NextResponse.json({ conectado: true, parte: await parteDiario() });
