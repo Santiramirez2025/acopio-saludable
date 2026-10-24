@@ -20,7 +20,7 @@ type Candidato = { id: number; nombre: string; telefono: string; calle: string; 
 async function candidatos(): Promise<Candidato[]> {
   return prisma.$queryRaw<Candidato[]>`
     SELECT o."id", o."nombre", o."telefono", o."calle", o."ciudad", o."total"::text AS total FROM "Order" o
-    JOIN LATERAL (SELECT max(e."createdAt") AS entregado FROM "OrderEvent" e WHERE e."orderId" = o."id" AND e."estado" = 'ENTREGADO') ev ON true
+    JOIN LATERAL (SELECT max(e."fecha") AS entregado FROM "OrderEvent" e WHERE e."orderId" = o."id" AND e."estado" = 'ENTREGADO') ev ON true
     WHERE o."estado" = 'ENTREGADO' AND o."nombre" NOT ILIKE '%prueba%'
       AND coalesce(ev.entregado, o."updatedAt") BETWEEN now() - interval '25 days' AND now() - interval '20 days'
       -- No volvió a comprar desde ese pedido.
