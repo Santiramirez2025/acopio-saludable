@@ -5,6 +5,7 @@
 // una persona tomó la charla o si el prospecto pidió la baja, y contesta el mismo vendedor.
 // Lo único que cambia por canal es cómo se manda la respuesta.
 
+import { conPresentacion } from "./whatsapp-saludo";
 import { zonaDeLugar } from "./envio-zona";
 import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
 import { buscarEnCatalogo, comboDelAnuncio, type Accion, type EnvioCotizado, type Respuesta } from "./asistente-catalogo";
@@ -524,6 +525,8 @@ export async function pensar(c: {
 
   // Pedir una persona deriva siempre, conteste la IA o el buscador.
   const derivar = Boolean(respuesta.derivar) || pidePersona(c.texto);
+  // Primera respuesta de la charla: se presenta como asistente con IA, sin cortar la venta.
+  if (!derivar && respuesta.texto && !c.historial.some((h) => h.de === "acopio")) respuesta = { ...respuesta, texto: conPresentacion(respuesta.texto) };
   // El pedido: el que acaba de armar, o el guardado si recién ahora cotizó el envío.
   // Lo nuevo se suma a lo que ya tenía guardado (a Julieta el mix cervecero le borró el resto del pedido);
   // solo se arma de nuevo si el vendedor dijo que quitó o cambió algo.

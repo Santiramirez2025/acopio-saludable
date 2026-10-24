@@ -1270,3 +1270,12 @@ test("canales: el precio de Mercado Libre y PedidosYa deja al menos lo mismo que
   const despensa = precioCanal(35000, "mercadolibre");
   assert.ok(despensa > 48000 && despensa < 56000, String(despensa));
 });
+
+test("la primera respuesta se presenta como asistente con IA, una sola vez", async () => {
+  const { conPresentacion } = await import("./whatsapp-saludo");
+  const a = conPresentacion("¡Hola Quique! El mix sale $15.400 el kilo. ¿Para tu casa o un negocio?");
+  assert.ok(a.startsWith("¡Hola Quique! Soy el asistente con IA de Acopio"));
+  assert.ok(a.endsWith("¿Para tu casa o un negocio?"));
+  assert.ok(conPresentacion("El mix sale $15.400. ¿Te lo separo?").startsWith("¡Hola! Soy el asistente con IA"));
+  assert.equal(conPresentacion(a), a);
+});
