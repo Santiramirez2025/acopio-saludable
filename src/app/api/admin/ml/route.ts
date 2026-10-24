@@ -1,4 +1,4 @@
-// Prueba y estado de Mercado Libre desde el panel (solo administrador).
+// Prueba y estado de Mercado Libre desde el panel. Solo administrador.
 // GET: si está conectado, corre el parte (visitas, ventas, reputación, preguntas) y lo devuelve.
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
