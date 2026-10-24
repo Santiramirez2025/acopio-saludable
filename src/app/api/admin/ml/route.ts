@@ -14,7 +14,13 @@ export async function GET() {
   const id = (process.env.ML_CLIENT_ID ?? "").trim();
   const secreto = (process.env.ML_CLIENT_SECRET ?? "").trim();
   const credenciales = { clientId: id ? `${id.slice(0, 4)}…${id.slice(-4)}` : null, largoSecreto: secreto.length, huellaSecreto: secreto ? createHash("sha256").update(secreto).digest("hex").slice(0, 8) : null, entorno: process.env.VERCEL_ENV ?? null, desplegado: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null };
-  if (!(await conectado())) return NextResponse.json({ conectado: false, credenciales });
+  // Prueba directa de las credenciales (client_credentials): dice si ML acepta el par id/clave.
+  const prueba = await fetch("https://api.mercadolibre.com/oauth/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+    body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secreto }),
+  }).then(async (r) => (r.ok ? "aceptadas" : `rechazadas (${r.status}: ${(await r.text()).slice(0, 120)})`)).catch((e) => `sin respuesta: ${e}`);
+  if (!(await conectado())) return NextResponse.json({ conectado: false, credenciales, prueba });
   try {
     return NextResponse.json({ conectado: true, parte: await parteDiario() });
   } catch (e) {
