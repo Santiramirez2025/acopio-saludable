@@ -20,7 +20,7 @@ type Token = { access_token: string; refresh_token: string; user_id: number; ven
 export const redirigirA = () => `${urlSitio()}/api/ml/callback`;
 
 export function urlAutorizar(): string | null {
-  const id = process.env.ML_CLIENT_ID;
+  const id = process.env.ML_CLIENT_ID?.trim();
   if (!id) return null;
   return `https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=${encodeURIComponent(id)}&redirect_uri=${encodeURIComponent(redirigirA())}`;
 }
@@ -37,7 +37,7 @@ async function pedirToken(body: Record<string, string>): Promise<Token> {
   const res = await fetch(`${API}/oauth/token`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
-    body: new URLSearchParams({ client_id: process.env.ML_CLIENT_ID ?? "", client_secret: process.env.ML_CLIENT_SECRET ?? "", ...body }),
+    body: new URLSearchParams({ client_id: (process.env.ML_CLIENT_ID ?? "").trim(), client_secret: (process.env.ML_CLIENT_SECRET ?? "").trim(), ...body }),
   });
   if (!res.ok) throw new Error(`ML oauth ${res.status}: ${(await res.text()).slice(0, 200)}`);
   return guardar(await res.json());
