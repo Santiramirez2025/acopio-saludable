@@ -23,3 +23,14 @@ export function conMensaje(href: string, mensaje: string): string {
   const base = href.split("?")[0];
   return `${base}?text=${encodeURIComponent(mensaje)}`;
 }
+
+/** La primera respuesta de la charla avisa, en media frase, que atiende una IA y que puede preguntar lo que quiera. */
+export const PRESENTACION_IA = "Soy el asistente con IA de Acopio 🤖: te armo el pedido y te respondo cualquier consulta.";
+
+export function conPresentacion(texto: string): string {
+  const t = texto.trim();
+  if (!t || t.includes("asistente con IA")) return t;
+  const saludo = t.match(/^¡?hola\b[^!.?\n]*[!.]?\s*/i)?.[0];
+  if (saludo) return `${saludo.trim()} ${PRESENTACION_IA} ${t.slice(saludo.length).trim()}`.trim();
+  return `¡Hola! ${PRESENTACION_IA} ${t}`;
+}
