@@ -1,4 +1,4 @@
-// Mercado Libre: la cuenta de vendedor conectada por OAuth.
+// Mercado Libre: la cuenta de vendedor conectada por OAuth (app «Panel Acopio Carlos Paz 5152»).
 //
 // Para qué: en ML posiciona quien contesta rápido y bien, vende y no tiene reclamos. Las preguntas
 // las contesta el mismo criterio del vendedor de WhatsApp en menos de un minuto, a cualquier hora,
