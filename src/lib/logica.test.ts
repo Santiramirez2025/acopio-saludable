@@ -1219,6 +1219,7 @@ test("salud: avisa la tarea del día que no corrió y no molesta antes de hora n
   const corridas = [
     { nombre: "listas", ok: true, detalle: null, fecha: hoy(7.67) },
     { nombre: "organico", ok: true, detalle: null, fecha: hoy(9) },
+    { nombre: "ml", ok: true, detalle: null, fecha: hoy(9.25) },
     { nombre: "reactivacion", ok: false, detalle: "error", fecha: hoy(9.5) },
     { nombre: "radar", ok: true, detalle: null, fecha: new Date(jueves11.getTime() - 10 * 60_000) },
   ];
