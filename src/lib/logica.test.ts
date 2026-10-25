@@ -1367,3 +1367,9 @@ test("pizarra de armado: gramos, totales y nombre corto", async () => {
   ]);
   assert.match(t[0].texto, /^1,5 kg/);
 });
+
+test("vendedor: el mix con cajú mantiene el mismo producto y precio que pasó en la lista", () => {
+  const txt = readFileSync("src/lib/vendedor.ts", "utf8");
+  assert.ok(txt.includes("MISMO MIX, MISMO PRECIO"));
+  assert.ok(txt.includes("Mix Clásico con cajú y girasol"));
+});
