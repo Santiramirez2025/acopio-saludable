@@ -41,6 +41,24 @@ export const AGENTES: Agente[] = [
     mide: "Tareas al día y decisiones tomadas",
   },
   {
+    id: "corporativo", persona: "Victoria", nombre: "Socios Corporativos", puesto: "Grandes cuentas y marcas", area: "direccion", emoji: "🏢", dias: [1, 2, 3, 4, 5], horas: ["11:13"], informa: true,
+    mision: "Conseguir clientes que compren por miles: cadenas, estaciones de servicio, hoteles, empresas y marcas grandes que puedan vender o regalar nuestros mixes.",
+    hace: ["Investiga empresas grandes (tiendas de estaciones de servicio, cadenas, hotelería, aerolíneas, corporativos) y quién decide las compras", "Arma propuestas a medida (marca propia, regalos empresariales, góndola) y las envía", "Sigue cada oportunidad hasta la reunión y deja a Santiago solo la firma"],
+    mide: "Oportunidades abiertas, reuniones y monto potencial",
+  },
+  {
+    id: "sociedades", persona: "Bruno", nombre: "Sociedades y Expansión", puesto: "Socios e incorporaciones", area: "direccion", emoji: "🤝", dias: [2, 4], horas: ["16:07"], informa: true,
+    mision: "Crecer más rápido sumando socios y negocios donde Acopio siempre gane.",
+    hace: ["Busca negocios para asociarse o incorporar (dietéticas, emprendedores, revendedores, franquicias)", "Diseña acuerdos donde Acopio gana siempre: comisión, reventa, marca propia o revendedores", "Evalúa números y riesgos y le lleva a Santiago solo las oportunidades listas para decidir"],
+    mide: "Acuerdos firmados y ventas que generan",
+  },
+  {
+    id: "web", persona: "Tomi", nombre: "Encargado del Sitio Web", puesto: "acopiosaludable.com siempre mejor", area: "comercial", emoji: "🌐", dias: [1, 2, 3, 4, 5, 6], horas: ["14:23"], informa: true,
+    mision: "Que el sitio venda cada día más: más visitas que se convierten en pedidos.",
+    hace: ["Mide visitas, carritos y pedidos del sitio y encuentra dónde se pierde gente", "Mejora una cosa por día: fichas, fotos, combos destacados, velocidad, textos", "Prueba ofertas y secciones de temporada en la portada"],
+    mide: "Pedidos que entran por la web y conversión",
+  },
+  {
     id: "estratega", persona: "Martín", nombre: "Director de Crecimiento", puesto: "Plan para escalar", area: "direccion", emoji: "🚀", dias: [6], horas: ["10:13"], informa: true,
     mision: "Encontrar la forma más rápida de multiplicar las ventas.",
     hace: ["Analiza la semana: qué canal trajo clientes y a qué costo", "Define 3 experimentos de crecimiento para la semana", "Ajusta las prioridades del resto de los agentes"],
