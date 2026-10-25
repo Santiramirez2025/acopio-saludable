@@ -3,12 +3,15 @@
 // el contexto del negocio, la voz del agente y la herramienta guardar_orden. Solo administrador.
 import { NextResponse } from "next/server";
 import { esAdmin } from "@/lib/admin-acceso";
-import { IDS_AGENTES } from "@/lib/agentes";
+import { AGENTES, IDS_AGENTES } from "@/lib/agentes";
 import { promptAgente } from "@/lib/agentes-chat";
 import { VOCES_EN_VIVO } from "@/lib/voz-agentes";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+
+// Palabras que el transcriptor tiene que reconocer bien (antes «sin TACC» salía «sin tag»).
+const VOCABULARIO = `Acopio Saludable, sin TACC, celíacos, La Granja del Centro, Carlos Paz, Punilla, Córdoba, Mercado Libre, mix, mixes, frutos secos, pan dulce, alfajores, combos, WhatsApp, Meta, Instagram, ${AGENTES.map((a) => a.persona).join(", ")}.`;
 
 const MODELOS = [process.env.OPENAI_REALTIME_MODELO, "gpt-realtime-2.1", "gpt-realtime"].filter(Boolean) as string[];
 
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
           instructions,
           audio: {
             input: {
-              transcription: { model: "gpt-4o-mini-transcribe", language: "es" },
+              transcription: { model: "gpt-4o-transcribe", language: "es", prompt: VOCABULARIO },
               noise_reduction: { type: "near_field" },
               turn_detection: { type: "semantic_vad", eagerness: "high" },
             },
@@ -43,10 +46,13 @@ export async function POST(req: Request) {
             {
               type: "function",
               name: "guardar_orden",
-              description: "Guarda una orden de Santiago para que este agente la haga en su próxima corrida. Usala solo cuando Santiago pide que hagas algo.",
+              description: "Guarda una orden de Santiago para la próxima corrida del agente que corresponda. Usala solo cuando Santiago pide que se haga algo. Si la tarea es de otra persona del equipo, mandásela directo a ella con «para».",
               parameters: {
                 type: "object",
-                properties: { orden: { type: "string", description: "La instrucción clara y completa, en una o dos oraciones." } },
+                properties: {
+                  orden: { type: "string", description: "La instrucción clara y completa, en una o dos oraciones." },
+                  para: { type: "string", enum: IDS_AGENTES, description: `Quién la hace (por defecto, vos). Equipo: ${AGENTES.map((a) => `${a.id}=${a.persona} (${a.nombre})`).join("; ")}.` },
+                },
                 required: ["orden"],
               },
             },

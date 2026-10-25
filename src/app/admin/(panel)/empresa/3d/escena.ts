@@ -584,7 +584,10 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
   const qGiro = new THREE.Quaternion();
   const eje = new THREE.Vector3();
   let cercaAntes: string | null = null;
+  let cuadro = 0;
   render.setAnimationLoop(() => {
+    // Con una charla abierta la escena va a 30 cuadros por segundo: le deja aire al audio en vivo.
+    if (enfocado && ++cuadro % 2) return;
     const dt = Math.min(reloj.getDelta(), 0.05);
     const t = reloj.elapsedTime;
 
