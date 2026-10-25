@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Ficha, type AgenteVista, type DatosOficina } from "../oficina";
 import type { Control } from "./escena";
 import { BotonTv } from "../boton-tv";
+import { SeguirCelular } from "@/app/tv/seguir-celular";
 
 const COLOR_ESTADO: Record<AgenteVista["estado"], string> = { ok: "#22c55e", falla: "#ef4444", atrasado: "#f59e0b", pendiente: "#38bdf8", descanso: "#9ca3af" };
 
@@ -52,7 +53,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
             temporada: d.temporada,
           },
           { cerca: setCerca, tocar: (id) => setAbierto(id), listo: () => setCargado(true), progreso: setProgreso },
-          { tv },
+          { tv, liviano: enTv || new URLSearchParams(window.location.search).get("liviano") === "1" },
         );
         if (!vivo) return c.destruir();
         ctl.current = c;
@@ -85,20 +86,32 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
     let n = 0;
     const t = setInterval(() => {
       if (!cargado || abiertoRef.current || mapa) return;
-      if (Date.now() - quieto.current < 25_000) return;
+      if (Date.now() - quieto.current < (enTv ? 4_000 : 25_000)) return;
       const lista = datos.agentes;
       const a = lista[n % lista.length];
       n++;
       setRecorrido(a.id);
       ctl.current?.irA(a.id, false);
-    }, 12_000);
+    }, enTv ? 10_000 : 12_000);
     return () => {
       clearInterval(t);
       window.removeEventListener("pointerdown", mover);
       window.removeEventListener("keydown", mover);
     };
-  }, [cargado, mapa, datos.agentes]);
+  }, [cargado, mapa, datos.agentes, enTv]);
   const enRecorrido = porId(recorrido);
+
+  // En la TV: ir a la oficina que se pidió desde el celular (o por ?agente=) y quedarse ahí un minuto.
+  const irAgente = useCallback((id: string) => {
+    quieto.current = Date.now() + 60_000;
+    setRecorrido(id);
+    ctl.current?.irA(id, false);
+  }, []);
+  useEffect(() => {
+    if (!cargado) return;
+    const id = new URLSearchParams(window.location.search).get("agente");
+    if (id && datos.agentes.some((x) => x.id === id)) irAgente(id);
+  }, [cargado, datos.agentes, irAgente]);
 
   // Teclado y control remoto.
   const tecla = useCallback((e: KeyboardEvent, baja: boolean) => {
@@ -150,6 +163,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
   return (
     <div className="fixed inset-0 z-50 bg-stone-200">
       <div ref={lienzo} className="absolute inset-0" />
+      {enTv ? <SeguirCelular actual="oficina" onAgente={irAgente} /> : null}
 
       {!cargado ? (
         <div className="absolute inset-0 grid place-items-center bg-[#0b2a20] text-white">
@@ -166,7 +180,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-4">
         <div className="pointer-events-auto rounded-2xl bg-black/40 px-4 py-2 text-white backdrop-blur-md">
           <div className="text-sm font-semibold">Acopio · La empresa</div>
-          <div className="text-xs text-white/70">Flechas o WASD para caminar · Shift corre · arrastrá para mirar · tocá a alguien o OK para hablarle · M oficinas</div>
+          <div className="text-xs text-white/70">{enTv ? "Manejala desde el celular: panel → TV → «Mostrar en la TV»" : "Flechas o WASD para caminar · Shift corre · arrastrá para mirar · tocá a alguien o OK para hablarle · M oficinas"}</div>
         </div>
         <div className="pointer-events-auto flex gap-2">
           <button onClick={() => setMapa((m) => !m)} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">🗺️ Oficinas</button>
@@ -205,7 +219,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
         </button>
       ) : null}
 
-      {!a ? (
+      {!a && !enTv ? (
         <div className="absolute bottom-4 left-4 grid grid-cols-3 gap-2">
           <span />
           {boton("ArrowUp", "▲")}

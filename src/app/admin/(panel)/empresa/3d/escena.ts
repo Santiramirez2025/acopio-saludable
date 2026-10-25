@@ -89,14 +89,18 @@ function texturaMadera() {
   return t;
 }
 
-export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eventos, opciones: { tv: boolean }): Promise<Control> {
-  const render = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-  render.setPixelRatio(Math.min(window.devicePixelRatio, opciones.tv ? 1 : 1.75));
+export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eventos, opciones: { tv: boolean; liviano?: boolean }): Promise<Control> {
+  // Modo liviano para el navegador de un Smart TV (su placa de video no aguanta el reflejo del ambiente
+  // ni las sombras suaves: se veía todo blanco). También si el equipo no tiene WebGL2.
+  const prueba = document.createElement("canvas").getContext("webgl2");
+  const liviano = opciones.liviano || !prueba;
+  const render = new THREE.WebGLRenderer({ antialias: !liviano, powerPreference: "high-performance" });
+  render.setPixelRatio(liviano ? 1 : Math.min(window.devicePixelRatio, opciones.tv ? 1 : 1.75));
   render.setSize(cont.clientWidth, cont.clientHeight);
   render.outputColorSpace = THREE.SRGBColorSpace;
-  render.toneMapping = THREE.ACESFilmicToneMapping;
+  render.toneMapping = liviano ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
   render.toneMappingExposure = 1.05;
-  render.shadowMap.enabled = true;
+  render.shadowMap.enabled = !liviano;
   render.shadowMap.type = THREE.PCFSoftShadowMap;
   cont.appendChild(render.domElement);
 
@@ -104,14 +108,16 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
   escena.background = new THREE.Color(0xeef1ec);
   escena.fog = new THREE.Fog(0xeef1ec, 35, 110);
   const pmrem = new THREE.PMREMGenerator(render);
-  escena.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  escena.environmentIntensity = 0.55;
+  if (!liviano) {
+    escena.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    escena.environmentIntensity = 0.55;
+  }
 
   const camara = new THREE.PerspectiveCamera(62, cont.clientWidth / cont.clientHeight, 0.05, 220);
-  escena.add(new THREE.HemisphereLight(0xffffff, 0xd6c7ae, 0.9));
-  const sol = new THREE.DirectionalLight(0xfff4e0, 1.5);
+  escena.add(new THREE.HemisphereLight(0xffffff, 0xd6c7ae, liviano ? 1.6 : 0.9));
+  const sol = new THREE.DirectionalLight(0xfff4e0, liviano ? 1.1 : 1.5);
   sol.position.set(18, 30, 12);
-  sol.castShadow = true;
+  sol.castShadow = !liviano;
   sol.shadow.mapSize.set(opciones.tv ? 2048 : 4096, opciones.tv ? 2048 : 4096);
   sol.shadow.bias = -0.0004;
   sol.shadow.normalBias = 0.02;

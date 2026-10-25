@@ -4,6 +4,7 @@
 // En la TV aparece un código; acá se carga y la TV entra sola a la oficina (queda vinculada 30 días).
 // Para TVs sin Chromecast: abrir acopiosaludable.com/tv en el navegador de la TV y cargar el código igual.
 import { useEffect, useRef, useState } from "react";
+import { AGENTES } from "@/lib/agentes";
 
 type Presentacion = { start: () => Promise<unknown>; getAvailability?: () => Promise<{ value: boolean; onchange: (() => void) | null }> };
 
@@ -52,6 +53,13 @@ export function BotonTv({ oscuro = true }: { oscuro?: boolean }) {
     }
   };
 
+  const [mostrado, setMostrado] = useState("");
+  const mostrar = async (vista: "oficina" | "armado" | "agente", agente?: string) => {
+    setMostrado("Mandando…");
+    const r = await fetch("/api/admin/tv/comando", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ vista, agente }) });
+    setMostrado(r.ok ? "✅ Listo: la TV cambia en unos segundos." : "No pude mandarlo. Probá de nuevo.");
+  };
+
   const vincular = async () => {
     setEstado("Vinculando…");
     const r = await fetch("/api/admin/tv/vincular", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ codigo }) });
@@ -63,20 +71,47 @@ export function BotonTv({ oscuro = true }: { oscuro?: boolean }) {
   return (
     <>
       <button
-        onClick={() => void transmitir()}
-        title="Transmitir a la TV"
+        onClick={() => {
+          setAbierto(true);
+          setEstado("");
+        }}
+        title="Mostrar en la TV"
         aria-label="Transmitir a la TV"
         className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm backdrop-blur-md ${oscuro ? "bg-black/40 text-white hover:bg-black/55" : "border border-stone-300 bg-white text-stone-900 hover:bg-stone-50"}`}
       >
         <IconoTv activo={hayCast} />
-        <span>TV</span>
+        <span>Mostrar en la TV</span>
       </button>
       {abierto ? (
         <div className="fixed inset-0 z-[80] grid place-items-center bg-black/50 p-4" onClick={() => setAbierto(false)}>
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl bg-white p-6 text-stone-900 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Ver la empresa en la TV</h2>
+              <h2 className="text-lg font-semibold">Mostrar en la TV</h2>
               <button onClick={() => setAbierto(false)} className="text-2xl text-stone-400" aria-label="Cerrar">×</button>
+            </div>
+            <p className="mt-1 text-sm text-stone-500">Elegí acá qué se ve en la TV vinculada: cambia sola, sin tocar el control.</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button onClick={() => void mostrar("armado")} className="rounded-2xl bg-acopio-700 px-3 py-3 text-sm font-semibold text-white">📦 Pizarra de armado</button>
+              <button onClick={() => void mostrar("oficina")} className="rounded-2xl bg-stone-900 px-3 py-3 text-sm font-semibold text-white">🕹️ Oficina (recorrido)</button>
+            </div>
+            <select
+              defaultValue=""
+              onChange={(e) => {
+                if (e.target.value) void mostrar("agente", e.target.value);
+                e.target.value = "";
+              }}
+              className="mt-2 w-full rounded-2xl border border-stone-300 px-3 py-3 text-sm"
+            >
+              <option value="">👤 Ir a la oficina de…</option>
+              {AGENTES.map((x) => (
+                <option key={x.id} value={x.id}>{x.persona} · {x.nombre}</option>
+              ))}
+            </select>
+            {mostrado ? <p className="mt-2 text-sm text-stone-600">{mostrado}</p> : null}
+            <hr className="my-5 border-stone-200" />
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Vincular una TV (una sola vez)</h2>
+              
             </div>
             <ol className="mt-3 space-y-2 text-sm text-stone-700">
               <li>
@@ -86,9 +121,9 @@ export function BotonTv({ oscuro = true }: { oscuro?: boolean }) {
                 ) : null}
               </li>
               <li>
-                <b>Cualquier Smart TV</b>: abrí el navegador de la TV en <b>acopiosaludable.com/tv</b>.
+                <b>Cualquier Smart TV</b>: abrí el navegador de la TV en <b>acopiosaludable.com/tv</b> (una sola vez; dejala en favoritos o como página de inicio).
               </li>
-              <li>En la TV aparece un código de 6 números: escribilo acá.</li>
+              <li>En la TV aparece un código de 6 números: escribilo acá, en el celular. Queda vinculada 30 días y después la manejás desde arriba.</li>
             </ol>
             <div className="mt-4 flex gap-2">
               <input
