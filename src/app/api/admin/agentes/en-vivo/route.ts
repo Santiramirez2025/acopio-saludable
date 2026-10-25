@@ -2,7 +2,7 @@
 // POST { agente } → { clave, modelo } — clave efímera (dura ~1 min para conectar) con la persona,
 // el contexto del negocio, la voz del agente y la herramienta guardar_orden. Solo administrador.
 import { NextResponse } from "next/server";
-import { esAdmin } from "@/lib/admin-acceso";
+import { esAdminOTv as esAdmin } from "@/lib/admin-acceso";
 import { AGENTES, IDS_AGENTES } from "@/lib/agentes";
 import { promptAgente } from "@/lib/agentes-chat";
 import { VOCES_EN_VIVO } from "@/lib/voz-agentes";
@@ -25,7 +25,8 @@ export async function POST(req: Request) {
 
   const instructions = await promptAgente(agente, "voz");
   let ultimo = "";
-  for (const model of [...new Set(MODELOS)]) {
+  const intentos = [...new Set(MODELOS)].flatMap((model) => [{ model, extras: true }, { model, extras: false }]);
+  for (const { model, extras } of intentos) {
     const r = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: { authorization: `Bearer ${clave}`, "content-type": "application/json" },
@@ -38,9 +39,12 @@ export async function POST(req: Request) {
             input: {
               transcription: { model: "gpt-4o-transcribe", language: "es", prompt: VOCABULARIO },
               noise_reduction: { type: "near_field" },
-              turn_detection: { type: "semantic_vad", eagerness: "high" },
+              // Corte de turno rápido: cuando te callás ~0,45 s, contesta; si hablás encima, se calla.
+              turn_detection: extras
+                ? { type: "server_vad", threshold: 0.5, prefix_padding_ms: 250, silence_duration_ms: 450, create_response: true, interrupt_response: true }
+                : { type: "semantic_vad", eagerness: "high" },
             },
-            output: { voice: VOCES_EN_VIVO[agente] ?? "marin" },
+            output: extras ? { voice: VOCES_EN_VIVO[agente] ?? "marin", speed: 1.08 } : { voice: VOCES_EN_VIVO[agente] ?? "marin" },
           },
           tools: [
             {

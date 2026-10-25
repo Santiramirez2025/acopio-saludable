@@ -1,6 +1,6 @@
 // Lo que dice Santiago por micrófono → texto. POST multipart { audio } → { texto }. 503 sin OPENAI_API_KEY.
 import { NextResponse } from "next/server";
-import { esAdmin } from "@/lib/admin-acceso";
+import { esAdminOTv as esAdmin } from "@/lib/admin-acceso";
 import { hayVoz, transcribir } from "@/lib/voz-agentes";
 
 export const dynamic = "force-dynamic";

@@ -1,6 +1,6 @@
 // Voz natural de un agente. POST { texto, agente } → audio/mpeg. 503 si no hay OPENAI_API_KEY.
 import { NextResponse } from "next/server";
-import { esAdmin } from "@/lib/admin-acceso";
+import { esAdminOTv as esAdmin } from "@/lib/admin-acceso";
 import { hablar, hayVoz } from "@/lib/voz-agentes";
 
 export const dynamic = "force-dynamic";

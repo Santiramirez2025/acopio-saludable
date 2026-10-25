@@ -1,7 +1,7 @@
 // Santiago le deja una orden a un agente desde /admin/empresa. El agente la lee en su próxima corrida
 // (llega como «PRIORIDAD: <agente> — ORDEN DE SANTIAGO …» en GET /api/admin/agentes). Solo administrador.
 //   POST { agente, texto }
-import { esAdmin } from "@/lib/admin-acceso";
+import { esAdminOTv as esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
