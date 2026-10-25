@@ -54,10 +54,10 @@ export async function POST(req: Request) {
               noise_reduction: { type: "near_field" },
               // Corte de turno rápido: cuando te callás ~0,45 s, contesta; si hablás encima, se calla.
               turn_detection: extras
-                ? { type: "server_vad", threshold: 0.5, prefix_padding_ms: 250, silence_duration_ms: 450, create_response: true, interrupt_response: true }
+                ? { type: "server_vad", threshold: 0.5, prefix_padding_ms: 250, silence_duration_ms: 550, create_response: true, interrupt_response: true }
                 : { type: "semantic_vad", eagerness: "high" },
             },
-            output: extras ? { voice: VOCES_EN_VIVO[agente] ?? "marin", speed: 1.08 } : { voice: VOCES_EN_VIVO[agente] ?? "marin" },
+            output: { voice: VOCES_EN_VIVO[agente] ?? "marin" },
           },
           tools: [
             {

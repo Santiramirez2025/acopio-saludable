@@ -7,20 +7,19 @@ const API = "https://api.openai.com/v1";
 
 /** Voz de cada persona del equipo (mujeres y hombres distintos, que se reconozcan). */
 export const VOCES: Record<string, string> = {
-  gerente: "coral", estratega: "ash", ventas: "verse", hunter: "nova", fidelizacion: "shimmer", mercadolibre: "echo",
-  anuncios: "sage", marketing: "nova", disenador: "ballad", community: "verse", seo: "echo", alianzas: "shimmer",
-  reels: "ash", compras: "onyx", logistica: "onyx", finanzas: "sage", web: "ballad", corporativo: "coral", sociedades: "ash",
+  gerente: "marin", corporativo: "marin", hunter: "marin", fidelizacion: "marin", anuncios: "marin", marketing: "marin", alianzas: "marin", finanzas: "marin",
+  estratega: "cedar", sociedades: "cedar", ventas: "cedar", mercadolibre: "cedar", web: "cedar", disenador: "cedar", community: "cedar", reels: "cedar", seo: "cedar", compras: "cedar", logistica: "cedar",
 };
 
 /** Voces de la llamada en vivo (Realtime): marin y cedar son las más naturales. */
 export const VOCES_EN_VIVO: Record<string, string> = {
-  gerente: "marin", estratega: "cedar", corporativo: "coral", sociedades: "ash", ventas: "cedar", hunter: "shimmer",
-  fidelizacion: "marin", mercadolibre: "echo", web: "verse", anuncios: "sage", marketing: "coral", disenador: "ballad",
-  community: "verse", reels: "ash", seo: "echo", alianzas: "shimmer", compras: "cedar", logistica: "ash", finanzas: "sage",
+  // Las dos voces más claras y naturales del modelo: «marin» para ellas y «cedar» para ellos.
+  gerente: "marin", corporativo: "marin", hunter: "marin", fidelizacion: "marin", anuncios: "marin", marketing: "marin", alianzas: "marin", finanzas: "marin",
+  estratega: "cedar", sociedades: "cedar", ventas: "cedar", mercadolibre: "cedar", web: "cedar", disenador: "cedar", community: "cedar", reels: "cedar", seo: "cedar", compras: "cedar", logistica: "cedar",
 };
 
 const INSTRUCCIONES =
-  "Hablás en español rioplatense de Argentina (Córdoba), como una persona real de un equipo de trabajo: cálida, segura, natural, con ritmo de conversación y sin sonar a locutor. Pronunciá bien los números y los precios en pesos.";
+  "Hablás en español rioplatense de Argentina, como una persona real del equipo: voz clara, cálida y agradable, ritmo tranquilo, vocalizando bien cada palabra, con pausas naturales entre frases. Nada de tono de locutor ni de apuro. Números y precios dichos claros y redondeados.";
 
 export function hayVoz(): boolean {
   return Boolean(process.env.OPENAI_API_KEY);
@@ -38,7 +37,7 @@ export async function hablar(texto: string, agente: string): Promise<Response> {
       signal: AbortSignal.timeout(45_000),
     });
   let r = await pedir({ model: process.env.OPENAI_TTS_MODELO || "gpt-4o-mini-tts", voice: voz, input: limpio, instructions: INSTRUCCIONES, response_format: "mp3" });
-  if (!r.ok) r = await pedir({ model: "tts-1", voice: ["coral", "verse", "ballad", "sage", "ash"].includes(voz) ? "alloy" : voz, input: limpio, response_format: "mp3" });
+  if (!r.ok) r = await pedir({ model: "tts-1", voice: ["coral", "verse", "ballad", "sage", "ash", "marin", "cedar"].includes(voz) ? (["marin", "coral", "sage", "shimmer"].includes(voz) ? "nova" : "onyx") : voz, input: limpio, response_format: "mp3" });
   return r;
 }
 
