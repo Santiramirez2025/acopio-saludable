@@ -1,5 +1,6 @@
 // Hablar con un agente desde /admin/empresa. Solo administrador.
 //   POST { agente, mensajes: [{ role: "user" | "assistant", content }] } → { respuesta, orden? }
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const b = (await req.json().catch(() => ({}))) as { agente?: string; mensajes?: { role: string; content: string }[] };
   const agente = String(b.agente ?? "");
   if (!IDS_AGENTES.includes(agente)) return NextResponse.json({ error: "Agente desconocido" }, { status: 400 });

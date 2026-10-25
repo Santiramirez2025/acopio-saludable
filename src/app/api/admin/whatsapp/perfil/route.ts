@@ -10,6 +10,7 @@
 // GET  → el perfil como está hoy en Meta.
 // POST → sube la foto y deja los textos. Idempotente.
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -49,7 +50,7 @@ async function graph(camino: string, init: RequestInit = {}): Promise<{ ok: bool
 }
 
 async function autorizado() {
-  return Boolean(await getServerSession(authOptions));
+  return Boolean(await esAdmin());
 }
 
 export async function GET() {

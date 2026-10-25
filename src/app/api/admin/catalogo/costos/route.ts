@@ -1,6 +1,7 @@
 // Corrige costos (y si se pide, precio o nombre) de productos ya cargados, sin tocar nada más.
 // POST { items: [{ codigo, costo?, precioPublico?, producto? }] }. Registra el cambio en el historial.
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -11,7 +12,7 @@ import { COMBOS_PROVEEDORES, PRODUCTOS_PROVEEDORES, fotoCombo, precioDe } from "
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const b = (await req.json().catch(() => ({}))) as { items?: { codigo?: string; costo?: number; precioPublico?: number; producto?: string; crear?: boolean; fotoDe?: string }[] };
   const salida: Record<string, unknown> = {};
   // Descuento de un combo: { combos: [{ slug, descuentoPct }] }. Sirve para mantener el precio del combo cuando sube un producto.

@@ -8,6 +8,7 @@
 // El envío se saltea a quien ya se le escribió y a quien pidió no recibir más. Con
 // { forzar: true } se puede repetir a propósito (por ejemplo, la prueba a tu propio número).
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { crearPlantillaAviso } from "@/lib/avisos";
 import { crearPlantillaComprobante } from "@/lib/comprobante-envio";
@@ -27,12 +28,12 @@ export const maxDuration = 300;
 const TOPE = 60; // por llamada: entra en el tiempo de una función y se ve el resultado tanda por tanda
 
 export async function GET() {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   return NextResponse.json(await estadoPlantillas());
 }
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   let cuerpo: { accion?: unknown; lista?: unknown; forzar?: unknown; cantidad?: unknown };
   try {
     cuerpo = await req.json();

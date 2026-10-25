@@ -3,6 +3,7 @@
 //
 // POST { telefono, nombre, camino, medio: "TRANSFERENCIA" | "AL_RECIBIR", lugar, costoEnvio, direccion?, horario? }
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -13,7 +14,7 @@ import { guardarPedido } from "@/lib/whatsapp-memoria";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const s = (k: string) => (typeof b[k] === "string" ? String(b[k]).trim() : "");
   const telefono = s("telefono").replace(/\D/g, "");

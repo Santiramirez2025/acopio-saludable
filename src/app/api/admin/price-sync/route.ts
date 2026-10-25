@@ -1,3 +1,4 @@
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   const json = (cuerpo: unknown, status = 200) => NextResponse.json(cuerpo, { status, headers: CORS });
   const bearer = req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] ?? null;
   // Entra con el token del marcador o con la sesión del panel.
-  if (!(await tokenSyncValido(bearer)) && !(await getServerSession(authOptions))) return json({ error: "No autorizado. Generá un marcador nuevo en Panel → Actualizaciones." }, 401);
+  if (!(await tokenSyncValido(bearer)) && !(await esAdmin())) return json({ error: "No autorizado. Generá un marcador nuevo en Panel → Actualizaciones." }, 401);
   const texto = await req.text();
   if (texto.length > 5 * 1024 * 1024) return json({ error: "La actualización es demasiado grande" }, 413);
   let cuerpo: { origen?: unknown; modo?: unknown; completo?: unknown; items?: unknown };

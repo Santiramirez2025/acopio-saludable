@@ -6,6 +6,7 @@
 // sin mandar nada ni guardar nada: devuelve lo que vería la persona, con los botones y la lista.
 // Sirve para probar cambios en el vendedor antes de que les lleguen a los clientes reales.
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -20,7 +21,7 @@ export const maxDuration = 300;
 type Paso = { texto?: unknown; toque?: unknown };
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   let cuerpo: { pasos?: unknown; anuncio?: { titulo?: string; texto?: string } | null; nombre?: string; prospecto?: { rubro?: string; negocio?: string } | null };
   try {
     cuerpo = await req.json();

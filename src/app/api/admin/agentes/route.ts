@@ -3,6 +3,7 @@
 //   GET  ?dias=1                    → informes de los últimos N días, del más nuevo al más viejo.
 //     Las órdenes que Santiago deja desde /admin/empresa viajan acá como notas del Gerente con una
 //     línea «PRIORIDAD: <agente> — ORDEN DE SANTIAGO …», que es lo que cada agente lee al empezar.
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -12,7 +13,7 @@ import { IDS_AGENTES } from "@/lib/agentes";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const b = (await req.json().catch(() => ({}))) as { agente?: string; ok?: boolean; informe?: string };
   const agente = String(b.agente ?? "").toLowerCase().trim();
   if (!IDS_AGENTES.includes(agente)) return NextResponse.json({ error: `agente = ${IDS_AGENTES.join(" | ")}` }, { status: 400 });
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const dias = Math.min(30, Math.max(1, Number(new URL(req.url).searchParams.get("dias")) || 1));
   const desde = new Date(Date.now() - Math.max(dias, 7) * 86_400_000);
   const filas = await prisma.$queryRaw<{ nombre: string; ok: boolean; detalle: string | null; fecha: Date }[]>`

@@ -1,5 +1,6 @@
 // Subir una lista de precios en PDF (Todo Granolas o La Granja) desde el panel, o forzar la de La Granja.
 // POST multipart con `archivo`, o JSON { accion: "granja" }.
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const tipo = req.headers.get("content-type") ?? "";
   if (tipo.includes("multipart/form-data")) {
     const fd = await req.formData();
