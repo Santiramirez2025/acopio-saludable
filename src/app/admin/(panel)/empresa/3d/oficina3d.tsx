@@ -71,6 +71,35 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
     ctl.current?.enfocar(abierto);
   }, [abierto]);
 
+  // Recorrido automático (para dejarlo en la TV): si nadie toca nada por 25 s, la cámara va
+  // pasando por cada oficina y muestra qué hizo cada persona. Cualquier tecla o toque lo corta.
+  const [recorrido, setRecorrido] = useState<string | null>(null);
+  const quieto = useRef(Date.now());
+  useEffect(() => {
+    const mover = () => {
+      quieto.current = Date.now();
+      setRecorrido((r) => (r ? null : r));
+    };
+    window.addEventListener("pointerdown", mover);
+    window.addEventListener("keydown", mover);
+    let n = 0;
+    const t = setInterval(() => {
+      if (!cargado || abiertoRef.current || mapa) return;
+      if (Date.now() - quieto.current < 25_000) return;
+      const lista = datos.agentes;
+      const a = lista[n % lista.length];
+      n++;
+      setRecorrido(a.id);
+      ctl.current?.irA(a.id, false);
+    }, 12_000);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("pointerdown", mover);
+      window.removeEventListener("keydown", mover);
+    };
+  }, [cargado, mapa, datos.agentes]);
+  const enRecorrido = porId(recorrido);
+
   // Teclado y control remoto.
   const tecla = useCallback((e: KeyboardEvent, baja: boolean) => {
     const enCampo = ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName);
@@ -147,7 +176,21 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
         </div>
       </div>
 
-      {c && !a ? (
+      {enRecorrido && !a ? (
+        <div className="pointer-events-none absolute bottom-8 left-8 max-w-xl rounded-3xl bg-black/55 p-5 text-white shadow-2xl backdrop-blur-md">
+          <div className="flex items-center gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/avatars/${enRecorrido.id}.svg`} alt="" className="h-16 w-16 rounded-full bg-white/90" />
+            <div>
+              <div className="text-2xl font-bold">{enRecorrido.persona} {enRecorrido.emoji}</div>
+              <div className="text-white/70">{enRecorrido.nombre} · {enRecorrido.estadoTexto}</div>
+            </div>
+          </div>
+          <p className="mt-3 line-clamp-3 text-lg text-white/90">{ultimaLinea(enRecorrido)}</p>
+        </div>
+      ) : null}
+
+      {c && !a && !enRecorrido ? (
         <button
           onClick={() => ctl.current?.irA(c.id, true)}
           className="absolute bottom-24 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full bg-white/95 py-2 pl-2 pr-5 text-stone-900 shadow-2xl"

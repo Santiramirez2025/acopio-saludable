@@ -8,6 +8,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { clone as clonarEsqueleto } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { huesos, sentar, type Huesos } from "./pose";
+import { decorarOficina, decorarPasillo } from "./decor";
 
 export type AgenteEscena = {
   id: string;
@@ -89,7 +90,7 @@ function texturaMadera() {
 }
 
 export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eventos, opciones: { tv: boolean }): Promise<Control> {
-  const render = new THREE.WebGLRenderer({ antialias: !opciones.tv, powerPreference: "high-performance" });
+  const render = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   render.setPixelRatio(Math.min(window.devicePixelRatio, opciones.tv ? 1 : 1.75));
   render.setSize(cont.clientWidth, cont.clientHeight);
   render.outputColorSpace = THREE.SRGBColorSpace;
@@ -111,7 +112,7 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
   const sol = new THREE.DirectionalLight(0xfff4e0, 1.5);
   sol.position.set(18, 30, 12);
   sol.castShadow = true;
-  sol.shadow.mapSize.set(opciones.tv ? 1024 : 4096, opciones.tv ? 1024 : 4096);
+  sol.shadow.mapSize.set(opciones.tv ? 2048 : 4096, opciones.tv ? 2048 : 4096);
   sol.shadow.bias = -0.0004;
   sol.shadow.normalBias = 0.02;
   escena.add(sol, sol.target);
@@ -371,6 +372,8 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     pizarra.rotation.y = Math.PI;
     escena.add(pizarra);
 
+    decorarOficina({ escena, id: a.id, emoji: a.emoji, persona: a.persona, lado, zc, z1, z2, xIn, xOut, xEsc, xPer, color, bloquea, lienzo });
+
     // La persona.
     const g = MUJERES.has(a.id) ? gMujer : gHombre;
     const raiz = clonarEsqueleto(g.scene);
@@ -419,6 +422,8 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     });
     lugares.push({ id: a.id, lado, zc, frente: new THREE.Vector3(xEsc - lado * 1.55, 0, zc), mira: new THREE.Vector3(xPer, 1.35, zc) });
   });
+
+  decorarPasillo(escena, A, fondo, LARGO, bloquea);
 
   // Paredes del fondo y del hall.
   pared(-(A + PROF), fondo, A + PROF, fondo);

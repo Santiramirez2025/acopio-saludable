@@ -464,6 +464,16 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
           return m;
         });
       },
+      onAccion: (h, args, ok, resultado) => {
+        const que: Record<string, string> = {
+          escribir_whatsapp: `le escribí por WhatsApp a ${String(args.telefono ?? "")}`,
+          cambiar_estado_pedido: `pasé el pedido #${String(args.id ?? "")} a ${String(args.estado ?? "")}`,
+          cambiar_precio_ml: `cambié ${String(args.item ?? "")} a $${Number(args.precio ?? 0).toLocaleString("es-AR")}`,
+          cargar_negocios: `cargué ${Array.isArray(args.lista) ? args.lista.length : 0} negocios para la captación`,
+        };
+        setMensajes((prev) => [...prev, { role: "assistant", content: ok ? `✅ Hecho: ${que[h] ?? h}.` : `⚠️ No pude: ${que[h] ?? h}. ${resultado.slice(0, 160)}` }]);
+        onCambio();
+      },
       onOrden: (o, para) => {
         const quien = para === a.id ? "" : ` → se la pasé a ${AGENTES.find((x) => x.id === para)?.persona ?? para}`;
         setMensajes((prev) => [...prev, { role: "assistant", content: `Anotado${quien}.`, orden: o }]);
