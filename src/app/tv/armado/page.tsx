@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { esTv } from "@/lib/tv";
 import { pizarraArmado } from "@/lib/armado";
 import { PizarraArmado } from "@/app/admin/(panel)/empresa/pizarra-armado";
+import { SeguirCelular } from "../seguir-celular";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pizarra de armado · Acopio" };
@@ -12,5 +13,10 @@ export const metadata = { title: "Pizarra de armado · Acopio" };
 export default async function TvArmado() {
   const sesion = await getServerSession(authOptions);
   if (!sesion && !(await esTv())) redirect("/tv");
-  return <PizarraArmado p={await pizarraArmado()} puedeMarcar={!!sesion} volver="/tv/oficina" />;
+  return (
+    <>
+      <SeguirCelular actual="armado" />
+      <PizarraArmado p={await pizarraArmado()} puedeMarcar={!!sesion} volver="/tv/oficina" />
+    </>
+  );
 }

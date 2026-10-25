@@ -69,3 +69,22 @@ export async function esTv(): Promise<boolean> {
   const r = await prisma.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM "CronCorrida" WHERE "nombre" = ${`tvsesion-${sha(token)}`} AND "fecha" >= ${desde}`.catch(() => [{ n: 0 }]);
   return (r[0]?.n ?? 0) > 0;
 }
+
+// ---------- El celular manda, la TV obedece (como «ver en la TV» de YouTube, sin escribir nada en la TV) ----------
+export type ComandoTv = { vista: "oficina" | "armado" | "agente"; agente?: string; t: number };
+
+export async function mandarComando(c: Omit<ComandoTv, "t">): Promise<ComandoTv> {
+  const cmd = { ...c, t: Date.now() };
+  await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES ('tv-comando', true, ${JSON.stringify(cmd)})`;
+  return cmd;
+}
+
+export async function ultimoComando(): Promise<ComandoTv | null> {
+  const desde = new Date(Date.now() - 6 * 3_600_000);
+  const r = await prisma.$queryRaw<{ detalle: string | null }[]>`SELECT "detalle" FROM "CronCorrida" WHERE "nombre" = 'tv-comando' AND "fecha" >= ${desde} ORDER BY "fecha" DESC LIMIT 1`.catch(() => []);
+  try {
+    return r[0]?.detalle ? (JSON.parse(r[0].detalle) as ComandoTv) : null;
+  } catch {
+    return null;
+  }
+}
