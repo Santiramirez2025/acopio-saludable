@@ -11,12 +11,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 // Palabras que el transcriptor tiene que reconocer bien (antes «sin TACC» salía «sin tag»).
-const VOCABULARIO = `Acopio Saludable, sin TACC, celíacos, La Granja del Centro, Carlos Paz, Punilla, Córdoba, Mercado Libre, mix, mixes, frutos secos, pan dulce, alfajores, combos, WhatsApp, Meta, Instagram, ${AGENTES.map((a) => a.persona).join(", ")}.`;
+const VOCABULARIO = "Charla de trabajo de Acopio Saludable, una dietética de Carlos Paz: productos sin TACC, La Granja del Centro, Mercado Libre.";
 
 const fn = (name: string, description: string, properties: Record<string, unknown>, required: string[] = []) => ({ type: "function", name, description, parameters: { type: "object", properties, required } });
 const SI = { confirmado: { type: "boolean", description: "true solo si Santiago ya dijo que sí a ESTA acción exacta." } };
 // Lo que el agente puede hacer en el momento. Las que cambian algo piden confirmado:true.
 const HERRAMIENTAS = [
+  fn("ver_pizarra", "La pizarra de armado: cada pedido para armar con lo que lleva (producto, cantidad, presentación), cuánto cobrar, zona y notas, y los totales a juntar. Usala cuando pregunten qué hay que armar.", {}),
   fn("ver_pedidos", "Lista los pedidos abiertos y los de los últimos 7 días (cliente, teléfono, estado, total, pago, ítems).", {}),
   fn("ver_charlas", "Charlas de WhatsApp recientes con sus últimos mensajes y si la ventana de 24 h está abierta.", { horas: { type: "number", description: "Cuántas horas hacia atrás (por defecto 24)." } }),
   fn("ver_charla", "La charla completa con un teléfono.", { telefono: { type: "string" } }, ["telefono"]),
