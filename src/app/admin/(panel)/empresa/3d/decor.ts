@@ -127,7 +127,11 @@ export function decorarOficina(l: Lugar) {
 
   // ---- Libros sobre el estante de la pared del fondo ----
   const colores = [0x0b5540, 0xd9a441, 0x8a6bd1, 0x3b8fd1, 0xc0504d, 0x2f9e6a];
-  for (let k = 0; k < 6; k++) caja(0.22, 0.26 + (k % 3) * 0.03, 0.05, mat(colores[(k + Math.abs(Math.round(l.zc))) % 6], 0.7), S * (Math.abs(l.xOut) - 0.25), 1.97, l.z2 - 1.95 + k * 0.06, false);
+  // apoyados en la tabla de arriba del estante (1,55 m), al costado de los frascos
+  for (let k = 0; k < 5; k++) {
+    const alto = 0.24 + (k % 3) * 0.03;
+    caja(0.2, alto, 0.05, mat(colores[(k + Math.abs(Math.round(l.zc))) % 6], 0.7), S * (Math.abs(l.xOut) - 0.25), 1.565 + alto / 2, l.z2 - 0.64 + k * 0.055, false);
+  }
 
   // ---- El objeto de su trabajo, en el rincón junto a la puerta ----
   const px = S * (Math.abs(l.xIn) + 1.3);
