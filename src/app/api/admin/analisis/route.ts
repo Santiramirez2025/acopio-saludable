@@ -1,5 +1,6 @@
 // Radiografía del negocio para replantear el catálogo: qué se vendió, qué preguntó la gente y qué
 // tiene La Granja hoy. Solo administrador. GET ?parte=pedidos|whatsapp|catalogo|lagranja
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -100,7 +101,7 @@ async function lagranja() {
 }
 
 export async function GET(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const parte = new URL(req.url).searchParams.get("parte");
   const f = { pedidos, whatsapp, catalogo, lagranja }[parte ?? ""];
   if (!f) return NextResponse.json({ error: "parte = pedidos | whatsapp | catalogo | lagranja" }, { status: 400 });

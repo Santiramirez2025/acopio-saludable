@@ -4,6 +4,7 @@
 // la ventana de 24 horas: pasado un día del último mensaje del cliente, solo se puede
 // escribir con una plantilla aprobada. Ese error se devuelve tal cual para que se entienda.
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -22,7 +23,7 @@ import { argumentoCombo } from "@/lib/combos-tema";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   // Un archivo (foto o documento) llega como multipart: se sube a Meta y se manda con el texto como pie.
   if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) return responderConArchivo(req);
   let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown; pedido?: unknown; zonas?: unknown; combos?: unknown };

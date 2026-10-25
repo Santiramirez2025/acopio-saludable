@@ -1,3 +1,4 @@
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -13,7 +14,7 @@ const celda = (v: string | number) => {
 };
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const { id } = await params;
   const pedido = /^\d+$/.test(id) ? await prisma.order.findUnique({ where: { id: Number(id) }, include: { items: true } }) : null;
   if (!pedido) return NextResponse.json({ error: "Pedido inexistente" }, { status: 404 });

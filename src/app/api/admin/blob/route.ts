@@ -1,3 +1,4 @@
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
       body,
       request: req,
       onBeforeGenerateToken: async (ruta) => {
-        if (!(await getServerSession(authOptions))) throw new Error("No autorizado");
+        if (!(await esAdmin())) throw new Error("No autorizado");
         if (!/^productos\/[\w.-]{1,40}\/[\w.-]{1,120}\.(png|jpe?g|webp)$/i.test(ruta)) throw new Error("Nombre de archivo no permitido");
         return { allowedContentTypes: ["image/png", "image/jpeg", "image/webp"], maximumSizeInBytes: 12 * 1024 * 1024, addRandomSuffix: true };
       },

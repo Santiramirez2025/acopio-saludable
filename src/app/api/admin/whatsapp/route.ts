@@ -8,6 +8,7 @@
 // GET  → qué apps están suscriptas a la WABA y el estado del número.
 // POST → suscribe esta app a la WABA. Es idempotente: repetirla no rompe nada.
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -39,7 +40,7 @@ function faltantes(): string[] {
 }
 
 export async function GET() {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const waba = process.env.WHATSAPP_WABA_ID;
   const telefono = process.env.WHATSAPP_PHONE_ID;
   const [suscripciones, numero] = await Promise.all([
@@ -50,7 +51,7 @@ export async function GET() {
 }
 
 export async function POST() {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const waba = process.env.WHATSAPP_WABA_ID;
   if (!waba) return NextResponse.json({ error: "Falta WHATSAPP_WABA_ID" }, { status: 503 });
   const r = await graph(`${waba}/subscribed_apps`, "POST");

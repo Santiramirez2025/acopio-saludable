@@ -3,6 +3,7 @@
 // POST { accion: "agregar", cuentas: [{ username, rubro }] } → valida cada una con la API y la suma.
 // POST { accion: "quitar", usernames } · POST { accion: "probar" } → una pasada ahora.
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -13,14 +14,14 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function GET() {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const cuentas = await prisma.$queryRaw`SELECT * FROM "RadarCuenta" ORDER BY "seguidores" DESC NULLS LAST`;
   const avisos = await prisma.$queryRaw`SELECT * FROM "RadarAviso" ORDER BY "fecha" DESC LIMIT 30`;
   return NextResponse.json({ cuentas, avisos });
 }
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const b = (await req.json().catch(() => ({}))) as { accion?: string; cuentas?: { username?: string; rubro?: string }[]; usernames?: string[]; username?: string };
   if (b.accion === "probar") return NextResponse.json(await correrRadar(true));
   // Diagnóstico: escribe el comentario para el último post de una cuenta, sin avisar ni guardar.

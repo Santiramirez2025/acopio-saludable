@@ -4,6 +4,7 @@
 //
 // POST { aplicar?: boolean } — sin aplicar:true solo devuelve lo que haría.
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -17,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const { aplicar } = (await req.json().catch(() => ({}))) as { aplicar?: boolean };
 
   // Pedidos sugeridos por rubro: los sueltos de Distrimay pasan a su equivalente propio (si ya está, se suman).

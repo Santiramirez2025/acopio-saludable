@@ -1,6 +1,7 @@
 // Suma al catálogo solo los productos y combos que se le pasan (de catalogo-proveedores), sin tocar
 // el resto: el ajuste completo vuelve a escribir costos que la lista de La Granja ya actualizó.
 // Solo administrador. POST { codigos: string[], combos: string[], aplicar?: boolean }
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -12,7 +13,7 @@ import { COMBOS_PROVEEDORES, PRODUCTOS_PROVEEDORES, fotoCombo, fotoProducto, pre
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const b = (await req.json().catch(() => ({}))) as { codigos?: string[]; combos?: string[]; aplicar?: boolean };
   const productos = PRODUCTOS_PROVEEDORES.filter((p) => b.codigos?.includes(p.codigo));
   const combos = COMBOS_PROVEEDORES.filter((c) => b.combos?.includes(c.slug));

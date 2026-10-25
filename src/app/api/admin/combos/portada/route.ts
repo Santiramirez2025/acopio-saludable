@@ -2,6 +2,7 @@
 // Existe para los combos cuyas fotos de productos están en servidores que el armado de imágenes
 // del repo no alcanza: la portada se compone donde las fotos sí cargan.
 
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { put } from "@vercel/blob";
@@ -11,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const { slug, dataUrl } = (await req.json().catch(() => ({}))) as { slug?: string; dataUrl?: string };
   if (!slug || !/^[a-z0-9-]{3,60}$/.test(slug)) return NextResponse.json({ error: "Slug inválido" }, { status: 400 });
   const m = /^data:image\/(webp|jpeg|png);base64,(.+)$/.exec(dataUrl ?? "");

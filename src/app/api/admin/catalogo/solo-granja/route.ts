@@ -2,6 +2,7 @@
 // se ocultan de la tienda los productos de Distrimay y los combos se rearman sin ellos.
 // Solo administrador. POST ?aplicar=1 aplica; sin eso devuelve el plan sin tocar nada.
 // Se puede deshacer: los ocultos quedan con el motivo MOTIVO y se vuelven a mostrar con ?deshacer=1.
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -18,7 +19,7 @@ const MOTIVO = "Distrimay: se deja de vender, todo sale de La Granja (oct 2026)"
 const EQUIVALENTES: Record<string, string> = { ...REEMPLAZOS, "702": "LG-ALMNP-500" };
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const q = new URL(req.url).searchParams;
   const aplicar = q.get("aplicar") === "1";
 

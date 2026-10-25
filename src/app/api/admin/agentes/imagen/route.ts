@@ -1,6 +1,7 @@
 // El Diseñador sube acá las piezas que genera (PNG/JPG/WebP en base64) y recibe una URL pública
 // para publicar en redes o usar en anuncios. Solo administrador.
 // POST { nombre: "navidad-kit-pan-dulce", datos: "<base64>", tipo?: "image/png" } → { url }
+import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { put } from "@vercel/blob";
@@ -12,7 +13,7 @@ export const maxDuration = 60;
 const TIPOS: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 
 export async function POST(req: Request) {
-  if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   if (!process.env.BLOB_READ_WRITE_TOKEN) return NextResponse.json({ error: "Falta el almacén Blob en Vercel" }, { status: 503 });
   const b = (await req.json().catch(() => ({}))) as { nombre?: string; datos?: string; tipo?: string };
   const tipo = b.tipo && TIPOS[b.tipo] ? b.tipo : "image/png";
