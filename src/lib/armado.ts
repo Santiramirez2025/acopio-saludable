@@ -22,13 +22,17 @@ const n = (d: unknown) => Math.round(Number(d) || 0);
 
 /** «Lorenzo Albert» → «Lorenzo A.» (en la TV no va el apellido completo). */
 export function nombreCorto(nombre: string): string {
-  const p = nombre.trim().split(/\s+/);
-  return p.length > 1 ? `${p[0]} ${p[1][0].toUpperCase()}.` : p[0] ?? "";
+  const p = nombre.replace(/[()[\]{}"'.,]/g, " ").trim().split(/\s+/).filter(Boolean);
+  const ape = p.slice(1).find((x) => /^\p{L}/u.test(x));
+  return ape ? `${p[0]} ${ape[0].toUpperCase()}.` : p[0] ?? "";
 }
 
 /** «x 1 kg» → 1000, «x500gr Fraccionada» → 500, «x 250 g» → 250. Sin peso → null. */
 export function gramosDe(presentacion: string): number | null {
-  const m = presentacion.toLowerCase().replace(",", ".").match(/(\d+(?:\.\d+)?)\s*(kg|kilo|kilos|gr|g)\b/);
+  const t = presentacion.toLowerCase().replace(",", ".");
+  const fr = t.match(/(\d+)\s*\/\s*(\d+)\s*(kg|kilo|kilos)\b/); // «1/2 kilo», «1/4 kg»
+  if (fr && Number(fr[2]) > 0) return Math.round((Number(fr[1]) / Number(fr[2])) * 1000);
+  const m = t.match(/(\d+(?:\.\d+)?)\s*(kg|kilo|kilos|grs|gr|g)\b/);
   if (!m) return null;
   const v = Number(m[1]);
   return m[2].startsWith("k") ? v * 1000 : v;

@@ -1356,6 +1356,10 @@ test("pizarra de armado: gramos, totales y nombre corto", async () => {
   assert.equal(gramosDe("x500gr Fraccionada"), 500);
   assert.equal(gramosDe("Unidad"), null);
   assert.equal(nombreCorto("Lorenzo Albert"), "Lorenzo A.");
+  assert.equal(nombreCorto("Mabel (tía)"), "Mabel T.");
+  assert.equal(nombreCorto("Mabel ("), "Mabel");
+  assert.equal(gramosDe("1/2 kilo"), 500);
+  assert.equal(gramosDe("Fraccionada x 250 Grs"), 250);
   const base = { id: 1, codigo: "AS-00001", cliente: "A", zona: "", cobrar: "", pagado: true, notas: null, estado: "PAGADO", hace: "" };
   const t = totalesDeArmado([
     { ...base, items: [{ producto: "Granola", presentacion: "x 1 kg", cantidad: 1, combo: null }] },
