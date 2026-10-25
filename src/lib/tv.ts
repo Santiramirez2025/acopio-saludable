@@ -71,7 +71,8 @@ export async function esTv(): Promise<boolean> {
 }
 
 // ---------- El celular manda, la TV obedece (como «ver en la TV» de YouTube, sin escribir nada en la TV) ----------
-export type ComandoTv = { vista: "oficina" | "armado" | "agente"; agente?: string; t: number };
+export type VistaTv = "oficina" | "3d" | "armado" | "mensajes" | "agente";
+export type ComandoTv = { vista: VistaTv; agente?: string; t: number };
 
 export async function mandarComando(c: Omit<ComandoTv, "t">): Promise<ComandoTv> {
   const cmd = { ...c, t: Date.now() };

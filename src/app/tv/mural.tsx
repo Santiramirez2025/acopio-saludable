@@ -48,6 +48,11 @@ export function MuralTv({ datos }: { datos: DatosOficina }) {
     };
   }, [router]);
 
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("agente");
+    if (id) setFijo({ id, hasta: Date.now() + 60_000 });
+  }, []);
+
   const conTrabajo = useMemo(() => datos.agentes.filter((a) => a.informes.length), [datos.agentes]);
   useEffect(() => {
     const t = setInterval(() => setI((x) => x + 1), 9_000);

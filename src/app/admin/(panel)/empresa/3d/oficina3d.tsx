@@ -163,7 +163,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
   return (
     <div className="fixed inset-0 z-50 bg-stone-200">
       <div ref={lienzo} className="absolute inset-0" />
-      {enTv ? <SeguirCelular actual="oficina" onAgente={irAgente} /> : null}
+      {enTv ? <SeguirCelular actual="3d" onAgente={irAgente} /> : null}
 
       {!cargado ? (
         <div className="absolute inset-0 grid place-items-center bg-[#0b2a20] text-white">
@@ -186,6 +186,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
         <div className="pointer-events-auto flex shrink-0 gap-1.5 sm:gap-2">
           <button onClick={() => setMapa((m) => !m)} aria-label="Oficinas" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">🗺️<span className="hidden sm:inline"> Oficinas</span></button>
           <a href={enTv ? "/tv/armado" : "/admin/empresa/armado"} aria-label="Pizarra de armado" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">📦<span className="hidden sm:inline"> Pizarra de armado</span></a>
+          {enTv ? null : <a href="/admin/empresa/mensajes" aria-label="Mensajes en vivo" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">💬<span className="hidden sm:inline"> Mensajes</span></a>}
           {enTv ? null : <BotonTv />}
           <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)} className="hidden rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md sm:block">⛶</button>
           {enTv ? null : <a href="/admin/empresa" aria-label="Salir" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">✕</a>}
