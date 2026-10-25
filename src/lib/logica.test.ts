@@ -1349,3 +1349,17 @@ test("envío a Córdoba Capital con entrega propia: $15.000 fijo, pague como pag
   assert.equal(envioQueSeCobra(15000, "TRANSFERENCIA", 8, true), 15000);
   assert.equal(envioQueSeCobra(15000, "MERCADOPAGO", 8) % 100, 0);
 });
+
+test("pizarra de armado: gramos, totales y nombre corto", async () => {
+  const { gramosDe, totalesDeArmado, nombreCorto } = await import("./armado");
+  assert.equal(gramosDe("x 1 kg"), 1000);
+  assert.equal(gramosDe("x500gr Fraccionada"), 500);
+  assert.equal(gramosDe("Unidad"), null);
+  assert.equal(nombreCorto("Lorenzo Albert"), "Lorenzo A.");
+  const base = { id: 1, codigo: "AS-00001", cliente: "A", zona: "", cobrar: "", pagado: true, notas: null, estado: "PAGADO", hace: "" };
+  const t = totalesDeArmado([
+    { ...base, items: [{ producto: "Granola", presentacion: "x 1 kg", cantidad: 1, combo: null }] },
+    { ...base, id: 2, items: [{ producto: "Granola", presentacion: "x 500 g", cantidad: 1, combo: null }] },
+  ]);
+  assert.match(t[0].texto, /^1,5 kg/);
+});

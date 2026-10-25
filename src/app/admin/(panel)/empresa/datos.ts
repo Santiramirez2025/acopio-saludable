@@ -7,6 +7,7 @@ import { AGENTES, AREAS, ROBOTS, estadoAgente, type Area } from "@/lib/agentes";
 import { estadoTexto } from "@/lib/salud";
 import { diasHasta, proximaTemporada, temporadaActual } from "@/lib/temporada";
 import type { AgenteVista, DatosOficina } from "./oficina";
+import { lineasPizarra, pizarraArmado } from "@/lib/armado";
 
 
 const TZ = "America/Argentina/Cordoba";
@@ -101,6 +102,7 @@ export async function cargarOficina(): Promise<DatosOficina> {
     agentes,
     robots: ROBOTS,
     salud,
+    armado: await pizarraArmado().then(lineasPizarra).catch(() => undefined),
   };
 
   return datos;
