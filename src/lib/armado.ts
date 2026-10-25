@@ -1,6 +1,5 @@
 // Pizarra de armado de Gonza: qué pedidos hay que preparar, qué lleva cada uno y cuánto de cada producto
 // en total. La ven Santiago en la TV mientras arma y la oficina 3D en la pizarra de Logística.
-import { prisma } from "./prisma";
 import { pesos } from "./precios";
 
 export type ItemArmado = { producto: string; presentacion: string; cantidad: number; combo: string | null };
@@ -75,6 +74,7 @@ function haceCuanto(d: Date): string {
 }
 
 export async function pizarraArmado(): Promise<Pizarra> {
+  const { prisma } = await import("./prisma");
   const os = await prisma.order.findMany({
     where: { estado: { in: ["PENDIENTE_PAGO", "PAGADO", "EN_COMPRA", "PREPARADO", "ENVIADO"] } },
     include: { items: true },
