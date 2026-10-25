@@ -1,7 +1,7 @@
 // Cálculos y validaciones de pedidos sin base de datos (testeables).
 
 import type { EstadoPedido, Order, OrderItem } from "@prisma/client";
-import { redondear2 } from "./precios";
+import { precioRedondo, redondear2 } from "./precios";
 import { normalizarCp, zonaDeProvincia } from "./envios/geo";
 
 /**
@@ -14,10 +14,12 @@ import { normalizarCp, zonaDeProvincia } from "./envios/geo";
  * Se divide, no se multiplica: para que después de que el pago se lleve su 8% queden los $35.000
  * del correo, hay que cobrar 35.000 / 0,92, no 35.000 × 1,08.
  */
-export function envioQueSeCobra(envio: number, medioPago: "MERCADOPAGO" | "TRANSFERENCIA" | "AL_RECIBIR", comisionPagoPct: number): number {
-  if (medioPago !== "MERCADOPAGO" || !(envio > 0)) return redondear2(envio);
+export function envioQueSeCobra(envio: number, medioPago: "MERCADOPAGO" | "TRANSFERENCIA" | "AL_RECIBIR", comisionPagoPct: number, fijo = false): number {
+  // La entrega propia (Carlos Paz gratis, Córdoba Capital $15.000) tiene precio fijo: se cobra eso, pague como pague.
+  if (fijo || medioPago !== "MERCADOPAGO" || !(envio > 0)) return redondear2(envio);
   const pct = Math.min(Math.max(comisionPagoPct, 0), 95);
-  return redondear2(envio / (1 - pct / 100));
+  // Correos: con la comisión adentro y redondo hacia arriba (nunca un envío de $ 16.304,35).
+  return precioRedondo(envio / (1 - pct / 100), "arriba");
 }
 
 /** Una línea del pedido ya resuelta: incluye datos que solo sirven para calcular (peso, congelado). */
