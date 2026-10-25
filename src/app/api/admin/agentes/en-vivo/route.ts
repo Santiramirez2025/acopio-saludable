@@ -27,6 +27,7 @@ const HERRAMIENTAS = [
   fn("cargar_negocios", "Carga negocios para la captación automática por WhatsApp.", { lista: { type: "array", items: { type: "object", properties: { telefono: { type: "string" }, negocio: { type: "string" }, rubro: { type: "string" }, localidad: { type: "string" } }, required: ["telefono", "negocio"] } }, ...SI }, ["lista", "confirmado"]),
 ];
 
+const ESFUERZO = (["minimal", "low", "medium", "high"].includes(process.env.OPENAI_REALTIME_ESFUERZO ?? "") ? process.env.OPENAI_REALTIME_ESFUERZO : "low") as string;
 const MODELOS = [process.env.OPENAI_REALTIME_MODELO, "gpt-realtime-2.1", "gpt-realtime"].filter(Boolean) as string[];
 
 export async function POST(req: Request) {
@@ -39,8 +40,13 @@ export async function POST(req: Request) {
 
   const instructions = await promptAgente(agente, "voz");
   let ultimo = "";
-  const intentos = [...new Set(MODELOS)].flatMap((model) => [{ model, extras: true }, { model, extras: false }]);
-  for (const { model, extras } of intentos) {
+  // Del mejor al más simple: si OpenAI rechaza algo (modelo o parámetro nuevo), probamos el siguiente.
+  const intentos = [...new Set(MODELOS)].flatMap((model) => [
+    { model, nivel: 2 },
+    { model, nivel: 1 },
+    { model, nivel: 0 },
+  ]);
+  for (const { model, nivel } of intentos) {
     const r = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: { authorization: `Bearer ${clave}`, "content-type": "application/json" },
@@ -49,14 +55,17 @@ export async function POST(req: Request) {
           type: "realtime",
           model,
           instructions,
+          // Que piense un poco antes de contestar (respuestas mejores sin perder fluidez).
+          ...(nivel >= 2 ? { reasoning: { effort: ESFUERZO } } : {}),
           audio: {
             input: {
-              transcription: { model: "gpt-4o-transcribe", language: "es", prompt: VOCABULARIO },
+              transcription: { model: nivel >= 1 ? "gpt-live-transcribe" : "gpt-4o-transcribe", language: "es", prompt: VOCABULARIO },
               noise_reduction: { type: "near_field" },
-              // Corte de turno rápido: cuando te callás ~0,45 s, contesta; si hablás encima, se calla.
-              turn_detection: extras
-                ? { type: "server_vad", threshold: 0.5, prefix_padding_ms: 250, silence_duration_ms: 550, create_response: true, interrupt_response: true }
-                : { type: "semantic_vad", eagerness: "high" },
+              // Que no te pise: entiende por el sentido de la frase si terminaste (no solo por el silencio)
+              // y con «low» te espera un poco más. Si hablás encima, se calla.
+              turn_detection: nivel >= 1
+                ? { type: "semantic_vad", eagerness: "low", create_response: true, interrupt_response: true }
+                : { type: "server_vad", threshold: 0.55, prefix_padding_ms: 300, silence_duration_ms: 1000, create_response: true, interrupt_response: true },
             },
             output: { voice: VOCES_EN_VIVO[agente] ?? "marin" },
           },

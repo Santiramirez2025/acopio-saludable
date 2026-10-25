@@ -10,6 +10,7 @@ import { callar, decir, escuchar as escucharVoz, hayVozNatural } from "./voz-cli
 import { llamar, type EstadoLlamada, type Llamada } from "./en-vivo";
 import { AGENTES } from "@/lib/agentes";
 import { BotonTv } from "./boton-tv";
+import { PantallaLlamada } from "./llamada-pantalla";
 import { CLAVE_SEGUIR, mandarATv } from "./control-tv";
 
 export type Informe = { cuando: string; ok: boolean; texto: string };
@@ -323,6 +324,14 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
   const llamada = useRef<Llamada | null>(null);
   const ultimoRefresco = useRef(0);
   const [enVivo, setEnVivo] = useState<EstadoLlamada | null>(null);
+  const [silenciado, setSilenciado] = useState(false);
+  const [verChat, setVerChat] = useState(false);
+  useEffect(() => {
+    if (!enVivo) {
+      setVerChat(false);
+      setSilenciado(false);
+    }
+  }, [enVivo]);
 
   // La charla se ve en la TV mientras hablás desde el celular (subtítulos en grande).
   const tvUltimo = useRef(0);
@@ -530,7 +539,14 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
       },
     });
   };
+  const silenciar = () => {
+    const v = !silenciado;
+    setSilenciado(v);
+    llamada.current?.silenciar(v);
+  };
   const cortarLlamada = () => {
+    setSilenciado(false);
+    setVerChat(false);
     llamada.current?.cortar();
     llamada.current = null;
     setEnVivo(null);
@@ -577,8 +593,27 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
   const suave = tv ? "text-white/60" : "text-stone-500";
   const borde = tv ? "border-white/10" : "border-stone-200";
 
+  const ultimoAgente = [...mensajes].reverse().find((m) => m.role === "assistant")?.content.replace(/\*\*/g, "") ?? "";
+  const ultimoTuyo = mensajes[mensajes.length - 1]?.role === "user" ? mensajes[mensajes.length - 1].content : "";
+  const pantallaLlamada =
+    enVivo && !angosta && !tv && !verChat ? (
+      <PantallaLlamada
+        agente={a.id}
+        persona={a.persona}
+        puesto={a.nombre}
+        estado={enVivo}
+        subtitulo={ultimoAgente.length > 320 ? `…${ultimoAgente.slice(-319)}` : ultimoAgente}
+        tuyo={ultimoTuyo}
+        silenciado={silenciado}
+        onSilenciar={silenciar}
+        onCortar={cortarLlamada}
+        onChat={() => setVerChat(true)}
+      />
+    ) : null;
+
   return (
     <div className={`fixed inset-0 z-[60] flex justify-end ${angosta ? "pointer-events-none" : "bg-black/50"}`} onClick={onCerrar}>
+      {pantallaLlamada}
       <aside
         onClick={(e) => e.stopPropagation()}
         className={`${base} pointer-events-auto flex h-full w-full flex-col shadow-2xl ${angosta ? "bg-stone-900/90 backdrop-blur-md " : ""}${angosta ? "max-w-md" : tv ? "max-w-4xl text-lg" : "max-w-xl"}`}
@@ -627,12 +662,13 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
               ))}
               {estadoVoz ? <div className="text-sm text-amber-400">🎙️ {estadoVoz}</div> : null}
               {enVivo ? (
-                <div className="flex items-center gap-2 text-sm">
+                <button onClick={() => setVerChat(false)} className="flex items-center gap-2 text-left text-sm">
                   <span className={`h-2.5 w-2.5 rounded-full ${enVivo === "hablando" ? "bg-acopio-500 animate-pulse" : enVivo === "escuchando" ? "bg-red-500 animate-pulse" : "bg-amber-400"}`} />
                   <span className={suave}>
                     {enVivo === "conectando" ? `Llamando a ${a.persona}…` : enVivo === "hablando" ? `${a.persona} está hablando · podés interrumpir cuando quieras` : enVivo === "pensando" ? `${a.persona} está pensando…` : enVivo === "error" ? "Se cortó la llamada" : "En vivo · hablá cuando quieras"}
+                    {verChat ? " · tocá para volver a la llamada" : ""}
                   </span>
-                </div>
+                </button>
               ) : null}
               {cargando ? <div className={`text-sm ${suave}`}>{a.persona} está pensando…</div> : null}
               {error ? <div className="text-sm text-red-500">{error}</div> : null}
