@@ -491,10 +491,10 @@ test("la tabla le pone el nombre del correo a la opción que ve el cliente", () 
 import { envioQueSeCobra } from "./pedido-calculos";
 
 test("con tarjeta el envío lleva adentro la comisión del pago", () => {
-  // Se divide, no se multiplica: 35.000 / 0,92 = 38.043,48, y el 8% de eso deja los 35.000 del correo.
+  // Se divide, no se multiplica: 35.000 / 0,92 = 38.043,48 → redondo hacia arriba $ 38.500 (cubre la comisión).
   const cobrado = envioQueSeCobra(35000, "MERCADOPAGO", 8);
-  assert.equal(cobrado, 38043.48);
-  assert.ok(Math.abs(cobrado * 0.92 - 35000) < 0.01, "después de la comisión tiene que quedar el costo del correo");
+  assert.equal(cobrado, 38500);
+  assert.ok(cobrado * 0.92 >= 35000, "después de la comisión tiene que quedar al menos el costo del correo");
   // Por transferencia no hay comisión que cubrir.
   assert.equal(envioQueSeCobra(35000, "TRANSFERENCIA", 8), 35000);
   // La entrega propia sin cargo sigue sin cargo.
@@ -1341,4 +1341,11 @@ test("pedido de la web: se arma completo (5 ítems) y redondo", async () => {
   const { aplicarReglas } = await import("./envios/cotizar");
   const op = aplicarReglas([{ id: "x", proveedor: "propia", modalidad: "propia", nombre: "Te lo llevamos", costo: 16304.35, plazo: "" } as never], 38300, null);
   assert.equal(op[0].precio % 100, 0);
+});
+
+
+test("envío a Córdoba Capital con entrega propia: $15.000 fijo, pague como pague", () => {
+  assert.equal(envioQueSeCobra(15000, "MERCADOPAGO", 8, true), 15000);
+  assert.equal(envioQueSeCobra(15000, "TRANSFERENCIA", 8, true), 15000);
+  assert.equal(envioQueSeCobra(15000, "MERCADOPAGO", 8) % 100, 0);
 });

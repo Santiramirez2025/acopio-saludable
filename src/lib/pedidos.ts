@@ -85,11 +85,11 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
   };
 }
 
-export function totales(subtotal: number, envio: number, medioPago: MedioPago, cfg: Config, extraPct = 0) {
+export function totales(subtotal: number, envio: number, medioPago: MedioPago, cfg: Config, extraPct = 0, envioFijo = false) {
   // El extra es el beneficio por recomendación: se suma al de transferencia, sobre los productos.
   const descuento = redondear2((medioPago === "TRANSFERENCIA" ? (subtotal * cfg.descuentoTransferenciaPct) / 100 : 0) + (subtotal * extraPct) / 100);
   // Con tarjeta el envío va con la comisión adentro; por transferencia sale lo que cuesta.
-  const envioCobrado = envioQueSeCobra(envio, medioPago, cfg.comisionPagoPct);
+  const envioCobrado = envioQueSeCobra(envio, medioPago, cfg.comisionPagoPct, envioFijo);
   const total = redondear2(subtotal - descuento + envioCobrado);
   const comisionPago = medioPago === "MERCADOPAGO" ? redondear2((total * cfg.comisionPagoPct) / 100) : 0;
   return { descuento, envioCobrado, total, comisionPago };
@@ -116,7 +116,7 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
   const subtotal = prep.cotizacion.subtotal;
   const origenCrudo = typeof args.origen === "string" ? args.origen : "";
   const beneficio = await beneficioRecomendacion({ telefono: cliente.telefono, email: cliente.email, origen: origenCrudo }).catch(() => null);
-  const { descuento, envioCobrado, total, comisionPago } = totales(subtotal, opcion.precio, medioPago, cfg, beneficio?.pct ?? 0);
+  const { descuento, envioCobrado, total, comisionPago } = totales(subtotal, opcion.precio, medioPago, cfg, beneficio?.pct ?? 0, opcion.modalidad === "propia");
   const pedido = await prisma.order.create({
     data: {
       token: randomBytes(18).toString("base64url"),

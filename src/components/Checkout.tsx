@@ -86,8 +86,8 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
   const descuento = medio === "TRANSFERENCIA" ? Math.round(subtotal * descuentoTransferenciaPct) / 100 : 0;
   const descuentoAmigo = beneficio.pct > 0 ? Math.round(subtotal * beneficio.pct) / 100 : 0;
   // Mismo cálculo que el servidor: con tarjeta el envío lleva la comisión adentro.
-  const precioEnvio = (p: number) => envioQueSeCobra(p, medio === "MERCADOPAGO" ? "MERCADOPAGO" : "TRANSFERENCIA", comisionPagoPct);
-  const envioCobrado = precioEnvio(opcion?.precio ?? 0);
+  const precioEnvio = (p: number, fijo = false) => envioQueSeCobra(p, medio === "MERCADOPAGO" ? "MERCADOPAGO" : "TRANSFERENCIA", comisionPagoPct, fijo);
+  const envioCobrado = precioEnvio(opcion?.precio ?? 0, opcion?.modalidad === "propia");
   const total = subtotal - descuento - descuentoAmigo + envioCobrado;
 
   async function confirmar(e: React.FormEvent<HTMLFormElement>) {
@@ -163,7 +163,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
                       <span className="block text-sm font-medium">{o.nombre} {o.masBarata && <span className="chip ml-1 bg-acopio-100 text-acopio-700">La más barata</span>}</span>
                       <span className="block text-xs text-stone-600">{o.plazo}</span>
                     </span>
-                    <span className="text-sm font-semibold tabular-nums">{o.precio > 0 ? pesosCliente(precioEnvio(o.precio)) : "Sin cargo"}</span>
+                    <span className="text-sm font-semibold tabular-nums">{o.precio > 0 ? pesosCliente(precioEnvio(o.precio, o.modalidad === "propia")) : "Sin cargo"}</span>
                   </label>
                 ))}
               </div>
@@ -189,7 +189,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
             </label>
           </div>
           {/* El envío cambia según cómo pague: si no se dice, parece un cargo escondido. */}
-          {comisionPagoPct > 0 && opcion && opcion.precio > 0 && (
+          {comisionPagoPct > 0 && opcion && opcion.precio > 0 && opcion.modalidad !== "propia" && (
             <p className="mt-3 text-xs text-stone-600">
               Pagando por transferencia el envío sale {pesosCliente(opcion.precio)} en vez de {pesosCliente(precioEnvio(opcion.precio))}: con tarjeta se suma el costo de la operación.
             </p>
