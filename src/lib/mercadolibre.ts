@@ -10,7 +10,7 @@
 import { prisma } from "./prisma";
 import { urlSitio } from "./sitio";
 import { avisarSantiago } from "./avisos";
-import { textoRespuestaMl } from "./mercadolibre-reglas";
+import { textoRespuestaMl, precioMinimoMl, SKU_ML } from "./mercadolibre-reglas";
 
 const API = "https://api.mercadolibre.com";
 const MODELO = process.env.VENDEDOR_MODELO || "claude-haiku-5-5";
@@ -159,6 +159,44 @@ export async function avisarVenta(recurso: string): Promise<void> {
   await avisarSantiago("Venta en Mercado Libre", `🟡 ¡Venta en Mercado Libre! $${o.total_amount}\n${que}\nPreparalo hoy y despachalo con la etiqueta de Mercado Envíos (vendedores.mercadolibre.com.ar/ventas).`);
 }
 
+
+/** Costo de hoy de lo que trae cada publicación (según su SKU), con los costos que actualiza la lista de La Granja. */
+async function costoDeSku(sku: string): Promise<number | null> {
+  const d = SKU_ML[sku];
+  if (!d) return null;
+  if (d.combo) {
+    const c = await prisma.combo.findUnique({ where: { slug: d.combo }, include: { items: { include: { product: { select: { costo: true } } } } } }).catch(() => null);
+    if (!c?.items.length) return null;
+    return c.items.reduce((s, i) => s + Number(i.product.costo) * i.cantidad, 0);
+  }
+  const p = await prisma.product.findUnique({ where: { codigo: d.codigo! }, select: { costo: true } });
+  return p ? Number(p.costo) * (d.cantidad ?? 1) : null;
+}
+
+/** Sube el precio en ML cuando el costo subió y la ganancia quedó debajo de la mínima. Nunca baja precios. */
+export async function ajustarPreciosMl(): Promise<string[]> {
+  const uid = await miUsuario();
+  const ids = (await ml<{ results: string[] }>(`/users/${uid}/items/search?status=active&limit=50`)).results;
+  if (!ids.length) return [];
+  const r = await ml<{ code: number; body: { id: string; title: string; price: number; seller_custom_field?: string | null; attributes?: { id: string; value_name?: string | null }[] } }[]>(`/items?ids=${ids.join(",")}&attributes=id,title,price,seller_custom_field,attributes`);
+  const cambios: string[] = [];
+  for (const { body: it } of r.filter((x) => x.code === 200)) {
+    const sku = it.seller_custom_field || it.attributes?.find((a) => a.id === "SELLER_SKU")?.value_name || "";
+    const costo = await costoDeSku(sku);
+    if (costo === null) continue;
+    const minimo = precioMinimoMl(costo);
+    if (minimo <= it.price) continue;
+    try {
+      await ml(`/items/${it.id}`, { method: "PUT", body: JSON.stringify({ price: minimo }) });
+      cambios.push(`${it.title.slice(0, 40)}: $${it.price} → $${minimo}`);
+    } catch (e) {
+      cambios.push(`${it.title.slice(0, 40)}: no pude subirlo a $${minimo} (${String(e).slice(0, 60)})`);
+    }
+  }
+  if (cambios.length) await avisarSantiago("Precios de Mercado Libre", `💲 Subieron costos en La Granja y ajusté ML:\n${cambios.join("\n")}`);
+  return cambios;
+}
+
 /** Parte diario: visitas de ayer por publicación, preguntas, ventas y reputación. */
 export async function parteDiario(): Promise<string> {
   const uid = await miUsuario();
@@ -173,10 +211,12 @@ export async function parteDiario(): Promise<string> {
   const u = await ml<{ seller_reputation?: { level_id?: string | null; transactions?: { completed?: number } } }>(`/users/${uid}`);
   const ventas = await ml<{ paging?: { total?: number } }>(`/orders/search?seller=${uid}&order.status=paid&order.date_created.from=${ayer}T00:00:00.000-03:00`).catch(() => ({ paging: { total: 0 } }));
   const pendientes = await responderPendientes().catch(() => ({ respondidas: 0, avisos: 0 }));
+  const subidos = await ajustarPreciosMl().catch(() => [] as string[]);
   const total = visitas.reduce((s, v) => s + v.visitas, 0);
   const lineas = [
     `📊 Mercado Libre · últimos 7 días: ${total} visitas · ventas desde ayer: ${ventas.paging?.total ?? 0} · reputación: ${u.seller_reputation?.level_id ?? "sin calcular"} (${u.seller_reputation?.transactions?.completed ?? 0} ventas)`,
     ...visitas.sort((a, b) => b.visitas - a.visitas).map((v) => `• ${v.titulo.slice(0, 45)}: ${v.visitas} visitas${v.stock <= 1 ? " · ⚠️ sin stock" : ""}`),
+    subidos.length ? `Precios ajustados por suba de costos: ${subidos.length}.` : "Precios: sin cambios de costo.",
     pendientes.respondidas || pendientes.avisos ? `Preguntas: ${pendientes.respondidas} respondidas ahora, ${pendientes.avisos} para vos.` : "Preguntas: todas respondidas.",
   ];
   const texto = lineas.join("\n");

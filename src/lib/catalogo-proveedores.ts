@@ -102,6 +102,17 @@ export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   { codigo: "LG-NATUZEN-RALLADO", codigoProveedor: "917-021", producto: "Pan rallado sin TACC", marca: "Natuzen", presentacion: "x 450 g", categoria: "Sin TACC", contenido: 450, unidad: "g", costo: 2790, margen: 0.6, pesoBrutoG: 470 },
   { codigo: "LG-NATUZEN-TAPAS", codigoProveedor: "917-009", producto: "Tapas de alfajor sin TACC", marca: "Natuzen", presentacion: "x 300 g", categoria: "Sin TACC", contenido: 300, unidad: "g", costo: 2798, margen: 0.6, pesoBrutoG: 320 },
   { codigo: "LG-NATUZEN-PEPAS", codigoProveedor: "917-001", producto: "Galletitas pepas sin TACC", marca: "Natuzen", presentacion: "x 200 g", categoria: "Sin TACC", contenido: 200, unidad: "g", costo: 2162, margen: 0.6, pesoBrutoG: 220 },
+  // ——— Octubre 2026: mix propio y merienda sin TACC, todo de La Granja ———
+  { codigo: "TG-MIXCAJUBAN", codigoProveedor: "propio", producto: "Mix de cajú y banana chips", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", costo: 16300, margen: 0.45, pesoBrutoG: 1020, porQueLoElegimos: "Mitad castañas de cajú, mitad banana chips: dulce, crocante y sin maní." },
+  { codigo: "TG-MIXCAJUBAN-500", codigoProveedor: "propio", producto: "Mix de cajú y banana chips", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutos secos y mix", contenido: 500, unidad: "g", costo: 8150, margen: 0.46, pesoBrutoG: 520, porQueLoElegimos: "Mitad castañas de cajú, mitad banana chips: dulce, crocante y sin maní. Medio kilo." },
+  { codigo: "LG-TAPITAS-VAI", codigoProveedor: "907-006", producto: "Tapitas para alfajor de vainilla", marca: "Doninas", presentacion: "x 200 g", categoria: "Galletas, alfajores y discos", contenido: 200, unidad: "g", costo: 2325, pesoBrutoG: 230 },
+  { codigo: "LG-TAPITAS-CHOC", codigoProveedor: "907-014", producto: "Tapitas para alfajor de chocolate", marca: "Doninas", presentacion: "x 200 g", categoria: "Galletas, alfajores y discos", contenido: 200, unidad: "g", costo: 2325, pesoBrutoG: 230 },
+  { codigo: "LG-DDL-REPOSTERO", codigoProveedor: "958-008", producto: "Dulce de leche repostero", marca: "Trini", presentacion: "x 1 kg", categoria: "Almacen", contenido: 1000, unidad: "g", costo: 15872, margen: 0.45, pesoBrutoG: 1100 },
+  { codigo: "LG-YUKA-ALF-DDL", codigoProveedor: "903-009", producto: "Alfajores de dulce de leche sin TACC", marca: "Yuka", presentacion: "x 6 unidades", categoria: "Galletas, alfajores y discos", contenido: 6, unidad: "g", costo: 4726, pesoBrutoG: 330 },
+  { codigo: "LG-YUKA-ALF-CHOC", codigoProveedor: "903-001", producto: "Alfajores de chocolate sin TACC", marca: "Yuka", presentacion: "x 6 unidades", categoria: "Galletas, alfajores y discos", contenido: 6, unidad: "g", costo: 4726, pesoBrutoG: 330 },
+  { codigo: "LG-YUKA-GALL-VAI", codigoProveedor: "903-004", producto: "Galletas de vainilla sin TACC", marca: "Yuka", presentacion: "x 150 g", categoria: "Galletas, alfajores y discos", contenido: 150, unidad: "g", costo: 2229, pesoBrutoG: 170 },
+  { codigo: "LG-DONINAS-COCO", codigoProveedor: "907-008", producto: "Galletitas de coco y dulce de leche", marca: "Doninas", presentacion: "x 200 g", categoria: "Galletas, alfajores y discos", contenido: 200, unidad: "g", costo: 2700, pesoBrutoG: 230 },
+  { codigo: "LG-DONINAS-CHIPS", codigoProveedor: "907-007", producto: "Galletitas con chips de chocolate", marca: "Doninas", presentacion: "x 200 g", categoria: "Galletas, alfajores y discos", contenido: 200, unidad: "g", costo: 2700, pesoBrutoG: 230 },
 ];
 
 export function precioDe(p: ProductoProveedor): number {
@@ -120,9 +131,12 @@ export const COMBOS_PROVEEDORES: ComboProveedor[] = [
   { slug: "despensa-chica", nombre: "Despensa chica de 2 kilos", descuentoPct: 6.7, destacado: true, items: [{ codigo: "TG-MIXCG-500", cantidad: 1 }, { codigo: "LG-DATIL-500", cantidad: 1 }, { codigo: "TG-PASAS-500", cantidad: 1 }, { codigo: "LG-MIXSEM-500", cantidad: 1 }] },
   { slug: "mixes-del-mes", nombre: "Mixes del mes", descuentoPct: 3, items: [{ codigo: "TG-MIXGIR", cantidad: 1 }, { codigo: "TG-MIXTSM", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "alacena-de-frutos-secos", nombre: "Alacena de frutos secos", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-NUEZ", cantidad: 1 }, { codigo: "TG-MIXC", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
-  { slug: "desayuno-30-dias", nombre: "Desayuno 30 días", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-GTRAD", cantidad: 1 }, { codigo: "LG-GPMANI", cantidad: 1 }, { codigo: "736684208707", cantidad: 1 }, { codigo: "LG-MIEL", cantidad: 1 }] },
+  { slug: "desayuno-30-dias", nombre: "Desayuno 30 días", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-GTRAD", cantidad: 1 }, { codigo: "LG-GPMANI", cantidad: 1 }, { codigo: "LG-MIEL", cantidad: 1 }] },
   { slug: "picada-y-snacks", nombre: "Picada y snacks", descuentoPct: 3, items: [{ codigo: "TG-MIXCERV", cantidad: 1 }, { codigo: "TG-MANIQUESO", cantidad: 1 }, { codigo: "TG-MANIJAMON", cantidad: 1 }, { codigo: "TG-GIRASOL", cantidad: 1 }] },
-  { slug: "arranque-gym", nombre: "Pack gym del mes", descuentoPct: 5, items: [{ codigo: "LG-GPROTE", cantidad: 1 }, { codigo: "LG-AVENA", cantidad: 1 }, { codigo: "LG-CACAO-250", cantidad: 1 }, { codigo: "LG-ALMNP-500", cantidad: 1 }, { codigo: "7798446310083", cantidad: 1 }] },
+  { slug: "mix-caju-banana", nombre: "Mix de cajú y banana · 2 kilos", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-MIXCAJUBAN", cantidad: 2 }] },
+  { slug: "alfajorcitos-caseros", nombre: "Kit alfajorcitos caseros", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-TAPITAS-VAI", cantidad: 2 }, { codigo: "LG-TAPITAS-CHOC", cantidad: 1 }, { codigo: "LG-DDL-REPOSTERO", cantidad: 1 }] },
+  { slug: "merienda-sin-tacc-yuka", nombre: "Merienda sin TACC", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-YUKA-ALF-DDL", cantidad: 1 }, { codigo: "LG-YUKA-ALF-CHOC", cantidad: 1 }, { codigo: "LG-YUKA-GALL-VAI", cantidad: 1 }, { codigo: "LG-DONINAS-COCO", cantidad: 1 }, { codigo: "LG-DONINAS-CHIPS", cantidad: 1 }] },
+  { slug: "arranque-gym", nombre: "Pack gym del mes", descuentoPct: 5, items: [{ codigo: "LG-GPROTE", cantidad: 1 }, { codigo: "LG-AVENA", cantidad: 1 }, { codigo: "LG-CACAO-250", cantidad: 1 }, { codigo: "LG-ALMNP-500", cantidad: 1 } ] },
 ];
 
 /** Combos que quedaban rellenados con bolsones: se desactivan hasta rearmarlos con stock propio. */
