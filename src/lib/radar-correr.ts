@@ -56,7 +56,10 @@ export async function escribirComentarioConMotivo(p: Publicacion): Promise<{ tex
     const t = (j.content ?? []).filter((b) => b.type === "text").map((b) => b.text ?? "").join("").trim().replace(/^["«]|["»]$/g, "");
     if (!t) return { texto: null, motivo: `vacío (${j.stop_reason}; ${(j.content ?? []).map((b) => b.type).join(",")})` };
     if (/NO_COMENTAR/.test(t)) return { texto: null, motivo: "el modelo eligió no comentar" };
-    return { texto: t.slice(0, 220) };
+    // Si hay que acortar, se corta en el último punto o signo para no dejar una frase a medias.
+    if (t.length <= 220) return { texto: t };
+    const corte = Math.max(...[".", "!", "?", "🌿", "🩷"].map((c) => t.slice(0, 220).lastIndexOf(c)));
+    return { texto: corte > 80 ? t.slice(0, corte + 1).trim() : t.slice(0, 220) };
   } catch (e) {
     console.error("radar: falló escribir el comentario", e);
     return { texto: null, motivo: String(e).slice(0, 200) };
