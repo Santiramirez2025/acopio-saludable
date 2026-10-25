@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { callar, decir, escuchar as escucharVoz } from "./voz-cliente";
 
 export type Informe = { cuando: string; ok: boolean; texto: string };
 export type AgenteVista = {
@@ -58,29 +59,6 @@ const PILDORA: Record<AgenteVista["estado"], string> = {
 function resumen(t: string, largo = 140): string {
   const l = t.split("\n").map((x) => x.replace(/^[#*\-•\s]+/, "").trim()).find((x) => x.length > 12) ?? "";
   return l.length > largo ? `${l.slice(0, largo - 1)}…` : l;
-}
-
-// Reconocimiento de voz del navegador (Chrome lo trae como webkitSpeechRecognition).
-type Reconocedor = { lang: string; interimResults: boolean; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; onerror: (() => void) | null; start: () => void; stop: () => void };
-function crearReconocedor(): Reconocedor | null {
-  if (typeof window === "undefined") return null;
-  const w = window as unknown as { SpeechRecognition?: new () => Reconocedor; webkitSpeechRecognition?: new () => Reconocedor };
-  const C = w.SpeechRecognition ?? w.webkitSpeechRecognition;
-  return C ? new C() : null;
-}
-
-function hablarEnVoz(texto: string, alTerminar?: () => void) {
-  try {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(texto.replace(/[*_#`]/g, ""));
-    u.lang = "es-AR";
-    const voz = window.speechSynthesis.getVoices().find((v) => v.lang.startsWith("es"));
-    if (voz) u.voice = voz;
-    if (alTerminar) u.onend = () => alTerminar();
-    window.speechSynthesis.speak(u);
-  } catch {
-    /* sin voz en este navegador */
-  }
 }
 
 export function Oficina({ datos }: { datos: DatosOficina }) {
@@ -313,7 +291,7 @@ function Spot({ a, onAbrir }: { a: AgenteVista; onAbrir: () => void }) {
 }
 
 /** La ficha de un agente: hablarle, sus informes, sus órdenes y su perfil. */
-export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false }: { a: AgenteVista; tv: boolean; onCerrar: () => void; onCambio: () => void; manosLibres?: boolean }) {
+export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta = false }: { a: AgenteVista; tv: boolean; onCerrar: () => void; onCambio: () => void; manosLibres?: boolean; angosta?: boolean }) {
   const [pestana, setPestana] = useState<"hablar" | "informes" | "ordenes" | "perfil">("hablar");
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [texto, setTexto] = useState("");
@@ -324,7 +302,12 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false }: { a: A
   const [orden, setOrden] = useState("");
   const [ordenOk, setOrdenOk] = useState("");
   const fin = useRef<HTMLDivElement>(null);
-  const rec = useRef<Reconocedor | null>(null);
+  const cortarMic = useRef<(() => void) | null>(null);
+  const [estadoVoz, setEstadoVoz] = useState("");
+  useEffect(() => () => {
+    cortarMic.current?.();
+    callar();
+  }, []);
 
   // La charla queda guardada en este navegador por agente (si se puede), para retomarla.
   const clave = `acopio-charla-${a.id}`;
@@ -362,7 +345,7 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false }: { a: A
       const d = (await r.json()) as { respuesta?: string; orden?: string | null; error?: string };
       if (!r.ok || !d.respuesta) throw new Error(d.error ?? "No pude responder");
       setMensajes([...nuevos, { role: "assistant", content: d.respuesta, orden: d.orden }]);
-      if (voz) hablarEnVoz(d.respuesta, manosLibres ? () => escuchar() : undefined);
+      if (voz) void decir(d.respuesta, a.id, manosLibres ? () => escuchar() : undefined);
       if (d.orden) onCambio();
     } catch (e) {
       setError(String(e instanceof Error ? e.message : e));
@@ -373,26 +356,25 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false }: { a: A
 
   const escuchar = () => {
     if (escuchando) {
-      rec.current?.stop();
+      cortarMic.current?.();
       return;
     }
-    const r = crearReconocedor();
-    if (!r) {
-      setError("Este navegador no reconoce voz. Probá con Chrome.");
-      return;
-    }
-    rec.current = r;
-    r.lang = "es-AR";
-    r.interimResults = false;
-    r.onresult = (e) => {
-      const dicho = Array.from(e.results).map((x) => x[0]?.transcript ?? "").join(" ");
-      setVoz(true);
-      void enviar(dicho);
-    };
-    r.onend = () => setEscuchando(false);
-    r.onerror = () => setEscuchando(false);
-    setEscuchando(true);
-    r.start();
+    setError("");
+    void escucharVoz(
+      (dicho) => {
+        if (dicho.trim()) {
+          setVoz(true);
+          void enviar(dicho);
+        }
+      },
+      (e, detalle) => {
+        setEscuchando(e === "escuchando");
+        setEstadoVoz(e === "escuchando" ? "Te escucho…" : e === "pensando" ? "Entendiendo…" : "");
+        if (e === "error" && detalle) setError(detalle);
+      },
+    ).then((c) => {
+      cortarMic.current = c;
+    });
   };
 
   const guardar = async () => {
@@ -424,10 +406,10 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false }: { a: A
   const borde = tv ? "border-white/10" : "border-stone-200";
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end bg-black/50" onClick={onCerrar}>
+    <div className={`fixed inset-0 z-[60] flex justify-end ${angosta ? "pointer-events-none" : "bg-black/50"}`} onClick={onCerrar}>
       <aside
         onClick={(e) => e.stopPropagation()}
-        className={`${base} flex h-full w-full flex-col shadow-2xl ${tv ? "max-w-4xl text-lg" : "max-w-xl"}`}
+        className={`${base} pointer-events-auto flex h-full w-full flex-col shadow-2xl ${angosta ? "bg-stone-900/90 backdrop-blur-md " : ""}${angosta ? "max-w-md" : tv ? "max-w-4xl text-lg" : "max-w-xl"}`}
         role="dialog"
         aria-label={`${a.persona}, ${a.nombre}`}
       >
@@ -471,7 +453,8 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false }: { a: A
                   </div>
                 </div>
               ))}
-              {cargando ? <div className={`text-sm ${suave}`}>{a.persona} está escribiendo…</div> : null}
+              {estadoVoz ? <div className="text-sm text-amber-400">🎙️ {estadoVoz}</div> : null}
+              {cargando ? <div className={`text-sm ${suave}`}>{a.persona} está pensando…</div> : null}
               {error ? <div className="text-sm text-red-500">{error}</div> : null}
               <div ref={fin} />
             </div>
