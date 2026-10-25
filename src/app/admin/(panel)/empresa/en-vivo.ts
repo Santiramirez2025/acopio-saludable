@@ -12,7 +12,7 @@ type Opciones = {
   onEstado: (e: EstadoLlamada, detalle?: string) => void;
   /** Texto de la charla: rol, texto, y si ya está completo. */
   onTexto: (rol: "user" | "assistant", texto: string, final: boolean) => void;
-  onOrden: (orden: string) => void;
+  onOrden: (orden: string, para: string) => void;
 };
 
 export type Llamada = { cortar: () => void; silenciar: (si: boolean) => void };
@@ -118,17 +118,20 @@ export async function llamar(o: Opciones): Promise<Llamada> {
           for (const it of salida) {
             if (it.type !== "function_call" || it.name !== "guardar_orden") continue;
             let orden = "";
+            let para = o.agente;
             try {
-              orden = String((JSON.parse(it.arguments ?? "{}") as { orden?: string }).orden ?? "");
+              const args = JSON.parse(it.arguments ?? "{}") as { orden?: string; para?: string };
+              orden = String(args.orden ?? "");
+              if (args.para) para = String(args.para);
             } catch {
               /* nada */
             }
             void (async () => {
               let ok = false;
               if (orden.trim()) {
-                const g = await fetch("/api/admin/agentes/orden", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente: o.agente, texto: orden }) }).catch(() => null);
+                const g = await fetch("/api/admin/agentes/orden", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente: para, texto: para === o.agente ? orden : `${orden} (te lo pasó ${o.agente} en una llamada con Santiago)` }) }).catch(() => null);
                 ok = !!g?.ok;
-                if (ok) o.onOrden(orden);
+                if (ok) o.onOrden(orden, para);
               }
               enviar({ type: "conversation.item.create", item: { type: "function_call_output", call_id: it.call_id, output: JSON.stringify({ guardada: ok }) } });
               enviar({ type: "response.create" });

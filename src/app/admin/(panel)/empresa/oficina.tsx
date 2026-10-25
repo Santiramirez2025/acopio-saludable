@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { callar, decir, escuchar as escucharVoz, hayVozNatural } from "./voz-cliente";
 import { llamar, type EstadoLlamada, type Llamada } from "./en-vivo";
+import { AGENTES } from "@/lib/agentes";
 
 export type Informe = { cuando: string; ok: boolean; texto: string };
 export type AgenteVista = {
@@ -306,6 +307,7 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
   const cortarMic = useRef<(() => void) | null>(null);
   const [estadoVoz, setEstadoVoz] = useState("");
   const llamada = useRef<Llamada | null>(null);
+  const ultimoRefresco = useRef(0);
   const [enVivo, setEnVivo] = useState<EstadoLlamada | null>(null);
   useEffect(() => () => {
     cortarMic.current?.();
@@ -324,12 +326,15 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
     }
   }, [clave]);
   useEffect(() => {
-    try {
-      localStorage.setItem(clave, JSON.stringify(mensajes.slice(-30)));
-    } catch {
-      /* sin almacenamiento */
+    const enCurso = mensajes[mensajes.length - 1]?.vivo;
+    if (!enCurso) {
+      try {
+        localStorage.setItem(clave, JSON.stringify(mensajes.slice(-30)));
+      } catch {
+        /* sin almacenamiento */
+      }
     }
-    fin.current?.scrollIntoView({ behavior: "smooth" });
+    fin.current?.scrollIntoView({ behavior: enCurso ? "auto" : "smooth" });
   }, [mensajes, clave]);
 
   const enviar = async (t: string) => {
@@ -397,7 +402,11 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
         }
         if (e === "cortada") llamada.current = null;
       },
-      onTexto: (rol, t, final) =>
+      onTexto: (rol, t, final) => {
+        // Mientras habla, el texto se refresca 4 veces por segundo (no en cada letra) para no trabar el audio.
+        const ahora = performance.now();
+        if (rol === "assistant" && !final && ahora - ultimoRefresco.current < 250) return;
+        ultimoRefresco.current = ahora;
         setMensajes((prev) => {
           const m = [...prev];
           const ult = m[m.length - 1];
@@ -410,9 +419,11 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
           if (ult?.role === "assistant" && ult.vivo) m[m.length - 1] = { ...ult, content: t, vivo: !final };
           else m.push({ role: "assistant", content: t, vivo: !final });
           return m;
-        }),
-      onOrden: (o) => {
-        setMensajes((prev) => [...prev, { role: "assistant", content: "Anotado.", orden: o }]);
+        });
+      },
+      onOrden: (o, para) => {
+        const quien = para === a.id ? "" : ` → se la pasé a ${AGENTES.find((x) => x.id === para)?.persona ?? para}`;
+        setMensajes((prev) => [...prev, { role: "assistant", content: `Anotado${quien}.`, orden: o }]);
         onCambio();
       },
     });
