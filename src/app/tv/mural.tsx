@@ -97,16 +97,16 @@ export function MuralTv({ datos }: { datos: DatosOficina }) {
             return (
               <div
                 key={a.id}
-                style={{ width: 340, display: "flex", alignItems: "center", gap: 14, borderRadius: 20, padding: "10px 14px", background: on ? "#FFC83D" : "rgba(255,255,255,.06)", color: on ? "#0b2a20" : "#fff", transition: "background .4s" }}
+                style={{ width: 244, height: 84, boxSizing: "border-box", display: "flex", alignItems: "center", gap: 12, borderRadius: 20, padding: "10px 12px", background: on ? "#FFC83D" : "rgba(255,255,255,.06)", color: on ? "#0b2a20" : "#fff", transition: "background .4s" }}
               >
                 <div style={{ position: "relative", flexShrink: 0 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/avatars/${a.id}.svg`} alt="" width={64} height={64} style={{ borderRadius: 999, background: "rgba(255,255,255,.9)" }} />
+                  <img src={`/avatars/${a.id}.svg`} alt="" width={56} height={56} style={{ borderRadius: 999, background: "rgba(255,255,255,.9)" }} />
                   <span style={{ position: "absolute", right: 0, bottom: 0, width: 18, height: 18, borderRadius: 999, background: COLOR[a.estado], border: `3px solid ${on ? "#FFC83D" : "#0b2a20"}` }} />
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 24, fontWeight: 800, whiteSpace: "nowrap" }}>{a.persona} {a.emoji}</div>
-                  <div style={{ fontSize: 17, opacity: 0.75, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 230 }}>{a.nombre}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, whiteSpace: "nowrap" }}>{a.persona} {a.emoji}</div>
+                  <div style={{ fontSize: 15, lineHeight: 1.15, opacity: 0.75, maxHeight: 35, overflow: "hidden" }}>{a.nombre}</div>
                 </div>
               </div>
             );
@@ -116,16 +116,16 @@ export function MuralTv({ datos }: { datos: DatosOficina }) {
         {/* Lo último que hizo alguien + atención */}
         <div style={{ position: "absolute", left: 64, right: 64, bottom: 44, display: "flex", gap: 20 }}>
           {destacado ? (
-            <div style={{ flex: 3, display: "flex", gap: 28, alignItems: "center", background: "#fff", color: "#0b2a20", borderRadius: 32, padding: "28px 36px" }}>
+            <div style={{ flex: 3, display: "flex", gap: 28, alignItems: "center", background: "#fff", color: "#0b2a20", borderRadius: 32, padding: "32px 40px", minHeight: 300, boxSizing: "border-box" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/avatars/${destacado.id}.svg`} alt="" width={140} height={140} style={{ flexShrink: 0 }} />
+              <img src={`/avatars/${destacado.id}.svg`} alt="" width={180} height={180} style={{ flexShrink: 0 }} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 22, color: "#0F6B4F", fontWeight: 700 }}>
+                <div style={{ fontSize: 24, color: "#0F6B4F", fontWeight: 700 }}>
                   AHORA · {destacado.nombre.toUpperCase()} {destacado.informes[0] ? `· ${destacado.informes[0].cuando}` : ""}
                 </div>
-                <div style={{ fontSize: 44, fontWeight: 900, marginTop: 2 }}>{destacado.persona} {destacado.emoji}</div>
-                <div style={{ fontSize: 28, lineHeight: 1.3, marginTop: 8, maxHeight: 110, overflow: "hidden" }}>
-                  {destacado.informes[0] ? linea(destacado.informes[0].texto, 200) : destacado.mision}
+                <div style={{ fontSize: 52, fontWeight: 900, marginTop: 2 }}>{destacado.persona} {destacado.emoji}</div>
+                <div style={{ fontSize: 32, lineHeight: 1.3, marginTop: 8, maxHeight: 168, overflow: "hidden" }}>
+                  {destacado.informes[0] ? linea(destacado.informes[0].texto, 260) : destacado.mision}
                 </div>
               </div>
             </div>
