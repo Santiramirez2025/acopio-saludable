@@ -34,7 +34,7 @@ export function ControlTv() {
 
   useEffect(() => {
     try {
-      setSigue(localStorage.getItem(CLAVE_SEGUIR) === "1");
+      setSigue(localStorage.getItem(CLAVE_SEGUIR) !== "0");
     } catch {
       /* nada */
     }
@@ -106,11 +106,16 @@ export function ControlTv() {
         ))}
       </div>
       {aviso ? <p className="mt-3 text-sm text-stone-600">{aviso}</p> : null}
+      {AGENTES.some((x) => x.id === actual) ? (
+        <a href={`/admin/empresa?abrir=${actual}`} className="mt-3 flex items-center justify-center gap-2 rounded-2xl bg-acopio-700 px-4 py-3 text-sm font-semibold text-white">
+          🎙️ Hablar con {AGENTES.find((x) => x.id === actual)?.persona} (se ve en la TV)
+        </a>
+      ) : null}
 
       <label className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-stone-100 p-3 text-sm">
         <span>
           <b>La TV sigue lo que abro</b>
-          <span className="block text-xs text-stone-500">Cuando abrís a alguien acá para hablarle, la TV lo muestra.</span>
+          <span className="block text-xs text-stone-500">Cuando hablás con alguien desde acá, la TV lo muestra en grande con lo que se dicen.</span>
         </span>
         <input type="checkbox" checked={sigue} onChange={(e) => cambiarSigue(e.target.checked)} className="h-6 w-6 accent-acopio-700" />
       </label>
