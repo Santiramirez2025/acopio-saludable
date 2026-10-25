@@ -120,7 +120,8 @@ const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen
 export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[] }): FotoOportuna[] {
   const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
   const yaMandadas = nuestros.filter((t) => t.startsWith("[Foto]"));
-  if (yaMandadas.length >= 3) return [];
+  // Máximo 2 fotos por charla: más que eso molesta (y nunca una foto de algo que no pidió).
+  if (yaMandadas.length >= 2) return [];
   const yaSalio = (pie: string) => yaMandadas.some((t) => t.includes(pie));
   const candidata = (archivo: string, pie: string): FotoOportuna | null => (yaSalio(pie) ? null : { url: url(archivo), pie });
   const real = REALES[0];
@@ -135,9 +136,10 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
     const f = candidata(real.archivo, real.pie);
     return f ? [f] : [];
   }
-  // 3. Un combo nombrado (en el texto o en los botones).
+  // 3. Un combo que la persona nombró o eligió (no uno que el vendedor ofreció por su cuenta).
+  const hablaDeCombos = /combo|despensa|alacena|kit|bolsa|caja|mesa|regalo|recomend|conviene|aconsej/i.test(a.entrante);
   for (const [re, slug, nombre] of NOMBRES_COMBO) {
-    if (re.test(a.respuesta) || a.combos?.includes(slug)) {
+    if (re.test(a.entrante) || (hablaDeCombos && (re.test(a.respuesta) || a.combos?.includes(slug)))) {
       const f = candidata(COMBOS[slug], nombre);
       if (f) return [f];
     }
@@ -156,8 +158,10 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
     const f = candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
     if (f) return [f];
   }
-  // 5. Primera respuesta con precios (el «precios por kilo» del anuncio): entra por los ojos con lo más pedido.
-  if (!nuestros.length && /\$\s?\d/.test(a.respuesta)) {
+  // 5. Primera respuesta a un pedido de precios en general (el «precios por kilo» del anuncio): lo más pedido.
+  // Si pidió un producto puntual (una granola, una harina), no: la foto del mix no tiene nada que ver.
+  const preciosEnGeneral = /precio|lista|por kilo|cat[aá]logo|qu[eé] (tienen|venden|hay)/i.test(a.entrante);
+  if (!nuestros.length && preciosEnGeneral && /\$\s?\d/.test(a.respuesta)) {
     const f = candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
     if (f) return [f];
   }

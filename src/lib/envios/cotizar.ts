@@ -1,6 +1,7 @@
 // Orquestador de envíos: entrega propia + correos con credenciales; la tabla entra como respaldo.
 
 import { cpEnLista, zonaDeProvincia } from "./geo";
+import { precioRedondo } from "../precios";
 import { proveedorAndreani } from "./andreani";
 import { proveedorMiCorreo } from "./micorreo";
 import { proveedorTabla, type TablaEnvios } from "./tabla";
@@ -27,7 +28,8 @@ export function aplicarReglas(tarifas: Tarifa[], subtotal: number, envioGratisDe
   const opciones = tarifas.map((t) => ({
     ...t,
     // Con envío gratis, la opción paga más barata sale $0 y las demás pagan solo la diferencia.
-    precio: gratis && lista(t) > 0 ? Math.max(0, Math.round((lista(t) - minimoPago) * 100) / 100) : lista(t),
+    // Siempre redondo: al cliente nunca le llega un envío de $ 16.304,35.
+    precio: precioRedondo(gratis && lista(t) > 0 ? Math.max(0, lista(t) - minimoPago) : lista(t)),
     masBarata: false,
   }));
   const minimo = Math.min(...opciones.map((o) => o.precio));

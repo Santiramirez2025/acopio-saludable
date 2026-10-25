@@ -1103,6 +1103,10 @@ test("imágenes oportunas: en el momento justo y sin repetir", () => {
   assert.equal(fotosOportunas({ entrante: "¿es confiable?", respuesta: "sí", historial: tres }).length, 0);
   // Charla común sin disparador → nada
   assert.equal(fotosOportunas({ entrante: "hola", respuesta: "¡Hola! ¿Qué estás buscando?", historial: vacio }).length, 0);
+  // Pidió una granola: no va la foto del mix (Lorenzo)
+  assert.equal(fotosOportunas({ entrante: "Hola! Quiero Granola proteica Sport x 1 kg", respuesta: "La granola sale $14.200", historial: vacio }).length, 0);
+  // El vendedor ofrece un combo que nadie pidió: sin foto
+  assert.equal(fotosOportunas({ entrante: "quiero sal rosada y granola", respuesta: "Te paso: Despensa de 4 kilos a $35.500", historial: vacio }).length, 0);
 });
 
 test("imágenes oportunas: el primer «precios por kilo» va con la imagen del mix", () => {
@@ -1313,4 +1317,28 @@ test("separarOrden: saca la línea ORDEN y deja la respuesta", async () => {
   const { separarOrden } = await import("./agentes");
   assert.deepEqual(separarOrden("Dale, lo hago.\nORDEN: priorizar gimnasios de Carlos Paz"), { respuesta: "Dale, lo hago.", orden: "priorizar gimnasios de Carlos Paz" });
   assert.deepEqual(separarOrden("Vamos bien, 3 pedidos hoy."), { respuesta: "Vamos bien, 3 pedidos hoy.", orden: null });
+});
+
+
+test("pedido de la web: se arma completo (5 ítems) y redondo", async () => {
+  const { esPedidoWeb, leerPedidoWeb, resolverPedidoWeb } = await import("./pedido-web");
+  const t = "Hola! Quiero hacer este pedido de la web:\n• 1 × Mix Clásico con cajú: $ 15.400\n• 1 × Granola proteica Sport: $ 14.200\n• 1 × Sal Rosada del Himalaya: $ 2.600\n• 1 × Sal Marina Fina yodada: $ 2.400\n• 1 × Pasas de uva negras sin semilla: $ 3.700\nTotal: $ 38.300";
+  assert.ok(esPedidoWeb(t));
+  const l = leerPedidoWeb(t);
+  assert.equal(l.length, 5);
+  assert.deepEqual(l[4], { cantidad: 1, nombre: "Pasas de uva negras sin semilla", subtotal: 3700 });
+  const productos = [
+    { codigo: "MIX", producto: "Mix Clásico con cajú", presentacion: "x 1 kg", precio: 15400 },
+    { codigo: "GR1", producto: "Granola proteica Sport", presentacion: "x 1 kg", precio: 14200 },
+    { codigo: "GR5", producto: "Granola proteica Sport", presentacion: "x 500 g", precio: 7600 },
+    { codigo: "SR", producto: "Sal Rosada del Himalaya", presentacion: "x500gr", precio: 2600 },
+    { codigo: "SM", producto: "Sal Marina Fina yodada", presentacion: "x500gr", precio: 2400 },
+    { codigo: "PAS", producto: "Pasas de uva negras sin semilla", presentacion: "x 500 g", precio: 3700 },
+  ];
+  const r = resolverPedidoWeb(l, productos, []);
+  assert.deepEqual(r.faltan, []);
+  assert.deepEqual(r.elegidos.map((e) => e.id), ["MIX", "GR1", "SR", "SM", "PAS"]);
+  const { aplicarReglas } = await import("./envios/cotizar");
+  const op = aplicarReglas([{ id: "x", proveedor: "propia", modalidad: "propia", nombre: "Te lo llevamos", costo: 16304.35, plazo: "" } as never], 38300, null);
+  assert.equal(op[0].precio % 100, 0);
 });
