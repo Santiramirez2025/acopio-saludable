@@ -46,7 +46,7 @@ export function textoAviso(p: Publicacion, comentario: string, ahora = new Date(
 export function pedidoComentario(p: Publicacion): string {
   return [
     "Escribí UN comentario de Instagram para que lo publique la cuenta @acopio.saludable (dietética online de Villa Carlos Paz: frutos secos, despensa y combos con entrega a domicilio) en esta publicación de otra cuenta.",
-    "Reglas: español rioplatense, una o dos frases, máximo 180 caracteres, cálido y genuino, que aporte algo al tema del post (un dato, una opinión, un buen deseo, una pregunta). Nada de vender ni de «seguinos», sin hashtags y con a lo sumo un emoji. Si el post es de una tragedia, un accidente o algo triste, respondé solo: NO_COMENTAR.",
+    "Reglas: español rioplatense, una o dos frases, máximo 180 caracteres, cálido y genuino, que aporte algo al tema del post (un dato, una opinión, un buen deseo, una pregunta). Nada de vender ni de «seguinos», sin hashtags y con a lo sumo un emoji. Respondé solo NO_COMENTAR si el post es de una tragedia, un accidente o algo triste; si es algo personal o familiar (un cumpleaños, hijos, chicos, una fiesta privada, un bebé); o si es política o polémica. Una marca comentando la vida privada de alguien queda mal.",
     `Cuenta: @${p.username}`,
     `Publicación: ${p.caption.slice(0, 1200) || "(sin texto)"}`,
     "Devolvé solo el comentario, sin comillas.",

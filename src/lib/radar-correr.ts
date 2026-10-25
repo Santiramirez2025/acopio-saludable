@@ -1,5 +1,5 @@
 // Radar de Instagram: lee las publicaciones de las cuentas vigiladas (business discovery de la
-// API de Instagram) y avisa a Santiago por WhatsApp con un comentario listo.
+// API de Instagram) y deja un comentario listo para cada publicación nueva. Lo publica Agus (Community).
 
 import { prisma } from "@/lib/prisma";
 import { paginaMeta } from "@/lib/meta-mensajes";
@@ -97,7 +97,9 @@ export async function correrRadar(forzar = false): Promise<{ revisadas: number; 
     const comentario = await escribirComentario(p);
     await prisma.$executeRaw`INSERT INTO "RadarAviso" ("mediaId", "username", "comentario") VALUES (${p.id}, ${p.username}, ${comentario}) ON CONFLICT DO NOTHING`;
     if (!comentario) continue;
-    await avisarSantiago(`Comentar en @${p.username}`, textoAviso(p, comentario));
+    // Comentar es trabajo de Agus (Community, 12:41 y 19:41): toma la lista del radar.
+    // A Santiago solo se le avisa si lo pide (RADAR_AVISAR=1 en Vercel).
+    if (process.env.RADAR_AVISAR === "1") await avisarSantiago(`Comentar en @${p.username}`, textoAviso(p, comentario));
     avisos++;
     quedan--;
   }
