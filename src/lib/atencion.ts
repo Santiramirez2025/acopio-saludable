@@ -20,6 +20,8 @@ import { combosTienda, cotizarCarrito } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
 import { avisarSantiago } from "./avisos";
 import { fotosOportunas } from "./galeria";
+import { esPedidoWeb, leerPedidoWeb, resolverPedidoWeb } from "./pedido-web";
+import { catalogo } from "./asistente-catalogo";
 import { leerConfig } from "./config";
 import { pesos, renglonCombo } from "./precios";
 import { urlSitio } from "./sitio";
@@ -499,7 +501,9 @@ export async function pensar(c: {
   const cerrado = ordenId
     ? `<pedido_cerrado>Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";
-  const r = vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId }) : null;
+  // El carrito de la web llega armado: se carga exacto, sin IA y sin ofrecer otra cosa.
+  const web = esPedidoWeb(c.texto) && !ordenId ? await armarPedidoWeb(c.texto, Boolean(c.historial.some((h) => h.de === "acopio"))) : null;
+  const r = web ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId }) : null);
 
   let respuesta: Respuesta;
   if (r) respuesta = r;
@@ -539,7 +543,7 @@ export async function pensar(c: {
   if (!respuesta.envio && envio) respuesta = { ...respuesta, envio };
   const pedido = await pedidoDe(lineas, envio);
   // Imágenes en el momento justo (duda, combo nombrado, producto cotizado, pedido agendado), sin saturar.
-  if (c.canal === "whatsapp" && !derivar && !respuesta.fotos?.length && estadoOrden !== "ENTREGADO" && estadoOrden !== "ENVIADO") {
+  if (c.canal === "whatsapp" && !web && !derivar && !respuesta.fotos?.length && estadoOrden !== "ENTREGADO" && estadoOrden !== "ENVIADO") {
     const combos = [
       ...(respuesta.acciones ?? []).filter((a) => a.clase === "combo").map((a) => a.id),
       ...(respuesta.fichas ?? []).map((f) => f.href.match(/^\/combos\/(.+)$/)?.[1]).filter((x): x is string => Boolean(x)),
@@ -563,3 +567,21 @@ export async function pensar(c: {
 }
 
 
+
+
+/** Arma el pedido que viene de la web tal cual. Si algo no se encuentra, igual arma el resto y lo dice. */
+async function armarPedidoWeb(texto: string, yaSaludo: boolean): Promise<Respuesta | null> {
+  const lineas = leerPedidoWeb(texto);
+  if (!lineas.length) return null;
+  const [productos, combos] = await Promise.all([catalogo(), combosTienda({ activo: true, tipo: "COMBO" })]);
+  const { elegidos, faltan } = resolverPedidoWeb(lineas, productos, combos);
+  if (!elegidos.length) return null;
+  const total = elegidos.reduce((s, e) => s + e.precio, 0);
+  const acciones: Accion[] = elegidos.map((e) => ({ tipo: "agregar", clase: e.clase, id: e.id, nombre: e.nombre, cantidad: e.cantidad, precio: pesos(e.precio) }));
+  const falta = faltan.length ? ` No encontré ${faltan.join(" y ")} con el precio de hoy: ¿lo cambiamos por otro o seguimos sin eso?` : "";
+  return {
+    texto: `${yaSaludo ? "¡Listo!" : "¡Hola! Listo,"} ya te armé el pedido de la web tal cual (${elegidos.length} ${elegidos.length === 1 ? "producto" : "productos"}, ${pesos(total)}).${falta} ¿De qué ciudad sos así te digo el envío?`,
+    acciones,
+    reemplazaPedido: true,
+  };
+}

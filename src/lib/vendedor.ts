@@ -169,7 +169,7 @@ const HERRAMIENTAS = [
         reemplazar: { type: "boolean", description: "true solo si el pedido se arma de nuevo (quitó o cambió algo). Si no, lo nuevo se suma a lo guardado." },
         items: {
           type: "array",
-          description: "Hasta 4 cosas para sumar al pedido.",
+          description: "Todo lo que se suma al pedido (hasta 20 cosas).",
           items: {
             type: "object",
             properties: {
@@ -448,7 +448,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
   }
 
   if (nombre === "agregar_al_pedido") {
-    const crudos = Array.isArray(entrada.items) ? entrada.items.slice(0, 4) : [];
+    const crudos = Array.isArray(entrada.items) ? entrada.items.slice(0, 20) : [];
     const [productos, combos] = await Promise.all([catalogo(), combosTienda({ activo: true, tipo: "COMBO" })]);
     const acciones: Accion[] = [];
     const rechazados: string[] = [];
@@ -733,10 +733,14 @@ export async function responderComoVendedor(
             mensajes.push({ role: "user", content: "(Escribile la respuesta al cliente: máximo 30 palabras, un dato y una pregunta al final, y después la línea OPCIONES con las respuestas a esa pregunta.)" });
             continue;
           }
-          if (!fichas.length) return null;
+          if (acciones.length) {
+            texto = "¡Listo! Ya te armé el pedido. ¿De qué ciudad sos así te digo el envío?";
+          } else if (!fichas.length) return null;
           // Ya no va la lista debajo: los precios tienen que estar en el texto.
+          else {
           const tres = fichas.slice(0, 3).map((f) => `${f.nombre.replace(/^Combo /, "")} ${presentacionDe(f)} a ${f.precio}`.replace(/\s+/g, " "));
           texto = `Te paso los precios: ${tres.join(", ")}. ¿Cuál te llevás?`;
+          }
         }
         const mostradas = sep.texto ? fichasNombradas(fichas, texto) : fichas.slice(0, 4);
         return {

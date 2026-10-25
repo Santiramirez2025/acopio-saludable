@@ -4,7 +4,7 @@ import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
 import { proximoCorte } from "./corte";
-import { calcularCombo, renglonCombo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
+import { calcularCombo, renglonCombo, precioRedondo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
 import { wherePublicado, esSinTacc } from "./filtros-producto";
 import { prolijo } from "./nombres";
 
@@ -233,7 +233,7 @@ export async function cotizarCarrito(entrada: unknown, minimo?: number): Promise
     progresoPct: compraMinima > 0 ? Math.min(100, Math.round((subtotal / compraMinima) * 100)) : 100,
     puedePagar: subtotal > 0 && falta === 0,
     puedePagarEnZona: subtotal > 0 && subtotal >= minimoPropia,
-    conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? Math.round(subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) : null,
+    conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? precioRedondo(subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) : null,
     gananciaReventa: redondear2(gananciaReventa),
     corte: proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null,
   };
