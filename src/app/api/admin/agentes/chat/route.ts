@@ -1,6 +1,6 @@
 // Hablar con un agente desde /admin/empresa. Solo administrador.
 //   POST { agente, mensajes: [{ role: "user" | "assistant", content }] } → { respuesta, orden? }
-import { esAdmin } from "@/lib/admin-acceso";
+import { esAdminOTv as esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";

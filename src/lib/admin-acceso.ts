@@ -34,3 +34,10 @@ export async function esAdmin(): Promise<boolean> {
   const h = await hashGuardado();
   return !!h && h === hashClave(clave);
 }
+
+/** Para las rutas de la oficina (charlar, voz, órdenes): Santiago, un agente o una TV vinculada. */
+export async function esAdminOTv(): Promise<boolean> {
+  if (await esAdmin()) return true;
+  const { esTv } = await import("./tv");
+  return esTv();
+}

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { callar, decir, escuchar as escucharVoz, hayVozNatural } from "./voz-cliente";
 import { llamar, type EstadoLlamada, type Llamada } from "./en-vivo";
 import { AGENTES } from "@/lib/agentes";
+import { BotonTv } from "./boton-tv";
 
 export type Informe = { cuando: string; ok: boolean; texto: string };
 export type AgenteVista = {
@@ -155,7 +156,10 @@ export function Oficina({ datos }: { datos: DatosOficina }) {
           {tv ? (
             <button onClick={salirTv} className="rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20">Salir de TV</button>
           ) : (
-            <button onClick={entrarTv} className="rounded-full bg-acopio-700 px-4 py-2 text-sm text-white hover:bg-acopio-900">📺 Modo TV</button>
+            <>
+              <BotonTv oscuro={false} />
+              <button onClick={entrarTv} className="rounded-full bg-acopio-700 px-4 py-2 text-sm text-white hover:bg-acopio-900">Pantalla completa</button>
+            </>
           )}
         </div>
       </header>
@@ -315,16 +319,45 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
     llamada.current?.cortar();
   }, []);
 
-  // La charla queda guardada en este navegador por agente (si se puede), para retomarla.
+  // La charla queda guardada en el servidor (se ve desde cualquier dispositivo y el agente la recuerda).
+  // El navegador guarda una copia por si no hay conexión; la primera vez se suben las charlas viejas de acá.
   const clave = `acopio-charla-${a.id}`;
+  const guardados = useRef(0);
+  const cargada = useRef(false);
   useEffect(() => {
+    let vivo = true;
+    cargada.current = false;
+    let local: Mensaje[] = [];
     try {
       const g = localStorage.getItem(clave);
-      setMensajes(g ? (JSON.parse(g) as Mensaje[]) : []);
+      local = g ? (JSON.parse(g) as Mensaje[]).filter((m) => !m.vivo) : [];
     } catch {
-      setMensajes([]);
+      local = [];
     }
-  }, [clave]);
+    setMensajes(local);
+    guardados.current = local.length;
+    void fetch(`/api/admin/agentes/charla?agente=${a.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(async (d: { mensajes?: Mensaje[] } | null) => {
+        if (!vivo || !d) return;
+        const servidor = (d.mensajes ?? []).map(({ role, content, orden }) => ({ role, content, orden }));
+        if (servidor.length) {
+          // lo que haya empezado mientras cargaba (por ejemplo el saludo de la llamada) queda después
+          setMensajes((prev) => [...servidor, ...prev.slice(local.length)]);
+          guardados.current = servidor.length;
+        } else if (local.length) {
+          // primera vez: subo lo que estaba solo en este navegador
+          await fetch("/api/admin/agentes/charla", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente: a.id, mensajes: local.slice(-20) }) }).catch(() => undefined);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        cargada.current = true;
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [clave, a.id]);
   useEffect(() => {
     const enCurso = mensajes[mensajes.length - 1]?.vivo;
     if (!enCurso) {
@@ -334,8 +367,18 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
         /* sin almacenamiento */
       }
     }
+    // Subo al servidor los mensajes nuevos ya terminados.
+    if (cargada.current) {
+      let hasta = guardados.current;
+      while (hasta < mensajes.length && !mensajes[hasta].vivo) hasta++;
+      if (hasta > guardados.current) {
+        const nuevos = mensajes.slice(guardados.current, hasta);
+        guardados.current = hasta;
+        void fetch("/api/admin/agentes/charla", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente: a.id, mensajes: nuevos }) }).catch(() => undefined);
+      }
+    }
     fin.current?.scrollIntoView({ behavior: enCurso ? "auto" : "smooth" });
-  }, [mensajes, clave]);
+  }, [mensajes, clave, a.id]);
 
   const enviar = async (t: string) => {
     const limpio = t.trim();

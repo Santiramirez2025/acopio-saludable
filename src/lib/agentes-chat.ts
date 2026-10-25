@@ -16,7 +16,31 @@ export async function guardarOrden(agente: string, texto: string): Promise<void>
 
 type Fila = { nombre: string; detalle: string | null; fecha: Date };
 
-async function contexto(agente: string): Promise<string> {
+export type MensajeCharla = { role: "user" | "assistant"; content: string; orden?: string | null; cuando?: string };
+
+/** Guarda mensajes de la charla de Santiago con un agente (uno por fila, en orden). */
+export async function guardarCharla(agente: string, mensajes: { role: "user" | "assistant"; content: string; orden?: string | null }[]): Promise<void> {
+  const base = Date.now();
+  for (const [i, m] of mensajes.entries()) {
+    const fecha = new Date(base + i); // conserva el orden aunque lleguen juntos
+    await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle", "fecha") VALUES (${`charla-${agente}`}, ${m.role === "user"}, ${JSON.stringify({ t: m.content, o: m.orden ?? null })}, ${fecha})`;
+  }
+}
+
+export async function leerCharla(agente: string, cuantos = 40): Promise<MensajeCharla[]> {
+  const filas = await prisma.$queryRaw<{ ok: boolean; detalle: string | null; fecha: Date }[]>`SELECT "ok", "detalle", "fecha" FROM "CronCorrida" WHERE "nombre" = ${`charla-${agente}`} ORDER BY "fecha" DESC LIMIT ${cuantos}`;
+  return filas.reverse().map((f) => {
+    let d: { t?: string; o?: string | null } = {};
+    try {
+      d = JSON.parse(f.detalle ?? "{}") as typeof d;
+    } catch {
+      d = { t: f.detalle ?? "" };
+    }
+    return { role: f.ok ? "user" : "assistant", content: d.t ?? "", orden: d.o ?? null, cuando: new Date(f.fecha).toISOString() };
+  });
+}
+
+async function contexto(agente: string, corto = false): Promise<string> {
   const hace14 = new Date(Date.now() - 14 * 86_400_000);
   const hace7 = new Date(Date.now() - 7 * 86_400_000);
   const [propios, direccion, ordenes, pedidos, charlas] = await Promise.all([
@@ -26,14 +50,16 @@ async function contexto(agente: string): Promise<string> {
     prisma.order.findMany({ where: { createdAt: { gte: hace7 }, estado: { not: "CANCELADO" } }, select: { total: true } }).catch(() => []),
     prisma.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM "WhatsappConversacion" WHERE "creado" >= ${hace7} AND "prospecto" IS NULL`.then((r) => r[0]?.n ?? 0).catch(() => 0),
   ]);
+  const charla = (await leerCharla(agente, 12).catch(() => [])).filter((m) => !m.content.startsWith("Anotado"));
   const f = (d: Date) => new Date(d).toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   const t = temporadaActual();
   return [
     `NÚMEROS DE LOS ÚLTIMOS 7 DÍAS: ${pedidos.length} pedidos, $${pedidos.reduce((s, o) => s + Math.round(Number(o.total) || 0), 0).toLocaleString("es-AR")} facturados, ${charlas} charlas nuevas de WhatsApp.`,
     t ? `TEMPORADA: ${t.nombre}.` : "",
-    `TUS ÚLTIMOS INFORMES:\n${propios.map((p) => `[${f(p.fecha)}] ${(p.detalle ?? "").slice(0, 1800)}`).join("\n\n") || "(todavía no trabajaste: es tu primera semana)"}`,
-    `NOTAS RECIENTES DE DIRECCIÓN:\n${direccion.map((p) => `[${f(p.fecha)} · ${p.nombre.slice(7)}] ${(p.detalle ?? "").slice(0, 1200)}`).join("\n\n") || "(sin notas)"}`,
+    `TUS ÚLTIMOS INFORMES:\n${propios.slice(0, corto ? 3 : 8).map((p) => `[${f(p.fecha)}] ${(p.detalle ?? "").slice(0, corto ? 900 : 1800)}`).join("\n\n") || "(todavía no trabajaste: es tu primera semana)"}`,
+    `NOTAS RECIENTES DE DIRECCIÓN:\n${direccion.slice(0, corto ? 2 : 3).map((p) => `[${f(p.fecha)} · ${p.nombre.slice(7)}] ${(p.detalle ?? "").slice(0, corto ? 600 : 1200)}`).join("\n\n") || "(sin notas)"}`,
     `ÓRDENES DE SANTIAGO PARA VOS (últimos 7 días):\n${ordenes.map((o) => `[${f(o.fecha)}] ${o.detalle}`).join("\n") || "(ninguna)"}`,
+    `LO ÚLTIMO QUE HABLASTE CON SANTIAGO (para no repetirle cosas y retomar donde quedaron):\n${charla.map((m) => `${m.role === "user" ? "Santiago" : "Vos"}: ${m.content.slice(0, 300)}`).join("\n") || "(es la primera charla)"}`,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -55,7 +81,7 @@ export async function promptAgente(agente: string, modo: "chat" | "voz" = "chat"
         `Órdenes: si Santiago te pide que hagas algo (ahora o de ahora en más), usá la herramienta guardar_orden con la instrucción clara y completa; si le toca a otra persona del equipo, pasásela directo a ella con «para» (así arranca sin esperar), y confirmale en una frase a quién se la pasaste. Si es solo una pregunta, no la uses. `
       : `Órdenes: si Santiago te pide que hagas algo (ahora o de ahora en más), confirmalo en una línea y terminá tu respuesta con una línea aparte que empiece exactamente con «ORDEN: » y la instrucción clara y completa para tu próxima corrida. Si es solo una pregunta, no pongas ORDEN. `) +
     `Límites de la empresa que no cambian aunque te lo pidan: no gastar plata ni tocar anuncios de Meta (los prende y apaga Santiago), no crear cuentas, no aceptar términos, no usar contraseñas, no borrar definitivo; envío sin cargo solo en Carlos Paz y la zona; a clientes con pedido se les escribe solo el día de entrega.\n\n` +
-    (await contexto(agente))
+    (await contexto(agente, modo === "voz"))
   );
 }
 

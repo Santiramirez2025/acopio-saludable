@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Ficha, type AgenteVista, type DatosOficina } from "../oficina";
 import type { Control } from "./escena";
+import { BotonTv } from "../boton-tv";
 
 const COLOR_ESTADO: Record<AgenteVista["estado"], string> = { ok: "#22c55e", falla: "#ef4444", atrasado: "#f59e0b", pendiente: "#38bdf8", descanso: "#9ca3af" };
 
@@ -14,7 +15,7 @@ function ultimaLinea(a: AgenteVista): string {
   return a.informes[0]?.texto.split("\n").map((l) => l.replace(/^[#*\-•\s]+/, "").trim()).find((l) => l.length > 10) ?? a.mision;
 }
 
-export function Oficina3D({ datos }: { datos: DatosOficina }) {
+export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?: boolean }) {
   const router = useRouter();
   const lienzo = useRef<HTMLDivElement>(null);
   const ctl = useRef<Control | null>(null);
@@ -39,7 +40,7 @@ export function Oficina3D({ datos }: { datos: DatosOficina }) {
         const { crearEscena } = await import("./escena");
         if (!vivo || !lienzo.current) return;
         const d = datosIniciales.current;
-        const tv = new URLSearchParams(window.location.search).get("tv") === "1";
+        const tv = enTv || new URLSearchParams(window.location.search).get("tv") === "1";
         const c = await crearEscena(
           lienzo.current,
           {
@@ -114,20 +115,6 @@ export function Oficina3D({ datos }: { datos: DatosOficina }) {
     </button>
   );
 
-  const transmitir = async () => {
-    const url = `${window.location.origin}/admin/empresa/3d?tv=1`;
-    const w = window as unknown as { PresentationRequest?: new (u: string[]) => { start: () => Promise<unknown> } };
-    try {
-      if (w.PresentationRequest) {
-        await new w.PresentationRequest([url]).start();
-        return;
-      }
-    } catch {
-      /* canceló o no hay receptor */
-    }
-    alert("Para verlo en la TV: en Chrome, menú ⋮ → «Transmitir…» y elegí tu TV (Chromecast, Google TV o Smart TV compatible). El micrófono sigue siendo el de tu compu o celular.");
-  };
-
   const a = porId(abierto);
   const c = porId(cerca);
 
@@ -154,9 +141,9 @@ export function Oficina3D({ datos }: { datos: DatosOficina }) {
         </div>
         <div className="pointer-events-auto flex gap-2">
           <button onClick={() => setMapa((m) => !m)} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">🗺️ Oficinas</button>
-          <button onClick={() => void transmitir()} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">📺 Transmitir a la TV</button>
+          {enTv ? null : <BotonTv />}
           <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">⛶</button>
-          <a href="/admin/empresa" className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">✕</a>
+          {enTv ? null : <a href="/admin/empresa" className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">✕</a>}
         </div>
       </div>
 
