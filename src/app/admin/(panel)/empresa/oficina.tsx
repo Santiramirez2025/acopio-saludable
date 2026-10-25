@@ -39,6 +39,8 @@ export type DatosOficina = {
   agentes: AgenteVista[];
   robots: { nombre: string; cuando: string; hace: string }[];
   salud: string;
+  /** Resumen de la pizarra de armado (va en la pizarra de Gonza en 3D). */
+  armado?: string;
 };
 
 type Mensaje = { role: "user" | "assistant"; content: string; orden?: string | null; vivo?: boolean };
@@ -153,6 +155,7 @@ export function Oficina({ datos }: { datos: DatosOficina }) {
         <div className="flex gap-2">
           <button onClick={() => router.refresh()} className={`rounded-full px-4 py-2 text-sm ${oscuro ? "bg-white/10 hover:bg-white/20" : "border border-stone-300 bg-white hover:bg-stone-50"}`}>↻ Actualizar</button>
           <a href="/admin/empresa/3d" className="rounded-full bg-amber-400 px-4 py-2 text-sm font-semibold text-stone-900 hover:bg-amber-300">🕹️ Oficina 3D</a>
+          <a href="/admin/empresa/armado" className={`rounded-full px-4 py-2 text-sm ${oscuro ? "bg-white/10 hover:bg-white/20" : "border border-stone-300 bg-white hover:bg-stone-50"}`}>📦 Pizarra de armado</a>
           {tv ? (
             <button onClick={salirTv} className="rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20">Salir de TV</button>
           ) : (

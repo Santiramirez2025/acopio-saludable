@@ -44,7 +44,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
         const c = await crearEscena(
           lienzo.current,
           {
-            agentes: d.agentes.map((a) => ({ id: a.id, persona: a.persona, nombre: a.nombre, area: a.area, emoji: a.emoji, estado: a.estado, estadoTexto: a.estadoTexto, ultimo: ultimaLinea(a) })),
+            agentes: d.agentes.map((a) => ({ id: a.id, persona: a.persona, nombre: a.nombre, area: a.area, emoji: a.emoji, estado: a.estado, estadoTexto: a.estadoTexto, ultimo: a.id === "logistica" && d.armado ? d.armado : ultimaLinea(a) })),
             areas: d.areas.map((a) => a.id),
             kpis: d.kpis,
             hoy: d.hoy,
@@ -170,6 +170,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
         </div>
         <div className="pointer-events-auto flex gap-2">
           <button onClick={() => setMapa((m) => !m)} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">🗺️ Oficinas</button>
+          <a href={enTv ? "/tv/armado" : "/admin/empresa/armado"} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">📦 Pizarra de armado</a>
           {enTv ? null : <BotonTv />}
           <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">⛶</button>
           {enTv ? null : <a href="/admin/empresa" className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">✕</a>}
