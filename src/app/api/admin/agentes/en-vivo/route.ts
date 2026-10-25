@@ -96,7 +96,7 @@ export async function POST(req: Request) {
     if (!r) continue;
     const d = (await r.json().catch(() => ({}))) as { value?: string; client_secret?: { value?: string }; error?: { message?: string } };
     const valor = d.value ?? d.client_secret?.value;
-    if (r.ok && valor) return NextResponse.json({ clave: valor, modelo: model });
+    if (r.ok && valor) return NextResponse.json({ clave: valor, modelo: model, nivel });
     ultimo = `${r.status} ${d.error?.message ?? ""}`.slice(0, 200);
   }
   return NextResponse.json({ error: `OpenAI no abrió la llamada: ${ultimo}` }, { status: 502 });
