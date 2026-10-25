@@ -23,6 +23,16 @@ const corto = (x: unknown, max = 6000) => {
   return s.length > max ? `${s.slice(0, max)}…(recortado)` : s;
 };
 
+/** «+54 9 3517 07-2560», «3517072560», «0351 15…» → «5493517072560» (como lo guarda WhatsApp). */
+function telefonoAr(t: string): string {
+  let d = t.replace(/\D/g, "");
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.startsWith("0")) d = d.slice(1);
+  if (d.length === 10) d = `549${d}`;
+  if (d.startsWith("54") && !d.startsWith("549") && d.length === 12) d = `549${d.slice(2)}`;
+  return d;
+}
+
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ ok: false, resultado: "Desde la TV no puedo hacer cambios: hacelo desde la compu o el celular." }, { status: 401 });
   const b = (await req.json().catch(() => ({}))) as { agente?: string; herramienta?: string; args?: Record<string, unknown> };
@@ -37,6 +47,11 @@ export async function POST(req: Request) {
   let r: Response;
   try {
     switch (h) {
+      case "ver_pizarra": {
+        const { pizarraArmado } = await import("@/lib/armado");
+        const pz = await pizarraArmado();
+        return NextResponse.json({ ok: true, resultado: corto({ paraArmar: pz.paraArmar.map((x) => ({ pedido: x.codigo, cliente: x.cliente, zona: x.zona, cobrar: x.cobrar, notas: x.notas, lleva: x.items.map((i) => `${i.cantidad} × ${i.producto} ${i.presentacion}`) })), totales: pz.totales, listos: pz.listos.map((x) => `${x.codigo} ${x.cliente}`), enCamino: pz.enCamino.map((x) => `${x.codigo} ${x.cliente}`), esperandoPago: pz.esperandoPago.map((x) => `${x.codigo} ${x.cliente} ${x.cobrar}`) }, 12000) });
+      }
       case "ver_pedidos":
         r = await datosGet(new Request(`${base}/api/admin/agentes/datos?que=pedidos`));
         break;
@@ -44,10 +59,10 @@ export async function POST(req: Request) {
         r = await datosGet(new Request(`${base}/api/admin/agentes/datos?que=charlas&horas=${Math.min(168, Number(a.horas) || 24)}`));
         break;
       case "ver_charla":
-        r = await datosGet(new Request(`${base}/api/admin/agentes/datos?que=charla&telefono=${encodeURIComponent(String(a.telefono ?? ""))}`));
+        r = await datosGet(new Request(`${base}/api/admin/agentes/datos?que=charla&telefono=${encodeURIComponent(telefonoAr(String(a.telefono ?? "")))}`));
         break;
       case "escribir_whatsapp":
-        r = await responderPost(json(`${base}/api/admin/whatsapp/responder`, { telefono: String(a.telefono ?? ""), texto: String(a.texto ?? "") }));
+        r = await responderPost(json(`${base}/api/admin/whatsapp/responder`, { telefono: telefonoAr(String(a.telefono ?? "")), texto: String(a.texto ?? "") }));
         break;
       case "cambiar_estado_pedido":
         r = await datosPost(json(`${base}/api/admin/agentes/datos`, { accion: "estado", id: Number(a.id), estado: String(a.estado ?? ""), nota: a.nota ? String(a.nota) : undefined }));

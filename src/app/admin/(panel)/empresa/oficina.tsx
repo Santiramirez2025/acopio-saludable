@@ -43,7 +43,7 @@ export type DatosOficina = {
   armado?: string;
 };
 
-type Mensaje = { role: "user" | "assistant"; content: string; orden?: string | null; vivo?: boolean };
+type Mensaje = { role: "user" | "assistant"; content: string; orden?: string | null; vivo?: boolean; rid?: string };
 
 const PUNTO: Record<AgenteVista["estado"], string> = {
   ok: "bg-emerald-500",
@@ -448,7 +448,7 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
         }
         if (e === "cortada") llamada.current = null;
       },
-      onTexto: (rol, t, final) => {
+      onTexto: (rol, t, final, rid) => {
         // Mientras habla, el texto se refresca 4 veces por segundo (no en cada letra) para no trabar el audio.
         const ahora = performance.now();
         if (rol === "assistant" && !final && ahora - ultimoRefresco.current < 250) return;
@@ -458,12 +458,14 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
           const ult = m[m.length - 1];
           if (rol === "user") {
             // si el agente ya empezó a contestar, lo que dijo Santiago va antes
-            if (ult?.role === "assistant" && ult.vivo) m.splice(m.length - 1, 0, { role: "user", content: t });
+            if (ult?.role === "assistant" && ult.vivo && !ult.content) m.splice(m.length - 1, 0, { role: "user", content: t });
             else m.push({ role: "user", content: t });
             return m;
           }
-          if (ult?.role === "assistant" && ult.vivo) m[m.length - 1] = { ...ult, content: t, vivo: !final };
-          else m.push({ role: "assistant", content: t, vivo: !final });
+          // Cada respuesta del agente es su propio globo: si dijo «dejame ver» y después contestó, no se pisan.
+          const k = rid ? m.map((x) => x.rid).lastIndexOf(rid) : ult?.role === "assistant" && ult.vivo ? m.length - 1 : -1;
+          if (k >= 0) m[k] = { ...m[k], content: t, vivo: !final };
+          else m.push({ role: "assistant", content: t, vivo: !final, rid });
           return m;
         });
       },

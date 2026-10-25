@@ -11,7 +11,8 @@ type Opciones = {
   agente: string;
   onEstado: (e: EstadoLlamada, detalle?: string) => void;
   /** Texto de la charla: rol, texto, y si ya está completo. */
-  onTexto: (rol: "user" | "assistant", texto: string, final: boolean) => void;
+  /** Texto de la charla. `id` = la respuesta a la que pertenece (cada respuesta, su propio globo). */
+  onTexto: (rol: "user" | "assistant", texto: string, final: boolean, id?: string) => void;
   onOrden: (orden: string, para: string) => void;
   /** Algo que el agente hizo de verdad en la llamada (con el sí de Santiago). */
   onAccion?: (herramienta: string, args: Record<string, unknown>, ok: boolean, resultado: string) => void;
@@ -85,7 +86,7 @@ export async function llamar(o: Opciones): Promise<Llamada> {
 
     const dc = pc.createDataChannel("oai-events");
     const enviar = (ev: unknown) => dc.readyState === "open" && dc.send(JSON.stringify(ev));
-    let dicho = "";
+    const textos = new Map<string, string>();
     dc.onopen = () => {
       o.onEstado("escuchando");
       // Que salude primero, corto.
@@ -105,15 +106,19 @@ export async function llamar(o: Opciones): Promise<Llamada> {
         o.onEstado("pensando");
       } else if (tipo === "conversation.item.input_audio_transcription.completed") {
         const t = String(ev.transcript ?? "").trim();
-        if (t) o.onTexto("user", t, true);
+        // El transcriptor a veces «escucha» su propia lista de palabras cuando hay ruido: eso no lo dijo nadie.
+        const ruido = (t.match(/sin TACC|La Granja|Punilla|Mercado Libre|WhatsApp|Instagram|frutos secos|pan dulce/gi) ?? []).length >= 3;
+        if (t && !ruido) o.onTexto("user", t, true);
       } else if (tipo === "response.output_audio_transcript.delta" || tipo === "response.audio_transcript.delta") {
-        dicho += String(ev.delta ?? "");
+        const id = String(ev.response_id ?? "");
+        textos.set(id, (textos.get(id) ?? "") + String(ev.delta ?? ""));
         o.onEstado("hablando");
-        o.onTexto("assistant", dicho, false);
+        o.onTexto("assistant", textos.get(id) ?? "", false, id);
       } else if (tipo === "response.output_audio_transcript.done" || tipo === "response.audio_transcript.done") {
-        const t = String(ev.transcript ?? dicho);
-        dicho = "";
-        o.onTexto("assistant", t, true);
+        const id = String(ev.response_id ?? "");
+        const t = String(ev.transcript ?? textos.get(id) ?? "");
+        textos.delete(id);
+        o.onTexto("assistant", t, true, id);
       } else if (tipo === "output_audio_buffer.stopped" || tipo === "response.done") {
         if (tipo === "response.done") {
           const salida = ((ev.response as { output?: { type?: string; name?: string; call_id?: string; arguments?: string }[] })?.output ?? []).filter((it) => it.type === "function_call");
