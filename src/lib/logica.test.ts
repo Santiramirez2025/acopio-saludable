@@ -1296,3 +1296,14 @@ test("ML: el precio mínimo deja la ganancia mínima y no sube si ya alcanza", a
   assert.ok(precioMinimoMl(30000) > precioMinimoMl(25800));
   assert.equal(precioMinimoMl(25800) % 500, 0);
 });
+
+test("estadoAgente: descanso, pendiente, ok, atrasado y falla", async () => {
+  const { AGENTES, estadoAgente } = await import("./agentes");
+  const logi = AGENTES.find((a) => a.id === "logistica")!;
+  assert.equal(estadoAgente(logi, { dia: 0, min: 600, fecha: "2026-10-25" }, null).estado, "descanso");
+  assert.equal(estadoAgente(logi, { dia: 1, min: 7 * 60, fecha: "2026-10-26" }, null).estado, "pendiente");
+  assert.equal(estadoAgente(logi, { dia: 1, min: 9 * 60, fecha: "2026-10-26" }, { fecha: "2026-10-26", hora: "8:20", ok: true }).estado, "ok");
+  assert.equal(estadoAgente(logi, { dia: 1, min: 11 * 60, fecha: "2026-10-26" }, { fecha: "2026-10-24", hora: "8:20", ok: true }).estado, "atrasado");
+  assert.equal(estadoAgente(logi, { dia: 1, min: 9 * 60, fecha: "2026-10-26" }, { fecha: "2026-10-26", hora: "8:20", ok: false }).estado, "falla");
+  assert.equal(new Set(AGENTES.map((a) => a.id)).size, AGENTES.length);
+});
