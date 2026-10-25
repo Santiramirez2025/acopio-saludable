@@ -19,6 +19,24 @@ function boca(agente: string, nivel: number) {
   window.dispatchEvent(new CustomEvent("acopio-boca", { detail: { agente, nivel } }));
 }
 
+// Un solo AudioContext para toda la página, destrabado con el primer toque/tecla (Chrome arranca
+// los AudioContext «suspendidos» si se crean sin un gesto, y entonces no se escucha nada).
+let ctxGlobal: AudioContext | null = null;
+export function contextoAudio(): AudioContext | null {
+  try {
+    ctxGlobal ??= new AudioContext();
+    if (ctxGlobal.state === "suspended") void ctxGlobal.resume();
+    return ctxGlobal;
+  } catch {
+    return null;
+  }
+}
+if (typeof window !== "undefined") {
+  const destrabar = () => contextoAudio();
+  window.addEventListener("pointerdown", destrabar, { once: true, capture: true });
+  window.addEventListener("keydown", destrabar, { once: true, capture: true });
+}
+
 let actual: { parar: () => void } | null = null;
 export function callar() {
   actual?.parar();
@@ -43,26 +61,38 @@ export async function decir(texto: string, agente: string, alTerminar?: () => vo
       if (!r.ok) throw new Error(String(r.status));
       const url = URL.createObjectURL(await r.blob());
       const audio = new Audio(url);
-      const ctx = new AudioContext();
-      const src = ctx.createMediaElementSource(audio);
-      const an = ctx.createAnalyser();
-      an.fftSize = 512;
-      src.connect(an);
-      an.connect(ctx.destination);
-      const datos = new Uint8Array(an.fftSize);
+      const ctx = contextoAudio();
+      if (ctx && ctx.state !== "running") await ctx.resume().catch(() => undefined);
       let vivo = true;
-      const paso = () => {
-        if (!vivo) return;
-        an.getByteTimeDomainData(datos);
-        let s = 0;
-        for (const v of datos) s += ((v - 128) / 128) ** 2;
-        boca(agente, Math.min(1, Math.sqrt(s / datos.length) * 5));
-        requestAnimationFrame(paso);
-      };
+      let src: MediaElementAudioSourceNode | null = null;
+      let paso: () => void;
+      if (ctx && ctx.state === "running") {
+        src = ctx.createMediaElementSource(audio);
+        const an = ctx.createAnalyser();
+        an.fftSize = 512;
+        src.connect(an);
+        an.connect(ctx.destination);
+        const datos = new Uint8Array(an.fftSize);
+        paso = () => {
+          if (!vivo) return;
+          an.getByteTimeDomainData(datos);
+          let s = 0;
+          for (const v of datos) s += ((v - 128) / 128) ** 2;
+          boca(agente, Math.min(1, Math.sqrt(s / datos.length) * 5));
+          requestAnimationFrame(paso);
+        };
+      } else {
+        // sin AudioContext: suena igual por el elemento de audio; boca aproximada
+        paso = () => {
+          if (!vivo) return;
+          boca(agente, 0.25 + 0.35 * Math.abs(Math.sin(performance.now() / 90)));
+          requestAnimationFrame(paso);
+        };
+      }
       const fin = () => {
         vivo = false;
         URL.revokeObjectURL(url);
-        void ctx.close();
+        src?.disconnect();
         actual = null;
         terminar();
       };
@@ -72,8 +102,8 @@ export async function decir(texto: string, agente: string, alTerminar?: () => vo
         parar: () => {
           audio.pause();
           vivo = false;
+          src?.disconnect();
           boca(agente, 0);
-          void ctx.close();
         },
       };
       await audio.play();
