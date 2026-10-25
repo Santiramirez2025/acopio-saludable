@@ -29,6 +29,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "three": "^0.169.0",
     "unpdf": "^0.12.1"
   },
   "devDependencies": {
@@ -36,6 +37,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.169.0",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
     "prisma": "^6.19.3",
