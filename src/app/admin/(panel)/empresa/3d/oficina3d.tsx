@@ -200,21 +200,48 @@ export function Oficina3D({ datos }: { datos: DatosOficina }) {
         cartel.rotation.y = lado === -1 ? Math.PI / 2 : -Math.PI / 2;
         escena.add(cartel);
 
-        // Escritorio, silla, compu y planta.
+        // Puesto de trabajo: escritorio frente a la puerta, la persona sentada detrás, con su compu.
         const madera = new THREE.MeshStandardMaterial({ color: 0x9a6b43, roughness: 0.7 });
         const xEsc = lado * (ANCHO_PASILLO + PROF * 0.48);
         const tapa = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 2.6), madera);
         tapa.position.set(xEsc, 0.85, zc);
         tapa.castShadow = true;
+        tapa.receiveShadow = true;
         escena.add(tapa);
-        for (const dz of [-1.15, 1.15]) {
-          const pata = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.85, 0.08), madera);
-          pata.position.set(xEsc, 0.42, zc + dz);
+        // Frente cerrado (del lado del visitante) y laterales.
+        const frente = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.8, 2.6), madera);
+        frente.position.set(xEsc - lado * 0.67, 0.42, zc);
+        escena.add(frente);
+        for (const dz of [-1.27, 1.27]) {
+          const pata = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.82, 0.06), madera);
+          pata.position.set(xEsc, 0.41, zc + dz);
           escena.add(pata);
         }
-        const pantalla = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.6, 1), new THREE.MeshStandardMaterial({ color: 0x1f2937 }));
-        pantalla.position.set(xEsc + lado * 0.35, 1.25, zc - 0.5);
-        escena.add(pantalla);
+        // Monitor mirando a la persona (corrido a un costado para que se le vea la cara) y teclado.
+        const xPc = xEsc + lado * 0.05;
+        const pie = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 0.2), new THREE.MeshStandardMaterial({ color: 0x374151 }));
+        pie.position.set(xPc, 1.0, zc - 0.75);
+        const monitor = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.62, 1.05), new THREE.MeshStandardMaterial({ color: 0x111827 }));
+        monitor.position.set(xPc, 1.42, zc - 0.75);
+        monitor.rotation.y = lado * 0.35;
+        const brillo = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.52), new THREE.MeshBasicMaterial({ color: new THREE.Color(colorArea).lerp(new THREE.Color(0xffffff), 0.35) }));
+        brillo.position.set(xPc + lado * 0.035, 1.42, zc - 0.75);
+        brillo.rotation.y = (lado === 1 ? Math.PI / 2 : -Math.PI / 2) + lado * 0.35;
+        const teclado = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.03, 0.75), new THREE.MeshStandardMaterial({ color: 0xe5e7eb }));
+        teclado.position.set(xEsc + lado * 0.32, 0.905, zc - 0.15);
+        const taza = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.14, 16), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+        taza.position.set(xEsc - lado * 0.2, 0.96, zc + 0.85);
+        escena.add(pie, monitor, brillo, teclado, taza);
+        // Silla.
+        const tela = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.8 });
+        const asiento = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.1, 0.62), tela);
+        asiento.position.set(p.persona.x, 0.55, zc);
+        const respaldo = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.62), tela);
+        respaldo.position.set(p.persona.x + lado * 0.33, 1.0, zc);
+        const columna = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8), new THREE.MeshStandardMaterial({ color: 0x52525b }));
+        columna.position.set(p.persona.x, 0.27, zc);
+        escena.add(asiento, respaldo, columna);
+        // Planta.
         const planta = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12), new THREE.MeshStandardMaterial({ color: 0x3f8f5a }));
         planta.position.set(xOut - lado * 0.8, 0.9, z1 + 0.9);
         const maceta = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.5, 16), new THREE.MeshStandardMaterial({ color: 0xc2410c }));
@@ -222,21 +249,30 @@ export function Oficina3D({ datos }: { datos: DatosOficina }) {
         escena.add(planta, maceta);
         paredes.push({ minX: Math.min(xEsc - 0.75, xEsc + 0.75), maxX: Math.max(xEsc - 0.75, xEsc + 0.75), minZ: zc - 1.35, maxZ: zc + 1.35 });
 
-        // La persona: cuerpo + cabeza con su cara (siempre mirando a la cámara).
-        const cuerpo = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.75, 6, 16), new THREE.MeshStandardMaterial({ color: new THREE.Color(colorArea).multiplyScalar(0.8), roughness: 0.6 }));
-        cuerpo.position.set(p.persona.x, 0.85, zc);
+        // La persona sentada: torso, brazos hacia el teclado y la cabeza con su cara.
+        const ropa = new THREE.MeshStandardMaterial({ color: new THREE.Color(colorArea).multiplyScalar(0.75), roughness: 0.6 });
+        const cuerpo = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.45, 6, 16), ropa);
+        cuerpo.position.set(p.persona.x, 1.0, zc);
         cuerpo.castShadow = true;
-        escena.add(cuerpo);
+        const piernas = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.45), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+        piernas.position.set(p.persona.x - lado * 0.25, 0.68, zc);
+        escena.add(cuerpo, piernas);
+        for (const dz of [-0.28, 0.28]) {
+          const brazo = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.42, 4, 8), ropa);
+          brazo.position.set(p.persona.x - lado * 0.28, 1.0, zc + dz);
+          brazo.rotation.z = lado * 1.1;
+          escena.add(brazo);
+        }
         const cabeza = new THREE.Sprite(new THREE.SpriteMaterial({ map: avatar(THREE, a.id) }));
-        cabeza.scale.set(1.2, 1.2, 1);
-        cabeza.position.set(p.persona.x, 1.95, zc);
+        cabeza.scale.set(1.05, 1.05, 1);
+        cabeza.position.set(p.persona.x, 1.72, zc);
         escena.add(cabeza);
-        cabezas.push({ s: cabeza, base: 1.95, fase: Math.random() * 6 });
+        cabezas.push({ s: cabeza, base: 1.72, fase: Math.random() * 6 });
         clicables.push({ obj: cuerpo, a }, { obj: cabeza, a });
 
         // Luz de estado arriba de la cabeza.
-        const lampara = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), new THREE.MeshBasicMaterial({ color: COLOR_ESTADO[a.estado] }));
-        lampara.position.set(p.persona.x, 2.75, zc);
+        const lampara = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), new THREE.MeshBasicMaterial({ color: COLOR_ESTADO[a.estado] }));
+        lampara.position.set(p.persona.x, 2.4, zc);
         escena.add(lampara);
         lamparas.push({ m: lampara, estado: a.estado });
 
