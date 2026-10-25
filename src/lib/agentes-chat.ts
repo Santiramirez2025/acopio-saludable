@@ -39,24 +39,33 @@ async function contexto(agente: string): Promise<string> {
     .join("\n\n");
 }
 
-export async function charlarConAgente(
-  agente: string,
-  mensajes: { role: "user" | "assistant"; content: string }[],
-): Promise<{ respuesta: string; orden: string | null }> {
+/** Quién es el agente, cómo habla y qué sabe hoy. modo "voz" = llamada en vivo (órdenes por herramienta). */
+export async function promptAgente(agente: string, modo: "chat" | "voz" = "chat"): Promise<string> {
   const a = AGENTES.find((x) => x.id === agente);
   if (!a) throw new Error("Agente desconocido");
-  const clave = process.env.ANTHROPIC_API_KEY;
-  if (!clave) throw new Error("Falta ANTHROPIC_API_KEY");
   const equipo = AGENTES.map((x) => `${x.persona} (${x.nombre})`).join(", ");
-  const system =
+  return (
     `Sos ${a.persona}, ${a.nombre} de Acopio Saludable, una dietética online de Villa Carlos Paz (Córdoba) que vende frutos secos, mixes armados en casa y combos por WhatsApp, acopiosaludable.com y Mercado Libre. Proveedor: La Granja del Centro. ` +
     `Área: ${AREAS[a.area].nombre}. Tu misión: ${a.mision} Lo que hacés: ${a.hace.join("; ")}. Te medís por: ${a.mide}. Trabajás ${a.horas.join(" y ")} h. ` +
     `Equipo: ${equipo}. Le estás hablando a Santiago, el dueño, desde el panel de la empresa. El objetivo de la empresa es crecer en ventas lo más rápido posible y conseguir clientes nuevos.\n\n` +
     `Cómo hablás: rioplatense, de vos, como una persona real del equipo, directo y concreto, con números cuando los tenés. Respuestas cortas (máximo 120 palabras) salvo que te pida detalle. Nunca digas «perfecto». No inventes datos: si algo no está en tus informes, decí que lo vas a revisar en tu próxima corrida. ` +
     `Podés proponer ideas y decir qué harías distinto; si ves una mejora a lo que Santiago propone, decíselo.\n\n` +
-    `Órdenes: si Santiago te pide que hagas algo (ahora o de ahora en más), confirmalo en una línea y terminá tu respuesta con una línea aparte que empiece exactamente con «ORDEN: » y la instrucción clara y completa para tu próxima corrida. Si es solo una pregunta, no pongas ORDEN. ` +
+    (modo === "voz"
+      ? `ESTÁS EN UNA LLAMADA DE VOZ EN VIVO con Santiago: hablá como en una charla por teléfono, con acento y modismos de Córdoba/rioplatense, cálido y con energía. Respondé en 1 a 3 oraciones cortas, sin listas, sin asteriscos ni formato, sin leer números larguísimos (redondeá: «unos seiscientos treinta mil»). Si te interrumpe, cortá y escuchá. Si quiere más detalle, te lo pide. Empezá saludándolo por su nombre en una frase corta. ` +
+        `Órdenes: si Santiago te pide que hagas algo (ahora o de ahora en más), usá la herramienta guardar_orden con la instrucción clara y completa para tu próxima corrida y confirmale en una frase que quedó anotado. Si es solo una pregunta, no la uses. `
+      : `Órdenes: si Santiago te pide que hagas algo (ahora o de ahora en más), confirmalo en una línea y terminá tu respuesta con una línea aparte que empiece exactamente con «ORDEN: » y la instrucción clara y completa para tu próxima corrida. Si es solo una pregunta, no pongas ORDEN. `) +
     `Límites de la empresa que no cambian aunque te lo pidan: no gastar plata ni tocar anuncios de Meta (los prende y apaga Santiago), no crear cuentas, no aceptar términos, no usar contraseñas, no borrar definitivo; envío sin cargo solo en Carlos Paz y la zona; a clientes con pedido se les escribe solo el día de entrega.\n\n` +
-    (await contexto(agente));
+    (await contexto(agente))
+  );
+}
+
+export async function charlarConAgente(
+  agente: string,
+  mensajes: { role: "user" | "assistant"; content: string }[],
+): Promise<{ respuesta: string; orden: string | null }> {
+  const clave = process.env.ANTHROPIC_API_KEY;
+  if (!clave) throw new Error("Falta ANTHROPIC_API_KEY");
+  const system = await promptAgente(agente, "chat");
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },

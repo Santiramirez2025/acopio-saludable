@@ -510,14 +510,22 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     const xIn = l.lado * A;
     const dentro = (x: number) => Math.abs(x) > A; // ¿estoy dentro de alguna oficina?
     camino = [];
-    if (dentro(yo.x)) {
+    const zAca = -(Math.floor(-yo.z / LARGO) * LARGO + LARGO / 2);
+    const mismaOficina = dentro(yo.x) && Math.sign(yo.x) === l.lado && Math.abs(zAca - l.zc) < 0.1;
+    const enLaPuerta = !dentro(yo.x) && Math.abs(yo.z - l.zc) < 1.2 && Math.sign(yo.x || l.lado) === l.lado && Math.abs(yo.x) > A - 1.6;
+    if (mismaOficina) {
+      // ya estoy en su oficina: voy directo al escritorio
+    } else if (enLaPuerta) {
+      camino.push({ x: xIn + l.lado * 0.9, z: l.zc });
+    } else if (dentro(yo.x)) {
       // salir por la puerta de la oficina en la que estoy
-      const zPuerta = -(Math.floor(-yo.z / LARGO) * LARGO + LARGO / 2);
+      const zPuerta = zAca;
       camino.push({ x: Math.sign(yo.x) * (A + 0.9), z: zPuerta }, { x: Math.sign(yo.x) * (A - 1), z: zPuerta });
     } else if (yo.z > 0.5) {
       camino.push({ x: 0, z: 0.5 });
     }
-    camino.push({ x: l.lado * (A - 1), z: l.zc }, { x: xIn + l.lado * 0.9, z: l.zc }, { x: l.frente.x, z: l.frente.z });
+    if (!mismaOficina && !enLaPuerta) camino.push({ x: l.lado * (A - 1), z: l.zc }, { x: xIn + l.lado * 0.9, z: l.zc });
+    camino.push({ x: l.frente.x, z: l.frente.z });
     const fin = camino.pop()!;
     destino = { x: fin.x, z: fin.z, giro, cabeceo: -0.08, alLlegar: mirar ? () => ev.tocar(id) : undefined };
   };

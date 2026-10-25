@@ -12,6 +12,13 @@ export const VOCES: Record<string, string> = {
   reels: "ash", compras: "onyx", logistica: "onyx", finanzas: "sage", web: "ballad", corporativo: "coral", sociedades: "ash",
 };
 
+/** Voces de la llamada en vivo (Realtime): marin y cedar son las más naturales. */
+export const VOCES_EN_VIVO: Record<string, string> = {
+  gerente: "marin", estratega: "cedar", corporativo: "coral", sociedades: "ash", ventas: "cedar", hunter: "shimmer",
+  fidelizacion: "marin", mercadolibre: "echo", web: "verse", anuncios: "sage", marketing: "coral", disenador: "ballad",
+  community: "verse", reels: "ash", seo: "echo", alianzas: "shimmer", compras: "cedar", logistica: "ash", finanzas: "sage",
+};
+
 const INSTRUCCIONES =
   "Hablás en español rioplatense de Argentina (Córdoba), como una persona real de un equipo de trabajo: cálida, segura, natural, con ritmo de conversación y sin sonar a locutor. Pronunciá bien los números y los precios en pesos.";
 

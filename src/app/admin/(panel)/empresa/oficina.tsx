@@ -6,7 +6,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { callar, decir, escuchar as escucharVoz } from "./voz-cliente";
+import { callar, decir, escuchar as escucharVoz, hayVozNatural } from "./voz-cliente";
+import { llamar, type EstadoLlamada, type Llamada } from "./en-vivo";
 
 export type Informe = { cuando: string; ok: boolean; texto: string };
 export type AgenteVista = {
@@ -38,7 +39,7 @@ export type DatosOficina = {
   salud: string;
 };
 
-type Mensaje = { role: "user" | "assistant"; content: string; orden?: string | null };
+type Mensaje = { role: "user" | "assistant"; content: string; orden?: string | null; vivo?: boolean };
 
 const PUNTO: Record<AgenteVista["estado"], string> = {
   ok: "bg-emerald-500",
@@ -304,9 +305,12 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
   const fin = useRef<HTMLDivElement>(null);
   const cortarMic = useRef<(() => void) | null>(null);
   const [estadoVoz, setEstadoVoz] = useState("");
+  const llamada = useRef<Llamada | null>(null);
+  const [enVivo, setEnVivo] = useState<EstadoLlamada | null>(null);
   useEffect(() => () => {
     cortarMic.current?.();
     callar();
+    llamada.current?.cortar();
   }, []);
 
   // La charla queda guardada en este navegador por agente (si se puede), para retomarla.
@@ -377,6 +381,48 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
     });
   };
 
+  // Llamada en vivo (como el modo voz de ChatGPT): responde al instante y se lo puede interrumpir.
+  const iniciarLlamada = async () => {
+    callar();
+    cortarMic.current?.();
+    setError("");
+    llamada.current?.cortar();
+    llamada.current = await llamar({
+      agente: a.id,
+      onEstado: (e, detalle) => {
+        setEnVivo(e === "cortada" ? null : e);
+        if (e === "error") {
+          if (detalle) setError(detalle);
+          llamada.current = null;
+        }
+        if (e === "cortada") llamada.current = null;
+      },
+      onTexto: (rol, t, final) =>
+        setMensajes((prev) => {
+          const m = [...prev];
+          const ult = m[m.length - 1];
+          if (rol === "user") {
+            // si el agente ya empezó a contestar, lo que dijo Santiago va antes
+            if (ult?.role === "assistant" && ult.vivo) m.splice(m.length - 1, 0, { role: "user", content: t });
+            else m.push({ role: "user", content: t });
+            return m;
+          }
+          if (ult?.role === "assistant" && ult.vivo) m[m.length - 1] = { ...ult, content: t, vivo: !final };
+          else m.push({ role: "assistant", content: t, vivo: !final });
+          return m;
+        }),
+      onOrden: (o) => {
+        setMensajes((prev) => [...prev, { role: "assistant", content: "Anotado.", orden: o }]);
+        onCambio();
+      },
+    });
+  };
+  const cortarLlamada = () => {
+    llamada.current?.cortar();
+    llamada.current = null;
+    setEnVivo(null);
+  };
+
   const guardar = async () => {
     if (!orden.trim()) return;
     const r = await fetch("/api/admin/agentes/orden", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente: a.id, texto: orden }) });
@@ -387,11 +433,24 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
     } else setOrdenOk("No se pudo guardar. Probá de nuevo.");
   };
 
-  // Manos libres (oficina 3D / TV): al entrar a la oficina ya escucha, y responde en voz alta.
+  // Manos libres (oficina 3D / TV): al entrar a la oficina arranca la llamada en vivo
+  // (o, sin voz natural, el micrófono del navegador).
   useEffect(() => {
     if (!manosLibres) return;
-    const t = setTimeout(() => escuchar(), 400);
-    return () => clearTimeout(t);
+    let cancelado = false;
+    const t = setTimeout(() => {
+      void hayVozNatural().then((si) => {
+        if (cancelado) return;
+        if (si) void iniciarLlamada();
+        else escuchar();
+      });
+    }, 250);
+    return () => {
+      cancelado = true;
+      clearTimeout(t);
+      llamada.current?.cortar();
+      llamada.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manosLibres, a.id]);
 
@@ -448,12 +507,20 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
               {mensajes.map((m, i) => (
                 <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2 ${m.role === "user" ? "bg-acopio-700 text-white" : tv ? "bg-white/10" : "bg-stone-100"}`}>
-                    {m.content}
+                    {m.content.replace(/\*\*/g, "")}
                     {m.orden ? <div className="mt-2 rounded-lg bg-amber-100 px-2 py-1 text-xs text-amber-900">📌 Orden guardada: {m.orden}</div> : null}
                   </div>
                 </div>
               ))}
               {estadoVoz ? <div className="text-sm text-amber-400">🎙️ {estadoVoz}</div> : null}
+              {enVivo ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className={`h-2.5 w-2.5 rounded-full ${enVivo === "hablando" ? "bg-acopio-500 animate-pulse" : enVivo === "escuchando" ? "bg-red-500 animate-pulse" : "bg-amber-400"}`} />
+                  <span className={suave}>
+                    {enVivo === "conectando" ? `Llamando a ${a.persona}…` : enVivo === "hablando" ? `${a.persona} está hablando · podés interrumpir cuando quieras` : enVivo === "pensando" ? `${a.persona} está pensando…` : enVivo === "error" ? "Se cortó la llamada" : "En vivo · hablá cuando quieras"}
+                  </span>
+                </div>
+              ) : null}
               {cargando ? <div className={`text-sm ${suave}`}>{a.persona} está pensando…</div> : null}
               {error ? <div className="text-sm text-red-500">{error}</div> : null}
               <div ref={fin} />
@@ -515,7 +582,15 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
             }}
             className={`flex items-center gap-2 border-t ${borde} p-3`}
           >
-            <button type="button" onClick={escuchar} title="Hablar con la voz" className={`rounded-full px-3 py-2 text-lg ${escuchando ? "bg-red-500 text-white animate-pulse" : tv ? "bg-white/10" : "bg-stone-100"}`}>🎙️</button>
+            <button
+              type="button"
+              onClick={() => (enVivo ? cortarLlamada() : void iniciarLlamada())}
+              title={enVivo ? "Cortar la llamada" : "Llamada en vivo"}
+              className={`rounded-full px-3 py-2 text-sm font-semibold ${enVivo ? "bg-red-500 text-white" : "bg-acopio-700 text-white"}`}
+            >
+              {enVivo ? "Cortar" : "📞 En vivo"}
+            </button>
+            <button type="button" onClick={escuchar} title="Dictar un mensaje" className={`rounded-full px-3 py-2 text-lg ${escuchando ? "bg-red-500 text-white animate-pulse" : tv ? "bg-white/10" : "bg-stone-100"}`}>🎙️</button>
             <input
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
