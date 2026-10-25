@@ -43,8 +43,8 @@ export const ORDEN_PROVEEDORES: IdProveedor[] = ["lagranja", "propio", "distrima
 const normal = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 const MIX = /\bmix\b/;
-const LA_GRANJA_SECOS = /\b(nuez|nueces|almendra|castana|caju|avellana|pistacho|mani(?! japones)|banana|arandano|papaya|anana|granola|fruta deshidratada|ciruela)/;
-const LA_GRANJA = /\b(avena|mascabo|pasas?|chia|girasol|lino|zapallo|sesamo|semilla|datil|sal rosada|sal marina|sal\b|miel|lenteja|garbanzo|poroto|arroz yamani|quinoa|coco rallado)/;
+const LA_GRANJA_SECOS = /\b(nuez|nueces|almendra|castana|caju|avellana|mani(?! japones)|banana|arandano|papaya|anana|granola|fruta deshidratada|ciruela|higo)/;
+const LA_GRANJA = /\b(avena|mascabo|pasas?|chia|girasol|lino|zapallo|sesamo|semilla|datil|sal rosada|sal marina|sal\b|miel|lenteja|garbanzo|poroto|arroz yamani|quinoa|coco rallado|chips? (de )?chocolate|gotas de chocolate)/;
 
 /** ¿Es de marca? «Sin marca / fraccionado» (o vacío) es lo suelto que se consigue en cualquier lado. */
 export function esDeMarca(marca: string | null | undefined): boolean {
