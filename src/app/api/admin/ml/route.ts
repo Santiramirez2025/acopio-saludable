@@ -1,11 +1,12 @@
 // Prueba y estado de Mercado Libre desde el panel. Solo administrador.
 // GET: si está conectado, corre el parte (visitas, ventas, reputación, preguntas) y lo devuelve.
+// POST { accion: "precio", item: "MLA…", precio } → cambia el precio (nunca bajo el piso de ganancia).
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { conectado, parteDiario } from "@/lib/mercadolibre";
+import { cambiarPrecioMl, conectado, parteDiario } from "@/lib/mercadolibre";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -26,5 +27,16 @@ export async function GET() {
     return NextResponse.json({ conectado: true, parte: await parteDiario() });
   } catch (e) {
     return NextResponse.json({ conectado: true, error: String(e) }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const b = (await req.json().catch(() => ({}))) as { accion?: string; item?: string; precio?: number };
+  if (b.accion !== "precio" || !b.item || !Number(b.precio)) return NextResponse.json({ error: "POST { accion: \"precio\", item, precio }" }, { status: 400 });
+  try {
+    return NextResponse.json({ ok: true, ...(await cambiarPrecioMl(String(b.item), Number(b.precio))) });
+  } catch (e) {
+    return NextResponse.json({ error: String(e instanceof Error ? e.message : e) }, { status: 400 });
   }
 }

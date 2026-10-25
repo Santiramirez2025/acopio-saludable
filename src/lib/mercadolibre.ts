@@ -223,3 +223,20 @@ export async function parteDiario(): Promise<string> {
   await avisarSantiago("Parte de Mercado Libre", texto);
   return texto;
 }
+
+/**
+ * Cambia el precio de una publicación (para el Encargado de Mercado Libre). Nunca por debajo del piso
+ * de ganancia (precioMinimoMl del costo actual) y siempre redondeado a $500.
+ */
+export async function cambiarPrecioMl(itemId: string, precio: number): Promise<{ antes: number; despues: number; piso: number | null }> {
+  const id = itemId.toUpperCase().startsWith("MLA") ? itemId.toUpperCase() : `MLA${itemId}`;
+  const it = await ml<{ id: string; price: number; seller_custom_field?: string | null; attributes?: { id: string; value_name?: string | null }[] }>(`/items/${id}?attributes=id,price,seller_custom_field,attributes`);
+  const sku = it.seller_custom_field || it.attributes?.find((a) => a.id === "SELLER_SKU")?.value_name || "";
+  const costo = await costoDeSku(sku);
+  const piso = costo === null ? null : precioMinimoMl(costo);
+  const nuevo = Math.round(precio / 500) * 500;
+  if (piso !== null && nuevo < piso) throw new Error(`$${nuevo} queda por debajo del piso de ganancia ($${piso})`);
+  if (piso === null && nuevo < it.price) throw new Error("No conozco el costo de esa publicación: solo se puede subir el precio");
+  await ml(`/items/${id}`, { method: "PUT", body: JSON.stringify({ price: nuevo }) });
+  return { antes: it.price, despues: nuevo, piso };
+}
