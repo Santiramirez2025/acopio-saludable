@@ -69,13 +69,14 @@ function crearReconocedor(): Reconocedor | null {
   return C ? new C() : null;
 }
 
-function hablarEnVoz(texto: string) {
+function hablarEnVoz(texto: string, alTerminar?: () => void) {
   try {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(texto.replace(/[*_#`]/g, ""));
     u.lang = "es-AR";
     const voz = window.speechSynthesis.getVoices().find((v) => v.lang.startsWith("es"));
     if (voz) u.voice = voz;
+    if (alTerminar) u.onend = () => alTerminar();
     window.speechSynthesis.speak(u);
   } catch {
     /* sin voz en este navegador */
@@ -170,6 +171,7 @@ export function Oficina({ datos }: { datos: DatosOficina }) {
         </div>
         <div className="flex gap-2">
           <button onClick={() => router.refresh()} className={`rounded-full px-4 py-2 text-sm ${oscuro ? "bg-white/10 hover:bg-white/20" : "border border-stone-300 bg-white hover:bg-stone-50"}`}>↻ Actualizar</button>
+          <a href="/admin/empresa/3d" className="rounded-full bg-amber-400 px-4 py-2 text-sm font-semibold text-stone-900 hover:bg-amber-300">🕹️ Oficina 3D</a>
           {tv ? (
             <button onClick={salirTv} className="rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20">Salir de TV</button>
           ) : (
@@ -311,13 +313,13 @@ function Spot({ a, onAbrir }: { a: AgenteVista; onAbrir: () => void }) {
 }
 
 /** La ficha de un agente: hablarle, sus informes, sus órdenes y su perfil. */
-function Ficha({ a, tv, onCerrar, onCambio }: { a: AgenteVista; tv: boolean; onCerrar: () => void; onCambio: () => void }) {
+export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false }: { a: AgenteVista; tv: boolean; onCerrar: () => void; onCambio: () => void; manosLibres?: boolean }) {
   const [pestana, setPestana] = useState<"hablar" | "informes" | "ordenes" | "perfil">("hablar");
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [texto, setTexto] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
-  const [voz, setVoz] = useState(false);
+  const [voz, setVoz] = useState(manosLibres);
   const [escuchando, setEscuchando] = useState(false);
   const [orden, setOrden] = useState("");
   const [ordenOk, setOrdenOk] = useState("");
@@ -360,7 +362,7 @@ function Ficha({ a, tv, onCerrar, onCambio }: { a: AgenteVista; tv: boolean; onC
       const d = (await r.json()) as { respuesta?: string; orden?: string | null; error?: string };
       if (!r.ok || !d.respuesta) throw new Error(d.error ?? "No pude responder");
       setMensajes([...nuevos, { role: "assistant", content: d.respuesta, orden: d.orden }]);
-      if (voz) hablarEnVoz(d.respuesta);
+      if (voz) hablarEnVoz(d.respuesta, manosLibres ? () => escuchar() : undefined);
       if (d.orden) onCambio();
     } catch (e) {
       setError(String(e instanceof Error ? e.message : e));
@@ -402,6 +404,14 @@ function Ficha({ a, tv, onCerrar, onCambio }: { a: AgenteVista; tv: boolean; onC
       onCambio();
     } else setOrdenOk("No se pudo guardar. Probá de nuevo.");
   };
+
+  // Manos libres (oficina 3D / TV): al entrar a la oficina ya escucha, y responde en voz alta.
+  useEffect(() => {
+    if (!manosLibres) return;
+    const t = setTimeout(() => escuchar(), 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manosLibres, a.id]);
 
   const sugerencias = [
     "¿Qué hiciste hoy y qué resultado tuviste?",
