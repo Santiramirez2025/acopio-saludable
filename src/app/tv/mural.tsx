@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AgenteVista, DatosOficina } from "@/app/admin/(panel)/empresa/oficina";
 import { SeguirCelular } from "./seguir-celular";
+import { CharlaEnTv } from "./charla-en-tv";
 
 const COLOR: Record<AgenteVista["estado"], string> = { ok: "#22c55e", falla: "#ef4444", atrasado: "#f59e0b", pendiente: "#38bdf8", descanso: "#9ca3af" };
 const ANCHO = 1920;
@@ -67,6 +68,7 @@ export function MuralTv({ datos }: { datos: DatosOficina }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#0b2a20", overflow: "hidden" }}>
+      <CharlaEnTv />
       <SeguirCelular actual="oficina" onAgente={(id) => setFijo({ id, hasta: Date.now() + 60_000 })} />
       <div
         style={{ width: ANCHO, height: ALTO, transform: `scale(${escala})`, transformOrigin: "0 0", position: "absolute", left: izq, top: 0, color: "#fff", fontFamily: "Figtree, system-ui, sans-serif" }}

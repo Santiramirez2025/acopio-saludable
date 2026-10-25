@@ -6,6 +6,7 @@ import { esTv } from "@/lib/tv";
 import { pizarraArmado } from "@/lib/armado";
 import { PizarraArmado } from "@/app/admin/(panel)/empresa/pizarra-armado";
 import { SeguirCelular } from "../seguir-celular";
+import { CharlaEnTv } from "../charla-en-tv";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pizarra de armado · Acopio" };
@@ -16,6 +17,7 @@ export default async function TvArmado() {
   return (
     <>
       <SeguirCelular actual="armado" />
+      <CharlaEnTv />
       <PizarraArmado p={await pizarraArmado()} puedeMarcar={!!sesion} volver="/tv/oficina" />
     </>
   );

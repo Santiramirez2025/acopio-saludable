@@ -89,3 +89,22 @@ export async function ultimoComando(): Promise<ComandoTv | null> {
     return null;
   }
 }
+
+// ---------- La charla con un agente, en vivo en la TV (se habla por el celular, la TV la muestra) ----------
+export type CharlaTv = { agente: string | null; estado: string; mensajes: { rol: "user" | "assistant"; texto: string }[]; t: number };
+
+export async function publicarCharla(c: Omit<CharlaTv, "t">): Promise<void> {
+  const datos: CharlaTv = { agente: c.agente, estado: String(c.estado).slice(0, 20), mensajes: c.mensajes.slice(-6).map((m) => ({ rol: m.rol, texto: String(m.texto).slice(0, 600) })), t: Date.now() };
+  await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES ('tv-charla', true, ${JSON.stringify(datos)})`;
+  // No juntar miles de filas: solo hace falta la última.
+  await prisma.$executeRaw`DELETE FROM "CronCorrida" WHERE "nombre" = 'tv-charla' AND "fecha" < now() - interval '1 hour'`.catch(() => undefined);
+}
+
+export async function ultimaCharla(): Promise<CharlaTv | null> {
+  const r = await prisma.$queryRaw<{ detalle: string | null }[]>`SELECT "detalle" FROM "CronCorrida" WHERE "nombre" = 'tv-charla' AND "fecha" >= now() - interval '10 minutes' ORDER BY "fecha" DESC LIMIT 1`.catch(() => []);
+  try {
+    return r[0]?.detalle ? (JSON.parse(r[0].detalle) as CharlaTv) : null;
+  } catch {
+    return null;
+  }
+}

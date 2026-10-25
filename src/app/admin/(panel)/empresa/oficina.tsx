@@ -77,7 +77,12 @@ export function Oficina({ datos }: { datos: DatosOficina }) {
 
   // ?tv=1 abre directo en modo TV (para dejarlo como favorito en el televisor).
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("tv") === "1") setTv(true);
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("tv") === "1") setTv(true);
+    // ?abrir=<agente>: viene del control de la TV para hablarle directo.
+    const abrir = q.get("abrir");
+    if (abrir && datos.agentes.some((x) => x.id === abrir)) setAbierto(abrir);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Se actualiza sola cada minuto (los agentes trabajan aunque nadie mire).
@@ -318,11 +323,27 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
   const llamada = useRef<Llamada | null>(null);
   const ultimoRefresco = useRef(0);
   const [enVivo, setEnVivo] = useState<EstadoLlamada | null>(null);
+
+  // La charla se ve en la TV mientras hablás desde el celular (subtítulos en grande).
+  const tvUltimo = useRef(0);
+  const tvPendiente = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enLaTv = useRef(false);
+  useEffect(() => {
+    try {
+      enLaTv.current = !window.location.pathname.startsWith("/tv") && localStorage.getItem(CLAVE_SEGUIR) !== "0";
+    } catch {
+      enLaTv.current = false;
+    }
+    return () => {
+      if (tvPendiente.current) clearTimeout(tvPendiente.current);
+      if (enLaTv.current) void fetch("/api/admin/tv/charla", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente: null, mensajes: [] }), keepalive: true }).catch(() => undefined);
+    };
+  }, []);
   // «La TV sigue lo que abro»: al abrir a alguien desde el celular, la TV lo muestra.
   useEffect(() => {
     if (window.location.pathname.startsWith("/tv")) return;
     try {
-      if (localStorage.getItem(CLAVE_SEGUIR) === "1") void mandarATv("agente", a.id);
+      if (localStorage.getItem(CLAVE_SEGUIR) !== "0") void mandarATv("agente", a.id);
     } catch {
       /* nada */
     }
@@ -332,6 +353,18 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
     callar();
     llamada.current?.cortar();
   }, []);
+
+  useEffect(() => {
+    if (!enLaTv.current) return;
+    const mandar = () => {
+      tvUltimo.current = Date.now();
+      tvPendiente.current = null;
+      const ultimos = mensajes.slice(-6).map((m) => ({ rol: m.role, texto: m.content }));
+      void fetch("/api/admin/tv/charla", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente: a.id, estado: enVivo ?? (cargando ? "pensando" : "escribiendo"), mensajes: ultimos }) }).catch(() => undefined);
+    };
+    if (tvPendiente.current) clearTimeout(tvPendiente.current);
+    tvPendiente.current = setTimeout(mandar, Math.max(0, 900 - (Date.now() - tvUltimo.current)));
+  }, [mensajes, enVivo, cargando, a.id]);
 
   // La charla queda guardada en el servidor (se ve desde cualquier dispositivo y el agente la recuerda).
   // El navegador guarda una copia por si no hay conexión; la primera vez se suben las charlas viejas de acá.
