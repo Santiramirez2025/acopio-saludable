@@ -10,6 +10,7 @@ import { callar, decir, escuchar as escucharVoz, hayVozNatural } from "./voz-cli
 import { llamar, type EstadoLlamada, type Llamada } from "./en-vivo";
 import { AGENTES } from "@/lib/agentes";
 import { BotonTv } from "./boton-tv";
+import { CLAVE_SEGUIR, mandarATv } from "./control-tv";
 
 export type Informe = { cuando: string; ok: boolean; texto: string };
 export type AgenteVista = {
@@ -152,10 +153,11 @@ export function Oficina({ datos }: { datos: DatosOficina }) {
             {trabajan.length ? `${cumplieron} de ${trabajan.length} personas del equipo ya trabajaron hoy.` : "Hoy el equipo descansa."} Tocá a cualquiera para hablarle o dejarle una orden.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button onClick={() => router.refresh()} className={`rounded-full px-4 py-2 text-sm ${oscuro ? "bg-white/10 hover:bg-white/20" : "border border-stone-300 bg-white hover:bg-stone-50"}`}>↻ Actualizar</button>
           <a href="/admin/empresa/3d" className="rounded-full bg-amber-400 px-4 py-2 text-sm font-semibold text-stone-900 hover:bg-amber-300">🕹️ Oficina 3D</a>
           <a href="/admin/empresa/armado" className={`rounded-full px-4 py-2 text-sm ${oscuro ? "bg-white/10 hover:bg-white/20" : "border border-stone-300 bg-white hover:bg-stone-50"}`}>📦 Pizarra de armado</a>
+          <a href="/admin/empresa/mensajes" className={`rounded-full px-4 py-2 text-sm ${oscuro ? "bg-white/10 hover:bg-white/20" : "border border-stone-300 bg-white hover:bg-stone-50"}`}>💬 Mensajes en vivo</a>
           {tv ? (
             <button onClick={salirTv} className="rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20">Salir de TV</button>
           ) : (
@@ -316,6 +318,15 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
   const llamada = useRef<Llamada | null>(null);
   const ultimoRefresco = useRef(0);
   const [enVivo, setEnVivo] = useState<EstadoLlamada | null>(null);
+  // «La TV sigue lo que abro»: al abrir a alguien desde el celular, la TV lo muestra.
+  useEffect(() => {
+    if (window.location.pathname.startsWith("/tv")) return;
+    try {
+      if (localStorage.getItem(CLAVE_SEGUIR) === "1") void mandarATv("agente", a.id);
+    } catch {
+      /* nada */
+    }
+  }, [a.id]);
   useEffect(() => () => {
     cortarMic.current?.();
     callar();

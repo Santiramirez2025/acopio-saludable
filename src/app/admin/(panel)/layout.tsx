@@ -26,6 +26,7 @@ const NAV = [
   ["/admin", "Resumen"],
   ["/admin/pedidos", "Pedidos"],
   ["/admin/whatsapp", "Mensajes"],
+  ["/admin/tv", "📺 TV"],
   ["/admin/productos", "Productos"],
   ["/admin/imagenes", "Imágenes"],
   ["/admin/combos", "Combos"],
