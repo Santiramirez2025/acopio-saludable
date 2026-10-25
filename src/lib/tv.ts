@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
 export const COOKIE_TV = "acopio_tv";
-const DIAS_SESION = 30;
+const DIAS_SESION = 365;
 const MIN_CODIGO = 10;
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");

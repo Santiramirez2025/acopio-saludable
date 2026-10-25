@@ -1,7 +1,7 @@
 "use client";
 
 // Botón «transmitir» como el de YouTube: si hay un Chromecast / Google TV en la red, lo abre en un toque.
-// En la TV aparece un código; acá se carga y la TV entra sola a la oficina (queda vinculada 30 días).
+// En la TV aparece un código; acá se carga y la TV entra sola a la oficina (queda vinculada un año).
 // Para TVs sin Chromecast: abrir acopiosaludable.com/tv en el navegador de la TV y cargar el código igual.
 import { useEffect, useRef, useState } from "react";
 import { AGENTES } from "@/lib/agentes";
@@ -64,7 +64,7 @@ export function BotonTv({ oscuro = true }: { oscuro?: boolean }) {
     setEstado("Vinculando…");
     const r = await fetch("/api/admin/tv/vincular", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ codigo }) });
     const d = (await r.json().catch(() => ({}))) as { error?: string };
-    setEstado(r.ok ? "✅ Listo: la TV ya entra a la oficina. Queda vinculada 30 días." : d.error ?? "No se pudo vincular.");
+    setEstado(r.ok ? "✅ Listo: la TV ya entra a la oficina. Queda vinculada un año." : d.error ?? "No se pudo vincular.");
     if (r.ok) setCodigo("");
   };
 
@@ -77,19 +77,19 @@ export function BotonTv({ oscuro = true }: { oscuro?: boolean }) {
         }}
         title="Mostrar en la TV"
         aria-label="Transmitir a la TV"
-        className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm backdrop-blur-md ${oscuro ? "bg-black/40 text-white hover:bg-black/55" : "border border-stone-300 bg-white text-stone-900 hover:bg-stone-50"}`}
+        className={`flex items-center gap-2 rounded-full px-3 py-2 sm:px-4 text-sm backdrop-blur-md ${oscuro ? "bg-black/40 text-white hover:bg-black/55" : "border border-stone-300 bg-white text-stone-900 hover:bg-stone-50"}`}
       >
         <IconoTv activo={hayCast} />
-        <span>Mostrar en la TV</span>
+        <span className={oscuro ? "hidden sm:inline" : ""}>Mostrar en la TV</span>
       </button>
       {abierto ? (
-        <div className="fixed inset-0 z-[80] grid place-items-center bg-black/50 p-4" onClick={() => setAbierto(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl bg-white p-6 text-stone-900 shadow-2xl">
+        <div className="fixed inset-0 z-[80] grid place-items-end bg-black/50 p-0 sm:place-items-center sm:p-4" onClick={() => setAbierto(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-5 text-stone-900 shadow-2xl sm:rounded-3xl sm:p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Mostrar en la TV</h2>
               <button onClick={() => setAbierto(false)} className="text-2xl text-stone-400" aria-label="Cerrar">×</button>
             </div>
-            <p className="mt-1 text-sm text-stone-500">Elegí acá qué se ve en la TV vinculada: cambia sola, sin tocar el control.</p>
+            <p className="mt-1 text-sm text-stone-500">Elegí qué se ve en la TV vinculada: cambia sola en unos segundos, sin tocar el control.</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button onClick={() => void mostrar("armado")} className="rounded-2xl bg-acopio-700 px-3 py-3 text-sm font-semibold text-white">📦 Pizarra de armado</button>
               <button onClick={() => void mostrar("oficina")} className="rounded-2xl bg-stone-900 px-3 py-3 text-sm font-semibold text-white">🕹️ Oficina (recorrido)</button>
@@ -121,9 +121,9 @@ export function BotonTv({ oscuro = true }: { oscuro?: boolean }) {
                 ) : null}
               </li>
               <li>
-                <b>Cualquier Smart TV</b>: abrí el navegador de la TV en <b>acopiosaludable.com/tv</b> (una sola vez; dejala en favoritos o como página de inicio).
+                <b>Cualquier Smart TV</b>: abrí el navegador de la TV en <b>acopiosaludable.com/tv</b> y guardala en favoritos. Después de vincularla, esa misma dirección entra directo, sin código.
               </li>
-              <li>En la TV aparece un código de 6 números: escribilo acá, en el celular. Queda vinculada 30 días y después la manejás desde arriba.</li>
+              <li>En la TV aparece un código de 6 números: escribilo acá, en el celular. Queda vinculada un año y después la manejás desde arriba.</li>
             </ol>
             <div className="mt-4 flex gap-2">
               <input

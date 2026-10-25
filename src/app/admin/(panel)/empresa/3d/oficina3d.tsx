@@ -177,38 +177,39 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-4">
-        <div className="pointer-events-auto rounded-2xl bg-black/40 px-4 py-2 text-white backdrop-blur-md">
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3 sm:p-4">
+        <div className="pointer-events-auto min-w-0 rounded-2xl bg-black/40 px-3 py-2 text-white backdrop-blur-md sm:px-4">
           <div className="text-sm font-semibold">Acopio · La empresa</div>
-          <div className="text-xs text-white/70">{enTv ? "Manejala desde el celular: panel → TV → «Mostrar en la TV»" : "Flechas o WASD para caminar · Shift corre · arrastrá para mirar · tocá a alguien o OK para hablarle · M oficinas"}</div>
+          <div className="hidden text-xs text-white/70 sm:block">{enTv ? "Manejala desde el celular: panel → TV → «Mostrar en la TV»" : "Flechas o WASD para caminar · Shift corre · arrastrá para mirar · tocá a alguien o OK para hablarle · M oficinas"}</div>
+          <div className="text-xs text-white/70 sm:hidden">Tocá a alguien para hablarle</div>
         </div>
-        <div className="pointer-events-auto flex gap-2">
-          <button onClick={() => setMapa((m) => !m)} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">🗺️ Oficinas</button>
-          <a href={enTv ? "/tv/armado" : "/admin/empresa/armado"} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">📦 Pizarra de armado</a>
+        <div className="pointer-events-auto flex shrink-0 gap-1.5 sm:gap-2">
+          <button onClick={() => setMapa((m) => !m)} aria-label="Oficinas" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">🗺️<span className="hidden sm:inline"> Oficinas</span></button>
+          <a href={enTv ? "/tv/armado" : "/admin/empresa/armado"} aria-label="Pizarra de armado" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">📦<span className="hidden sm:inline"> Pizarra de armado</span></a>
           {enTv ? null : <BotonTv />}
-          <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)} className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">⛶</button>
-          {enTv ? null : <a href="/admin/empresa" className="rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md">✕</a>}
+          <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)} className="hidden rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md sm:block">⛶</button>
+          {enTv ? null : <a href="/admin/empresa" aria-label="Salir" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">✕</a>}
         </div>
       </div>
 
       {enRecorrido && !a ? (
-        <div className="pointer-events-none absolute bottom-8 left-8 max-w-xl rounded-3xl bg-black/55 p-5 text-white shadow-2xl backdrop-blur-md">
+        <div className="pointer-events-none absolute inset-x-3 bottom-28 rounded-3xl bg-black/55 p-4 text-white shadow-2xl backdrop-blur-md sm:inset-x-auto sm:bottom-8 sm:left-8 sm:max-w-xl sm:p-5">
           <div className="flex items-center gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/avatars/${enRecorrido.id}.svg`} alt="" className="h-16 w-16 rounded-full bg-white/90" />
+            <img src={`/avatars/${enRecorrido.id}.svg`} alt="" className="h-12 w-12 rounded-full bg-white/90 sm:h-16 sm:w-16" />
             <div>
-              <div className="text-2xl font-bold">{enRecorrido.persona} {enRecorrido.emoji}</div>
+              <div className="text-xl font-bold sm:text-2xl">{enRecorrido.persona} {enRecorrido.emoji}</div>
               <div className="text-white/70">{enRecorrido.nombre} · {enRecorrido.estadoTexto}</div>
             </div>
           </div>
-          <p className="mt-3 line-clamp-3 text-lg text-white/90">{ultimaLinea(enRecorrido)}</p>
+          <p className="mt-2 line-clamp-3 text-base text-white/90 sm:mt-3 sm:text-lg">{ultimaLinea(enRecorrido)}</p>
         </div>
       ) : null}
 
       {c && !a && !enRecorrido ? (
         <button
           onClick={() => ctl.current?.irA(c.id, true)}
-          className="absolute bottom-24 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-full bg-white/95 py-2 pl-2 pr-5 text-stone-900 shadow-2xl"
+          className="absolute bottom-24 left-1/2 flex max-w-[calc(100vw-24px)] -translate-x-1/2 items-center gap-3 rounded-full bg-white/95 py-2 pl-2 pr-5 text-stone-900 shadow-2xl"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={`/avatars/${c.id}.svg`} alt="" className="h-12 w-12" />
@@ -231,7 +232,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
       ) : null}
 
       {mapa ? (
-        <div className="absolute right-4 top-20 max-h-[75vh] w-80 overflow-y-auto rounded-2xl bg-black/70 p-3 text-white backdrop-blur-md">
+        <div className="absolute right-3 top-16 max-h-[75vh] w-[min(20rem,calc(100vw-24px))] overflow-y-auto sm:right-4 sm:top-20 rounded-2xl bg-black/70 p-3 text-white backdrop-blur-md">
           <div className="mb-2 text-sm font-semibold">Ir a la oficina de…</div>
           {datos.agentes.map((x) => (
             <button
