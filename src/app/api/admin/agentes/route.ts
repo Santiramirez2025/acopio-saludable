@@ -1,4 +1,4 @@
-// Bitácora de los agentes (Gerente, Logística, Ventas, Compras, Community, Mercado Libre, Finanzas).
+// Bitácora de los agentes de la empresa (ver lib/agentes.ts).
 // Cada agente deja acá su informe del día; el Gerente los lee para armar un solo parte para Santiago.
 // Solo administrador.
 //   POST { agente, ok?, informe }  → guarda el informe (hasta 6000 caracteres)
@@ -7,10 +7,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { IDS_AGENTES } from "@/lib/agentes";
 
 export const dynamic = "force-dynamic";
 
-const AGENTES = ["gerente", "logistica", "ventas", "compras", "community", "mercadolibre", "finanzas"];
+const AGENTES = IDS_AGENTES;
 
 export async function POST(req: Request) {
   if (!(await getServerSession(authOptions))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });

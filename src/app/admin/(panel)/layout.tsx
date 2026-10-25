@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 };
 
 const NAV = [
+  ["/admin/empresa", "Empresa"],
   ["/admin", "Resumen"],
   ["/admin/pedidos", "Pedidos"],
   ["/admin/whatsapp", "Mensajes"],
