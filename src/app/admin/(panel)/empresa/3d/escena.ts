@@ -543,6 +543,44 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
 
   const libre = (x: number, z: number) => !choques.some((c) => x > c.x1 - 0.3 && x < c.x2 + 0.3 && z > c.z1 - 0.3 && z < c.z2 + 0.3);
 
+  // Doble clic / doble toque en el piso: caminás hasta ahí (como en Google Maps), pasando por las puertas.
+  const anillo = new THREE.Mesh(new THREE.RingGeometry(0.28, 0.4, 40), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+  anillo.rotation.x = -Math.PI / 2;
+  anillo.position.y = 0.02;
+  escena.add(anillo);
+  let marcaT = -1;
+  const oficinaDe = (x: number, z: number) => (Math.abs(x) > A && z < 0 && z > fondo ? { lado: Math.sign(x), zc: -(Math.floor(-z / LARGO) * LARGO + LARGO / 2) } : null);
+  const caminarA = (x: number, z: number) => {
+    // Dentro de los límites del piso y no metido en un mueble: si cae en uno, se queda un poco antes.
+    x = Math.max(-(A + PROF) + 0.5, Math.min(A + PROF - 0.5, x));
+    z = Math.max(fondo + 0.5, Math.min(15.5, z));
+    for (let i = 0; i < 12 && !libre(x, z); i++) {
+      x += (yo.x - x) * 0.15;
+      z += (yo.z - z) * 0.15;
+    }
+    if (!libre(x, z)) return;
+    const desde = oficinaDe(yo.x, yo.z);
+    const hacia = oficinaDe(x, z);
+    camino = [];
+    const misma = desde && hacia && desde.lado === hacia.lado && desde.zc === hacia.zc;
+    if (!misma) {
+      if (desde) camino.push({ x: desde.lado * (A + 0.9), z: desde.zc }, { x: desde.lado * (A - 1), z: desde.zc });
+      if (hacia) {
+        if (yo.z > 0.5 && !desde) camino.push({ x: 0, z: 0.5 });
+        camino.push({ x: hacia.lado * (A - 1), z: hacia.zc }, { x: hacia.lado * (A + 0.9), z: hacia.zc });
+      } else if (z > 0.5 && desde) camino.push({ x: 0, z: 0.5 });
+    }
+    const dx = x - (camino[camino.length - 1]?.x ?? yo.x);
+    const dz = z - (camino[camino.length - 1]?.z ?? yo.z);
+    destino = { x, z, giro: Math.hypot(dx, dz) > 0.2 ? Math.atan2(-dx, -dz) : yo.giro, cabeceo: -0.04 };
+    anillo.position.x = x;
+    anillo.position.z = z;
+    marcaT = 0;
+  };
+  const sueloPlano = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const puntoSuelo = new THREE.Vector3();
+  let ultimoToque = { t: 0, x: 0, y: 0 };
+
   // Mouse/toque: arrastrar para mirar; tocar a alguien para ir a hablarle.
   const ray = new THREE.Raycaster();
   let arrastre: { x: number; y: number; giro: number; cab: number; movio: boolean } | null = null;
@@ -569,7 +607,11 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camara);
     const hit = ray.intersectObjects(clicables.map((c) => c.obj), false)[0];
     const id = hit && clicables.find((c) => c.obj === hit.object)?.id;
-    if (id) irA(id, true);
+    if (id) return irA(id, true);
+    const ahora = performance.now();
+    const doble = ahora - ultimoToque.t < 380 && Math.hypot(e.clientX - ultimoToque.x, e.clientY - ultimoToque.y) < 40;
+    ultimoToque = doble ? { t: 0, x: 0, y: 0 } : { t: ahora, x: e.clientX, y: e.clientY };
+    if (doble && ray.ray.direction.y < -0.02 && ray.ray.intersectPlane(sueloPlano, puntoSuelo) && puntoSuelo.distanceTo(camara.position) < 45) caminarA(puntoSuelo.x, puntoSuelo.z);
   };
   render.domElement.addEventListener("pointerdown", abajo);
   window.addEventListener("pointermove", mueve);
@@ -641,6 +683,14 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
         destino = null;
         cb?.();
       }
+    }
+    // La anillo del destino aparece y se desvanece.
+    if (marcaT >= 0) {
+      marcaT += dt;
+      const m = anillo.material as THREE.MeshBasicMaterial;
+      m.opacity = Math.max(0, 0.85 - marcaT * 0.6);
+      anillo.scale.setScalar(1 + marcaT * 0.6);
+      if (marcaT > 1.5) marcaT = -1;
     }
     yo.vx += (objX - yo.vx) * Math.min(1, dt * 8);
     yo.vz += (objZ - yo.vz) * Math.min(1, dt * 8);

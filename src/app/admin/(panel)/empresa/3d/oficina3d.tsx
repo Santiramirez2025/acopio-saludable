@@ -180,8 +180,8 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3 sm:p-4">
         <div className="pointer-events-auto min-w-0 rounded-2xl bg-black/40 px-3 py-2 text-white backdrop-blur-md sm:px-4">
           <div className="text-sm font-semibold">Acopio · La empresa</div>
-          <div className="hidden text-xs text-white/70 sm:block">{enTv ? "Manejala desde el celular: panel → TV → «Mostrar en la TV»" : "Flechas o WASD para caminar · Shift corre · arrastrá para mirar · tocá a alguien o OK para hablarle · M oficinas"}</div>
-          <div className="text-xs text-white/70 sm:hidden">Tocá a alguien para hablarle</div>
+          <div className="hidden text-xs text-white/70 sm:block">{enTv ? "Manejala desde el celular: panel → TV → «Mostrar en la TV»" : "Doble clic en el piso para ir · arrastrá para mirar · tocá a alguien para hablarle · flechas/WASD · M oficinas"}</div>
+          <div className="text-xs text-white/70 sm:hidden">Doble toque para ir · tocá a alguien para hablarle</div>
         </div>
         <div className="pointer-events-auto flex shrink-0 gap-1.5 sm:gap-2">
           <button onClick={() => setMapa((m) => !m)} aria-label="Oficinas" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">🗺️<span className="hidden sm:inline"> Oficinas</span></button>
