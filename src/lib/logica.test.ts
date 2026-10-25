@@ -1307,3 +1307,9 @@ test("estadoAgente: descanso, pendiente, ok, atrasado y falla", async () => {
   assert.equal(estadoAgente(logi, { dia: 1, min: 9 * 60, fecha: "2026-10-26" }, { fecha: "2026-10-26", hora: "8:20", ok: false }).estado, "falla");
   assert.equal(new Set(AGENTES.map((a) => a.id)).size, AGENTES.length);
 });
+
+test("separarOrden: saca la línea ORDEN y deja la respuesta", async () => {
+  const { separarOrden } = await import("./agentes");
+  assert.deepEqual(separarOrden("Dale, lo hago.\nORDEN: priorizar gimnasios de Carlos Paz"), { respuesta: "Dale, lo hago.", orden: "priorizar gimnasios de Carlos Paz" });
+  assert.deepEqual(separarOrden("Vamos bien, 3 pedidos hoy."), { respuesta: "Vamos bien, 3 pedidos hoy.", orden: null });
+});
