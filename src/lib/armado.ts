@@ -116,10 +116,12 @@ export async function pizarraArmado(): Promise<Pizarra> {
   // Ya se armó si pasó por «Preparado» o se tildó «Listo» en la pizarra. Gonza a veces pasa el pedido a
   // «Enviado» temprano para avisarle al cliente que sale hoy: si todavía no se armó, sigue en «para armar».
   const armado = (k: number) => os[k].eventos.some((e) => e.estado === "PREPARADO" || /armado/i.test(e.nota ?? ""));
-  // Se arma lo pagado o lo que se paga al recibir. Lo que espera una transferencia va aparte (y viejo de más de 7 días, no va).
+  // Se arma todo pedido de los últimos 7 días; lo que espera una transferencia lleva «Falta el pago».
   const reciente = (o: (typeof os)[number]) => Date.now() - o.createdAt.getTime() < 7 * 86_400_000;
   const paraArmar = todos.filter(
-    (p, k) => ["PAGADO", "EN_COMPRA"].includes(p.estado) || (p.estado === "PENDIENTE_PAGO" && os[k].medioPago === "AL_RECIBIR" && reciente(os[k])) || (p.estado === "ENVIADO" && !armado(k)),
+    // Todo pedido hecho va a la pizarra solo, apenas entra: también los que pagan por transferencia y todavía
+    // no transfirieron (se arman igual; la tarjeta dice «Falta el pago»). Los de más de 7 días sin pagar, no.
+    (p, k) => ["PAGADO", "EN_COMPRA"].includes(p.estado) || (p.estado === "PENDIENTE_PAGO" && reciente(os[k])) || (p.estado === "ENVIADO" && !armado(k)),
   );
   const esperandoPago = todos.filter((p, k) => p.estado === "PENDIENTE_PAGO" && os[k].medioPago !== "AL_RECIBIR" && reciente(os[k]));
   return {

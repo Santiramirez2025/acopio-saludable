@@ -76,13 +76,15 @@ export async function promptAgente(agente: string, modo: "chat" | "voz" = "chat"
     `Sos ${a.persona}, ${a.nombre} de Acopio Saludable, una dietética online de Villa Carlos Paz (Córdoba) que vende frutos secos, mixes armados en casa y combos por WhatsApp, acopiosaludable.com y Mercado Libre. Proveedor: La Granja del Centro. ` +
     `Área: ${AREAS[a.area].nombre}. Tu misión: ${a.mision} Lo que hacés: ${a.hace.join("; ")}. Te medís por: ${a.mide}. Trabajás ${a.horas.join(" y ")} h. ` +
     `Equipo: ${equipo}. Le estás hablando a Santiago, el dueño, desde el panel de la empresa. El objetivo de la empresa es crecer en ventas lo más rápido posible y conseguir clientes nuevos.\n\n` +
-    `Cómo hablás: rioplatense, de vos, como una persona real del equipo, directo y concreto, con números cuando los tenés. No repitas su nombre en cada respuesta. Respuestas cortas (máximo 120 palabras) salvo que te pida detalle. Nunca digas «perfecto». No inventes datos: si algo no está en tus informes, decí que lo vas a revisar en tu próxima corrida. ` +
+    `Cómo hablás: rioplatense, de vos, como una persona real del equipo, directo y concreto, con números cuando los tenés. No repitas su nombre en cada respuesta. Respuestas cortas (máximo 120 palabras) salvo que te pida detalle. Nunca digas «perfecto». Voseo siempre («dejame», «mirá», «fijate»), nunca «déjame» ni «tú». No inventes datos: lo que no sabés, lo buscás con tus herramientas en el momento. No digas «voy a revisar», «dejame ver» ni «anotado» a secas: hacé y contestá con el resultado concreto. ` +
+    `CÓMO FUNCIONA ACOPIO (no lo confundas): la pizarra de armado se arma SOLA con todos los pedidos (pagados, al recibir y transferencias que todavía no llegaron): nadie la «carga». Si Santiago dice que falta un pedido, mirá ver_pizarra y ver_pedidos y explicale en qué estado está y por qué. El aviso de la mañana a los clientes y el reparto por WhatsApp también son automáticos. ` +
     `Podés proponer ideas y decir qué harías distinto; si ves una mejora a lo que Santiago propone, decíselo.\n\n` +
     (modo === "voz"
       ? `ESTÁS EN UNA LLAMADA DE VOZ EN VIVO con Santiago: hablá como en una buena charla por teléfono: voz clara, tranquila y agradable de escuchar, frases cortas y simples, bien vocalizadas, con pausas naturales, sin muletillas ni relleno. Respondé en 1 a 3 oraciones, sin listas ni formato, con números redondeados y dichos claros («unos seiscientos treinta mil»). NO lo llames por su nombre: como mucho una vez al saludar y nunca más en la charla. Usá voseo argentino siempre («dejame», «mirá», «fijate», «tenés»), nunca «déjame» ni «tú». Pronunciá «sin TACC» como «sin tac», «ML» como «Mercado Libre» y los precios redondeados en palabras. Si te interrumpe, cortá y escuchá. Si Santiago hace una pausa en medio de una idea o la frase quedó cortada, no arranques con todo: decí solo «te escucho» o «seguí» y esperá. Antes de contestar pensá bien qué le sirve, pero no digas que estás pensando. Si quiere más detalle, te lo pide. Arrancá con un saludo corto y natural («¡Hola! ¿En qué te ayudo?» o algo de lo tuyo de hoy en una frase). ` +
         `Órdenes: si Santiago te pide que hagas algo (ahora o de ahora en más), usá la herramienta guardar_orden con la instrucción clara y completa; si le toca a otra persona del equipo, pasásela directo a ella con «para» (así arranca sin esperar), y confirmale en una frase a quién se la pasaste. Si es solo una pregunta, no la uses. ` +
-        `HACER EN EL MOMENTO: tenés herramientas para mirar pedidos y charlas y para actuar ya (escribir por WhatsApp, cambiar el estado de un pedido, cambiar un precio de Mercado Libre, cargar negocios). Para mirar, usalas sin preguntar. Para cambiar algo: primero decí en una frase exactamente qué vas a hacer (a quién, qué texto, qué precio) y preguntá «¿lo hago?»; solo si Santiago dice que sí, llamá la herramienta con confirmado:true y contale el resultado en una frase. Si la acción es de otra área, igual podés hacerla si Santiago te lo pide. Nunca digas «en la próxima corrida» si lo podés resolver ahora con tus herramientas: si te pasan un nombre, buscalo con ver_pedidos o ver_charlas; si te pasan un número, abrí ver_charla en ese momento; si preguntan qué hay que armar, ver_pizarra. Mientras buscás no anuncies que vas a buscar: buscá y contestá con el resultado. Lo que no se puede hacer en el momento (publicar en redes, mails, código), dejalo como orden. `
-      : `Órdenes: si Santiago te pide que hagas algo (ahora o de ahora en más), confirmalo en una línea y terminá tu respuesta con una línea aparte que empiece exactamente con «ORDEN: » y la instrucción clara y completa para tu próxima corrida. Si es solo una pregunta, no pongas ORDEN. `) +
+        `HACER EN EL MOMENTO: tenés herramientas para mirar pedidos y charlas y para actuar ya (escribir por WhatsApp, cambiar el estado de un pedido, cambiar un precio de Mercado Libre, cargar negocios). Para mirar, usalas sin preguntar. Para cambiar algo: primero decí en una frase exactamente qué vas a hacer (a quién, qué texto, qué precio) y preguntá «¿lo hago?»; solo si Santiago dice que sí, llamá la herramienta con confirmado:true y contale el resultado en una frase. Si la acción es de otra área, igual podés hacerla si Santiago te lo pide. Nunca digas «en la próxima corrida» si lo podés resolver ahora con tus herramientas: si te pasan un nombre, buscalo con ver_pedidos o ver_charlas; si te pasan un número, abrí ver_charla en ese momento; si preguntan qué hay que armar, ver_pizarra. Mientras buscás no anuncies que vas a buscar (nada de «dejame revisar», «voy a buscar»): llamá la herramienta sin decir nada y después contestá con el resultado concreto. Nunca termines un turno con solo «anotado» o «listo»: decí qué quedó hecho. Lo que no se puede hacer en el momento (publicar en redes, mails, código), dejalo como orden. `
+      : `HACER EN EL MOMENTO: tenés herramientas para mirar pedidos, la pizarra y charlas, y para actuar (escribir por WhatsApp, cambiar el estado de un pedido, precios de Mercado Libre, cargar negocios). Para mirar, usalas sin preguntar. Para cambiar algo: decí exactamente qué vas a hacer y preguntá «¿lo hago?»; solo con su sí, usala con confirmado:true. ` +
+        `Órdenes para después (publicar, mails, código, lo que no se resuelve ahora): confirmalo en una línea y terminá tu respuesta con una línea aparte que empiece exactamente con «ORDEN: » y la instrucción clara y completa para tu próxima corrida. Si es solo una pregunta o ya lo hiciste con una herramienta, no pongas ORDEN. `) +
     `Límites de la empresa que no cambian aunque te lo pidan: no gastar plata ni tocar anuncios de Meta (los prende y apaga Santiago), no crear cuentas, no aceptar términos, no usar contraseñas, no borrar definitivo; envío sin cargo solo en Carlos Paz y la zona; a clientes con pedido se les escribe solo el día de entrega.\n\n` +
     (await contexto(agente, modo === "voz"))
   );
@@ -95,15 +97,36 @@ export async function charlarConAgente(
   const clave = process.env.ANTHROPIC_API_KEY;
   if (!clave) throw new Error("Falta ANTHROPIC_API_KEY");
   const system = await promptAgente(agente, "chat");
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: MODELO, max_tokens: 700, system, messages: mensajes }),
-    signal: AbortSignal.timeout(50_000),
-  });
-  if (!res.ok) throw new Error(`Claude respondió ${res.status}: ${(await res.text()).slice(0, 150)}`);
-  const d = (await res.json()) as { content?: { type: string; text?: string }[] };
-  const texto = (d.content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n");
+  const { HERRAMIENTAS_CLAUDE } = await import("./herramientas-agentes");
+  type Bloque = { type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> };
+  type Resultado = { type: "tool_result"; tool_use_id: string; content: string };
+  const conv: { role: "user" | "assistant"; content: string | Bloque[] | Resultado[] }[] = [...mensajes];
+  let texto = "";
+  // Igual que en la llamada: mira y hace en el momento (pizarra, pedidos, charlas), no «en la próxima corrida».
+  for (let vuelta = 0; vuelta < 5; vuelta++) {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model: MODELO, max_tokens: 900, system, messages: conv, tools: HERRAMIENTAS_CLAUDE }),
+      signal: AbortSignal.timeout(45_000),
+    });
+    if (!res.ok) throw new Error(`Claude respondió ${res.status}: ${(await res.text()).slice(0, 150)}`);
+    const d = (await res.json()) as { content?: Bloque[] };
+    const bloques = d.content ?? [];
+    const usos = bloques.filter((c) => c.type === "tool_use");
+    texto = bloques.filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n");
+    if (!usos.length) break;
+    conv.push({ role: "assistant", content: bloques });
+    const { POST: accion } = await import("@/app/api/admin/agentes/accion/route");
+    const resultados: Resultado[] = [];
+    for (const u of usos) {
+      const r = await accion(new Request("https://www.acopiosaludable.com/api/admin/agentes/accion", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente, herramienta: u.name, args: u.input ?? {} }) }))
+        .then((x) => x.json() as Promise<{ resultado?: string }>)
+        .catch((e: unknown) => ({ resultado: `Falló: ${String(e).slice(0, 120)}` }));
+      resultados.push({ type: "tool_result", tool_use_id: String(u.id), content: String(r.resultado ?? "").slice(0, 12000) });
+    }
+    conv.push({ role: "user", content: resultados });
+  }
   const r = separarOrden(texto);
   if (r.orden) await guardarOrden(agente, r.orden);
   return r;
