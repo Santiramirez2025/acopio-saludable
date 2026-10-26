@@ -9,6 +9,7 @@ import { Ficha, type AgenteVista, type DatosOficina } from "../oficina";
 import type { Control } from "./escena";
 import { BotonTv } from "../boton-tv";
 import { SeguirCelular } from "@/app/tv/seguir-celular";
+import { activarSonido, sonar, sonidoActivo } from "./sonidos";
 
 const COLOR_ESTADO: Record<AgenteVista["estado"], string> = { ok: "#22c55e", falla: "#ef4444", atrasado: "#f59e0b", pendiente: "#38bdf8", descanso: "#9ca3af" };
 
@@ -70,7 +71,28 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
 
   useEffect(() => {
     ctl.current?.enfocar(abierto);
+    if (abierto) sonar("abrir");
   }, [abierto]);
+
+  // Destello del salto («tum»): un blanco que se va en un instante.
+  const destello = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const al = (e: Event) => {
+      const d = destello.current;
+      if (!d) return;
+      const suave = (e as CustomEvent<{ suave?: boolean }>).detail?.suave;
+      d.style.transition = "none";
+      d.style.opacity = suave ? "0.35" : "0.85";
+      requestAnimationFrame(() => {
+        d.style.transition = "opacity 420ms ease-out";
+        d.style.opacity = "0";
+      });
+    };
+    window.addEventListener("acopio-destello", al);
+    return () => window.removeEventListener("acopio-destello", al);
+  }, []);
+  const [conSonido, setConSonido] = useState(true);
+  useEffect(() => setConSonido(sonidoActivo()), []);
 
   // Recorrido automático (para dejarlo en la TV): si nadie toca nada por 25 s, la cámara va
   // pasando por cada oficina y muestra qué hizo cada persona. Cualquier tecla o toque lo corta.
@@ -91,7 +113,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
       const a = lista[n % lista.length];
       n++;
       setRecorrido(a.id);
-      ctl.current?.irA(a.id, false);
+      ctl.current?.irA(a.id, false, true, true);
     }, enTv ? 10_000 : 12_000);
     return () => {
       clearInterval(t);
@@ -105,7 +127,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
   const irAgente = useCallback((id: string) => {
     quieto.current = Date.now() + 60_000;
     setRecorrido(id);
-    ctl.current?.irA(id, false);
+    ctl.current?.irA(id, false, true, true);
   }, []);
   useEffect(() => {
     if (!cargado) return;
@@ -163,6 +185,9 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
   return (
     <div className="fixed inset-0 z-50 bg-stone-200">
       <div ref={lienzo} className="absolute inset-0" />
+      {/* Viñeta suave (más cine) y el destello del salto. */}
+      <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.28) 100%)" }} />
+      <div ref={destello} className="pointer-events-none absolute inset-0 bg-white opacity-0" />
       {enTv ? <SeguirCelular actual="3d" onAgente={irAgente} /> : null}
 
       {!cargado ? (
@@ -188,6 +213,19 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
           <a href={enTv ? "/tv/armado" : "/admin/empresa/armado"} aria-label="Pizarra de armado" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">📦<span className="hidden sm:inline"> Pizarra de armado</span></a>
           {enTv ? null : <a href="/admin/empresa/mensajes" aria-label="Mensajes en vivo" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">💬<span className="hidden sm:inline"> Mensajes</span></a>}
           {enTv ? null : <BotonTv />}
+          {enTv ? null : (
+            <button
+              onClick={() => {
+                activarSonido(!conSonido);
+                setConSonido(!conSonido);
+                if (!conSonido) sonar("click");
+              }}
+              aria-label={conSonido ? "Silenciar efectos" : "Activar efectos"}
+              className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md"
+            >
+              {conSonido ? "🔊" : "🔇"}
+            </button>
+          )}
           <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)} className="hidden rounded-full bg-black/40 px-4 py-2 text-sm text-white backdrop-blur-md sm:block">⛶</button>
           {enTv ? null : <a href="/admin/empresa" aria-label="Salir" className="rounded-full bg-black/40 px-3 py-2 text-sm text-white backdrop-blur-md sm:px-4">✕</a>}
         </div>
@@ -209,7 +247,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
 
       {c && !a && !enRecorrido ? (
         <button
-          onClick={() => ctl.current?.irA(c.id, true)}
+          onClick={() => ctl.current?.irA(c.id, true, true)}
           className="absolute bottom-24 left-1/2 flex max-w-[calc(100vw-24px)] -translate-x-1/2 items-center gap-3 rounded-full bg-white/95 py-2 pl-2 pr-5 text-stone-900 shadow-2xl"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -239,7 +277,7 @@ export function Oficina3D({ datos, enTv = false }: { datos: DatosOficina; enTv?:
             <button
               key={x.id}
               onClick={() => {
-                ctl.current?.irA(x.id, false);
+                ctl.current?.irA(x.id, true, true);
                 setMapa(false);
               }}
               className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm hover:bg-white/10"
