@@ -18,7 +18,7 @@ import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
-import { avisarSantiago } from "./avisos";
+import { AVISOS_WHATSAPP, avisarSantiago } from "./avisos";
 import { fotosOportunas } from "./galeria";
 import { esPedidoWeb, leerPedidoWeb, resolverPedidoWeb } from "./pedido-web";
 import { catalogo } from "./asistente-catalogo";
@@ -34,6 +34,7 @@ import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
 import { transcribirAudio } from "./oir-audio";
 import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
+import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from "./direccion-cliente";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
@@ -204,6 +205,21 @@ export async function atender(e: Entrada): Promise<void> {
   // Una reacción o un sticker: queda en el panel y no se contesta.
   if (e.silencioso) return;
 
+  // Santiago le escribe al número de Acopio: le contesta su asistente (pedidos, cobros, boletas), no el vendedor.
+  if (canal === "whatsapp" && e.clave === AVISOS_WHATSAPP && process.env.ASISTENTE_SANTIAGO !== "0") {
+    let dicho = e.texto ?? "";
+    const audio = /^\[audio·([^\]\s]+)\]/.exec(e.guardar ?? "")?.[1];
+    if (audio) {
+      const r = await transcribirAudio(audio);
+      dicho = r.texto ? `(audio) ${r.texto}` : "(mandó un audio que no se pudo transcribir)";
+      if (r.texto) await prisma.$executeRaw`UPDATE "WhatsappMensaje" SET "texto" = "texto" || ${` 🎤 «${r.texto}»`} WHERE "id" = ${e.idMensaje}`.catch(() => null);
+    }
+    const media = /^\[(?:foto|archivo)·([^\]\s]+)\]/.exec(e.guardar ?? "")?.[1] ?? null;
+    const { atenderSantiago } = await import("./asistente-santiago");
+    await atenderSantiago(e.clave, dicho, media).catch((x) => console.error("asistente de Santiago falló", x));
+    return;
+  }
+
   // Una persona tomó la charla: el bot no se mete. El mensaje queda guardado y suma no leídos.
   if ((await estadoDe(e.clave)) === "persona") {
     console.log("chat: en manos de una persona, el bot se calla", cola(e.clave));
@@ -274,6 +290,12 @@ export async function atender(e: Entrada): Promise<void> {
         const r = await procesarComprobante(e.clave, e.nombre, id);
         if (r) texto = r;
       }
+      // Una captura de Maps o algo con su dirección: si su pedido no tiene dirección, se carga sola.
+      if (id && /mapa|maps|ubicaci|direcci|calle|domicilio/i.test(vista)) {
+        const dir = await leerDireccionDeFoto(id).catch(() => null);
+        const cod = dir ? await completarDireccion(e.clave, dir).catch(() => null) : null;
+        if (dir && cod) texto = `[Mandó una captura con su dirección: ${dir}. Ya quedó cargada en su pedido ${cod}: confirmale en una frase que la tenemos.]`;
+      }
     }
   }
   // Un audio: se transcribe y entra a la charla como texto. Si no se pudo (sin clave, falló), se le pide que lo escriba, como antes.
@@ -304,6 +326,10 @@ export async function atender(e: Entrada): Promise<void> {
     return;
   }
   if (!texto) return;
+
+  // Mandó su ubicación de WhatsApp: si su pedido no tiene dirección, queda cargada (el reparto usa el mapa).
+  const ubic = e.texto ? direccionDeUbicacion(e.texto) : null;
+  if (ubic) await completarDireccion(e.clave, ubic).catch(() => null);
 
   // Del otro lado contestó un bot (el «gracias por comunicarte» de un hotel): no se le contesta y
   // no se avisa a nadie. La charla sigue en manos del vendedor: cuando escriba una persona, la atiende.

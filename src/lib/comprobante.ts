@@ -34,7 +34,7 @@ export function leerRespuestaComprobante(t: string): Comprobante | null {
   }
 }
 
-async function bajarMedia(mediaId: string): Promise<{ bytes: ArrayBuffer; mime: string } | null> {
+export async function bajarMedia(mediaId: string): Promise<{ bytes: ArrayBuffer; mime: string } | null> {
   const token = process.env.WHATSAPP_TOKEN;
   if (!token || !/^\d{5,30}$/.test(mediaId)) return null;
   const auth = { authorization: `Bearer ${token}` };

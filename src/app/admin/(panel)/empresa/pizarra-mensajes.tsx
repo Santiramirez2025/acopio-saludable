@@ -60,6 +60,11 @@ export function PizarraMensajes({ p, enTv = false, volver }: { p: Datos; enTv?: 
                   {c.noLeidos ? <span className="rounded-full bg-acopio-700 px-2 py-0.5 text-xs font-bold text-white">{c.noLeidos} sin leer</span> : null}
                 </div>
               </div>
+              {c.resumen ? (
+                <p className={`mt-2 rounded-2xl bg-stone-900/5 px-3 py-2 ${grande ? "text-base" : "text-xs"} text-stone-700`}>
+                  <b>{c.resumen.calor === "caliente" ? "🔥 Por comprar" : c.resumen.calor === "frio" ? "🧊 Se enfrió" : c.resumen.calor === "cliente" ? "💚 Cliente" : "🤔 Interesado"}</b> · {c.resumen.texto}
+                </p>
+              ) : null}
               <ul className={`mt-3 space-y-1.5 ${grande ? "text-lg" : "text-sm"}`}>
                 {c.mensajes.map((m, i) => (
                   <li key={i} className={`rounded-2xl px-3 py-1.5 ${m.de === "cliente" ? "mr-6 bg-stone-100" : "ml-6 bg-emerald-50 text-emerald-950"}`}>
