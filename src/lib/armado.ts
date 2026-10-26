@@ -68,7 +68,9 @@ export function totalesDeArmado(pedidos: PedidoArmado[]): TotalArmado[] {
     }));
 }
 
-function cobrarDe(o: { pagadoAt: Date | null; medioPago: string; total: unknown; notas: string | null }): string {
+function cobrarDe(o: { pagadoAt: Date | null; medioPago: string; total: unknown; notas: string | null; eventos?: { nota: string | null }[] }): string {
+  // Ya mandó el comprobante: no se le cobra en la puerta (a Beatriz se le intentó cobrar dos veces).
+  if (!o.pagadoAt && o.eventos?.some((e) => /comprobante/i.test(e.nota ?? ""))) return "Mandó comprobante: NO cobrar";
   const nota = o.notas?.match(/cobrar\s*\$?\s*([\d.]+)/i);
   if (nota) return `Cobrar $ ${nota[1]}`;
   if (o.pagadoAt) return "Ya pagó";
