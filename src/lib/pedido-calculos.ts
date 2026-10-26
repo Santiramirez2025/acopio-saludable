@@ -139,3 +139,15 @@ export const NOMBRE_MEDIO: Record<"MERCADOPAGO" | "TRANSFERENCIA" | "AL_RECIBIR"
   TRANSFERENCIA: "Transferencia",
   AL_RECIBIR: "Paga al recibir",
 };
+
+/**
+ * Suma horario y referencia a las notas sin repetir: el nuevo «Horario:» reemplaza al anterior, igual
+ * «Referencia:», y nada se duplica (antes quedaba «Horario: … · Horario: … · Horario: …»).
+ */
+export function unirNotas(viejas: string | null, horario?: string, referencia?: string): string {
+  const partes = (viejas ?? "").split(" · ").map((x) => x.trim()).filter(Boolean);
+  const quedan = partes.filter((x) => !(horario && /^horario:/i.test(x)) && !(referencia && /^referencia:/i.test(x)));
+  const todas = [horario ? `Horario: ${horario}` : "", referencia ? `Referencia: ${referencia}` : "", ...quedan].filter(Boolean);
+  return [...new Set(todas)].join(" · ").slice(0, 500);
+}
+

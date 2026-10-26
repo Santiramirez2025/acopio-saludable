@@ -12,7 +12,7 @@ import type { Bulto, OpcionEnvio } from "./envios/tipos";
 import { enviarEmail, escaparHtml } from "./email";
 import { SITIO, urlSitio } from "./sitio";
 import { linkSeguimiento } from "./envios/seguimiento";
-import { ErrorPedido, envioQueSeCobra, listaDeCompra, NOMBRE_MEDIO, numeroPedido, validarCliente } from "./pedido-calculos";
+import { ErrorPedido, envioQueSeCobra, listaDeCompra, NOMBRE_MEDIO, numeroPedido, unirNotas, validarCliente } from "./pedido-calculos";
 import { beneficioRecomendacion } from "./recomendacion-db";
 import { ORDEN_PROVEEDORES, PROVEEDORES, proveedorDe } from "./proveedores";
 
@@ -340,10 +340,13 @@ export async function crearPedidoWhatsapp(a: {
 }
 
 /** Completa nombre, dirección y horario cuando la persona los pasa en la charla. */
+/** ¿Ya hay una dirección para ir? («A confirmar por WhatsApp» no cuenta.) */
+const conDireccion = (calle: string | null | undefined) => Boolean(calle && calle.trim().length > 4 && !/a confirmar|sin direcci|retira/i.test(calle));
+
 export async function completarEntrega(orderId: number, d: { nombre?: string; direccion?: string; horario?: string; referencia?: string }): Promise<Order | null> {
   const pedido = await prisma.order.findUnique({ where: { id: orderId } });
   if (!pedido) return null;
-  const notas = [d.horario ? `Horario: ${d.horario}` : "", d.referencia ? `Referencia: ${d.referencia}` : "", pedido.notas ?? ""].filter(Boolean).join(" · ").slice(0, 500);
+  const notas = unirNotas(pedido.notas, d.horario, d.referencia);
   const actualizado = await prisma.order.update({
     where: { id: orderId },
     data: {
@@ -352,7 +355,9 @@ export async function completarEntrega(orderId: number, d: { nombre?: string; di
       notas,
     },
   });
-  await avisarVenta(actualizado, "Datos de entrega");
+  // Un solo aviso: cuando aparece la dirección. Los retoques (horario, referencia, «Calle …») no avisan:
+  // el 26/10 llegaron 9 avisos iguales por un pedido. Todo junto llega igual en el reparto de la mañana.
+  if (!conDireccion(pedido.calle) && conDireccion(actualizado.calle)) await avisarVenta(actualizado, "Datos de entrega");
   return actualizado;
 }
 
