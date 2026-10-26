@@ -2,6 +2,7 @@
 //   GET ?que=pedidos                 → pedidos abiertos + entregados/cancelados de los últimos 7 días, con ítems y notas
 //   GET ?que=charlas&horas=24        → charlas de WhatsApp con movimiento en las últimas N horas (últimos 12 mensajes)
 //   GET ?que=charla&telefono=549…    → una charla entera (últimos 60 mensajes)
+//   GET ?que=resumenes&horas=48      → una línea por charla: calor (caliente/tibio/frio/cliente), qué quiere y próximo paso
 //   POST { accion: "estado", id, estado, nota?, silencioso? } → cambia el estado de un pedido (mismo efecto que el panel:
 //        ENVIADO avisa «ya está en el reparto de hoy, el repartidor te escribe» por WhatsApp; ENTREGADO con pago manda gracias + referidos; silencioso = sin avisos)
 import { NextResponse } from "next/server";
@@ -19,6 +20,12 @@ export async function GET(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const u = new URL(req.url).searchParams;
   const que = u.get("que");
+
+  if (que === "resumenes") {
+    const { resumenesCharlas } = await import("@/lib/resumen-charlas");
+    const horas = Math.min(168, Number(u.get("horas")) || 48);
+    return NextResponse.json({ resumenes: await resumenesCharlas(horas, 40, 25) });
+  }
 
   if (que === "pedidos") {
     const hace7 = new Date(Date.now() - 7 * 86_400_000);
