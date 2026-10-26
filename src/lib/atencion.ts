@@ -696,3 +696,27 @@ async function primeraVezHoy(clave: string): Promise<boolean> {
   await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${clave}, true, 'aviso')`.catch(() => undefined);
   return true;
 }
+
+/**
+ * El vendedor retoma una charla que estaba en manos de una persona (o de un agente) y contesta el último
+ * mensaje del cliente si quedó sin respuesta. Lo usa «Devolvérsela al vendedor» en el panel.
+ */
+export async function retomarCharla(clave: string): Promise<boolean> {
+  await cambiarEstado(clave, "bot");
+  const ultimos = await prisma.$queryRaw<{ de: string; texto: string }[]>`SELECT "de", "texto" FROM "WhatsappMensaje" WHERE "telefono" = ${clave} AND "texto" NOT LIKE '[reacción%' ORDER BY "fecha" DESC LIMIT 1`;
+  if (ultimos[0]?.de !== "cliente") return false;
+  const texto = ultimos[0].texto.slice(0, 400);
+  const guardado = await pedidoGuardado(clave);
+  const historial = (await historialDe(clave, 10)).slice(0, -1);
+  const conv = await prisma.$queryRaw<{ nombre: string | null; anuncioTitulo: string | null }[]>`SELECT "nombre", "anuncioTitulo" FROM "WhatsappConversacion" WHERE "telefono" = ${clave}`;
+  const p = await pensar({ canal: canalDe(clave), texto, toque: null, historial, anuncio: conv[0]?.anuncioTitulo ? { titulo: conv[0].anuncioTitulo, texto: null } : null, nombre: conv[0]?.nombre ?? null, negocio: "", pedidoGuardado: guardado });
+  if (p.derivar) return false;
+  if (canalDe(clave) === "whatsapp") {
+    await responderWhatsapp(clave, p.salientes);
+    if (p.guardarPedido) await guardarPedido(clave, p.guardarPedido);
+  } else {
+    const salida = paraWhatsapp(p.respuesta);
+    if (salida) await responder(clave, salida);
+  }
+  return true;
+}

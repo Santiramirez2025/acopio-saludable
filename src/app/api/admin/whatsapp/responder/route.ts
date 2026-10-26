@@ -8,7 +8,7 @@ import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { enviarPorCanal } from "@/lib/atencion";
+import { enviarPorCanal, retomarCharla } from "@/lib/atencion";
 import { claveValida } from "@/lib/meta-mensajes";
 import { cambiarEstado, guardarPedido, marcarLeida, registrarSalida, ventanaAbierta } from "@/lib/whatsapp-memoria";
 import { enviarMedia, enviarSaliente, subirMedia } from "@/lib/whatsapp-cloud";
@@ -40,7 +40,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  if (cuerpo.accion === "bot" || cuerpo.accion === "persona") {
+  // Devolvérsela al vendedor: si el cliente quedó esperando, el vendedor le contesta ya.
+  if (cuerpo.accion === "bot") {
+    const contesto = await retomarCharla(telefono).catch((e) => {
+      console.error("retomar charla falló", e);
+      return false;
+    });
+    return NextResponse.json({ ok: true, estado: "bot", contesto });
+  }
+  if (cuerpo.accion === "persona") {
     await cambiarEstado(telefono, cuerpo.accion);
     if (cuerpo.accion === "persona") await marcarLeida(telefono);
     return NextResponse.json({ ok: true, estado: cuerpo.accion });
@@ -87,8 +95,11 @@ export async function POST(req: Request) {
   if (/^\d+$/.test(telefono) && !(await ventanaAbierta(telefono).catch(() => true))) {
     return NextResponse.json({ error: "Pasaron más de 24 horas desde su último mensaje: WhatsApp no entrega texto libre. Hace falta una plantilla." }, { status: 409 });
   }
-  // Contestar a mano toma la charla: el bot no se mete hasta que se la devuelvan.
-  await cambiarEstado(telefono, "persona");
+  // Contestar a mano (Santiago desde el panel) toma la charla: el bot no se mete hasta que se la devuelvan.
+  // Un agente que escribe (Nico, Caro…) NO la toma: si el cliente contesta, el vendedor sigue y cierra la venta
+  // (el 26/10 Nico escribió a «Hola» de Zapala y la charla quedó muda cuando el cliente respondió).
+  const esSantiago = Boolean(await getServerSession(authOptions));
+  if ((esSantiago && cuerpo.accion !== "agente") || cuerpo.accion === "tomar") await cambiarEstado(telefono, "persona");
   const enviado = await enviarPorCanal(telefono, texto);
   if (!enviado) {
     return NextResponse.json(
