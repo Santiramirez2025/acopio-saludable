@@ -58,9 +58,26 @@ export async function POST(req: Request) {
       case "ver_charlas":
         r = await datosGet(new Request(`${base}/api/admin/agentes/datos?que=charlas&horas=${Math.min(168, Number(a.horas) || 24)}`));
         break;
-      case "ver_charla":
-        r = await datosGet(new Request(`${base}/api/admin/agentes/datos?que=charla&telefono=${encodeURIComponent(telefonoAr(String(a.telefono ?? "")))}`));
+      case "ver_charla": {
+        // Acepta el teléfono o el nombre («Sonia»): si hay más de una persona con ese nombre, devuelve las opciones.
+        const q = String(a.telefono ?? a.cliente ?? "").trim();
+        let tel = q.replace(/\D/g, "").length >= 8 ? telefonoAr(q) : "";
+        if (!tel) {
+          const sin = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+          const ws = sin(q).split(/\s+/).filter((w) => w.length > 1);
+          const convs = await prisma.$queryRaw<{ telefono: string; nombre: string | null; ultimoMensaje: Date }[]>`SELECT "telefono", "nombre", "ultimoMensaje" FROM "WhatsappConversacion" WHERE "ultimoMensaje" > now() - interval '30 days' ORDER BY "ultimoMensaje" DESC LIMIT 300`;
+          const pedidos = await prisma.order.findMany({ where: { createdAt: { gte: new Date(Date.now() - 30 * 86_400_000) } }, select: { nombre: true, telefono: true }, take: 100 });
+          const enc = (n: string | null) => ws.length > 0 && ws.every((w) => sin(n ?? "").split(/[^a-z0-9ñ]+/).includes(w));
+          const cands = new Map<string, string>();
+          for (const c of convs) if (enc(c.nombre)) cands.set(c.telefono, c.nombre ?? c.telefono);
+          for (const o of pedidos) if (enc(o.nombre)) cands.set(telefonoAr(o.telefono), o.nombre);
+          if (cands.size === 0) return NextResponse.json({ ok: false, resultado: `No encontré a nadie llamado «${q}» en los últimos 30 días. Pedile el teléfono.` });
+          if (cands.size > 1) return NextResponse.json({ ok: true, resultado: `Hay varias personas con ese nombre: ${[...cands].map(([t, n]) => `${n} (${t})`).join("; ")}. Preguntale cuál o abrí cada una con su teléfono.` });
+          tel = [...cands.keys()][0];
+        }
+        r = await datosGet(new Request(`${base}/api/admin/agentes/datos?que=charla&telefono=${encodeURIComponent(tel)}`));
         break;
+      }
       case "escribir_whatsapp":
         r = await responderPost(json(`${base}/api/admin/whatsapp/responder`, { telefono: telefonoAr(String(a.telefono ?? "")), texto: String(a.texto ?? "") }));
         break;

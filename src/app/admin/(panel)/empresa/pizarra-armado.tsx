@@ -157,12 +157,11 @@ export function PizarraArmado({ p, puedeMarcar, volver }: { p: Pizarra; puedeMar
         ))}
       </section>
 
-      {p.listos.length || p.enCamino.length || p.esperandoPago.length ? (
+      {p.listos.length || p.enCamino.length ? (
         <section className="mt-8 grid gap-5 text-xl md:grid-cols-3">
           {[
             ["✅ Listos para salir", p.listos],
             ["🚚 En camino", p.enCamino],
-            ["⏳ Esperando el pago", p.esperandoPago],
           ].map(([t, lista]) => (
             <div key={t as string} className="rounded-3xl bg-white/5 p-5">
               <h3 className="font-bold">{t as string} ({(lista as PedidoArmado[]).length})</h3>
