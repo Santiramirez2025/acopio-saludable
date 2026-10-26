@@ -23,6 +23,7 @@ export * from "./pedido-calculos";
 
 // Renglon y aItemDePedido viven en pedido-calculos (sin base de datos) y ya salen por el `export *` de arriba.
 import { aItemDePedido, type Renglon } from "./pedido-calculos";
+import { telefonoFin } from "./telefono";
 
 /** Abre productos y combos en renglones con precio y costo. Solo entra lo que hoy se vende. */
 export async function expandirCarrito(entrada: unknown, cfg: Config): Promise<Renglon[]> {
@@ -301,6 +302,17 @@ export async function crearPedidoWhatsapp(a: {
   const cfg = await leerConfig();
   const [cotizacion, renglones] = await Promise.all([cotizarCarrito(a.lineas), expandirCarrito(a.lineas, cfg)]);
   if (!renglones.length) throw new ErrorPedido("El pedido está vacío");
+  // Ya hay un pedido abierto de este teléfono con lo mismo (de los últimos 3 días): se devuelve ese, no se crea otro.
+  // El 26/10 a Carmelo se le crearon 3 pedidos iguales en 36 segundos (agentes y bot a la vez).
+  const fin = telefonoFin(a.telefono);
+  const firma = (xs: { codigo: string; cantidad: number }[]) => xs.map((x) => `${x.codigo}×${x.cantidad}`).sort().join(",");
+  const nueva = firma(renglones.map((r) => ({ codigo: r.codigo, cantidad: r.cantidad })));
+  const abiertos = await prisma.order.findMany({ where: { estado: { notIn: ["CANCELADO", "ENTREGADO"] }, createdAt: { gte: new Date(Date.now() - 3 * 86_400_000) } }, include: { items: true }, orderBy: { id: "desc" }, take: 40 });
+  const igual = abiertos.find((o) => telefonoFin(o.telefono) === fin && firma(o.items) === nueva);
+  if (igual) {
+    console.log("pedido: ya existe uno igual, no se duplica", igual.id);
+    return igual;
+  }
   const bultos = armarBultos(renglones.map((r) => ({ pesoG: r.pesoG ?? PESO_POR_DEFECTO_G, cantidad: r.cantidad })));
   const envio = a.envio.costo ?? 0;
   const { descuento, envioCobrado, total, comisionPago } = totales(cotizacion.subtotal, envio, a.medioPago, cfg);
