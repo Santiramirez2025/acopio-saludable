@@ -42,7 +42,7 @@ function Tarjeta({ p, puedeMarcar, alListo }: { p: PedidoArmado; puedeMarcar: bo
       <header className="flex items-start justify-between gap-3">
         <div>
           <div className="text-3xl font-black tracking-tight">{p.cliente}</div>
-          <div className="text-lg text-white/60">{p.codigo} · {p.zona}</div>
+          <div className="text-lg text-white/60">{p.codigo} · {p.zona}{p.estado === "ENVIADO" ? <span className="ml-2 rounded-full bg-sky-400/20 px-2 py-0.5 text-sm text-sky-200">ya le avisamos: sale hoy</span> : null}</div>
         </div>
         <div className={`rounded-2xl px-3 py-2 text-right text-lg font-bold ${p.pagado ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-400/20 text-amber-300"}`}>{p.cobrar}</div>
       </header>
@@ -87,7 +87,9 @@ export function PizarraArmado({ p, puedeMarcar, volver }: { p: Pizarra; puedeMar
   }, [router]);
   const alListo = async (id: number) => {
     setError("");
-    const r = await fetch("/api/admin/agentes/datos", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ accion: "estado", id, estado: "PREPARADO", silencioso: true, nota: "Armado desde la pizarra" }) });
+    // Si ya figura «Enviado» (le avisaron que sale hoy), queda Enviado y se anota que está armado.
+    const estado = p.paraArmar.find((x) => x.id === id)?.estado === "ENVIADO" ? "ENVIADO" : "PREPARADO";
+    const r = await fetch("/api/admin/agentes/datos", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ accion: "estado", id, estado, silencioso: true, nota: "Armado desde la pizarra" }) });
     if (!r.ok) setError("No pude marcarlo. Probá de nuevo.");
     else {
       try {
