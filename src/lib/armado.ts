@@ -81,7 +81,7 @@ export async function pizarraArmado(): Promise<Pizarra> {
   const { prisma } = await import("./prisma");
   const os = await prisma.order.findMany({
     where: { estado: { in: ["PENDIENTE_PAGO", "PAGADO", "EN_COMPRA", "PREPARADO", "ENVIADO"] } },
-    include: { items: true },
+    include: { items: true, eventos: { select: { estado: true, nota: true } } },
     orderBy: { id: "asc" },
     take: 80,
   });
@@ -98,14 +98,19 @@ export async function pizarraArmado(): Promise<Pizarra> {
     hace: haceCuanto(o.createdAt),
   });
   const todos = os.map(vista);
+  // Ya se armó si pasó por «Preparado» o se tildó «Listo» en la pizarra. Gonza a veces pasa el pedido a
+  // «Enviado» temprano para avisarle al cliente que sale hoy: si todavía no se armó, sigue en «para armar».
+  const armado = (k: number) => os[k].eventos.some((e) => e.estado === "PREPARADO" || /armado/i.test(e.nota ?? ""));
   // Se arma lo pagado o lo que se paga al recibir. Lo que espera una transferencia va aparte (y viejo de más de 7 días, no va).
   const reciente = (o: (typeof os)[number]) => Date.now() - o.createdAt.getTime() < 7 * 86_400_000;
-  const paraArmar = todos.filter((p, k) => ["PAGADO", "EN_COMPRA"].includes(p.estado) || (p.estado === "PENDIENTE_PAGO" && os[k].medioPago === "AL_RECIBIR" && reciente(os[k])));
+  const paraArmar = todos.filter(
+    (p, k) => ["PAGADO", "EN_COMPRA"].includes(p.estado) || (p.estado === "PENDIENTE_PAGO" && os[k].medioPago === "AL_RECIBIR" && reciente(os[k])) || (p.estado === "ENVIADO" && !armado(k)),
+  );
   const esperandoPago = todos.filter((p, k) => p.estado === "PENDIENTE_PAGO" && os[k].medioPago !== "AL_RECIBIR" && reciente(os[k]));
   return {
     paraArmar,
     listos: todos.filter((p) => p.estado === "PREPARADO"),
-    enCamino: todos.filter((p) => p.estado === "ENVIADO"),
+    enCamino: todos.filter((p, k) => p.estado === "ENVIADO" && armado(k)),
     esperandoPago,
     totales: totalesDeArmado(paraArmar),
     actualizado: new Date().toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Cordoba", hour: "2-digit", minute: "2-digit" }),
