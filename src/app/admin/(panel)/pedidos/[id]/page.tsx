@@ -1,3 +1,4 @@
+import { linkMapa } from "@/lib/mapa";
 import Link from "next/link";
 import { NOMBRE_MEDIO } from "@/lib/pedido-calculos";
 import { notFound } from "next/navigation";
@@ -95,7 +96,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
             <h2 className="mb-2 text-sm font-semibold">Cliente y entrega</h2>
             <p className="font-medium">{pedido.nombre}</p>
             <p>{pedido.email} · {pedido.telefono} {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="text-acopio-700 underline">WhatsApp</a>}</p>
-            <p className="mt-1">{pedido.calle}, {pedido.ciudad}, {pedido.provincia} ({pedido.cp})</p>
+            <p className="mt-1">{pedido.calle}, {pedido.ciudad}, {pedido.provincia} ({pedido.cp}){(() => { const m = linkMapa(pedido.calle, pedido.ciudad, pedido.provincia); return m ? <a href={m} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center rounded-full bg-acopio-700 px-3 py-1 text-xs font-semibold text-white">📍 Cómo llegar</a> : null; })()}</p>
             <p className="text-stone-600">{pedido.envioNombre} · {pedido.bultos} {pedido.bultos === 1 ? "bulto" : "bultos"} · {(pedido.pesoTotalG / 1000).toFixed(1)} kg · cotizado por {pedido.envioOrigen}{pedido.tracking && (
               <>
                 {" · seguimiento "}

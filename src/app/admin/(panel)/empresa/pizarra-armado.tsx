@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PedidoArmado, Pizarra } from "@/lib/armado";
+import { linkRuta } from "@/lib/mapa";
 
 function etiquetaCombo(slug: string): string {
   const t = slug.replace(/^c-/, "").replace(/-/g, " ");
@@ -42,6 +43,11 @@ function Tarjeta({ p, puedeMarcar, alListo }: { p: PedidoArmado; puedeMarcar: bo
       <header className="flex items-start justify-between gap-3">
         <div>
           <div className="text-3xl font-black tracking-tight">{p.cliente}</div>
+          {p.mapa ? (
+            <a href={p.mapa} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-sky-500/20 px-3 py-1 text-base text-sky-200 hover:bg-sky-500/30">📍 {p.direccion.split(", ").slice(0, 2).join(", ")} · Cómo llegar</a>
+          ) : (
+            <div className="mt-1 text-base text-amber-300/80">📍 Falta la dirección</div>
+          )}
           <div className="text-lg text-white/60">{p.codigo} · {p.zona}{p.estado === "ENVIADO" ? <span className="ml-2 rounded-full bg-sky-400/20 px-2 py-0.5 text-sm text-sky-200">ya le avisamos: sale hoy</span> : null}</div>
         </div>
         <div className={`rounded-2xl px-3 py-2 text-right text-lg font-bold ${p.pagado ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-400/20 text-amber-300"}`}>{p.cobrar}</div>
@@ -100,6 +106,9 @@ export function PizarraArmado({ p, puedeMarcar, volver }: { p: Pizarra; puedeMar
       router.refresh();
     }
   };
+  // Todas las paradas en un solo recorrido: primero Carlos Paz y la zona, Córdoba al final.
+  const paradas = [...p.paraArmar, ...p.listos].filter((x) => x.direccion).sort((a, b) => Number(/c[oó]rdoba/i.test(a.zona) && !/carlos paz/i.test(a.zona)) - Number(/c[oó]rdoba/i.test(b.zona) && !/carlos paz/i.test(b.zona)));
+  const ruta = linkRuta(paradas.map((x) => x.direccion));
   const unidades = p.paraArmar.reduce((s, x) => s + x.items.reduce((a, i) => a + i.cantidad, 0), 0);
   return (
     <main className="min-h-screen bg-[#0d1512] px-6 py-6 text-white lg:px-10">
@@ -109,7 +118,8 @@ export function PizarraArmado({ p, puedeMarcar, volver }: { p: Pizarra; puedeMar
           <h1 className="text-5xl font-black tracking-tight">{p.paraArmar.length ? `${p.paraArmar.length} ${p.paraArmar.length === 1 ? "pedido" : "pedidos"} para armar` : "Todo armado 🙌"}</h1>
           <div className="mt-1 text-xl text-white/60">{unidades ? `${unidades} productos · ` : ""}listos {p.listos.length} · en camino {p.enCamino.length} · actualizado {p.actualizado}</div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {ruta ? <a href={ruta} target="_blank" rel="noopener noreferrer" className="rounded-full bg-sky-500 px-5 py-3 text-lg font-semibold text-white">🗺️ Ruta del reparto</a> : null}
           <button onClick={() => setVerTotales((v) => !v)} className="rounded-full bg-white/10 px-5 py-3 text-lg">{verTotales ? "Ocultar totales" : "Ver totales"}</button>
           <button onClick={() => router.refresh()} className="rounded-full bg-white/10 px-5 py-3 text-lg">↻</button>
           <button onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)} className="rounded-full bg-white/10 px-5 py-3 text-lg">⛶</button>
