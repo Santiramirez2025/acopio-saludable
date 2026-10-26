@@ -1404,3 +1404,14 @@ test("comprobante: lee el monto en cualquier formato y acepta diferencias chicas
   assert.ok(coincideMonto(54604, 54604));
   assert.ok(!coincideMonto(10000, 84700));
 });
+
+test("boleta y resúmenes: mapea renglones de La Granja y lee el resumen", async () => {
+  const { mapearRenglon } = await import("./boleta");
+  const { leerResumen } = await import("./resumen-charlas");
+  const { direccionDeUbicacion } = await import("./direccion-cliente");
+  assert.ok(mapearRenglon({ codigo: "009-037", descripcion: "PASAS DE UVA", precio_unitario: 3150 }).length > 0);
+  assert.deepEqual(mapearRenglon({ descripcion: "TORNILLOS", precio_unitario: 100 }), []);
+  assert.deepEqual(leerResumen('{"calor":"Frío","resumen":"Pidió precios y no contestó"}'), { calor: "frio", texto: "Pidió precios y no contestó" });
+  assert.equal(direccionDeUbicacion("Te mando mi ubicación: Bar Tifozzi, 9 de Julio 7 (-31.42, -64.49)"), "Bar Tifozzi, 9 de Julio 7");
+  assert.equal(direccionDeUbicacion("Te mando mi ubicación: sin dirección (-31.42, -64.49)"), "-31.42,-64.49");
+});

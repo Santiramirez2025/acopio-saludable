@@ -14,6 +14,7 @@ export type CharlaPizarra = {
   anuncio: string | null;
   mensajes: { de: "cliente" | "bot" | "persona"; texto: string; fecha: Date }[];
   ventanaCerrada: boolean;
+  resumen: { calor: string; texto: string } | null;
 };
 
 export type PizarraMensajes = { charlas: CharlaPizarra[]; hoy: number; esperan: number; sinLeer: number; actualizado: string };
@@ -29,6 +30,8 @@ export async function pizarraMensajes(horas = 48, max = 18): Promise<PizarraMens
     .map((c) => ({ c, etapa: etapaDe(c, ahora), espera: teEspera(c) }))
     .sort((a, b) => Number(b.espera) - Number(a.espera) || ORDEN[a.etapa] - ORDEN[b.etapa] || +new Date(b.c.ultimoMensaje) - +new Date(a.c.ultimoMensaje))
     .slice(0, max);
+  const { resumenesCharlas } = await import("./resumen-charlas");
+  const resumenes = new Map((await resumenesCharlas(horas, 40, 3).catch(() => [])).map((r) => [r.clave, r]));
   const charlas = await Promise.all(
     elegidas.map(async ({ c, etapa, espera }) => {
       const ms = (await mensajesDe(c.telefono, 4)).reverse();
@@ -44,6 +47,7 @@ export async function pizarraMensajes(horas = 48, max = 18): Promise<PizarraMens
         pedido: c.pedido ?? null,
         anuncio: c.anuncioTitulo ?? null,
         mensajes: ms.map((m) => ({ de: m.de, texto: m.texto, fecha: new Date(m.fecha) })),
+        resumen: resumenes.get(c.telefono) ? { calor: resumenes.get(c.telefono)!.calor, texto: resumenes.get(c.telefono)!.texto } : null,
         ventanaCerrada: Boolean(ultimoCliente && ahora.getTime() - new Date(ultimoCliente).getTime() > 24 * 3_600_000),
       } satisfies CharlaPizarra;
     }),

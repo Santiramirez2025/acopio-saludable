@@ -21,7 +21,7 @@ export async function conRegistro<T>(nombre: string, tarea: () => Promise<T>, re
 export async function ultimasCorridas(): Promise<Corrida[]> {
   return prisma.$queryRaw<Corrida[]>`
     SELECT DISTINCT ON ("nombre") "nombre", "ok", "detalle", "fecha" FROM "CronCorrida"
-    WHERE "nombre" NOT LIKE 'reintento-%' AND "nombre" NOT LIKE 'alerta-%' AND "nombre" NOT LIKE 'agente-%' AND "nombre" NOT LIKE 'orden-%' AND "nombre" NOT LIKE 'clave-%' AND "nombre" NOT LIKE 'charla-%' AND "nombre" NOT LIKE 'tv-%' AND "nombre" NOT LIKE 'tvsesion-%' ORDER BY "nombre", "fecha" DESC`;
+    WHERE "nombre" NOT LIKE 'reintento-%' AND "nombre" NOT LIKE 'alerta-%' AND "nombre" NOT LIKE 'agente-%' AND "nombre" NOT LIKE 'orden-%' AND "nombre" NOT LIKE 'clave-%' AND "nombre" NOT LIKE 'charla-%' AND "nombre" NOT LIKE 'tv-%' AND "nombre" NOT LIKE 'tvsesion-%' AND "nombre" NOT LIKE 'compra-%' AND "nombre" NOT LIKE 'resumen-%' ORDER BY "nombre", "fecha" DESC`;
 }
 
 /** Estado en texto, para el resumen diario y el panel. */

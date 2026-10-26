@@ -26,6 +26,7 @@ import { leerEntrante, type Entrante as EntranteMedia } from "@/lib/whatsapp-med
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs"; // hace falta crypto y after()
+export const maxDuration = 120; // el asistente de Santiago puede encadenar varias herramientas
 
 function firmaValida(crudo: string, cabecera: string | null): boolean {
   const secreto = process.env.WHATSAPP_APP_SECRET;
