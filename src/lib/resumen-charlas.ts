@@ -4,17 +4,22 @@
 export type ResumenCharla = { clave: string; nombre: string | null; calor: "caliente" | "tibio" | "frio" | "cliente"; texto: string; ultimo: string };
 
 export function leerResumen(t: string): { calor: ResumenCharla["calor"]; texto: string } | null {
+  const aCalor = (v: string) => (["caliente", "tibio", "frio", "cliente"] as const).find((c) => v.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().includes(c)) ?? "tibio";
   try {
     const j = JSON.parse(t.match(/\{[\s\S]*\}/)?.[0] ?? "") as { calor?: string; resumen?: string };
-    const calor = (["caliente", "tibio", "frio", "cliente"] as const).find((c) => c === String(j.calor ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()) ?? "tibio";
-    return j.resumen ? { calor, texto: String(j.resumen).slice(0, 260) } : null;
+    if (j.resumen) return { calor: aCalor(String(j.calor ?? "")), texto: String(j.resumen).slice(0, 260) };
   } catch {
-    return null;
+    /* sigue abajo */
   }
+  // Sin JSON válido (comillas sueltas, texto suelto): se rescata lo que se pueda.
+  const calor = t.match(/"?calor"?\s*:\s*"?([a-zA-Zíó]+)/)?.[1];
+  const resumen = t.match(/"?resumen"?\s*:\s*"([\s\S]*?)"\s*\}?\s*$/)?.[1] ?? t.replace(/[{}"`]/g, "").replace(/json/i, "").trim();
+  return resumen && resumen.length > 8 ? { calor: aCalor(calor ?? t), texto: resumen.replace(/\s+/g, " ").slice(0, 260) } : null;
 }
 
 /** Por qué falló el último resumen (para verlo desde el panel). */
 export let ultimoFallo = "";
+export let ultimaCuenta = 0;
 
 async function resumirConModelo(nombre: string | null, mensajes: { de: string; texto: string }[]): Promise<{ calor: ResumenCharla["calor"]; texto: string } | null> {
   const clave = process.env.ANTHROPIC_API_KEY;
@@ -45,7 +50,10 @@ async function resumirConModelo(nombre: string | null, mensajes: { de: string; t
     if (res) ultimoFallo = `${res.status} ${(await res.text()).slice(0, 160)}`;
     return null;
   }
-  return leerResumen(((await res.json()) as { content?: { text?: string }[] }).content?.map((b) => b.text ?? "").join(" ") ?? "");
+  const crudo = ((await res.json()) as { content?: { text?: string }[] }).content?.map((b) => b.text ?? "").join(" ") ?? "";
+  const r = leerResumen(crudo);
+  if (!r) ultimoFallo = `sin resumen: ${crudo.slice(0, 160)}`;
+  return r;
 }
 
 /** Resúmenes de las charlas con movimiento en las últimas `horas`. Rehace como mucho `nuevos` por llamada. */
@@ -54,6 +62,7 @@ export async function resumenesCharlas(horas = 48, max = 30, nuevos = 10): Promi
   const charlas = await prisma.$queryRaw<{ telefono: string; nombre: string | null; ultimo: string | null }[]>`
     SELECT c."telefono", c."nombre", (SELECT m."id" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1) AS "ultimo"
     FROM "WhatsappConversacion" c WHERE c."ultimoMensaje" > now() - (${horas} * interval '1 hour') AND NOT c."baja" ORDER BY c."ultimoMensaje" DESC LIMIT ${max}`;
+  ultimaCuenta = charlas.length;
   const nombres = charlas.map((c) => `resumen-${c.telefono}`);
   const guardados = nombres.length
     ? await prisma.$queryRaw<{ nombre: string; detalle: string | null }[]>`SELECT DISTINCT ON ("nombre") "nombre", "detalle" FROM "CronCorrida" WHERE "nombre" = ANY(${nombres}) ORDER BY "nombre", "fecha" DESC`
