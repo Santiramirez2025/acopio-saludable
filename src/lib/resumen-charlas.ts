@@ -13,6 +13,9 @@ export function leerResumen(t: string): { calor: ResumenCharla["calor"]; texto: 
   }
 }
 
+/** Por qué falló el último resumen (para verlo desde el panel). */
+export let ultimoFallo = "";
+
 async function resumirConModelo(nombre: string | null, mensajes: { de: string; texto: string }[]): Promise<{ calor: ResumenCharla["calor"]; texto: string } | null> {
   const clave = process.env.ANTHROPIC_API_KEY;
   if (!clave) return null;
@@ -34,8 +37,14 @@ async function resumirConModelo(nombre: string | null, mensajes: { de: string; t
       ],
     }),
     signal: AbortSignal.timeout(20_000),
-  }).catch(() => null);
-  if (!res?.ok) return null;
+  }).catch((e: unknown) => {
+    ultimoFallo = String(e).slice(0, 160);
+    return null;
+  });
+  if (!res?.ok) {
+    if (res) ultimoFallo = `${res.status} ${(await res.text()).slice(0, 160)}`;
+    return null;
+  }
   return leerResumen(((await res.json()) as { content?: { text?: string }[] }).content?.map((b) => b.text ?? "").join(" ") ?? "");
 }
 

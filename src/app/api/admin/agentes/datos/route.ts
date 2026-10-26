@@ -22,9 +22,10 @@ export async function GET(req: Request) {
   const que = u.get("que");
 
   if (que === "resumenes") {
-    const { resumenesCharlas } = await import("@/lib/resumen-charlas");
+    const m = await import("@/lib/resumen-charlas");
     const horas = Math.min(168, Number(u.get("horas")) || 48);
-    return NextResponse.json({ resumenes: await resumenesCharlas(horas, 40, 25) });
+    const resumenes = await m.resumenesCharlas(horas, 40, 25);
+    return NextResponse.json({ resumenes, fallo: m.ultimoFallo || undefined });
   }
 
   if (que === "pedidos") {
