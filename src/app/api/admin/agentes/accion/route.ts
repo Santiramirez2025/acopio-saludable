@@ -52,9 +52,13 @@ export async function POST(req: Request) {
         const pz = await pizarraArmado();
         return NextResponse.json({ ok: true, resultado: corto({ paraArmar: pz.paraArmar.map((x) => ({ pedido: x.codigo, cliente: x.cliente, zona: x.zona, cobrar: x.cobrar, notas: x.notas, lleva: x.items.map((i) => `${i.cantidad} × ${i.producto} ${i.presentacion}`) })), totales: pz.totales, listos: pz.listos.map((x) => `${x.codigo} ${x.cliente}`), enCamino: pz.enCamino.map((x) => `${x.codigo} ${x.cliente}`), esperandoPago: pz.esperandoPago.map((x) => `${x.codigo} ${x.cliente} ${x.cobrar}`) }, 12000) });
       }
-      case "ver_pedidos":
-        r = await datosGet(new Request(`${base}/api/admin/agentes/datos?que=pedidos`));
-        break;
+      case "ver_pedidos": {
+        // Corto y legible: lo justo para contestar rápido en la llamada.
+        const os = await prisma.order.findMany({ where: { OR: [{ estado: { notIn: ["ENTREGADO", "CANCELADO"] } }, { updatedAt: { gte: new Date(Date.now() - 7 * 86_400_000) } }] }, include: { items: true }, orderBy: { id: "desc" }, take: 40 });
+        const fila = (o: (typeof os)[number]) =>
+          `AS-${String(o.id).padStart(5, "0")} ${o.nombre} · ${o.estado} · $${Math.round(Number(o.total)).toLocaleString("es-AR")} · ${o.pagadoAt ? "pagado" : `sin cobrar (${o.medioPago})`} · ${o.ciudad} · tel ${o.telefono} · ${o.items.map((i) => `${i.cantidad}× ${i.producto} ${i.presentacion}`).join(", ")}${o.notas ? ` · notas: ${o.notas.slice(0, 120)}` : ""}`;
+        return NextResponse.json({ ok: true, resultado: corto(os.map(fila).join("\n") || "No hay pedidos.", 6000) });
+      }
       case "ver_charlas":
         r = await datosGet(new Request(`${base}/api/admin/agentes/datos?que=charlas&horas=${Math.min(168, Number(a.horas) || 24)}`));
         break;
