@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   if (que === "resumenes") {
     const m = await import("@/lib/resumen-charlas");
     const horas = Math.min(168, Number(u.get("horas")) || 48);
-    const resumenes = await m.resumenesCharlas(horas, 40, 25);
+    const resumenes = await m.resumenesCharlas(horas, 40, 12); // 12 nuevos por llamada: entra en el tiempo de la función; los demás salen de la caché
     return NextResponse.json({ resumenes, charlas: m.ultimaCuenta, fallo: m.ultimoFallo || undefined });
   }
 
