@@ -79,7 +79,7 @@ export async function POST(req: Request) {
         break;
       }
       case "escribir_whatsapp":
-        r = await responderPost(json(`${base}/api/admin/whatsapp/responder`, { telefono: telefonoAr(String(a.telefono ?? "")), texto: String(a.texto ?? ""), accion: "agente" }));
+        r = await responderPost(json(`${base}/api/admin/whatsapp/responder`, { telefono: telefonoAr(String(a.telefono ?? "")), texto: String(a.texto ?? ""), accion: "agente", pedido: typeof a.pedido === "string" ? a.pedido : undefined }));
         break;
       case "cambiar_estado_pedido":
         r = await datosPost(json(`${base}/api/admin/agentes/datos`, { accion: "estado", id: Number(a.id), estado: String(a.estado ?? ""), nota: a.nota ? String(a.nota) : undefined }));

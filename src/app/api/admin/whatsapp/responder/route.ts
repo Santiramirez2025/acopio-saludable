@@ -100,6 +100,8 @@ export async function POST(req: Request) {
   // (el 26/10 Nico escribió a «Hola» de Zapala y la charla quedó muda cuando el cliente respondió).
   const esSantiago = Boolean(await getServerSession(authOptions));
   if ((esSantiago && cuerpo.accion !== "agente") || cuerpo.accion === "tomar") await cambiarEstado(telefono, "persona");
+  // Un agente que le arma un pedido deja el carrito guardado: el vendedor sigue con ese, no con otro.
+  if (typeof cuerpo.pedido === "string" && cuerpo.pedido.startsWith("/carrito?p=")) await guardarPedido(telefono, cuerpo.pedido.slice(0, 300));
   const enviado = await enviarPorCanal(telefono, texto);
   if (!enviado) {
     return NextResponse.json(
