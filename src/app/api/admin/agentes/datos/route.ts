@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     const m = await import("@/lib/resumen-charlas");
     const horas = Math.min(168, Number(u.get("horas")) || 48);
     const resumenes = await m.resumenesCharlas(horas, 40, 25);
-    return NextResponse.json({ resumenes, fallo: m.ultimoFallo || undefined });
+    return NextResponse.json({ resumenes, charlas: m.ultimaCuenta, fallo: m.ultimoFallo || undefined });
   }
 
   if (que === "pedidos") {
