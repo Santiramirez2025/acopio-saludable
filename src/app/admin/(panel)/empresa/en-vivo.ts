@@ -87,6 +87,7 @@ export async function llamar(o: Opciones): Promise<Llamada> {
     const dc = pc.createDataChannel("oai-events");
     const enviar = (ev: unknown) => dc.readyState === "open" && dc.send(JSON.stringify(ev));
     const textos = new Map<string, string>();
+    let ultimaVoz = 0;
     dc.onopen = () => {
       o.onEstado("escuchando");
       // Que salude primero, corto.
@@ -110,6 +111,7 @@ export async function llamar(o: Opciones): Promise<Llamada> {
         const ruido = (t.match(/sin TACC|La Granja|Punilla|Mercado Libre|WhatsApp|Instagram|frutos secos|pan dulce/gi) ?? []).length >= 3;
         if (t && !ruido) o.onTexto("user", t, true);
       } else if (tipo === "response.output_audio_transcript.delta" || tipo === "response.audio_transcript.delta") {
+        ultimaVoz = Date.now();
         const id = String(ev.response_id ?? "");
         textos.set(id, (textos.get(id) ?? "") + String(ev.delta ?? ""));
         o.onEstado("hablando");
@@ -149,16 +151,25 @@ export async function llamar(o: Opciones): Promise<Llamada> {
                   if (args.confirmado === true) o.onAccion?.(String(it.name), args, d.ok, d.resultado);
                   salidaHerramienta = d;
                 }
-                enviar({ type: "conversation.item.create", item: { type: "function_call_output", call_id: it.call_id, output: JSON.stringify(salidaHerramienta).slice(0, 12000) } });
+                enviar({ type: "conversation.item.create", item: { type: "function_call_output", call_id: it.call_id, output: JSON.stringify(salidaHerramienta).slice(0, 6000) } });
               }
               enviar({ type: "response.create" });
+              // Si en 7 s no arrancó a hablar con el resultado, se lo pide de nuevo (una vez): que no quede mudo.
+              const pedido = Date.now();
+              ultimaVoz = 0;
+              setTimeout(() => {
+                if (vivo && ultimaVoz < pedido) enviar({ type: "response.create" });
+              }, 7000);
             })();
           }
         }
         if (tipo === "output_audio_buffer.stopped") o.onEstado("escuchando");
       } else if (tipo === "error") {
+        // Los errores de la sesión casi nunca cortan la llamada (por ejemplo, pedir una respuesta mientras ya
+        // está contestando): se anotan y la charla sigue. Antes quedaba en «error» y parecía trabada.
         const msg = (ev.error as { message?: string })?.message ?? "error";
-        o.onEstado("error", msg);
+        console.warn("llamada en vivo:", msg);
+        if (/session|expired|invalid_api_key|insufficient|quota/i.test(msg)) o.onEstado("error", msg);
       }
     };
     dc.onclose = () => cortar();
