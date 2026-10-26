@@ -1393,3 +1393,14 @@ test("reparto: Córdoba al final y la parada con mapa, cobro y link para marcar 
   assert.match(t, /1 × Mix Clásico con cajú 1 kg/);
   assert.match(t, /admin\/pedidos\/28/);
 });
+
+test("comprobante: lee el monto en cualquier formato y acepta diferencias chicas", async () => {
+  const { leerRespuestaComprobante, coincideMonto } = await import("./comprobante");
+  assert.equal(leerRespuestaComprobante('{"esComprobante": true, "monto": "$ 47.660,00", "fecha": "23/10/2026"}')?.monto, 47660);
+  assert.equal(leerRespuestaComprobante('Acá va: {"esComprobante": true, "monto": 54604.35}')?.monto, 54604);
+  assert.equal(leerRespuestaComprobante('{"esComprobante": true, "monto": "47.660"}')?.monto, 47660);
+  assert.equal(leerRespuestaComprobante("no es json"), null);
+  assert.ok(coincideMonto(47660, 47660));
+  assert.ok(coincideMonto(54604, 54604));
+  assert.ok(!coincideMonto(10000, 84700));
+});

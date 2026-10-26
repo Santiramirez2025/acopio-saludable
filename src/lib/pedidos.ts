@@ -179,7 +179,7 @@ export async function confirmarPago(orderId: number, nota: string, mpPaymentId?:
  * Pago registrado con el pedido ya en marcha (preparado, enviado): marca la fecha de pago, suma vendidos
  * y le manda el comprobante, sin cambiar el estado del pedido.
  */
-export async function registrarPago(orderId: number, nota: string): Promise<boolean> {
+export async function registrarPago(orderId: number, nota: string, { avisarCliente = true }: { avisarCliente?: boolean } = {}): Promise<boolean> {
   const hecho = await prisma.$transaction(async (tx) => {
     const r = await tx.order.updateMany({ where: { id: orderId, pagadoAt: null }, data: { pagadoAt: new Date() } });
     if (r.count === 0) return false;
@@ -191,7 +191,8 @@ export async function registrarPago(orderId: number, nota: string): Promise<bool
   if (hecho) {
     const pedido = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
     await avisarVenta(pedido, "Pago registrado").catch((e) => console.error("aviso de pago falló", e));
-    await enviarComprobante(pedido).catch((e) => console.error("comprobante por WhatsApp falló", e));
+    // «Silencioso» (Santiago lo pidió así): se registra sin mandarle nada al cliente.
+    if (avisarCliente) await enviarComprobante(pedido).catch((e) => console.error("comprobante por WhatsApp falló", e));
   }
   return hecho;
 }

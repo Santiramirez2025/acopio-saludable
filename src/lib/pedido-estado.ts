@@ -22,7 +22,7 @@ export async function aplicarEstadoPedido(
     await registrarCobroAlRecibir(id, nota ?? "Cobrado al entregar");
   } else if (estado === "PAGADO" && !pedido.pagadoAt) {
     if (pedido.estado === "PENDIENTE_PAGO" && !silencioso) await confirmarPago(id, nota ?? (pedido.medioPago === "TRANSFERENCIA" ? "Transferencia verificada" : "Pago confirmado a mano"));
-    else await registrarPago(id, nota ?? "Pago registrado a mano");
+    else await registrarPago(id, nota ?? "Pago registrado a mano", { avisarCliente: !silencioso });
   }
   // Elegir «Pagado» con el pedido ya en marcha registra el pago pero no lo hace retroceder de estado.
   if (estado === "PAGADO" && pedido.estado !== "PENDIENTE_PAGO") {

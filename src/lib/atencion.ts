@@ -33,6 +33,7 @@ import { AVISO_SUPLEMENTOS } from "./sitio";
 import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
 import { transcribirAudio } from "./oir-audio";
+import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
@@ -268,6 +269,11 @@ export async function atender(e: Entrada): Promise<void> {
     if (vista) {
       texto = `[Mandó una foto: ${vista}]`;
       console.log("chat: foto descripta", cola(e.clave), vista.slice(0, 80));
+      // Un comprobante: se lee el monto y, si coincide con su pedido, el pago queda registrado.
+      if (id && /comprobante|transferencia|pago|mercado pago/i.test(vista)) {
+        const r = await procesarComprobante(e.clave, e.nombre, id);
+        if (r) texto = r;
+      }
     }
   }
   // Un audio: se transcribe y entra a la charla como texto. Si no se pudo (sin clave, falló), se le pide que lo escriba, como antes.
@@ -285,10 +291,13 @@ export async function atender(e: Entrada): Promise<void> {
   // en vez de un «contame qué buscás» suelto, y a Santiago le llega el aviso para revisarlo.
   if (e.texto === null && e.tipo === "document") {
     const nombre = (e.guardar ?? "").replace(/^\[archivo·[^\]\s]+\]\s?/, "").trim().slice(0, 80);
-    texto = `[Mandó un archivo${nombre ? ` «${nombre}»` : ""}. No lo podés abrir. Si venían hablando de pagar, transferir o del comprobante, es el comprobante: agradecé y decile que Santiago lo revisa y le confirma por acá (no confirmes el pago vos). Si no, seguí con lo que venían hablando.]`;
-    await avisarSantiago("Mandó un archivo", `📎 ${e.nombre ?? e.clave} mandó un archivo${nombre ? ` (${nombre})` : ""}: si es un comprobante, revisá la transferencia y pasá el pedido a Pagado.\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
+    const idDoc = /^\[archivo·([^\]\s]+)\]/.exec(e.guardar ?? "")?.[1];
+    const leido = idDoc ? await procesarComprobante(e.clave, e.nombre, idDoc) : null;
+    if (leido) texto = leido;
+    else texto = `[Mandó un archivo${nombre ? ` «${nombre}»` : ""}. No lo podés abrir. Si venían hablando de pagar, transferir o del comprobante, es el comprobante: agradecé y decile que Santiago lo revisa y le confirma por acá (no confirmes el pago vos). Si no, seguí con lo que venían hablando.]`;
+    if (!leido) await avisarSantiago("Mandó un archivo", `📎 ${e.nombre ?? e.clave} mandó un archivo${nombre ? ` (${nombre})` : ""}: si es un comprobante, revisá la transferencia y pasá el pedido a Pagado.\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
   }
-  if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:") && !texto.startsWith("[Mandó un audio que dice:") && !texto.startsWith("[Mandó un archivo")) {
+  if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:") && !texto.startsWith("[Mandó un audio que dice:") && !texto.startsWith("[Mandó un archivo") && !/^\[Mandó (el|un) comprobante/.test(texto)) {
     await responder(e.clave, respuestaMedio(e.tipo));
     const que = NOMBRE_MEDIO[e.tipo as keyof typeof NOMBRE_MEDIO] ?? e.tipo;
     await avisarSantiago(`Mandó ${que}`, `📎 ${e.nombre ?? e.clave} mandó ${que === "foto" ? "una foto" : `un ${que}`}. Miralo en el panel:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
@@ -584,4 +593,25 @@ async function armarPedidoWeb(texto: string, yaSaludo: boolean): Promise<Respues
     acciones,
     reemplazaPedido: true,
   };
+}
+
+
+/** Lee un comprobante y lo aplica al pedido. Devuelve la nota para el vendedor (o null si no era un comprobante). */
+async function procesarComprobante(clave: string, nombre: string | null, mediaId: string): Promise<string | null> {
+  const c = await leerComprobante(mediaId).catch(() => null);
+  if (!c?.esComprobante) return null;
+  const r: ResultadoComprobante = await aplicarComprobante(clave, c).catch(() => ({ tipo: "sin-pedido" as const, monto: c.monto }));
+  const quien = nombre ?? clave;
+  const monto = r.monto ? pesos(r.monto) : "un monto que no se lee";
+  console.log("chat: comprobante", cola(clave), r.tipo, r.monto);
+  if (r.tipo === "registrado") {
+    await avisarSantiago("Pago por comprobante", `💸 ${quien} mandó el comprobante por ${monto}: coincide con el pedido ${r.codigo} y lo marqué pagado (no hay que cobrarle). Fijate que se haya acreditado.\n${urlSitio()}/admin/whatsapp?c=${clave}`);
+    return `[Mandó el comprobante de pago por ${monto}. Ya quedó registrado en su pedido ${r.codigo}: agradecé en una frase y decile que quedó todo listo, que no tiene que abonar nada al recibir. No pidas nada más.]`;
+  }
+  if (r.tipo === "revisar") {
+    await avisarSantiago("Comprobante para revisar", `🧾 ${quien} mandó un comprobante por ${monto}, pero el pedido ${r.codigo} debe ${pesos(r.debe)}. Revisalo antes de cobrar.\n${urlSitio()}/admin/whatsapp?c=${clave}`);
+    return `[Mandó un comprobante por ${monto}, pero su pedido ${r.codigo} es de ${pesos(r.debe)}. Agradecé y decile que Santiago lo revisa y le confirma por acá. No confirmes el pago vos.]`;
+  }
+  await avisarSantiago("Comprobante sin pedido", `🧾 ${quien} mandó un comprobante por ${monto} y no tiene un pedido abierto. Revisalo.\n${urlSitio()}/admin/whatsapp?c=${clave}`);
+  return `[Mandó un comprobante por ${monto}. Agradecé y decile que Santiago lo revisa y le confirma por acá.]`;
 }
