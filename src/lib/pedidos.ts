@@ -87,10 +87,13 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
 
 export function totales(subtotal: number, envio: number, medioPago: MedioPago, cfg: Config, extraPct = 0, envioFijo = false) {
   // El extra es el beneficio por recomendación: se suma al de transferencia, sobre los productos.
-  const descuento = redondear2((medioPago === "TRANSFERENCIA" ? (subtotal * cfg.descuentoTransferenciaPct) / 100 : 0) + (subtotal * extraPct) / 100);
+  const descuentoExacto = redondear2((medioPago === "TRANSFERENCIA" ? (subtotal * cfg.descuentoTransferenciaPct) / 100 : 0) + (subtotal * extraPct) / 100);
   // Con tarjeta el envío va con la comisión adentro; por transferencia sale lo que cuesta.
   const envioCobrado = envioQueSeCobra(envio, medioPago, cfg.comisionPagoPct, envioFijo);
-  const total = redondear2(subtotal - descuento + envioCobrado);
+  // Total redondo (a $100, para abajo: la diferencia va como descuento): «$33.200», no «$33.258».
+  const exacto = redondear2(subtotal - descuentoExacto + envioCobrado);
+  const total = exacto >= 1000 ? Math.floor(exacto / 100) * 100 : exacto;
+  const descuento = redondear2(descuentoExacto + (exacto - total));
   const comisionPago = medioPago === "MERCADOPAGO" ? redondear2((total * cfg.comisionPagoPct) / 100) : 0;
   return { descuento, envioCobrado, total, comisionPago };
 }

@@ -420,6 +420,14 @@ export async function atender(e: Entrada): Promise<void> {
     await avisarSantiago("Charla para vos", `💬 ${e.nombre ?? "Alguien"} (${e.clave}) quiere hablar con una persona.\nÚltimo mensaje: «${texto.slice(0, 200)}»\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
     return;
   }
+  // Mientras se pensaba la respuesta llegó otro mensaje (un botón, la ubicación): contesta ese, que ve todo.
+  // Si no, salían dos respuestas casi iguales seguidas (Nancy, 26/10).
+  const masNuevo = await ultimoDelCliente(e.clave).catch(() => null);
+  if (masNuevo && masNuevo !== e.idMensaje) {
+    console.log("chat: llegó otro mientras pensaba, contesta ese", cola(e.clave));
+    if (p.guardarPedido) await guardarPedido(e.clave, p.guardarPedido);
+    return;
+  }
   if (canal === "whatsapp") {
     await responderWhatsapp(e.clave, p.salientes);
     if (p.guardarPedido) await guardarPedido(e.clave, p.guardarPedido);
@@ -524,17 +532,24 @@ export async function pensar(c: {
   // Venta ya cerrada: lo que mande ahora (dirección, horario) va al pedido.
   const ordenId = c.pedidoGuardado?.startsWith("orden:") ? Number(c.pedidoGuardado.slice(6)) || undefined : undefined;
   // En qué anda el pedido: si ya salió o ya lo recibió, no se le habla de agendar ni de «te avisamos cuando salga».
-  const estadoOrden = ordenId ? (await prisma.order.findUnique({ where: { id: ordenId }, select: { estado: true } }).catch(() => null))?.estado : null;
+  const orden = ordenId ? await prisma.order.findUnique({ where: { id: ordenId }, select: { estado: true, nombre: true, calle: true, ciudad: true, notas: true } }).catch(() => null) : null;
+  const estadoOrden = orden?.estado ?? null;
+  // Lo que ya nos dio: no se le vuelve a pedir (a Nancy se le pidió el nombre dos veces el 26/10).
+  const tieneCalle = Boolean(orden?.calle && orden.calle.trim().length > 4 && !/a confirmar/i.test(orden.calle));
+  const horario = orden?.notas?.match(/Horario:\s*([^·]+)/i)?.[1]?.trim();
+  const yaTenemos = orden
+    ? ` Datos que YA tenemos: nombre ${orden.nombre}${tieneCalle ? `, dirección ${orden.calle}, ${orden.ciudad}` : ", FALTA la dirección"}${horario ? `, horario ${horario}` : ""}. No vuelvas a pedir lo que ya está; si falta algo, pedí solo eso y una sola vez. Si pregunta cuándo se lo llevan: entregamos en 24 a 48 h hábiles (domingos no hay reparto); el día del reparto le avisamos a la mañana y el chico del reparto le escribe para coordinar el horario. No prometas un día ni una hora exactos.`
+    : "";
   const enQueAnda =
     estadoOrden === "ENTREGADO"
       ? " YA LO RECIBIÓ: si agradece o comenta, agradecé corto y cálido y nada más. No digas que está agendado, no ofrezcas avisar cuando salga y no mandes fotos de cómo llega."
       : estadoOrden === "ENVIADO"
-        ? " YA SALIÓ y va en camino: no digas que está agendado ni ofrezcas avisar cuando salga."
+        ? " Ya está en el reparto de hoy: el chico del reparto le escribe para coordinar. No digas que está agendado ni ofrezcas avisar cuando salga."
         : estadoOrden === "CANCELADO"
           ? " Ese pedido se canceló."
           : "";
   const cerrado = ordenId
-    ? `<pedido_cerrado>Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
+    ? `<pedido_cerrado>Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";
   // El carrito de la web llega armado: se carga exacto, sin IA y sin ofrecer otra cosa.
   const web = esPedidoWeb(c.texto) && !ordenId ? await armarPedidoWeb(c.texto, Boolean(c.historial.some((h) => h.de === "acopio"))) : null;

@@ -88,7 +88,9 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
   // Mismo cálculo que el servidor: con tarjeta el envío lleva la comisión adentro.
   const precioEnvio = (p: number, fijo = false) => envioQueSeCobra(p, medio === "MERCADOPAGO" ? "MERCADOPAGO" : "TRANSFERENCIA", comisionPagoPct, fijo);
   const envioCobrado = precioEnvio(opcion?.precio ?? 0, opcion?.modalidad === "propia");
-  const total = subtotal - descuento - descuentoAmigo + envioCobrado;
+  // Igual que el servidor: total redondo a $100 para abajo (la diferencia es descuento).
+  const totalExacto = subtotal - descuento - descuentoAmigo + envioCobrado;
+  const total = totalExacto >= 1000 ? Math.floor(totalExacto / 100) * 100 : totalExacto;
 
   async function confirmar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
