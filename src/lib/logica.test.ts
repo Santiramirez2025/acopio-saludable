@@ -1445,3 +1445,12 @@ test("bot: nunca «perfecto»", async () => {
   assert.equal(sinPerfecto("¡Perfecto! Te lo llevo"), "¡Genial! Te lo llevo");
   assert.equal(sinPerfecto("Quedó perfecto."), "Quedó genial.");
 });
+
+test("vendedor: después de la lista por kilo propone un carrito armado y no promete mañana sin zona", () => {
+  const txt = readFileSync("src/lib/vendedor.ts", "utf8");
+  assert.ok(txt.includes("CARRITO ARMADO"));
+  assert.ok(txt.includes("Si no sabés la zona, no prometas mañana"));
+  assert.ok(!txt.includes("El combo NO va en ese primer mensaje"));
+  // La reactivación no lleva un precio escrito a mano (la Despensa sale $35.500, no $35.000).
+  assert.ok(!txt.includes("la Despensa de 4 kilos a $35.000"));
+});
