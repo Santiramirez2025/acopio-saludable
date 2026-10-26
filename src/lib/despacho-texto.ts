@@ -19,7 +19,8 @@ export function mensajeDespacho(p: Pick<Order, "id" | "nombre" | "medioPago" | "
       : p.medioPago === "AL_RECIBIR"
         ? `Lo pagás cuando te llega: ${pesos(Number(p.total))}, en efectivo o por transferencia.`
         : `Queda pendiente el pago de ${pesos(Number(p.total))}.`;
-  return `¡${nombre ? `${nombre}, t` : "T"}u pedido ${numeroPedido(p.id)} ya salió! 🚚 ${pago}`;
+  // No «ya salió» (no sabe a qué hora le llega): va en el reparto de hoy y el repartidor le escribe antes.
+  return `¡Hola${nombre ? ` ${nombre}` : ""}! 😊 Tu pedido ${numeroPedido(p.id)} ya está en el reparto de hoy. Durante el día te va a escribir por acá el chico del reparto para coordinar la entrega. ${pago}`;
 }
 
 /**

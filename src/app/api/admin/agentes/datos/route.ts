@@ -3,7 +3,7 @@
 //   GET ?que=charlas&horas=24        → charlas de WhatsApp con movimiento en las últimas N horas (últimos 12 mensajes)
 //   GET ?que=charla&telefono=549…    → una charla entera (últimos 60 mensajes)
 //   POST { accion: "estado", id, estado, nota?, silencioso? } → cambia el estado de un pedido (mismo efecto que el panel:
-//        ENVIADO avisa «ya salió» por WhatsApp; ENTREGADO con pago manda gracias + referidos; silencioso = sin avisos)
+//        ENVIADO avisa «ya está en el reparto de hoy, el repartidor te escribe» por WhatsApp; ENTREGADO con pago manda gracias + referidos; silencioso = sin avisos)
 import { NextResponse } from "next/server";
 import type { EstadoPedido } from "@prisma/client";
 import { esAdmin } from "@/lib/admin-acceso";
