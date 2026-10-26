@@ -198,7 +198,7 @@ export async function ajustarPreciosMl(): Promise<string[]> {
 }
 
 /** Parte diario: visitas de ayer por publicación, preguntas, ventas y reputación. */
-export async function parteDiario(): Promise<string> {
+export async function parteDiario({ avisar = false }: { avisar?: boolean } = {}): Promise<string> {
   const uid = await miUsuario();
   const items = await misItems();
   const ayer = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
@@ -215,12 +215,21 @@ export async function parteDiario(): Promise<string> {
   const total = visitas.reduce((s, v) => s + v.visitas, 0);
   const lineas = [
     `📊 Mercado Libre · últimos 7 días: ${total} visitas · ventas desde ayer: ${ventas.paging?.total ?? 0} · reputación: ${u.seller_reputation?.level_id ?? "sin calcular"} (${u.seller_reputation?.transactions?.completed ?? 0} ventas)`,
-    ...visitas.sort((a, b) => b.visitas - a.visitas).map((v) => `• ${v.titulo.slice(0, 45)}: ${v.visitas} visitas${v.stock <= 1 ? " · ⚠️ sin stock" : ""}`),
+    ...visitas.sort((a, b) => b.visitas - a.visitas || a.titulo.localeCompare(b.titulo)).map((v) => `• ${v.titulo.slice(0, 45)}: ${v.visitas} visitas${v.stock <= 1 ? " · ⚠️ sin stock" : ""}`),
     subidos.length ? `Precios ajustados por suba de costos: ${subidos.length}.` : "Precios: sin cambios de costo.",
     pendientes.respondidas || pendientes.avisos ? `Preguntas: ${pendientes.respondidas} respondidas ahora, ${pendientes.avisos} para vos.` : "Preguntas: todas respondidas.",
   ];
   const texto = lineas.join("\n");
-  await avisarSantiago("Parte de Mercado Libre", texto);
+  // Solo el programador del día le manda el parte a Santiago, y una vez por día. Cuando un agente lo
+  // consulta (Diego lo pedía varias veces seguidas), se le devuelve el texto sin mandarle nada a él.
+  if (avisar) {
+    const { prisma } = await import("./prisma");
+    const ya = await prisma.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM "CronCorrida" WHERE "nombre" = 'aviso-parte-ml' AND "fecha" > now() - interval '20 hours'`.catch(() => [{ n: 0 }]);
+    if (!(ya[0]?.n ?? 0)) {
+      await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES ('aviso-parte-ml', true, 'enviado')`.catch(() => undefined);
+      await avisarSantiago("Parte de Mercado Libre", texto);
+    }
+  }
   return texto;
 }
 

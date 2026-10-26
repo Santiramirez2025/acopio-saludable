@@ -39,6 +39,12 @@ async function plantillaAviso(resumen: string): Promise<boolean> {
 
 /** Avisa a Santiago. `texto` puede tener varias líneas; `asunto` va en el mail. */
 export async function avisarSantiago(asunto: string, texto: string, { mail = true }: { mail?: boolean } = {}): Promise<boolean> {
+  // Red de seguridad: el mismo aviso, palabra por palabra, no se manda dos veces en 30 minutos
+  // (el 26/10 llegaron 5 partes de Mercado Libre iguales porque un agente lo pidió varias veces).
+  if (await yaAvisado(texto)) {
+    console.log("aviso a Santiago repetido, no se manda", asunto);
+    return true;
+  }
   let ok = false;
   try {
     if (await ventanaAbierta(AVISOS_WHATSAPP).catch(() => false)) ok = await enviarTexto(AVISOS_WHATSAPP, texto);
@@ -76,4 +82,18 @@ export async function crearPlantillaAviso(): Promise<unknown> {
     }),
   });
   return res.json();
+}
+
+async function yaAvisado(texto: string): Promise<boolean> {
+  try {
+    const { createHash } = await import("node:crypto");
+    const { prisma } = await import("./prisma");
+    const nombre = `aviso-${createHash("sha256").update(texto.trim()).digest("hex").slice(0, 24)}`;
+    const r = await prisma.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM "CronCorrida" WHERE "nombre" = ${nombre} AND "fecha" > now() - interval '30 minutes'`;
+    if ((r[0]?.n ?? 0) > 0) return true;
+    await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${nombre}, true, '')`;
+    return false;
+  } catch {
+    return false;
+  }
 }

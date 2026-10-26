@@ -10,5 +10,5 @@ export async function GET(req: Request) {
   const secreto = process.env.CRON_SECRET;
   if (secreto && req.headers.get("authorization") !== `Bearer ${secreto}`) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   if (!(await conectado())) return NextResponse.json({ ok: true, omitido: "Mercado Libre sin conectar" });
-  return NextResponse.json({ texto: await conRegistro("ml", () => parteDiario(), (t) => t.slice(0, 400)) });
+  return NextResponse.json({ texto: await conRegistro("ml", () => parteDiario({ avisar: true }), (t) => t.slice(0, 400)) });
 }
