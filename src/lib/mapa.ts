@@ -1,12 +1,14 @@
 // Links a Google Maps para el reparto: tocás y abre la navegación lista hasta la casa del cliente.
 
 /** «Virgen de Lourdes 4480», «Cordoba», «Córdoba» → «Virgen de Lourdes 4480, Cordoba, Córdoba, Argentina» (sin repetir). */
+const sin = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
 export function direccionCompleta(calle: string | null | undefined, ciudad?: string | null, provincia?: string | null): string {
   const partes: string[] = [];
   for (const p of [calle, ciudad, provincia || "Córdoba", "Argentina"]) {
     const t = String(p ?? "").trim();
     if (!t || /la lleva|retira|a confirmar/i.test(t)) continue;
-    if (partes.some((x) => x.toLowerCase().includes(t.toLowerCase()))) continue;
+    if (partes.some((x) => sin(x).includes(sin(t)))) continue;
     partes.push(t);
   }
   return partes.join(", ");
