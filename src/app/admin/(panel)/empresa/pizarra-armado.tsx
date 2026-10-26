@@ -109,6 +109,14 @@ export function PizarraArmado({ p, puedeMarcar, volver }: { p: Pizarra; puedeMar
   // Todas las paradas en un solo recorrido: primero Carlos Paz y la zona, Córdoba al final.
   const paradas = [...p.paraArmar, ...p.listos].filter((x) => x.direccion).sort((a, b) => Number(/c[oó]rdoba/i.test(a.zona) && !/carlos paz/i.test(a.zona)) - Number(/c[oó]rdoba/i.test(b.zona) && !/carlos paz/i.test(b.zona)));
   const ruta = linkRuta(paradas.map((x) => x.direccion));
+  const [enviado, setEnviado] = useState("");
+  const mandarWa = async () => {
+    setEnviado("Mandando…");
+    const r = await fetch("/api/admin/reparto", { method: "POST" }).catch(() => null);
+    const d = (await r?.json().catch(() => null)) as { paradas?: number; ok?: boolean } | null;
+    setEnviado(r?.ok ? (d?.ok ? `✅ ${d.paradas} paradas a tu WhatsApp` : "⚠️ Revisá WhatsApp: alguna no salió") : "No pude mandarlo");
+    setTimeout(() => setEnviado(""), 6000);
+  };
   const unidades = p.paraArmar.reduce((s, x) => s + x.items.reduce((a, i) => a + i.cantidad, 0), 0);
   return (
     <main className="min-h-screen bg-[#0d1512] px-6 py-6 text-white lg:px-10">
@@ -119,6 +127,7 @@ export function PizarraArmado({ p, puedeMarcar, volver }: { p: Pizarra; puedeMar
           <div className="mt-1 text-xl text-white/60">{unidades ? `${unidades} productos · ` : ""}listos {p.listos.length} · en camino {p.enCamino.length} · actualizado {p.actualizado}</div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {puedeMarcar ? <button onClick={() => void mandarWa()} className="rounded-full bg-emerald-500 px-5 py-3 text-lg font-semibold text-black">{enviado || "📲 Reparto a mi WhatsApp"}</button> : null}
           {ruta ? <a href={ruta} target="_blank" rel="noopener noreferrer" className="rounded-full bg-sky-500 px-5 py-3 text-lg font-semibold text-white">🗺️ Ruta del reparto</a> : null}
           <button onClick={() => setVerTotales((v) => !v)} className="rounded-full bg-white/10 px-5 py-3 text-lg">{verTotales ? "Ocultar totales" : "Ver totales"}</button>
           <button onClick={() => router.refresh()} className="rounded-full bg-white/10 px-5 py-3 text-lg">↻</button>

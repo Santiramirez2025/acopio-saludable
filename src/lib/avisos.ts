@@ -38,7 +38,7 @@ async function plantillaAviso(resumen: string): Promise<boolean> {
 }
 
 /** Avisa a Santiago. `texto` puede tener varias líneas; `asunto` va en el mail. */
-export async function avisarSantiago(asunto: string, texto: string): Promise<void> {
+export async function avisarSantiago(asunto: string, texto: string, { mail = true }: { mail?: boolean } = {}): Promise<boolean> {
   let ok = false;
   try {
     if (await ventanaAbierta(AVISOS_WHATSAPP).catch(() => false)) ok = await enviarTexto(AVISOS_WHATSAPP, texto);
@@ -46,11 +46,12 @@ export async function avisarSantiago(asunto: string, texto: string): Promise<voi
   } catch (e) {
     console.error("aviso por WhatsApp falló", e);
   }
-  const cfg = await leerConfig();
-  if (cfg.emailContacto) {
+  const cfg = mail ? await leerConfig() : null;
+  if (cfg?.emailContacto) {
     await enviarEmail({ para: cfg.emailContacto, asunto, html: `<pre style="font-family:system-ui;white-space:pre-wrap">${escaparHtml(texto)}</pre>` }).catch(() => false);
   }
   console.log("aviso a Santiago", { asunto, whatsapp: ok });
+  return ok;
 }
 
 /** Alta de la plantilla de aviso (utilidad). Si ya existe, Meta lo dice y no pasa nada. */

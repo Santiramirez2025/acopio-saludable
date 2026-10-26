@@ -1360,7 +1360,7 @@ test("pizarra de armado: gramos, totales y nombre corto", async () => {
   assert.equal(nombreCorto("Mabel ("), "Mabel");
   assert.equal(gramosDe("1/2 kilo"), 500);
   assert.equal(gramosDe("Fraccionada x 250 Grs"), 250);
-  const base = { id: 1, codigo: "AS-00001", cliente: "A", zona: "", cobrar: "", pagado: true, notas: null, estado: "PAGADO", hace: "", mapa: null, direccion: "" };
+  const base = { id: 1, codigo: "AS-00001", cliente: "A", zona: "", cobrar: "", pagado: true, notas: null, estado: "PAGADO", hace: "", mapa: null, direccion: "", telefono: "", total: 0 };
   const t = totalesDeArmado([
     { ...base, items: [{ producto: "Granola", presentacion: "x 1 kg", cantidad: 1, combo: null }] },
     { ...base, id: 2, items: [{ producto: "Granola", presentacion: "x 500 g", cantidad: 1, combo: null }] },
@@ -1381,4 +1381,15 @@ test("mapa: link de navegación con la dirección completa y sin repetir", async
   assert.match(linkMapa("Virgen de Lourdes 4480", "Cordoba", "Córdoba") ?? "", /^https:\/\/www\.google\.com\/maps\/dir\/\?api=1&destination=Virgen/);
   assert.equal(linkMapa("", "Carlos Paz"), null);
   assert.match(linkRuta(["A 1, X", "B 2, Y"]) ?? "", /destination=B.*waypoints=A/);
+});
+
+test("reparto: Córdoba al final y la parada con mapa, cobro y link para marcar entregado", async () => {
+  const { ordenarParadas, textoParada } = await import("./reparto");
+  const o = ordenarParadas([{ zona: "Cordoba · envío $ 16.304" }, { zona: "Villa Carlos Paz · sin cargo" }]);
+  assert.match(o[0].zona, /Carlos Paz/);
+  const t = textoParada({ id: 28, codigo: "AS-00028", cliente: "Lorenzo A.", zona: "Cordoba", cobrar: "Ya pagó", pagado: true, notas: "Casa blanca", items: [{ producto: "Mix Clásico con cajú", presentacion: "x 1 kg", cantidad: 1, combo: null }], estado: "PAGADO", hace: "", mapa: "https://maps/x", direccion: "Virgen de Lourdes 4480, Cordoba, Argentina", telefono: "+5493517623124", total: 54604 }, 0, 4);
+  assert.match(t, /Parada 1 de 4 · AS-00028/);
+  assert.match(t, /wa\.me\/5493517623124/);
+  assert.match(t, /1 × Mix Clásico con cajú 1 kg/);
+  assert.match(t, /admin\/pedidos\/28/);
 });
