@@ -18,6 +18,8 @@ export type PedidoArmado = {
   /** Link a Google Maps con la navegación hasta el cliente (null si no hay calle). */
   mapa: string | null;
   direccion: string;
+  telefono: string;
+  total: number;
 };
 export type TotalArmado = { producto: string; texto: string };
 export type Pizarra = { paraArmar: PedidoArmado[]; listos: PedidoArmado[]; enCamino: PedidoArmado[]; esperandoPago: PedidoArmado[]; totales: TotalArmado[]; actualizado: string };
@@ -101,6 +103,8 @@ export async function pizarraArmado(): Promise<Pizarra> {
     estado: o.estado,
     hace: haceCuanto(o.createdAt),
     mapa: linkMapa(o.calle, o.ciudad, o.provincia),
+    telefono: o.telefono,
+    total: n(o.total),
     direccion: linkMapa(o.calle, o.ciudad, o.provincia) ? direccionCompleta(o.calle, o.ciudad, o.provincia) : "",
   });
   const todos = os.map(vista);

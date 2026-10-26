@@ -43,6 +43,11 @@ export async function aplicarEstadoPedido(
     const actual = await prisma.order.findUnique({ where: { id } });
     if (actual) await avisarDespachoWhatsapp(actual).catch((e) => console.error("aviso de despacho por WhatsApp falló", e));
   }
+  // En el reparto, a Santiago le llega la próxima parada apenas marca una como entregada.
+  if (estado === "ENTREGADO" && pedido.estado !== "ENTREGADO") {
+    const { avisarSiguiente } = await import("./reparto");
+    await avisarSiguiente({ id, nombre: pedido.nombre }).catch((e) => console.error("aviso de próxima parada falló", e));
+  }
   // Pagado y entregado: recién ahí, gracias + referidos.
   if (estado === "ENTREGADO" && pedido.estado !== "ENTREGADO" && !silencioso) {
     const actual = await prisma.order.findUnique({ where: { id } });
