@@ -9,6 +9,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { clone as clonarEsqueleto } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { huesos, sentar, type Huesos } from "./pose";
 import { decorarOficina, decorarPasillo } from "./decor";
+import { sonar } from "./sonidos";
 
 export type AgenteEscena = {
   id: string;
@@ -22,7 +23,7 @@ export type AgenteEscena = {
 };
 export type DatosEscena = { agentes: AgenteEscena[]; areas: string[]; kpis: { titulo: string; valor: string }[]; hoy: string; hora: string; temporada: string };
 export type Eventos = { cerca: (id: string | null) => void; tocar: (id: string) => void; listo: () => void; progreso?: (p: number) => void };
-export type Control = { destruir: () => void; irA: (id: string, mirar?: boolean) => void; enfocar: (id: string | null) => void; teclas: Set<string> };
+export type Control = { destruir: () => void; irA: (id: string, mirar?: boolean, saltar?: boolean, callado?: boolean) => void; enfocar: (id: string | null) => void; teclas: Set<string> };
 
 const MUJERES = new Set(["gerente", "hunter", "fidelizacion", "anuncios", "marketing", "finanzas", "alianzas", "corporativo"]);
 const COLOR_AREA: Record<string, number> = { direccion: 0xd9a441, comercial: 0x2f9e6a, marketing: 0x8a6bd1, operaciones: 0x3b8fd1, administracion: 0x9c8b74 };
@@ -513,7 +514,29 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
   const teclas = new Set<string>();
   let enfocado: string | null = null;
 
-  const irA = (id: string, mirar = false) => {
+  // Salto («tum»): aparece en la puerta de esa oficina, mirando adentro, y entra caminando hasta el
+  // escritorio. Así ir a Gonza (la última oficina) es instantáneo, sin cruzar todo el pasillo.
+  const fov = { base: 62, kick: 0 };
+  const saltarA = (id: string, mirar: boolean, callado = false) => {
+    const l = lugares.find((x) => x.id === id);
+    if (!l) return;
+    const d = new THREE.Vector3().subVectors(l.mira, l.frente);
+    const giro = Math.atan2(-d.x, -d.z);
+    yo.x = l.lado * (A - 0.4);
+    yo.z = l.zc;
+    yo.vx = 0;
+    yo.vz = 0;
+    yo.giro = l.lado > 0 ? -Math.PI / 2 : Math.PI / 2;
+    yo.cabeceo = -0.05;
+    camino = [];
+    destino = { x: l.frente.x, z: l.frente.z, giro, cabeceo: -0.08, alLlegar: mirar ? () => ev.tocar(id) : undefined };
+    fov.kick = callado ? 6 : 14;
+    if (!callado) sonar("tum");
+    window.dispatchEvent(new CustomEvent("acopio-destello", { detail: { suave: callado } }));
+  };
+
+  const irA = (id: string, mirar = false, saltar = false, callado = false) => {
+    if (saltar) return saltarA(id, mirar, callado);
     const l = lugares.find((x) => x.id === id);
     if (!l) return;
     const d = new THREE.Vector3().subVectors(l.mira, l.frente);
@@ -607,11 +630,14 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camara);
     const hit = ray.intersectObjects(clicables.map((c) => c.obj), false)[0];
     const id = hit && clicables.find((c) => c.obj === hit.object)?.id;
-    if (id) return irA(id, true);
+    if (id) return irA(id, true, true);
     const ahora = performance.now();
     const doble = ahora - ultimoToque.t < 380 && Math.hypot(e.clientX - ultimoToque.x, e.clientY - ultimoToque.y) < 40;
     ultimoToque = doble ? { t: 0, x: 0, y: 0 } : { t: ahora, x: e.clientX, y: e.clientY };
-    if (doble && ray.ray.direction.y < -0.02 && ray.ray.intersectPlane(sueloPlano, puntoSuelo) && puntoSuelo.distanceTo(camara.position) < 45) caminarA(puntoSuelo.x, puntoSuelo.z);
+    if (doble && ray.ray.direction.y < -0.02 && ray.ray.intersectPlane(sueloPlano, puntoSuelo) && puntoSuelo.distanceTo(camara.position) < 45) {
+      caminarA(puntoSuelo.x, puntoSuelo.z);
+      sonar("destino");
+    }
   };
   render.domElement.addEventListener("pointerdown", abajo);
   window.addEventListener("pointermove", mueve);
@@ -637,6 +663,7 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
   const qGiro = new THREE.Quaternion();
   const eje = new THREE.Vector3();
   let cercaAntes: string | null = null;
+  let recorrido = 0;
   let cuadro = 0;
   render.setAnimationLoop(() => {
     // Con una charla abierta la escena va a 30 cuadros por segundo: le deja aire al audio en vivo.
@@ -699,6 +726,17 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     if (libre(nx, yo.z) || destino) yo.x = nx;
     if (libre(yo.x, nz) || destino) yo.z = nz;
     const paso = Math.hypot(yo.vx, yo.vz);
+    // Pasos: uno cada ~0,9 m recorridos (más seguido si corre).
+    recorrido += paso * dt;
+    if (recorrido > (paso > 6 ? 1.15 : 0.9)) {
+      recorrido = 0;
+      if (paso > 1.2) sonar("paso");
+    }
+    if (fov.kick > 0.05 || Math.abs(camara.fov - fov.base) > 0.05) {
+      fov.kick *= Math.pow(0.02, dt);
+      camara.fov = fov.base + fov.kick;
+      camara.updateProjectionMatrix();
+    }
     camara.position.set(yo.x, 1.65 + Math.sin(t * 9) * 0.012 * Math.min(1, paso / 4), yo.z);
     camara.rotation.set(yo.cabeceo, yo.giro, 0, "YXZ");
 
@@ -748,6 +786,7 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     }
     const id = mejor?.id ?? null;
     if (id !== cercaAntes) {
+      if (id) sonar("cerca");
       cercaAntes = id;
       ev.cerca(id);
     }
