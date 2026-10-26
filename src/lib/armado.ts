@@ -69,11 +69,14 @@ export function totalesDeArmado(pedidos: PedidoArmado[]): TotalArmado[] {
 }
 
 function cobrarDe(o: { pagadoAt: Date | null; medioPago: string; total: unknown; notas: string | null; eventos?: { nota: string | null }[] }): string {
-  // Ya mandó el comprobante: no se le cobra en la puerta (a Beatriz se le intentó cobrar dos veces).
-  if (!o.pagadoAt && o.eventos?.some((e) => /comprobante/i.test(e.nota ?? ""))) return "Mandó comprobante: NO cobrar";
+  if (o.pagadoAt) return "Ya pagó";
+  // Mandó un comprobante que no coincide con lo que debe: no se cobra a ciegas, se revisa.
+  const noCoincide = o.eventos?.find((e) => /comprobante \(no coincide/i.test(e.nota ?? ""))?.nota;
+  if (noCoincide) return `Revisar comprobante (${noCoincide.match(/\$\s?[\d.]+/)?.[0] ?? "monto sin leer"}) antes de cobrar`;
+  // Ya mandó el comprobante (nota de Gonza o de Santiago): no se le cobra en la puerta (a Beatriz se le intentó cobrar dos veces).
+  if (o.eventos?.some((e) => /comprobante/i.test(e.nota ?? ""))) return "Mandó comprobante: NO cobrar";
   const nota = o.notas?.match(/cobrar\s*\$?\s*([\d.]+)/i);
   if (nota) return `Cobrar $ ${nota[1]}`;
-  if (o.pagadoAt) return "Ya pagó";
   if (o.medioPago === "AL_RECIBIR") return `Cobrar ${pesos(n(o.total))} al entregar`;
   return `Falta el pago (${pesos(n(o.total))})`;
 }

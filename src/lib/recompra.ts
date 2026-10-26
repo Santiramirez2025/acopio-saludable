@@ -10,6 +10,7 @@ import { primerNombre } from "./whatsapp-interactivo";
 import { numeroPedido } from "./pedido-calculos";
 import { pesos } from "./precios";
 import { textoRecompra, resumenPedido, type ItemRecompra } from "./recompra-reglas";
+import { telefonoWa } from "./telefono";
 
 export const PLANTILLA_RECOMPRA = "acopio_recompra_v1";
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -34,14 +35,7 @@ async function candidatos(): Promise<Candidato[]> {
     LIMIT ${TOPE}`;
 }
 
-function telefonoWhatsapp(t: string): string | null {
-  let d = t.replace(/\D/g, "");
-  if (d.startsWith("549") && d.length === 13) return d;
-  if (d.startsWith("54")) d = d.slice(2);
-  if (d.startsWith("0")) d = d.slice(1);
-  d = d.replace(/^(\d{2,4})15(\d{6,8})$/, "$1$2");
-  return d.length === 10 ? `549${d}` : null;
-}
+const telefonoWhatsapp = (t: string): string | null => telefonoWa(t);
 
 async function plantilla(tel: string, nombre: string, resumen: string): Promise<boolean> {
   const token = process.env.WHATSAPP_TOKEN;

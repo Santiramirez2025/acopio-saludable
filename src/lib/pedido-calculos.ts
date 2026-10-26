@@ -3,6 +3,7 @@
 import type { EstadoPedido, Order, OrderItem } from "@prisma/client";
 import { precioRedondo, redondear2 } from "./precios";
 import { normalizarCp, zonaDeProvincia } from "./envios/geo";
+import { telefonoWa } from "./telefono";
 
 /**
  * El envío que paga el cliente, según cómo paga.
@@ -81,7 +82,9 @@ export function validarCliente(crudo: unknown): DatosCliente {
   if (!zonaDeProvincia(d.provincia)) throw new ErrorPedido("Elegí la provincia");
   const cp = normalizarCp(String(o.cp ?? ""));
   if (!cp) throw new ErrorPedido("Revisá el código postal (4 números)");
-  return { ...d, cp };
+  // El teléfono se guarda ya en formato WhatsApp (+549…): así todo lo que se manda le llega a él.
+  const wa = telefonoWa(d.telefono);
+  return { ...d, telefono: wa ? `+${wa}` : d.telefono, cp };
 }
 
 // ---------- Lista de compra al proveedor ----------

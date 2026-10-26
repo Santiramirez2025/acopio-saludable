@@ -1429,3 +1429,19 @@ test("entrega: las notas no repiten horario ni referencia", async () => {
   const n3 = unirNotas(n2, "Preferencia entre 13 y 14 hs");
   assert.equal(n3, "Horario: Preferencia entre 13 y 14 hs · Referencia: Paralelo a la colectora · Venta por WhatsApp");
 });
+
+test("teléfono: cualquier forma de escribirlo va al mismo celular", async () => {
+  const { telefonoWa } = await import("./telefono");
+  assert.equal(telefonoWa("0351 15 555-1234"), "5493515551234");
+  assert.equal(telefonoWa("+54 9 351 555-1234"), "5493515551234");
+  assert.equal(telefonoWa("3515551234"), "5493515551234");
+  assert.equal(telefonoWa("03541 15 51-9630"), "5493541519630");
+  assert.equal(telefonoWa("+5493517623124"), "5493517623124");
+  assert.equal(telefonoWa("1234"), null);
+});
+
+test("bot: nunca «perfecto»", async () => {
+  const { sinPerfecto } = await import("./sin-perfecto");
+  assert.equal(sinPerfecto("¡Perfecto! Te lo llevo"), "¡Genial! Te lo llevo");
+  assert.equal(sinPerfecto("Quedó perfecto."), "Quedó genial.");
+});

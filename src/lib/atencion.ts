@@ -38,6 +38,8 @@ import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from ".
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
+import { telefonoFin } from "./telefono";
+import { sinPerfecto } from "./sin-perfecto";
 
 const SALUD =
   "Entiendo, y qué bueno que te estés cuidando 💚 Sobre salud no te puedo aconsejar, eso lo ve mejor tu médico o nutricionista. " +
@@ -67,7 +69,11 @@ export type Entrada = {
   anuncio?: { id: string | null; titulo: string | null; texto: string | null; ctwaClid: string | null } | null;
 };
 
-async function responder(clave: string, texto: string): Promise<boolean> {
+const limpiarSaliente = (m: Saliente): Saliente =>
+  m.tipo === "texto" ? { ...m, texto: sinPerfecto(m.texto) } : m.tipo === "botones" || m.tipo === "lista" || m.tipo === "cta" ? { ...m, cuerpo: sinPerfecto(m.cuerpo) } : m;
+
+async function responder(clave: string, texto0: string): Promise<boolean> {
+  const texto = sinPerfecto(texto0);
   const enviado = await enviarPorCanal(clave, texto);
   console.log("chat: envío", { canal: canalDe(clave), de: cola(clave), enviado });
   if (enviado) await registrarSalida(clave, "bot", texto);
@@ -75,8 +81,8 @@ async function responder(clave: string, texto: string): Promise<boolean> {
 }
 
 /** Manda una tanda de mensajes de WhatsApp en orden y deja cada uno en el panel. */
-async function responderWhatsapp(clave: string, salientes: Saliente[]): Promise<void> {
-  for (const m of salientes) {
+async function responderWhatsapp(clave: string, salientes0: Saliente[]): Promise<void> {
+  for (const m of salientes0.map(limpiarSaliente)) {
     const enviado = await enviarSaliente(clave, m);
     console.log("chat: envío", { canal: "whatsapp", tipo: m.tipo, de: cola(clave), enviado });
     if (enviado) await registrarSalida(clave, "bot", textoParaPanel(m));
@@ -150,6 +156,14 @@ async function cerrarVenta(
   direccion?: string,
 ): Promise<void> {
   const cfg = await leerConfig();
+  // Doble toque o un botón viejo: si ya hizo un pedido hace un rato, no se crea otro (antes salían dos AS-… distintos).
+  const fin = telefonoFin(clave);
+  const reciente = (await prisma.order.findMany({ where: { createdAt: { gte: new Date(Date.now() - 2 * 3_600_000) }, estado: { not: "CANCELADO" } }, orderBy: { id: "desc" }, take: 30 })).find((o) => telefonoFin(o.telefono) === fin);
+  if (reciente) {
+    console.log("chat: ya tiene pedido reciente, no se duplica", cola(clave), reciente.id);
+    await responder(clave, `Tu pedido ya está hecho: es el ${numeroPedido(reciente.id)} por ${pesos(Number(reciente.total))}. Si querés cambiar algo, decime qué y lo ajusto.`);
+    return;
+  }
   const lineas = leerPedido(camino.replace(/^\/carrito\?p=/, ""));
   let pedido;
   try {
@@ -260,17 +274,6 @@ export async function atender(e: Entrada): Promise<void> {
 
   // Audio, foto sin texto, video, archivo: el vendedor no lo puede leer. Se le pide que lo escriba
   // y le llega el aviso a Santiago, que lo puede escuchar o ver en el panel.
-  // Ráfaga: «Hola» + «quiero precios» llegan juntos. Se espera un momento y, si entró otro mensaje
-  // después de este, contesta ese (que ve toda la ráfaga) y este se calla: así no salen dos respuestas iguales.
-  await new Promise((r) => setTimeout(r, 6000));
-  const ultimo = await prisma
-    .$queryRaw<{ id: string }[]>`SELECT "id" FROM "WhatsappMensaje" WHERE "telefono" = ${e.clave} AND "de" = 'cliente' ORDER BY "fecha" DESC LIMIT 1`
-    .then((f) => f[0] ?? null)
-    .catch(() => null);
-  if (ultimo && ultimo.id !== e.idMensaje) {
-    console.log("chat: llegó otro mensaje enseguida, contesta ese", cola(e.clave));
-    return;
-  }
 
   // Una foto sin texto (la captura del anuncio, un producto): el vendedor la mira y sigue la charla.
   if (e.texto === null && e.tipo === "image") {
@@ -288,13 +291,19 @@ export async function atender(e: Entrada): Promise<void> {
       // Un comprobante: se lee el monto y, si coincide con su pedido, el pago queda registrado.
       if (id && /comprobante|transferencia|pago|mercado pago/i.test(vista)) {
         const r = await procesarComprobante(e.clave, e.nombre, id);
-        if (r) texto = r;
+        if (r) {
+          texto = r;
+          await anotarEnMensaje(e.idMensaje, r);
+        }
       }
       // Una captura de Maps o algo con su dirección: si su pedido no tiene dirección, se carga sola.
       if (id && /mapa|maps|ubicaci|direcci|calle|domicilio/i.test(vista)) {
         const dir = await leerDireccionDeFoto(id).catch(() => null);
         const cod = dir ? await completarDireccion(e.clave, dir).catch(() => null) : null;
-        if (dir && cod) texto = `[Mandó una captura con su dirección: ${dir}. Ya quedó cargada en su pedido ${cod}: confirmale en una frase que la tenemos.]`;
+        if (dir && cod) {
+          texto = `[Mandó una captura con su dirección: ${dir}. Ya quedó cargada en su pedido ${cod}: confirmale en una frase que la tenemos.]`;
+          await anotarEnMensaje(e.idMensaje, `[dirección cargada en ${cod}: ${dir}]`);
+        }
       }
     }
   }
@@ -315,9 +324,23 @@ export async function atender(e: Entrada): Promise<void> {
     const nombre = (e.guardar ?? "").replace(/^\[archivo·[^\]\s]+\]\s?/, "").trim().slice(0, 80);
     const idDoc = /^\[archivo·([^\]\s]+)\]/.exec(e.guardar ?? "")?.[1];
     const leido = idDoc ? await procesarComprobante(e.clave, e.nombre, idDoc) : null;
-    if (leido) texto = leido;
+    if (leido) {
+      texto = leido;
+      await anotarEnMensaje(e.idMensaje, leido);
+    }
     else texto = `[Mandó un archivo${nombre ? ` «${nombre}»` : ""}. No lo podés abrir. Si venían hablando de pagar, transferir o del comprobante, es el comprobante: agradecé y decile que Santiago lo revisa y le confirma por acá (no confirmes el pago vos). Si no, seguí con lo que venían hablando.]`;
     if (!leido) await avisarSantiago("Mandó un archivo", `📎 ${e.nombre ?? e.clave} mandó un archivo${nombre ? ` (${nombre})` : ""}: si es un comprobante, revisá la transferencia y pasá el pedido a Pagado.\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
+  }
+  // Ráfaga: «Hola» + «quiero precios», o la foto del comprobante + «ahí te lo mandé». Lo de arriba (leer el
+  // comprobante, la dirección, el audio) ya se hizo; ahora se espera un momento y, si entró otro mensaje
+  // después de este, contesta ese (que ve todo en el historial) y este se calla.
+  if (e.texto === null) {
+    await new Promise((r) => setTimeout(r, 4000));
+    const masNuevo = await ultimoDelCliente(e.clave).catch(() => null);
+    if (masNuevo && masNuevo !== e.idMensaje) {
+      console.log("chat: llegó otro mensaje enseguida, contesta ese", cola(e.clave));
+      return;
+    }
   }
   if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:") && !texto.startsWith("[Mandó un audio que dice:") && !texto.startsWith("[Mandó un archivo") && !/^\[Mandó (el|un) comprobante/.test(texto)) {
     await responder(e.clave, respuestaMedio(e.tipo));
@@ -350,7 +373,8 @@ export async function atender(e: Entrada): Promise<void> {
   if (/\b(llam(ar|ame|ás|as|en|arte|arme|en)|me (podés|podes|puede) llamar|hablar por tel)/i.test(texto)) {
     await avisarSantiago("Pide que lo llamen", `📞 ${e.nombre ?? e.clave} pide que lo llamen: +${e.clave}\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
   }
-  if (/\bvuelvo\b/i.test(texto)) {
+  // Solo el código (en mayúsculas o «código vuelvo»): «ya vuelvo» no es el descuento.
+  if (/\bVUELVO\b/.test(texto) || /c[oó]digo\s+vuelvo/i.test(texto)) {
     await avisarSantiago("Código VUELVO", `🎟️ ${e.nombre ?? e.clave} usó el código VUELVO (10% en su segunda compra). Aplicalo al pedido:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
   }
 
@@ -383,7 +407,7 @@ export async function atender(e: Entrada): Promise<void> {
   const guardado = canal === "whatsapp" ? await pedidoGuardado(e.clave) : null;
   // Solo si el último envío que le dijimos no es de otra zona (Córdoba capital, correo): ahí lo ve el vendedor.
   const ultimoEnvio = [...(await historialDe(e.clave, 9))].reverse().find((h) => h.de === "acopio" && /Envío a [^:]+:/.test(h.texto))?.texto.match(/Envío a ([^:]+):/)?.[1];
-  if (guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio))) {
+  if (guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (ultimoEnvio ? recibeEnZonaPropia(ultimoEnvio) : false)) {
     const direccion = tieneDireccion(texto) ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160) : undefined;
     console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
     return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: "Villa Carlos Paz" }, direccion || undefined);
@@ -407,7 +431,7 @@ export async function atender(e: Entrada): Promise<void> {
   // Dice «agendado» pero no hay pedido creado (no llegó al mínimo o no eligió cómo pagar): a Lilita le
   // pasó eso y el pedido nunca llegó al panel. Que Santiago se entere y lo cierre a mano.
   const dichoAhora = p.salientes.map((x) => textoParaPanel(x)).join(" ");
-  if (!guardado?.startsWith("orden:") && /agendad|confirmad/i.test(dichoAhora)) {
+  if (!guardado?.startsWith("orden:") && /agendad|confirmad/i.test(dichoAhora) && (await primeraVezHoy(`aviso-cerrar-${e.clave}`))) {
     await avisarSantiago(
       `Venta por cerrar: ${e.nombre ?? e.clave}`,
       `🛒 El vendedor le dijo a ${e.nombre ?? e.clave} que el pedido queda agendado, pero no hay pedido creado en el panel (falta llegar al mínimo o elegir cómo paga). Revisalo: ${urlSitio()}/admin/whatsapp?c=${e.clave}`,
@@ -655,4 +679,20 @@ async function procesarComprobante(clave: string, nombre: string | null, mediaId
   }
   await avisarSantiago("Comprobante sin pedido", `🧾 ${quien} mandó un comprobante por ${monto} y no tiene un pedido abierto. Revisalo.\n${urlSitio()}/admin/whatsapp?c=${clave}`);
   return `[Mandó un comprobante por ${monto}. Agradecé y decile que Santiago lo revisa y le confirma por acá.]`;
+}
+
+
+/** Deja escrito en el mensaje del cliente qué se sacó de su foto o archivo: así el próximo mensaje (y el panel) lo ve. */
+async function anotarEnMensaje(idMensaje: string, nota: string): Promise<void> {
+  const corta = nota.replace(/^\[|\]$/g, "").replace(/:\s*agradecé[\s\S]*$|\. Agradecé[\s\S]*$/i, "").slice(0, 200);
+  await prisma.$executeRaw`UPDATE "WhatsappMensaje" SET "texto" = "texto" || ${` 🧾 «${corta}»`} WHERE "id" = ${idMensaje}`.catch(() => null);
+}
+
+
+/** true la primera vez en el día para esa clave (un aviso por charla por día, no uno por respuesta). */
+async function primeraVezHoy(clave: string): Promise<boolean> {
+  const ya = await prisma.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM "CronCorrida" WHERE "nombre" = ${clave} AND "fecha" > now() - interval '20 hours'`.catch(() => [{ n: 0 }]);
+  if ((ya[0]?.n ?? 0) > 0) return false;
+  await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${clave}, true, 'aviso')`.catch(() => undefined);
+  return true;
 }

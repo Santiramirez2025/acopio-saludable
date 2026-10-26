@@ -182,7 +182,7 @@ export async function confirmarPago(orderId: number, nota: string, mpPaymentId?:
  * Pago registrado con el pedido ya en marcha (preparado, enviado): marca la fecha de pago, suma vendidos
  * y le manda el comprobante, sin cambiar el estado del pedido.
  */
-export async function registrarPago(orderId: number, nota: string, { avisarCliente = true }: { avisarCliente?: boolean } = {}): Promise<boolean> {
+export async function registrarPago(orderId: number, nota: string, { avisarCliente = true, avisarSantiago = true }: { avisarCliente?: boolean; avisarSantiago?: boolean } = {}): Promise<boolean> {
   const hecho = await prisma.$transaction(async (tx) => {
     const r = await tx.order.updateMany({ where: { id: orderId, pagadoAt: null }, data: { pagadoAt: new Date() } });
     if (r.count === 0) return false;
@@ -193,7 +193,7 @@ export async function registrarPago(orderId: number, nota: string, { avisarClien
   });
   if (hecho) {
     const pedido = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
-    await avisarVenta(pedido, "Pago registrado").catch((e) => console.error("aviso de pago falló", e));
+    if (avisarSantiago) await avisarVenta(pedido, "Pago registrado").catch((e) => console.error("aviso de pago falló", e));
     // «Silencioso» (Santiago lo pidió así): se registra sin mandarle nada al cliente.
     if (avisarCliente) await enviarComprobante(pedido).catch((e) => console.error("comprobante por WhatsApp falló", e));
   }
@@ -360,7 +360,9 @@ export async function completarEntrega(orderId: number, d: { nombre?: string; di
   });
   // Un solo aviso: cuando aparece la dirección. Los retoques (horario, referencia, «Calle …») no avisan:
   // el 26/10 llegaron 9 avisos iguales por un pedido. Todo junto llega igual en el reparto de la mañana.
-  if (!conDireccion(pedido.calle) && conDireccion(actualizado.calle)) await avisarVenta(actualizado, "Datos de entrega");
+  // Si la dirección vino en el mismo momento que la venta, ya está en el aviso de «Nueva venta» o llega en el reparto.
+  const recien = Date.now() - pedido.createdAt.getTime() < 2 * 60_000;
+  if (!recien && !conDireccion(pedido.calle) && conDireccion(actualizado.calle)) await avisarVenta(actualizado, "Datos de entrega");
   return actualizado;
 }
 

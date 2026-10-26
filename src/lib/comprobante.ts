@@ -2,6 +2,7 @@
 // número de operación) y, si coincide con su pedido, queda registrado el pago. Así nadie le cobra dos veces
 // en la puerta (le pasó a Beatriz el 26/10). Si no coincide, queda anotado para revisar.
 // Se registra SIN mandarle nada al cliente: la charla la sigue el vendedor con su propia respuesta.
+import { telefonoFin } from "./telefono";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 
@@ -97,21 +98,21 @@ export async function aplicarComprobante(clave: string, c: Comprobante): Promise
   const { prisma } = await import("./prisma");
   const { registrarPago } = await import("./pedidos");
   const { numeroPedido } = await import("./pedido-calculos");
-  const fin = clave.replace(/\D/g, "").slice(-10);
+  const fin = telefonoFin(clave);
   const abiertos = (
     await prisma.order.findMany({
       where: { pagadoAt: null, estado: { notIn: ["CANCELADO", "ENTREGADO"] }, createdAt: { gte: new Date(Date.now() - 21 * 86_400_000) } },
       orderBy: { id: "desc" },
       take: 50,
     })
-  ).filter((o) => o.telefono.replace(/\D/g, "").endsWith(fin));
+  ).filter((o) => telefonoFin(o.telefono) === fin);
   const detalle = [c.monto ? `$ ${c.monto.toLocaleString("es-AR")}` : "monto sin leer", c.fecha, c.destinatario ? `a ${c.destinatario}` : null, c.operacion ? `op. ${c.operacion}` : null].filter(Boolean).join(" · ");
   if (!abiertos.length) return { tipo: "sin-pedido", monto: c.monto };
   // Lo que debe: el total o, si hay una nota «cobrar $X» (seña ya pagada), eso.
   const debeDe = (o: (typeof abiertos)[number]) => Number(o.notas?.match(/cobrar\s*\$?\s*([\d.]+)/i)?.[1]?.replace(/\./g, "")) || Math.round(Number(o.total));
   const pedido = abiertos.find((o) => c.monto && (coincideMonto(c.monto, Math.round(Number(o.total))) || coincideMonto(c.monto, debeDe(o)))) ?? null;
   if (pedido && c.monto) {
-    await registrarPago(pedido.id, `Comprobante leído del chat: ${detalle}`, { avisarCliente: false });
+    await registrarPago(pedido.id, `Comprobante leído del chat: ${detalle}`, { avisarCliente: false, avisarSantiago: false });
     await prisma.order.updateMany({ where: { id: pedido.id, estado: "PENDIENTE_PAGO" }, data: { estado: "PAGADO" } });
     return { tipo: "registrado", codigo: numeroPedido(pedido.id), monto: c.monto };
   }

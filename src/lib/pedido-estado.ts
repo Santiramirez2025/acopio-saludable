@@ -22,17 +22,28 @@ export async function aplicarEstadoPedido(
     await registrarCobroAlRecibir(id, nota ?? "Cobrado al entregar");
   } else if (estado === "PAGADO" && !pedido.pagadoAt) {
     if (pedido.estado === "PENDIENTE_PAGO" && !silencioso) await confirmarPago(id, nota ?? (pedido.medioPago === "TRANSFERENCIA" ? "Transferencia verificada" : "Pago confirmado a mano"));
-    else await registrarPago(id, nota ?? "Pago registrado a mano", { avisarCliente: !silencioso });
+    else {
+      await registrarPago(id, nota ?? "Pago registrado a mano", { avisarCliente: !silencioso });
+      // Pagado en silencio desde «pendiente»: igual pasa a Pagado (si no, quedaba fuera de la pizarra y del reparto).
+      if (pedido.estado === "PENDIENTE_PAGO") await prisma.order.updateMany({ where: { id, estado: "PENDIENTE_PAGO" }, data: { estado: "PAGADO" } });
+    }
+    // Ya lo había recibido y recién ahora se registra el pago: ahí van las gracias + referidos.
+    if (pedido.estado === "ENTREGADO" && !silencioso) {
+      const actual = await prisma.order.findUnique({ where: { id } });
+      if (actual) await agradecerConReferidos(actual).catch((e) => console.error("gracias con referidos falló", e));
+    }
   }
   // Elegir «Pagado» con el pedido ya en marcha registra el pago pero no lo hace retroceder de estado.
   if (estado === "PAGADO" && pedido.estado !== "PENDIENTE_PAGO") {
     if (tracking) await prisma.order.update({ where: { id }, data: { tracking } });
   } else if (estado !== "PAGADO" || pedido.estado !== "PENDIENTE_PAGO") {
     const cambio = estado !== pedido.estado && !(pedido.estado === "PENDIENTE_PAGO" && estado === "PAGADO");
-    await prisma.$transaction([
-      prisma.order.update({ where: { id }, data: { estado, tracking: tracking ?? pedido.tracking } }),
+    // Cambio condicionado al estado que leímos: si dos toques llegan juntos, solo uno dispara los avisos.
+    const [hecho] = await prisma.$transaction([
+      prisma.order.updateMany({ where: { id, estado: pedido.estado }, data: { estado, tracking: tracking ?? pedido.tracking } }),
       ...(cambio || nota ? [prisma.orderEvent.create({ data: { orderId: id, estado, nota } })] : []),
     ]);
+    if (cambio && hecho.count === 0) return;
   } else if (tracking) {
     await prisma.order.update({ where: { id }, data: { tracking } });
   }

@@ -9,10 +9,11 @@ import { avisarReparto } from "./aviso-reparto";
 import { numeroPedido } from "./pedido-calculos";
 import { mensajeDespacho, mensajesGracias } from "./despacho-texto";
 import { urlSitio } from "./sitio";
+import { telefonoWa } from "./telefono";
 
 function telefonoDe(p: Order): string | null {
   const d = p.telefono.replace(/\D/g, "");
-  return d.length >= 10 ? `549${d.slice(-10)}` : null;
+  return telefonoWa(d);
 }
 
 function primerNombre(p: Order): string {
@@ -23,6 +24,16 @@ function primerNombre(p: Order): string {
 export async function avisarDespachoWhatsapp(p: Order): Promise<"texto" | "plantilla" | null> {
   const tel = telefonoDe(p);
   if (!tel) return null;
+  // Por correo (Andreani, etc.): no es «el reparto de hoy». Va «salió por X» con el seguimiento, solo con la charla abierta.
+  if (p.envioOrigen && p.envioOrigen !== "propia") {
+    const nombre = primerNombre(p);
+    const t = `¡Hola${nombre ? ` ${nombre}` : ""}! Tu pedido ${numeroPedido(p.id)} ya salió por ${p.envioNombre}.${p.tracking ? ` Número de seguimiento: ${p.tracking}.` : " Apenas tengamos el número de seguimiento te lo pasamos."}`;
+    if ((await ventanaAbierta(tel).catch(() => false)) && (await enviarTexto(tel, t))) {
+      await registrarSalida(tel, "persona", t).catch(() => undefined);
+      return "texto";
+    }
+    return null;
+  }
   const texto = mensajeDespacho(p);
   if ((await ventanaAbierta(tel).catch(() => false)) && (await enviarTexto(tel, texto))) {
     await registrarSalida(tel, "persona", texto).catch(() => undefined);

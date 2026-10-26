@@ -12,6 +12,7 @@
 import { prisma } from "./prisma";
 import type { Turno } from "./vendedor";
 import { sinIds } from "./whatsapp-media";
+import { telefonoFin } from "./telefono";
 
 export type EstadoConversacion = "bot" | "persona";
 
@@ -106,7 +107,7 @@ export async function ultimoDelCliente(telefono: string): Promise<string | null>
  * pero no lo entrega: hay que mandar plantilla. Sin esto los avisos y comprobantes se perdían callados.
  */
 export async function ventanaAbierta(telefono: string): Promise<boolean> {
-  const d = telefono.replace(/\D/g, "").slice(-10);
+  const d = telefonoFin(telefono);
   const filas = await prisma.$queryRaw<{ n: bigint }[]>`
     SELECT count(*) AS n FROM "WhatsappMensaje"
     WHERE right(regexp_replace("telefono", '[^0-9]', '', 'g'), 10) = ${d} AND "de" = 'cliente' AND "fecha" > now() - interval '23 hours'
