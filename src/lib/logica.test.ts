@@ -1415,3 +1415,9 @@ test("boleta y resúmenes: mapea renglones de La Granja y lee el resumen", async
   assert.equal(direccionDeUbicacion("Te mando mi ubicación: Bar Tifozzi, 9 de Julio 7 (-31.42, -64.49)"), "Bar Tifozzi, 9 de Julio 7");
   assert.equal(direccionDeUbicacion("Te mando mi ubicación: sin dirección (-31.42, -64.49)"), "-31.42,-64.49");
 });
+
+test("resumen: lee «calor | resumen» y rescata formatos sueltos", async () => {
+  const { leerResumen } = await import("./resumen-charlas");
+  assert.deepEqual(leerResumen("caliente | Quiere la Despensa; mandarle el link de pago"), { calor: "caliente", texto: "Quiere la Despensa; mandarle el link de pago" });
+  assert.equal(leerResumen("calor: tibio, resumen: Pidió precios del mix")?.texto, "Pidió precios del mix");
+});
