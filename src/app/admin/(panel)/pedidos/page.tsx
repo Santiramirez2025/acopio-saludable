@@ -1,3 +1,4 @@
+import { linkMapa } from "@/lib/mapa";
 import Link from "next/link";
 import { NOMBRE_MEDIO } from "@/lib/pedido-calculos";
 import type { EstadoPedido } from "@prisma/client";
@@ -41,7 +42,7 @@ export default async function Pedidos({ searchParams }: { searchParams: Promise<
               return (
                 <tr key={p.id} className="border-t border-stone-100">
                   <td className="px-3 py-2"><Link href={`/admin/pedidos/${p.id}`} className="font-medium text-acopio-700 underline">{numeroPedido(p.id)}</Link><div className="text-xs text-stone-600">{p.createdAt.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Cordoba" })}</div></td>
-                  <td className="px-3 py-2">{p.nombre}<div className="text-xs text-stone-600">{p.ciudad}, {p.provincia}</div></td>
+                  <td className="px-3 py-2">{p.nombre}<div className="text-xs text-stone-600">{p.ciudad}, {p.provincia}{(() => { const m = linkMapa(p.calle, p.ciudad, p.provincia); return m ? <a href={m} target="_blank" rel="noopener noreferrer" className="ml-1.5 font-semibold text-acopio-700 underline">📍 Mapa</a> : null; })()}</div></td>
                   <td className="px-3 py-2"><span className={`chip ${p.estado === "PENDIENTE_PAGO" ? "bg-amber-100 text-amber-800" : p.estado === "CANCELADO" ? "bg-stone-200 text-stone-600" : "bg-acopio-100 text-acopio-700"}`}>{nombreEstado(p.estado)}</span></td>
                   <td className="px-3 py-2">{NOMBRE_MEDIO[p.medioPago]}{p.estado !== "CANCELADO" && <span className={`ml-1 text-xs font-semibold ${p.pagadoAt ? "text-acopio-700" : "text-tierra-700"}`}>· {p.pagadoAt ? "pagado" : "sin cobrar"}</span>}</td>
                   <td className="px-3 py-2">{p.envioNombre}</td>

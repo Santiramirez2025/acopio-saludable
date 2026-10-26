@@ -1360,7 +1360,7 @@ test("pizarra de armado: gramos, totales y nombre corto", async () => {
   assert.equal(nombreCorto("Mabel ("), "Mabel");
   assert.equal(gramosDe("1/2 kilo"), 500);
   assert.equal(gramosDe("Fraccionada x 250 Grs"), 250);
-  const base = { id: 1, codigo: "AS-00001", cliente: "A", zona: "", cobrar: "", pagado: true, notas: null, estado: "PAGADO", hace: "" };
+  const base = { id: 1, codigo: "AS-00001", cliente: "A", zona: "", cobrar: "", pagado: true, notas: null, estado: "PAGADO", hace: "", mapa: null, direccion: "" };
   const t = totalesDeArmado([
     { ...base, items: [{ producto: "Granola", presentacion: "x 1 kg", cantidad: 1, combo: null }] },
     { ...base, id: 2, items: [{ producto: "Granola", presentacion: "x 500 g", cantidad: 1, combo: null }] },
@@ -1372,4 +1372,13 @@ test("vendedor: el mix con cajú mantiene el mismo producto y precio que pasó e
   const txt = readFileSync("src/lib/vendedor.ts", "utf8");
   assert.ok(txt.includes("MISMO MIX, MISMO PRECIO"));
   assert.ok(txt.includes("Mix Clásico con cajú y girasol"));
+});
+
+test("mapa: link de navegación con la dirección completa y sin repetir", async () => {
+  const { linkMapa, direccionCompleta, linkRuta } = await import("./mapa");
+  assert.equal(direccionCompleta("Virgen de Lourdes 4480", "Cordoba", "Córdoba"), "Virgen de Lourdes 4480, Cordoba, Argentina");
+  assert.equal(direccionCompleta("San Martín 100", "Villa Carlos Paz", null), "San Martín 100, Villa Carlos Paz, Córdoba, Argentina");
+  assert.match(linkMapa("Virgen de Lourdes 4480", "Cordoba", "Córdoba") ?? "", /^https:\/\/www\.google\.com\/maps\/dir\/\?api=1&destination=Virgen/);
+  assert.equal(linkMapa("", "Carlos Paz"), null);
+  assert.match(linkRuta(["A 1, X", "B 2, Y"]) ?? "", /destination=B.*waypoints=A/);
 });

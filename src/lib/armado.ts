@@ -1,6 +1,7 @@
 // Pizarra de armado de Gonza: qué pedidos hay que preparar, qué lleva cada uno y cuánto de cada producto
 // en total. La ven Santiago en la TV mientras arma y la oficina 3D en la pizarra de Logística.
 import { pesos } from "./precios";
+import { direccionCompleta, linkMapa } from "./mapa";
 
 export type ItemArmado = { producto: string; presentacion: string; cantidad: number; combo: string | null };
 export type PedidoArmado = {
@@ -14,6 +15,9 @@ export type PedidoArmado = {
   items: ItemArmado[];
   estado: string;
   hace: string;
+  /** Link a Google Maps con la navegación hasta el cliente (null si no hay calle). */
+  mapa: string | null;
+  direccion: string;
 };
 export type TotalArmado = { producto: string; texto: string };
 export type Pizarra = { paraArmar: PedidoArmado[]; listos: PedidoArmado[]; enCamino: PedidoArmado[]; esperandoPago: PedidoArmado[]; totales: TotalArmado[]; actualizado: string };
@@ -96,6 +100,8 @@ export async function pizarraArmado(): Promise<Pizarra> {
     items: o.items.map((i) => ({ producto: i.producto, presentacion: i.presentacion, cantidad: i.cantidad, combo: i.comboSlug })),
     estado: o.estado,
     hace: haceCuanto(o.createdAt),
+    mapa: linkMapa(o.calle, o.ciudad, o.provincia),
+    direccion: linkMapa(o.calle, o.ciudad, o.provincia) ? direccionCompleta(o.calle, o.ciudad, o.provincia) : "",
   });
   const todos = os.map(vista);
   // Ya se armó si pasó por «Preparado» o se tildó «Listo» en la pizarra. Gonza a veces pasa el pedido a
