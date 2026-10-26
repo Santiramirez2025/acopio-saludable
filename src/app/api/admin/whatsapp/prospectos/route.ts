@@ -12,7 +12,7 @@ import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { crearPlantillaAviso } from "@/lib/avisos";
 import { crearPlantillaComprobante } from "@/lib/comprobante-envio";
-import { avisarReparto, crearPlantillaReparto } from "@/lib/aviso-reparto";
+import { avisarReparto, crearPlantillaReparto, crearPlantillaRepartoHoy } from "@/lib/aviso-reparto";
 import { crearPlantillaSeguimiento } from "@/lib/seguimiento";
 import { correrReactivacion, crearPlantillaReactivacion } from "@/lib/reactivacion";
 import { correrRecompra, crearPlantillaRecompra } from "@/lib/recompra";
@@ -63,6 +63,7 @@ export async function POST(req: Request) {
   if (cuerpo.accion === "organico") return NextResponse.json(await correrOrganico({ cantidad: typeof cuerpo.cantidad === "number" ? cuerpo.cantidad : undefined }));
   if (cuerpo.accion === "lecciones") return NextResponse.json(await leccionesActivas());
   if (cuerpo.accion === "plantilla-reparto") return NextResponse.json(await crearPlantillaReparto());
+  if (cuerpo.accion === "plantilla-reparto-hoy") return NextResponse.json(await crearPlantillaRepartoHoy());
   if (cuerpo.accion === "reparto") {
     const r: Record<string, unknown> = {};
     for (const it of (Array.isArray(cuerpo.lista) ? cuerpo.lista : []).slice(0, 30)) {

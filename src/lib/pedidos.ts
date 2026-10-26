@@ -265,10 +265,13 @@ export async function avisarDespachado(orderId: number): Promise<boolean> {
     : "";
   return enviarEmail({
     para: pedido.email,
-    asunto: `Tu pedido ${numeroPedido(pedido.id)} ya salió`,
+    // Reparto propio (sin seguimiento): va en el reparto de hoy y le escribimos antes; no «ya salió».
+    asunto: pedido.tracking ? `Tu pedido ${numeroPedido(pedido.id)} ya salió` : `Tu pedido ${numeroPedido(pedido.id)} ya está en el reparto de hoy`,
     html: plantilla(
-      `Tu pedido ${numeroPedido(pedido.id)} está en camino`,
-      `<p>Lo despachamos por <b>${escaparHtml(pedido.envioNombre)}</b>.${pedido.envioPlazo ? ` ${escaparHtml(pedido.envioPlazo)}.` : ""}</p>${seguimiento}`,
+      pedido.tracking ? `Tu pedido ${numeroPedido(pedido.id)} está en camino` : `Tu pedido ${numeroPedido(pedido.id)} va en el reparto de hoy`,
+      pedido.tracking
+        ? `<p>Lo despachamos por <b>${escaparHtml(pedido.envioNombre)}</b>.${pedido.envioPlazo ? ` ${escaparHtml(pedido.envioPlazo)}.` : ""}</p>${seguimiento}`
+        : `<p>Durante el día te escribimos por WhatsApp para coordinar la entrega.</p>`,
       pedido.token,
     ),
     responderA: cfg.emailContacto,

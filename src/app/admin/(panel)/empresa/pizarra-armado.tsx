@@ -48,7 +48,7 @@ function Tarjeta({ p, puedeMarcar, alListo }: { p: PedidoArmado; puedeMarcar: bo
           ) : (
             <div className="mt-1 text-base text-amber-300/80">📍 Falta la dirección</div>
           )}
-          <div className="text-lg text-white/60">{p.codigo} · {p.zona}{p.estado === "ENVIADO" ? <span className="ml-2 rounded-full bg-sky-400/20 px-2 py-0.5 text-sm text-sky-200">ya le avisamos: sale hoy</span> : null}</div>
+          <div className="text-lg text-white/60">{p.codigo} · {p.zona}{p.estado === "ENVIADO" ? <span className="ml-2 rounded-full bg-sky-400/20 px-2 py-0.5 text-sm text-sky-200">ya le avisamos: va en el reparto de hoy</span> : null}</div>
         </div>
         <div className={`rounded-2xl px-3 py-2 text-right text-lg font-bold ${p.pagado ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-400/20 text-amber-300"}`}>{p.cobrar}</div>
       </header>
