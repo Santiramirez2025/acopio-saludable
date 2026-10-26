@@ -233,7 +233,8 @@ export async function cotizarCarrito(entrada: unknown, minimo?: number): Promise
     progresoPct: compraMinima > 0 ? Math.min(100, Math.round((subtotal / compraMinima) * 100)) : 100,
     puedePagar: subtotal > 0 && falta === 0,
     puedePagarEnZona: subtotal > 0 && subtotal >= minimoPropia,
-    conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? precioRedondo(subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) : null,
+    // Igual que el total del pedido: a $100 para abajo (lo que se dice en el chat es lo que se cobra).
+    conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? Math.floor((subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) / 100) * 100 : null,
     gananciaReventa: redondear2(gananciaReventa),
     corte: proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null,
   };

@@ -1,6 +1,7 @@
 import { enviarSaliente, cloudActivo } from "./whatsapp-cloud";
 import { textoParaPanel } from "./whatsapp-interactivo";
 import { prisma } from "./prisma";
+import { AVISOS_WHATSAPP } from "./avisos";
 import { cerroLaCharla, enHorario, planRecordatorio, RECORDATORIO } from "./whatsapp-recordatorio";
 
 type Charla = Parameters<typeof planRecordatorio>[0];
@@ -36,6 +37,13 @@ export async function pendientes(): Promise<Pendiente[]> {
       FROM "WhatsappConversacion" c
       WHERE c."estado" = 'bot' AND c."baja" = false AND c."prospecto" IS NULL
         AND (c."pedido" IS NULL OR c."pedido" NOT LIKE 'orden:%')
+        AND c."telefono" <> ${AVISOS_WHATSAPP}
+        -- Ya compró (por la web o con el link de pago) después de su último mensaje: no se le pregunta «¿lo cerramos?».
+        AND NOT EXISTS (
+          SELECT 1 FROM "Order" o
+          WHERE right(regexp_replace(o."telefono", '[^0-9]', '', 'g'), 10) = right(c."telefono", 10)
+            AND o."estado" <> 'CANCELADO' AND o."createdAt" > now() - interval '3 days'
+        )
         AND c."ultimoMensaje" > now() - interval '1 day'
     )
     SELECT u."telefono", u."nombre", u."anuncioTitulo", u."pedido", u.ultimo_texto AS "ultimoBot", u.cliente AS "cliente"

@@ -2,6 +2,7 @@
 // pedido abierto no tiene dirección, se carga sola (así el reparto tiene el mapa listo).
 import { bajarMedia } from "./comprobante";
 import { linkMapa } from "./mapa";
+import { telefonoFin } from "./telefono";
 
 /** Lee la dirección de una captura (Maps, una foto del frente con el número, un mensaje). null si no hay. */
 export async function leerDireccionDeFoto(mediaId: string): Promise<string | null> {
@@ -49,8 +50,8 @@ export function direccionDeUbicacion(texto: string): string | null {
 export async function completarDireccion(clave: string, direccion: string): Promise<string | null> {
   const { prisma } = await import("./prisma");
   const { numeroPedido } = await import("./pedido-calculos");
-  const fin = clave.replace(/\D/g, "").slice(-10);
-  const abiertos = (await prisma.order.findMany({ where: { estado: { notIn: ["ENTREGADO", "CANCELADO"] } }, orderBy: { id: "desc" }, take: 40 })).filter((o) => o.telefono.replace(/\D/g, "").endsWith(fin));
+  const fin = telefonoFin(clave);
+  const abiertos = (await prisma.order.findMany({ where: { estado: { notIn: ["ENTREGADO", "CANCELADO"] } }, orderBy: { id: "desc" }, take: 40 })).filter((o) => telefonoFin(o.telefono) === fin);
   const o = abiertos.find((x) => !linkMapa(x.calle, x.ciudad, x.provincia));
   if (!o) return null;
   await prisma.$transaction([

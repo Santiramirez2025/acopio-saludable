@@ -9,6 +9,7 @@ import { numeroPedido } from "./pedido-calculos";
 import { prisma } from "./prisma";
 import { pesos } from "./precios";
 import { urlSitio } from "./sitio";
+import { telefonoWa } from "./telefono";
 
 export const PLANTILLA_COMPROBANTE = "acopio_comprobante_pago_v1";
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -17,7 +18,7 @@ export const urlComprobante = (token: string) => `${urlSitio()}/pedido/${token}/
 
 function telefonoDe(p: Order): string | null {
   const d = p.telefono.replace(/\D/g, "");
-  return d.length >= 10 ? `549${d.slice(-10)}` : null;
+  return telefonoWa(d);
 }
 
 function primerNombre(p: Order): string {

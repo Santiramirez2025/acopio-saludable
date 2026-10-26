@@ -10,6 +10,7 @@ import { registrarSalida } from "./whatsapp-memoria";
 import { pesos } from "./precios";
 import { numeroPedido } from "./pedido-calculos";
 import { AGENTES, IDS_AGENTES } from "./agentes";
+import { telefonoWa } from "./telefono";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 const MODELO = () => process.env.ASISTENTE_MODELO || "claude-sonnet-5-5";
@@ -54,26 +55,41 @@ const HERRAMIENTAS = [
 const sinAcento = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 /** «AS-00027», «27», «Mabel», «lo de mabel» → el pedido más probable (abiertos primero). */
-async function buscarPedido(q: string) {
-  const num = q.match(/(\d{1,5})/)?.[1];
+/** Pedido por código, número o nombre. Si hay más de uno que encaja, devuelve la lista para preguntar. */
+async function buscarPedido(q: string): Promise<Awaited<ReturnType<typeof prisma.order.findUnique>> | { varios: string }> {
+  const num = q.match(/(?:as-?0*|pedido\s*#?|#)(\d{1,5})\b/i)?.[1] ?? q.match(/^\s*(\d{1,5})\s*$/)?.[1];
+  if (num) return prisma.order.findUnique({ where: { id: Number(num) } });
   const os = await prisma.order.findMany({ where: { OR: [{ estado: { notIn: ["ENTREGADO", "CANCELADO"] } }, { updatedAt: { gte: new Date(Date.now() - 10 * 86_400_000) } }] }, orderBy: { id: "desc" }, take: 80 });
-  if (num && /as-?0*\d|^\s*#?\d{1,5}\s*$/i.test(q)) return os.find((o) => o.id === Number(num)) ?? (await prisma.order.findUnique({ where: { id: Number(num) } }));
-  const palabras = sinAcento(q).replace(/\b(lo|el|la|de|del|pedido|que|a)\b/g, " ").split(/\s+/).filter((w) => w.length > 2);
+  // Palabras enteras y todas: «Ana» no es «Mariana»; «Flor» no es «Florencia».
+  const palabras = sinAcento(q).replace(/\b(lo|el|la|de|del|pedido|que|a|al|los|las)\b/g, " ").split(/\s+/).filter((w) => w.length > 1);
+  if (!palabras.length) return null;
+  const encaja = (nombre: string) => {
+    const ws = sinAcento(nombre).split(/[^a-z0-9ñ]+/);
+    return palabras.every((w) => ws.includes(w));
+  };
   const abiertos = os.filter((o) => !["ENTREGADO", "CANCELADO"].includes(o.estado));
   for (const lista of [abiertos, os]) {
-    const o = lista.find((x) => palabras.some((w) => sinAcento(x.nombre).includes(w)));
-    if (o) return o;
+    const hay = lista.filter((x) => encaja(x.nombre));
+    if (hay.length === 1) return hay[0];
+    if (hay.length > 1) return { varios: hay.slice(0, 6).map((o) => `${numeroPedido(o.id)} ${o.nombre} (${o.estado}, ${pesos(Number(o.total))})`).join("; ") };
   }
   return null;
 }
 
-async function telefonoDeCliente(q: string): Promise<{ tel: string; nombre: string } | null> {
-  const d = q.replace(/\D/g, "");
-  if (d.length >= 10) return { tel: d.length === 10 ? `549${d}` : d, nombre: q };
+const ambiguo = (o: unknown): o is { varios: string } => Boolean(o && typeof o === "object" && "varios" in o);
+
+async function telefonoDeCliente(q: string): Promise<{ tel: string; nombre: string } | { varios: string } | null> {
+  const directo = telefonoWa(q);
+  if (directo && q.replace(/\D/g, "").length >= 10) return { tel: directo, nombre: q };
   const o = await buscarPedido(q);
-  if (o) return { tel: `549${o.telefono.replace(/\D/g, "").slice(-10)}`, nombre: o.nombre };
-  const c = await prisma.$queryRaw<{ telefono: string; nombre: string | null }[]>`SELECT "telefono", "nombre" FROM "WhatsappConversacion" WHERE "nombre" ILIKE ${`%${q.trim()}%`} ORDER BY "ultimoMensaje" DESC LIMIT 1`.catch(() => []);
-  return c[0] ? { tel: c[0].telefono, nombre: c[0].nombre ?? q } : null;
+  if (ambiguo(o)) return o;
+  const wa = o ? telefonoWa(o.telefono) : null;
+  if (o && wa) return { tel: wa, nombre: o.nombre };
+  const c = await prisma.$queryRaw<{ telefono: string; nombre: string | null }[]>`SELECT "telefono", "nombre" FROM "WhatsappConversacion" WHERE "nombre" ILIKE ${`%${q.trim()}%`} ORDER BY "ultimoMensaje" DESC LIMIT 5`.catch(() => []);
+  const enteras = c.filter((x) => sinAcento(q).split(/\s+/).every((w) => sinAcento(x.nombre ?? "").split(/[^a-z0-9ñ]+/).includes(w)));
+  if (enteras.length > 1) return { varios: enteras.map((x) => `${x.nombre} (+${x.telefono})`).join("; ") };
+  const uno = enteras[0];
+  return uno ? { tel: uno.telefono, nombre: uno.nombre ?? q } : null;
 }
 
 async function ejecutar(nombre: string, a: Record<string, unknown>): Promise<string> {
@@ -90,6 +106,7 @@ async function ejecutar(nombre: string, a: Record<string, unknown>): Promise<str
     }
     case "cambiar_estado_pedido": {
       const o = await buscarPedido(String(a.pedido ?? ""));
+      if (ambiguo(o)) return `Hay más de uno: ${o.varios}. Preguntale cuál.`;
       if (!o) return `No encontré el pedido «${String(a.pedido)}».`;
       const estado = String(a.estado) as EstadoPedido;
       if (!(ESTADOS as readonly string[]).includes(estado)) return "Estado inválido.";
@@ -99,6 +116,7 @@ async function ejecutar(nombre: string, a: Record<string, unknown>): Promise<str
     }
     case "marcar_pagado": {
       const o = await buscarPedido(String(a.pedido ?? ""));
+      if (ambiguo(o)) return `Hay más de uno: ${o.varios}. Preguntale cuál.`;
       if (!o) return `No encontré el pedido «${String(a.pedido)}».`;
       if (o.pagadoAt) return `${numeroPedido(o.id)} ya figuraba pagado.`;
       const { aplicarEstadoPedido } = await import("./pedido-estado");
@@ -107,6 +125,7 @@ async function ejecutar(nombre: string, a: Record<string, unknown>): Promise<str
     }
     case "ver_charla": {
       const c = await telefonoDeCliente(String(a.cliente ?? ""));
+      if (ambiguo(c)) return `Hay más de uno: ${c.varios}. Preguntale cuál.`;
       if (!c) return "No encontré esa charla.";
       const ms = await prisma.$queryRaw<{ de: string; texto: string; fecha: Date }[]>`SELECT "de", "texto", "fecha" FROM "WhatsappMensaje" WHERE "telefono" = ${c.tel} ORDER BY "fecha" DESC LIMIT 14`;
       return `${c.nombre} (+${c.tel}):\n` + ms.reverse().map((m) => `${m.de === "cliente" ? "Cliente" : m.de === "bot" ? "Bot" : "Vos"}: ${m.texto.slice(0, 300)}`).join("\n");
@@ -114,6 +133,7 @@ async function ejecutar(nombre: string, a: Record<string, unknown>): Promise<str
     case "escribir_cliente": {
       if (a.confirmado !== true) return "Primero mostrale a Santiago el texto exacto y preguntale si lo mandás.";
       const c = await telefonoDeCliente(String(a.cliente ?? ""));
+      if (ambiguo(c)) return `Hay más de uno: ${c.varios}. Preguntale a quién.`;
       if (!c) return "No encontré a ese cliente.";
       const ok = await enviarTexto(c.tel, String(a.texto ?? ""));
       if (ok) await registrarSalida(c.tel, "persona", String(a.texto)).catch(() => undefined);
