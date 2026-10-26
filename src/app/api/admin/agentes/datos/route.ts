@@ -3,6 +3,7 @@
 //   GET ?que=charlas&horas=24        → charlas de WhatsApp con movimiento en las últimas N horas (últimos 12 mensajes)
 //   GET ?que=charla&telefono=549…    → una charla entera (últimos 60 mensajes)
 //   GET ?que=resumenes&horas=48      → una línea por charla: calor (caliente/tibio/frio/cliente), qué quiere y próximo paso
+//   POST { accion: "notas", id, notas, nota? } → corrige las notas del pedido (qué se cobra, cambios acordados)
 //   POST { accion: "estado", id, estado, nota?, silencioso? } → cambia el estado de un pedido (mismo efecto que el panel:
 //        ENVIADO avisa «ya está en el reparto de hoy, el repartidor te escribe» por WhatsApp; ENTREGADO con pago manda gracias + referidos; silencioso = sin avisos)
 import { NextResponse } from "next/server";
@@ -97,8 +98,20 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { accion?: string; id?: number; estado?: string; nota?: string; silencioso?: boolean };
-  if (b.accion !== "estado") return NextResponse.json({ error: "accion = estado" }, { status: 400 });
+  const b = (await req.json().catch(() => ({}))) as { accion?: string; id?: number; estado?: string; nota?: string; notas?: string; silencioso?: boolean };
+  // Corregir las notas del pedido (lo que se cobra, cambios acordados): queda registrado en el historial.
+  if (b.accion === "notas") {
+    const id = Number(b.id);
+    if (!id || typeof b.notas !== "string") return NextResponse.json({ error: "Faltan id y notas" }, { status: 400 });
+    const o = await prisma.order.findUnique({ where: { id } });
+    if (!o) return NextResponse.json({ error: "No existe el pedido" }, { status: 404 });
+    await prisma.$transaction([
+      prisma.order.update({ where: { id }, data: { notas: b.notas.slice(0, 1000) } }),
+      prisma.orderEvent.create({ data: { orderId: id, estado: o.estado, nota: `Notas corregidas${b.nota ? `: ${b.nota.slice(0, 200)}` : ""}` } }),
+    ]);
+    return NextResponse.json({ ok: true });
+  }
+  if (b.accion !== "estado") return NextResponse.json({ error: "accion = estado | notas" }, { status: 400 });
   const id = Number(b.id);
   if (!id || !b.estado) return NextResponse.json({ error: "Faltan id y estado" }, { status: 400 });
   try {
