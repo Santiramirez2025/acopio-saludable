@@ -18,6 +18,7 @@ import { Galeria } from "@/components/Galeria";
 import { BotonAgregar } from "@/components/Carrito";
 import { AvisoSuplementos, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
+import { PRODUCTOS_PROVEEDORES } from "@/lib/catalogo-proveedores";
 
 type Props = { params: Promise<{ codigo: string }> };
 
@@ -47,6 +48,9 @@ export default async function Producto({ params }: Props) {
   const propias = fila.fotos.filter((x) => x.startsWith("/img/"));
   if (propias.length) fila.fotos = propias;
   const p = aTienda(fila, cfg);
+  // Si el panel no tiene el texto cargado, se usa el del catálogo: en los mixes de la casa es lo que trae
+  // la bolsa, y sin eso el cliente pregunta «¿qué lleva?» y se va.
+  const porQue = fila.porQueLoElegimos ?? PRODUCTOS_PROVEEDORES.find((x) => x.codigo === fila.codigo)?.porQueLoElegimos ?? null;
   // «Venta sugerida / Ganás» es un dato de reventa: solo tiene sentido en bolsones y presentaciones de negocio.
   // En un paquete hogareño una familia lo lee como «me están cobrando con margen de reventa».
   const esBolson = /bols[oó]n|caja x|\b(5|10|20|25) ?(kg|kilos?)\b/i.test(`${p.presentacion} ${p.producto}`);
@@ -131,10 +135,10 @@ export default async function Producto({ params }: Props) {
             {p.categoria === "Congelados" && <p className="mt-3 rounded-xl bg-tierra-100 px-3.5 py-2.5 text-sm text-stone-700"><b>Producto congelado:</b> solo se entrega en Villa Carlos Paz y el sur de Punilla. No se envía por correo.</p>}
             <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} zonaPaga={zonaPagaDe(cfg.tabla)} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />
           </div>
-          {fila.porQueLoElegimos && (
+          {porQue && (
             <div className="rounded-2xl bg-acopio-100 p-4">
               <h2 className="mb-1 text-sm font-semibold text-acopio-700">Por qué lo elegimos</h2>
-              <p className="text-sm text-stone-700">{fila.porQueLoElegimos}</p>
+              <p className="text-sm text-stone-700">{porQue}</p>
             </div>
           )}
           <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
