@@ -1421,3 +1421,11 @@ test("resumen: lee «calor | resumen» y rescata formatos sueltos", async () => 
   assert.deepEqual(leerResumen("caliente | Quiere la Despensa; mandarle el link de pago"), { calor: "caliente", texto: "Quiere la Despensa; mandarle el link de pago" });
   assert.equal(leerResumen("calor: tibio, resumen: Pidió precios del mix")?.texto, "Pidió precios del mix");
 });
+
+test("entrega: las notas no repiten horario ni referencia", async () => {
+  const { unirNotas } = await import("./pedido-calculos");
+  const n1 = unirNotas("Venta por WhatsApp", "13 a 14 hs");
+  const n2 = unirNotas(n1, "Preferencia entre 13 y 14 hs", "Paralelo a la colectora");
+  const n3 = unirNotas(n2, "Preferencia entre 13 y 14 hs");
+  assert.equal(n3, "Horario: Preferencia entre 13 y 14 hs · Referencia: Paralelo a la colectora · Venta por WhatsApp");
+});
