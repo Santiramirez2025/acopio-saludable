@@ -499,7 +499,10 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
           if (detalle) setError(detalle);
           llamada.current = null;
         }
-        if (e === "cortada") llamada.current = null;
+        if (e === "cortada") {
+          llamada.current = null;
+          if (detalle) setError(detalle);
+        }
       },
       onTexto: (rol, t, final, rid) => {
         // Mientras habla, el texto se refresca 4 veces por segundo (no en cada letra) para no trabar el audio.

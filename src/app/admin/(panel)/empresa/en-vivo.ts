@@ -20,6 +20,12 @@ type Opciones = {
 
 export type Llamada = { cortar: () => void; silenciar: (si: boolean) => void };
 
+// Cada minuto de llamada cuesta aunque nadie hable (el micrófono manda audio todo el tiempo): por eso la
+// llamada se corta sola si hay silencio, si la pestaña queda escondida un rato o si se pasa del máximo.
+const SILENCIO_MS = 120_000;
+const ESCONDIDA_MS = 45_000;
+const MAXIMO_MS = 20 * 60_000;
+
 function boca(agente: string, nivel: number) {
   window.dispatchEvent(new CustomEvent("acopio-boca", { detail: { agente, nivel } }));
 }
@@ -28,7 +34,7 @@ export async function llamar(o: Opciones): Promise<Llamada> {
   o.onEstado("conectando");
   let vivo = true;
   const limpiar: (() => void)[] = [];
-  const cortar = () => {
+  const cortar: () => void = () => {
     if (!vivo) return;
     vivo = false;
     boca(o.agente, 0);
@@ -39,7 +45,12 @@ export async function llamar(o: Opciones): Promise<Llamada> {
         /* nada */
       }
     });
-    o.onEstado("cortada");
+    o.onEstado("cortada", motivo);
+  };
+  let motivo: string | undefined;
+  const cortarPor = (m: string) => {
+    motivo = m;
+    cortar();
   };
 
   try {
@@ -88,6 +99,21 @@ export async function llamar(o: Opciones): Promise<Llamada> {
     const enviar = (ev: unknown) => dc.readyState === "open" && dc.send(JSON.stringify(ev));
     const textos = new Map<string, string>();
     let ultimaVoz = 0;
+    let ultimaActividad = Date.now();
+    const inicio = Date.now();
+    let escondidaDesde = 0;
+    const guardian = setInterval(() => {
+      const ahora = Date.now();
+      if (ahora - inicio > MAXIMO_MS) cortarPor("Se cortó sola: 20 minutos de llamada (tope para no gastar de más).");
+      else if (ahora - ultimaActividad > SILENCIO_MS) cortarPor("Se cortó sola por 2 minutos de silencio.");
+      else if (escondidaDesde && ahora - escondidaDesde > ESCONDIDA_MS) cortarPor("Se cortó sola: la pantalla quedó cerrada.");
+    }, 5000);
+    limpiar.push(() => clearInterval(guardian));
+    const visibilidad = () => {
+      escondidaDesde = document.visibilityState === "hidden" ? Date.now() : 0;
+    };
+    document.addEventListener("visibilitychange", visibilidad);
+    limpiar.push(() => document.removeEventListener("visibilitychange", visibilidad));
     dc.onopen = () => {
       o.onEstado("escuchando");
       // Que salude primero, corto.
@@ -102,6 +128,7 @@ export async function llamar(o: Opciones): Promise<Llamada> {
       }
       const tipo = String(ev.type ?? "");
       if (tipo === "input_audio_buffer.speech_started") {
+        ultimaActividad = Date.now();
         o.onEstado("escuchando");
       } else if (tipo === "input_audio_buffer.speech_stopped") {
         o.onEstado("pensando");
@@ -112,6 +139,7 @@ export async function llamar(o: Opciones): Promise<Llamada> {
         if (t && !ruido) o.onTexto("user", t, true);
       } else if (tipo === "response.output_audio_transcript.delta" || tipo === "response.audio_transcript.delta") {
         ultimaVoz = Date.now();
+        ultimaActividad = ultimaVoz;
         const id = String(ev.response_id ?? "");
         textos.set(id, (textos.get(id) ?? "") + String(ev.delta ?? ""));
         o.onEstado("hablando");

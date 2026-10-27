@@ -17,7 +17,9 @@ import { HERRAMIENTAS } from "@/lib/herramientas-agentes";
 
 const ESFUERZO = (["minimal", "low", "medium", "high"].includes(process.env.OPENAI_REALTIME_ESFUERZO ?? "") ? process.env.OPENAI_REALTIME_ESFUERZO : "minimal") as string; // minimal: arranca a hablar enseguida (la fluidez vale más que pensar de más)
 
-const MODELOS = [process.env.OPENAI_REALTIME_MODELO, "gpt-realtime-2.1", "gpt-realtime"].filter(Boolean) as string[];
+// Mini primero: misma fluidez y mismas voces, un tercio del costo por minuto ($10/$20 por millón de tokens de audio
+// contra $32/$64 del 2.1). Con OPENAI_REALTIME_MODELO se fuerza otro (por ejemplo gpt-realtime-2.1 para grabar una demo).
+const MODELOS = [process.env.OPENAI_REALTIME_MODELO, "gpt-realtime-2.1-mini", "gpt-realtime-mini", "gpt-realtime-2.1", "gpt-realtime"].filter(Boolean) as string[];
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
