@@ -45,6 +45,7 @@ const LEMAS: Record<string, string> = {
   financiamiento: "Plata para crecer",
   mayorista: "Por mayor y todas las semanas",
   marketplaces: "En todas las apps",
+  sistema: "Vendemos lo que usamos",
 };
 
 const mat = (color: number, rough = 0.6, metal = 0, extra: Partial<THREE.MeshStandardMaterialParameters> = {}) =>
@@ -140,7 +141,7 @@ export function decorarOficina(l: Lugar) {
   // ---- El objeto de su trabajo, en el rincón junto a la puerta ----
   const px = S * (Math.abs(l.xIn) + 1.3);
   const pz = l.z1 + 0.95;
-  const tema = l.id;
+  let tema = l.id;
   const madera = mat(0xb98a5a, 0.55);
   const carton = mat(0xc49a6c, 0.9);
   const negro = mat(0x15171a, 0.5, 0.2);
@@ -165,6 +166,7 @@ export function decorarOficina(l: Lugar) {
     caja(1.7, 1.0, 0.05, negro, S * (Math.abs(l.xIn) + 2.2), 1.75, l.z2 - 0.06, false);
   };
 
+  if (tema === "sistema") tema = "ventas";
   if (tema === "logistica" || tema === "compras" || tema === "mercadolibre" || tema === "mayorista" || tema === "marketplaces") {
     // Pila de cajas / bolsas de frutos secos
     const amarillo = mat(0xffe600, 0.6);

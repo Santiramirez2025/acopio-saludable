@@ -241,8 +241,25 @@ export async function atender(e: Entrada): Promise<void> {
     return;
   }
 
-  // Prospecto que dice que no: se le da de baja, se le agradece una vez y nunca más.
+  // Un dueño de empresa que viene por el equipo de agentes (anuncio o /agentes): lo atiende Marcos,
+  // que vende el sistema, no el vendedor de la dietética. Una vez marcado, toda la charla es de Marcos.
   const prospecto = await datosProspecto(e.clave);
+  {
+    const { MARCA_SISTEMA, pareceLeadSistema, marcarLeadSistema, atenderLeadSistema } = await import("./vendedor-sistema");
+    const yaEs = prospecto.prospecto === MARCA_SISTEMA;
+    if (yaEs || (e.texto !== null && pareceLeadSistema(texto, ref?.titulo ?? ref?.texto))) {
+      if (!yaEs) await marcarLeadSistema(e.clave);
+      if (e.texto === null) {
+        const audio = /^\[audio·([^\]\s]+)\]/.exec(e.guardar ?? "")?.[1];
+        const r = audio ? await transcribirAudio(audio) : { texto: null };
+        if (r.texto) await prisma.$executeRaw`UPDATE "WhatsappMensaje" SET "texto" = ${`(audio) ${r.texto}`} WHERE "id" = ${e.idMensaje}`.catch(() => null);
+        else if (e.tipo !== "image") return;
+      }
+      await atenderLeadSistema(e.clave, e.nombre ?? null, e.idMensaje, responder).catch((x) => console.error("Marcos falló", x));
+      return;
+    }
+  }
+  // Prospecto que dice que no: se le da de baja, se le agradece una vez y nunca más.
   // Un proveedor: no le habla el vendedor. Queda para Santiago y le llega el aviso.
   if (prospecto.prospecto === MARCA_PROVEEDOR) {
     await avisarSantiago(`Proveedor: ${prospecto.negocio ?? e.clave}`, `📦 ${prospecto.negocio ?? e.nombre ?? e.clave} contestó:\n${(e.guardar ?? texto).slice(0, 300)}\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);

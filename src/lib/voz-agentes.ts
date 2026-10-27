@@ -8,7 +8,7 @@ const API = "https://api.openai.com/v1";
 /** Voz de cada persona del equipo (mujeres y hombres distintos, que se reconozcan). */
 export const VOCES: Record<string, string> = {
   gerente: "marin", corporativo: "marin", hunter: "marin", fidelizacion: "marin", anuncios: "marin", marketing: "marin", alianzas: "marin", finanzas: "marin",
-  estratega: "cedar", sociedades: "cedar", ventas: "cedar", mercadolibre: "cedar", web: "cedar", disenador: "cedar", community: "cedar", reels: "cedar", seo: "cedar", compras: "cedar", logistica: "cedar", seguridad: "onyx", financiamiento: "onyx", mayorista: "onyx", marketplaces: "nova",
+  estratega: "cedar", sociedades: "cedar", ventas: "cedar", mercadolibre: "cedar", web: "cedar", disenador: "cedar", community: "cedar", reels: "cedar", seo: "cedar", compras: "cedar", logistica: "cedar", seguridad: "onyx", financiamiento: "onyx", mayorista: "onyx", marketplaces: "nova", sistema: "onyx",
 };
 
 /**
@@ -18,13 +18,13 @@ export const VOCES: Record<string, string> = {
  */
 export const VOCES_EN_VIVO: Record<string, string> = {
   gerente: "marin", corporativo: "sage", hunter: "coral", fidelizacion: "shimmer", anuncios: "alloy", marketing: "coral", alianzas: "shimmer", finanzas: "sage",
-  estratega: "cedar", sociedades: "ash", ventas: "echo", mercadolibre: "verse", web: "ballad", disenador: "ash", community: "echo", reels: "verse", seo: "ballad", compras: "cedar", logistica: "cedar", seguridad: "ash", financiamiento: "verse", mayorista: "cedar", marketplaces: "coral",
+  estratega: "cedar", sociedades: "ash", ventas: "echo", mercadolibre: "verse", web: "ballad", disenador: "ash", community: "echo", reels: "verse", seo: "ballad", compras: "cedar", logistica: "cedar", seguridad: "ash", financiamiento: "verse", mayorista: "cedar", marketplaces: "coral", sistema: "ballad",
 };
 
 /** Velocidad del habla por persona (0.25 a 1.5): separa a los que comparten voz y acompaña el carácter. */
 export const VELOCIDAD_VOZ: Record<string, number> = {
   gerente: 1.1, corporativo: 1.07, hunter: 1.2, fidelizacion: 1.08, anuncios: 1.14, marketing: 1.18, alianzas: 1.22, finanzas: 1.05,
-  estratega: 1.2, sociedades: 1.13, ventas: 1.18, mercadolibre: 1.15, web: 1.07, disenador: 1.05, community: 1.22, reels: 1.2, seo: 1.04, compras: 1.06, logistica: 1.12, seguridad: 1.0, financiamiento: 1.05, mayorista: 1.15, marketplaces: 1.2,
+  estratega: 1.2, sociedades: 1.13, ventas: 1.18, mercadolibre: 1.15, web: 1.07, disenador: 1.05, community: 1.22, reels: 1.2, seo: 1.04, compras: 1.06, logistica: 1.12, seguridad: 1.0, financiamiento: 1.05, mayorista: 1.15, marketplaces: 1.2, sistema: 1.14,
 };
 
 const INSTRUCCIONES =

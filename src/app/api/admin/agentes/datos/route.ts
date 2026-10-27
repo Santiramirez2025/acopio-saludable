@@ -59,6 +59,18 @@ export async function GET(req: Request) {
     });
   }
 
+  // Leads del Equipo de Agentes (Marcos): formulario de /agentes y charlas marcadas «sistema», con su etapa.
+  if (que === "leads") {
+    const filas = await prisma.$queryRaw<{ nombre: string; ok: boolean; detalle: string | null; fecha: Date }[]>`
+      SELECT DISTINCT ON ("nombre") "nombre", "ok", "detalle", "fecha" FROM "CronCorrida" WHERE "nombre" LIKE 'lead-sistema-%' ORDER BY "nombre", "fecha" DESC`;
+    const charlas = await prisma.$queryRaw<{ telefono: string; nombre: string | null; estado: string; anuncioTitulo: string | null; ultimoMensaje: Date; creado: Date }[]>`
+      SELECT "telefono", "nombre", "estado", "anuncioTitulo", "ultimoMensaje", "creado" FROM "WhatsappConversacion" WHERE "prospecto" = 'sistema' ORDER BY "ultimoMensaje" DESC LIMIT 100`;
+    return NextResponse.json({
+      leads: filas.map((f) => ({ telefono: f.nombre.slice(13), fecha: f.fecha, ...(() => { try { return JSON.parse(f.detalle ?? "{}") as Record<string, unknown>; } catch { return {}; } })() })),
+      charlas,
+    });
+  }
+
   if (que === "charlas") {
     const horas = Math.min(168, Math.max(1, Number(u.get("horas")) || 24));
     const desde = new Date(Date.now() - horas * 3_600_000);
