@@ -7,7 +7,7 @@ import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { conectarMeta, paginaMeta } from "@/lib/meta-mensajes";
+import { conectarMeta, paginaMeta, ultimoErrorMeta } from "@/lib/meta-mensajes";
 import { urlSitio } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ export async function GET() {
   const media = p.instagram ? await leer(`${p.instagram}/media?fields=id,comments_count,timestamp&limit=3`, p.token) : null;
   const primera = (media as { data?: { id: string }[] } | null)?.data?.[0]?.id;
   const comentarios = primera ? await leer(`${primera}/comments?fields=id,text,timestamp&limit=3`, p.token) : null;
-  return NextResponse.json({ pagina: p.id, instagram: p.instagram, suscripciones: await res.json(), permisos, media, comentarios });
+  return NextResponse.json({ pagina: p.id, instagram: p.instagram, ultimoError: ultimoErrorMeta, suscripciones: await res.json(), permisos, media, comentarios });
 }
 
 export async function POST() {
