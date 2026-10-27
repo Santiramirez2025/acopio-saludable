@@ -65,11 +65,12 @@ export type ResumenImportacion = {
  * - Producto existente: solo se pisan los datos del proveedor. Lo que se edita en el panel
  *   (nichos, objetivos, foto, peso, visible, gancho) no se toca.
  * - Cada cambio de costo o precio queda en el historial.
+ * - Con `soloAltas` solo da de alta los nuevos y deja los existentes como están (lo usa el seed del deploy).
  */
 export async function importarCatalogo(
   db: PrismaClient,
   filas: FilaCatalogo[],
-  opciones: { origen: string; estadoNuevos: EstadoProducto },
+  opciones: { origen: string; estadoNuevos: EstadoProducto; soloAltas?: boolean },
 ): Promise<ResumenImportacion> {
   const existentes = new Map((await db.product.findMany()).map((p) => [p.codigo, p]));
   const resumen: ResumenImportacion = { total: filas.length, nuevos: 0, cambiosDePrecio: 0, datosActualizados: 0, sinCambios: 0 };
@@ -95,6 +96,12 @@ export async function importarCatalogo(
       });
       historial.push({ codigo: f.codigo, costo: f.costo, precioPublico: f.precioPublico, origen: opciones.origen });
       resumen.nuevos++;
+      continue;
+    }
+    // El seed corre en cada deploy: con `soloAltas` no pisa costo ni precio de lo que ya existe,
+    // así una corrección hecha en el panel (/catalogo/costos) no vuelve al CSV viejo en el próximo deploy.
+    if (opciones.soloAltas) {
+      resumen.sinCambios++;
       continue;
     }
     const cambioPrecio = Number(previo.costo) !== f.costo || Number(previo.precioPublico) !== f.precioPublico;
