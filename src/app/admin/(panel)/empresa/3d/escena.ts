@@ -255,10 +255,11 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     l.position.set(sx, 3.38, fondo / 2 + 6);
     escena.add(l);
   }
-  const matListon = new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 0.7 });
-  for (let z = 11; z > fondo; z -= 0.45) {
-    const li = new THREE.Mesh(new THREE.BoxGeometry(A * 2 + 0.4, 0.08, 0.12), matListon);
-    li.position.set(0, 3.3, z);
+  // Listones finos de roble claro sobre el pasillo (no sobre el hall): le dan ritmo al techo sin oscurecer.
+  const matListon = new THREE.MeshStandardMaterial({ color: 0xc9a376, roughness: 0.65 });
+  for (let z = -0.3; z > fondo; z -= 0.6) {
+    const li = new THREE.Mesh(new THREE.BoxGeometry(A * 2 - 0.2, 0.05, 0.07), matListon);
+    li.position.set(0, 3.34, z);
     escena.add(li);
   }
 
@@ -300,14 +301,15 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     escena.add(ventana);
     // Marco, parantes y antepecho del ventanal.
     const anchoV = LARGO - 2.2;
-    caja(0.06, 1.8, anchoV + 0.1, matMarco, xOut - lado * 0.05, 1.95, zc, false);
+    for (const dz of [-anchoV / 2 - 0.03, anchoV / 2 + 0.03]) caja(0.08, 1.8, 0.06, matMarco, xOut - lado * 0.1, 1.95, zc + dz, false);
     const vidrioV = new THREE.Mesh(new THREE.PlaneGeometry(anchoV, 1.7), new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0.05, metalness: 0, clearcoat: 1 }));
     vidrioV.position.set(xOut - lado * 0.1, 1.95, zc);
     vidrioV.rotation.y = lado === -1 ? Math.PI / 2 : -Math.PI / 2;
     escena.add(vidrioV);
     for (const dz of [-anchoV / 2, -anchoV / 6, anchoV / 6, anchoV / 2]) caja(0.09, 1.8, 0.05, matMarco, xOut - lado * 0.1, 1.95, zc + dz, false);
     caja(0.09, 0.05, anchoV + 0.1, matMarco, xOut - lado * 0.1, 1.95, zc, false);
-    caja(0.09, 0.05, anchoV + 0.1, matMarco, xOut - lado * 0.1, 2.8, zc, false);
+    caja(0.09, 0.06, anchoV + 0.1, matMarco, xOut - lado * 0.1, 2.82, zc, false);
+    caja(0.09, 0.06, anchoV + 0.1, matMarco, xOut - lado * 0.1, 1.08, zc, false);
     caja(0.22, 0.05, anchoV + 0.3, matRoble, xOut - lado * 0.14, 1.09, zc); // antepecho
     // Zócalos.
     const matZocalo = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
