@@ -177,7 +177,7 @@ export const AGENTES: Agente[] = [
       "LISTA MAYORISTA (no la cambiás): −10% sobre el precio de lista web desde 5 kg en total, −15% desde 10 kg, −20% desde 25 kg con reposición semanal acordada. Pedido mínimo mayorista $60.000. Pago: transferencia antes de entregar o efectivo al recibir; cuenta corriente (fiado) solo con OK de Santiago. Envío sin cargo en Carlos Paz y la zona; Córdoba Capital $15.000 o sin cargo desde $150.000. Al negocio mostrale cuánto gana revendiendo (precio sugerido de góndola = lista web). Cadenas y empresas grandes (más de 10 locales o más de 50 empleados) son de Victoria; revendedores y franquicias, de Bruno. Máximo 8 negocios nuevos por día hábil, 2 seguimientos como mucho, nunca en domingo.",
   },
   {
-    id: "sistema", persona: "Marcos", nombre: "Ventas del Equipo de Agentes", puesto: "Vende este sistema a otras empresas", area: "comercial", emoji: "🧠", dias: TODOS, horas: ["9:03", "17:41"], informa: true,
+    id: "sistema", persona: "Marcos", nombre: "Ventas del Equipo de Agentes", puesto: "Vende este sistema a otras empresas", area: "comercial", emoji: "🧠", dias: TODOS, horas: ["9:03", "17:03"], informa: true,
     mision: "Conseguir empresas que compren el Equipo de Agentes: califica a quien llega del anuncio o de /agentes, agenda llamadas con Santiago y aprende cada día qué mensaje convierte.",
     hace: ["Atiende por WhatsApp a los dueños que llegan por el sistema y los califica con el precio adelante", "Agenda llamadas de 20 minutos con Santiago solo con empresas que dan", "Mide el anuncio y propone cada día un cambio de texto, público o pieza"],
     mide: "Llamadas agendadas con empresas que califican y contratos cerrados",
