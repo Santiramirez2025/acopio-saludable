@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { enviarPorCanal, retomarCharla } from "@/lib/atencion";
-import { claveValida } from "@/lib/meta-mensajes";
+import { claveValida, ultimoErrorMeta } from "@/lib/meta-mensajes";
 import { cambiarEstado, guardarPedido, marcarLeida, registrarSalida, ventanaAbierta } from "@/lib/whatsapp-memoria";
 import { enviarMedia, enviarSaliente, subirMedia } from "@/lib/whatsapp-cloud";
 import { marca } from "@/lib/whatsapp-media";
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
   const enviado = await enviarPorCanal(telefono, texto);
   if (!enviado) {
     return NextResponse.json(
-      { error: "Meta rechazó el envío. Si pasaron más de 24 horas del último mensaje del cliente, hace falta una plantilla aprobada (en Messenger e Instagram, no se puede contestar hasta que vuelva a escribir)." },
+      { error: "Meta rechazó el envío. Si pasaron más de 24 horas del último mensaje del cliente, hace falta una plantilla aprobada (en Messenger e Instagram, no se puede contestar hasta que vuelva a escribir).", detalle: ultimoErrorMeta || undefined },
       { status: 502 },
     );
   }

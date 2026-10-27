@@ -64,9 +64,15 @@ export async function paginaMeta(): Promise<Pagina | null> {
   }
 }
 
+/** Último rechazo de Meta (para verlo desde /api/admin/meta y en el error del panel). */
+export let ultimoErrorMeta = "";
+
 async function llamar(camino: string, cuerpo: unknown, etiqueta: string): Promise<boolean> {
   const p = await paginaMeta();
-  if (!p) return false;
+  if (!p) {
+    ultimoErrorMeta = "el token no ve la página";
+    return false;
+  }
   try {
     const res = await fetch(`${GRAPH}/${camino}`, {
       method: "POST",
@@ -75,11 +81,14 @@ async function llamar(camino: string, cuerpo: unknown, etiqueta: string): Promis
       signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) {
-      console.error(`meta: ${etiqueta} rechazado`, res.status, (await res.text()).slice(0, 400));
+      const detalle = (await res.text()).slice(0, 400);
+      ultimoErrorMeta = `${etiqueta} ${res.status}: ${detalle}`;
+      console.error(`meta: ${etiqueta} rechazado`, res.status, detalle);
       return false;
     }
     return true;
   } catch (e) {
+    ultimoErrorMeta = `${etiqueta}: ${String(e).slice(0, 200)}`;
     console.error(`meta: ${etiqueta} falló`, e);
     return false;
   }
