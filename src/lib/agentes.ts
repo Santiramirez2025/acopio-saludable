@@ -148,6 +148,12 @@ export const AGENTES: Agente[] = [
     hace: ["Cada noche cierra el día: ventas, cobrado y pendiente", "Persigue cobranzas atrasadas", "Los lunes: margen, ticket y costo por cliente de la semana"],
     mide: "Margen y costo por cliente",
   },
+  {
+    id: "seguridad", persona: "Rodri", nombre: "Ciberseguridad", puesto: "Que nadie nos robe ni nos tire el sistema", area: "administracion", emoji: "🛡️", dias: TODOS, horas: ["7:31"], informa: true,
+    mision: "Que la tienda, el WhatsApp, Mercado Pago y los datos de los clientes estén protegidos todos los días, y que ningún agente ni robot haga algo que nos exponga.",
+    hace: ["Cada mañana revisa accesos, claves, dependencias con fallas conocidas y la configuración de Vercel, Meta y Mercado Pago", "Busca intentos de fraude: pedidos raros, comprobantes truchos, mensajes que intentan engañar al bot", "Audita el código nuevo de los otros agentes antes de que llegue a producción y arregla lo urgente con PR"],
+    mide: "Incidentes evitados y fallas de seguridad cerradas",
+  },
 ];
 
 /** Las tareas automáticas (robots) que corren solas en el servidor. */

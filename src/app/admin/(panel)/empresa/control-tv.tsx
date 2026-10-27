@@ -17,7 +17,7 @@ export async function mandarATv(vista: Vista, agente?: string): Promise<boolean>
 }
 
 const PANTALLAS: { vista: Vista; icono: string; nombre: string; bajada: string }[] = [
-  { vista: "oficina", icono: "👥", nombre: "Equipo", bajada: "Las 19 personas y lo que hizo cada una" },
+  { vista: "oficina", icono: "👥", nombre: "Equipo", bajada: "Las 20 personas y lo que hizo cada una" },
   { vista: "armado", icono: "📦", nombre: "Pizarra de armado", bajada: "Qué lleva cada pedido" },
   { vista: "mensajes", icono: "💬", nombre: "Mensajes en vivo", bajada: "Todo lo que entra" },
   { vista: "3d", icono: "🧊", nombre: "Oficina 3D", bajada: "Solo si tu TV la aguanta" },

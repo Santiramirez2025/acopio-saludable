@@ -6,6 +6,11 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { SMAAPass } from "three/examples/jsm/postprocessing/SMAAPass.js";
 import { clone as clonarEsqueleto } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { huesos, sentar, type Huesos } from "./pose";
 import { decorarOficina, decorarPasillo } from "./decor";
@@ -66,28 +71,92 @@ function lineas(t: string, max: number): string[] {
 }
 
 /** Piso de madera clara (tablas) hecho en canvas. */
+/** Las sierras de Córdoba por la ventana: cielo con sol, nubes, tres planos de cerros y arboleda. */
+function paisajeSierras(g: CanvasRenderingContext2D, semilla: number) {
+  const W = 1024;
+  const H = 512;
+  const cielo = g.createLinearGradient(0, 0, 0, H);
+  cielo.addColorStop(0, "#6fb0e6");
+  cielo.addColorStop(0.55, "#cfe6f5");
+  cielo.addColorStop(1, "#f3efe3");
+  g.fillStyle = cielo;
+  g.fillRect(0, 0, W, H);
+  // sol con halo
+  const sx = 180 + ((semilla * 173) % 600);
+  const halo = g.createRadialGradient(sx, 110, 10, sx, 110, 160);
+  halo.addColorStop(0, "rgba(255,246,200,0.95)");
+  halo.addColorStop(1, "rgba(255,246,200,0)");
+  g.fillStyle = halo;
+  g.fillRect(0, 0, W, H);
+  // nubes
+  g.fillStyle = "rgba(255,255,255,0.85)";
+  for (let k = 0; k < 7; k++) {
+    const cx = ((k * 191 + semilla * 97) % W);
+    const cy = 60 + ((k * 53) % 120);
+    for (let q = 0; q < 5; q++) {
+      g.beginPath();
+      g.ellipse(cx + q * 26 - 50, cy + Math.sin(q) * 6, 34 + (q % 3) * 8, 16 + (q % 2) * 6, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
+  // cerros (lejos → cerca)
+  const capas: [string, number, number][] = [["#8fa9c4", 250, 40], ["#6f8f6a", 300, 55], ["#4f7a4b", 350, 65]];
+  capas.forEach(([color, base, amp], n) => {
+    g.fillStyle = color;
+    g.beginPath();
+    g.moveTo(0, H);
+    for (let x = 0; x <= W; x += 16) g.lineTo(x, base - Math.abs(Math.sin(x / (170 - n * 40) + semilla + n)) * amp - Math.sin(x / 23 + n) * 6);
+    g.lineTo(W, H);
+    g.closePath();
+    g.fill();
+  });
+  // arboleda al frente
+  for (let x = -20; x < W; x += 34) {
+    const h = 60 + ((x * 7 + semilla * 13) % 50);
+    g.fillStyle = (x / 34) % 2 ? "#2f5d33" : "#3b7a3f";
+    g.beginPath();
+    g.moveTo(x, H);
+    g.lineTo(x + 17, H - h);
+    g.lineTo(x + 34, H);
+    g.fill();
+  }
+}
+
 function texturaMadera() {
+  // Tablas de roble claro con veta, junta oscura y leve variación entre tablas (se ve «real» de cerca).
   const t = lienzo(1024, 1024, (g) => {
-    g.fillStyle = "#d8c3a2";
+    g.fillStyle = "#b08d63";
     g.fillRect(0, 0, 1024, 1024);
     for (let y = 0; y < 1024; y += 64) {
       const desf = ((y / 64) % 3) * 170;
       for (let x = -desf; x < 1024; x += 512) {
-        const tono = 190 + Math.floor(Math.random() * 30);
-        g.fillStyle = `rgb(${tono + 22},${tono},${tono - 34})`;
-        g.fillRect(x + 2, y + 2, 508, 60);
-        g.strokeStyle = "rgba(120,90,60,0.08)";
-        for (let k = 0; k < 6; k++) {
+        const tono = 178 + Math.floor(Math.random() * 34);
+        const gr = g.createLinearGradient(x, y, x + 512, y + 64);
+        gr.addColorStop(0, `rgb(${tono + 26},${tono + 2},${tono - 40})`);
+        gr.addColorStop(1, `rgb(${tono + 14},${tono - 8},${tono - 48})`);
+        g.fillStyle = gr;
+        g.fillRect(x + 3, y + 3, 506, 58);
+        g.strokeStyle = "rgba(90,60,35,0.13)";
+        g.lineWidth = 1.2;
+        for (let k = 0; k < 9; k++) {
           g.beginPath();
-          const yy = y + 8 + Math.random() * 48;
+          const yy = y + 6 + Math.random() * 52;
           g.moveTo(x, yy);
-          g.bezierCurveTo(x + 150, yy + 4, x + 350, yy - 4, x + 510, yy + 2);
+          g.bezierCurveTo(x + 120, yy + (Math.random() - 0.5) * 10, x + 380, yy + (Math.random() - 0.5) * 10, x + 512, yy + (Math.random() - 0.5) * 6);
+          g.stroke();
+        }
+        // nudo ocasional
+        if (Math.random() < 0.18) {
+          g.strokeStyle = "rgba(70,45,25,0.25)";
+          g.beginPath();
+          g.ellipse(x + 80 + Math.random() * 350, y + 32, 14, 7, 0.3, 0, Math.PI * 2);
           g.stroke();
         }
       }
     }
   });
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
   return t;
 }
 
@@ -101,11 +170,12 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
   render.setSize(cont.clientWidth, cont.clientHeight);
   render.outputColorSpace = THREE.SRGBColorSpace;
   render.toneMapping = liviano ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
-  render.toneMappingExposure = 1.05;
+  render.toneMappingExposure = 1.0;
   render.shadowMap.enabled = !liviano;
   render.shadowMap.type = THREE.PCFSoftShadowMap;
   cont.appendChild(render.domElement);
 
+  let compositor: EffectComposer | null = null;
   const escena = new THREE.Scene();
   escena.background = new THREE.Color(0xeef1ec);
   escena.fog = new THREE.Fog(0xeef1ec, 35, 110);
@@ -116,8 +186,8 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
   }
 
   const camara = new THREE.PerspectiveCamera(62, cont.clientWidth / cont.clientHeight, 0.05, 220);
-  escena.add(new THREE.HemisphereLight(0xffffff, 0xd6c7ae, liviano ? 1.6 : 0.9));
-  const sol = new THREE.DirectionalLight(0xfff4e0, liviano ? 1.1 : 1.5);
+  escena.add(new THREE.HemisphereLight(0xfaf6ee, 0xcbb79a, liviano ? 1.6 : 0.75));
+  const sol = new THREE.DirectionalLight(0xffefd5, liviano ? 1.1 : 1.7);
   sol.position.set(18, 30, 12);
   sol.castShadow = !liviano;
   sol.shadow.mapSize.set(opciones.tv ? 2048 : 4096, opciones.tv ? 2048 : 4096);
@@ -128,7 +198,7 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
   // ---------- materiales ----------
   const madera = texturaMadera();
   madera.repeat.set(6, 30);
-  const matPiso = new THREE.MeshStandardMaterial({ map: madera, roughness: 0.55, metalness: 0 });
+  const matPiso = new THREE.MeshStandardMaterial({ map: madera, roughness: liviano ? 0.55 : 0.38, metalness: 0.02 });
   const matPared = new THREE.MeshStandardMaterial({ color: 0xf7f5f0, roughness: 0.92 });
   const matVidrio = new THREE.MeshPhysicalMaterial({ color: 0xdff1ff, transmission: 0.0, transparent: true, opacity: 0.18, roughness: 0.05, metalness: 0, clearcoat: 1 });
   const matMarco = new THREE.MeshStandardMaterial({ color: 0x2b2f33, roughness: 0.4, metalness: 0.7 });
@@ -178,12 +248,18 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
   techo.rotation.x = -Math.PI / 2;
   techo.position.set(0, 3.4, fondo / 2 + 9);
   escena.add(techo);
-  const matLuz = new THREE.MeshBasicMaterial({ color: 0xfffaf0 });
-  for (let z = 10; z > fondo; z -= 4) {
-    const l = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.4), matLuz);
-    l.rotation.x = Math.PI / 2;
-    l.position.set(0, 3.39, z);
+  const matLuz = new THREE.MeshBasicMaterial({ color: 0xfffaf0, toneMapped: false });
+  // Dos líneas LED continuas a lo largo del pasillo (con el bloom, brillan) y listones de madera oscura en el techo.
+  for (const sx of [-0.9, 0.9]) {
+    const l = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, -fondo + 12), matLuz);
+    l.position.set(sx, 3.38, fondo / 2 + 6);
     escena.add(l);
+  }
+  const matListon = new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 0.7 });
+  for (let z = 11; z > fondo; z -= 0.45) {
+    const li = new THREE.Mesh(new THREE.BoxGeometry(A * 2 + 0.4, 0.08, 0.12), matListon);
+    li.position.set(0, 3.3, z);
+    escena.add(li);
   }
 
   // ---------- personas ----------
@@ -217,26 +293,26 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     pared(xIn, z1, xOut, z1);
     pared(xIn, z2, xOut, z2);
     pared(xOut, z1, xOut, z2, new THREE.MeshStandardMaterial({ color: color.clone().lerp(new THREE.Color(0xffffff), 0.82), roughness: 0.9 }));
-    const cielo = lienzo(512, 256, (g) => {
-      const gr = g.createLinearGradient(0, 0, 0, 256);
-      gr.addColorStop(0, "#9cc7ec");
-      gr.addColorStop(0.65, "#e7f1f7");
-      gr.addColorStop(0.66, "#7c9a6b");
-      gr.addColorStop(1, "#5d7d52");
-      g.fillStyle = gr;
-      g.fillRect(0, 0, 512, 256);
-      g.fillStyle = "rgba(90,120,80,0.8)";
-      g.beginPath();
-      g.moveTo(0, 170);
-      for (let x = 0; x <= 512; x += 32) g.lineTo(x, 150 + Math.sin(x / 60 + i) * 18);
-      g.lineTo(512, 256);
-      g.lineTo(0, 256);
-      g.fill();
-    });
-    const ventana = new THREE.Mesh(new THREE.PlaneGeometry(LARGO - 2.2, 1.6), new THREE.MeshBasicMaterial({ map: cielo }));
-    ventana.position.set(xOut - lado * 0.07, 1.9, zc);
+    const cielo = lienzo(1024, 512, (g) => paisajeSierras(g, i));
+    const ventana = new THREE.Mesh(new THREE.PlaneGeometry(LARGO - 2.2, 1.7), new THREE.MeshBasicMaterial({ map: cielo, toneMapped: false }));
+    ventana.position.set(xOut - lado * 0.07, 1.95, zc);
     ventana.rotation.y = lado === -1 ? Math.PI / 2 : -Math.PI / 2;
     escena.add(ventana);
+    // Marco, parantes y antepecho del ventanal.
+    const anchoV = LARGO - 2.2;
+    caja(0.06, 1.8, anchoV + 0.1, matMarco, xOut - lado * 0.05, 1.95, zc, false);
+    const vidrioV = new THREE.Mesh(new THREE.PlaneGeometry(anchoV, 1.7), new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0.05, metalness: 0, clearcoat: 1 }));
+    vidrioV.position.set(xOut - lado * 0.1, 1.95, zc);
+    vidrioV.rotation.y = lado === -1 ? Math.PI / 2 : -Math.PI / 2;
+    escena.add(vidrioV);
+    for (const dz of [-anchoV / 2, -anchoV / 6, anchoV / 6, anchoV / 2]) caja(0.09, 1.8, 0.05, matMarco, xOut - lado * 0.1, 1.95, zc + dz, false);
+    caja(0.09, 0.05, anchoV + 0.1, matMarco, xOut - lado * 0.1, 1.95, zc, false);
+    caja(0.09, 0.05, anchoV + 0.1, matMarco, xOut - lado * 0.1, 2.8, zc, false);
+    caja(0.22, 0.05, anchoV + 0.3, matRoble, xOut - lado * 0.14, 1.09, zc); // antepecho
+    // Zócalos.
+    const matZocalo = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 });
+    caja(PROF, 0.1, 0.03, matZocalo, lado * (A + PROF / 2), 0.05, z1 + 0.08, false);
+    caja(PROF, 0.1, 0.03, matZocalo, lado * (A + PROF / 2), 0.05, z2 - 0.08, false);
     // frente de vidrio
     pared(xIn, z1, xIn, zc - 1.1, matVidrio);
     pared(xIn, zc + 1.1, xIn, z2, matVidrio);
@@ -267,10 +343,13 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     alf.position.set(lado * (A + PROF * 0.55), 0.006, zc);
     alf.receiveShadow = true;
     escena.add(alf);
-    const luz = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.2), matLuz);
+    const luz = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.08), matLuz);
     luz.rotation.x = Math.PI / 2;
-    luz.position.set(lado * (A + PROF * 0.55), 3.39, zc);
+    luz.position.set(lado * (A + PROF * 0.55), 3.39, zc + 1.2);
     escena.add(luz);
+    const luz2 = luz.clone();
+    luz2.position.z = zc - 1.2;
+    escena.add(luz2);
 
     // Escritorio de roble con patas de metal, de frente a la puerta.
     const xPer = lado * (A + PROF * 0.62); // donde está sentada la persona
@@ -654,10 +733,34 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
 
   const alCambiarTam = () => {
     render.setSize(cont.clientWidth, cont.clientHeight);
+    compositor?.setSize(cont.clientWidth, cont.clientHeight);
     camara.aspect = cont.clientWidth / cont.clientHeight;
     camara.updateProjectionMatrix();
   };
   window.addEventListener("resize", alCambiarTam);
+
+  // ---------- polvo en el aire (partículas lentas que dan vida a la luz) ----------
+  const N = liviano ? 0 : 900;
+  const polvo = new Float32Array(N * 3);
+  for (let k = 0; k < N; k++) {
+    polvo[k * 3] = (Math.random() - 0.5) * (A + PROF) * 2;
+    polvo[k * 3 + 1] = 0.3 + Math.random() * 2.9;
+    polvo[k * 3 + 2] = fondo + Math.random() * (-fondo + 14);
+  }
+  const geoPolvo = new THREE.BufferGeometry();
+  geoPolvo.setAttribute("position", new THREE.BufferAttribute(polvo, 3));
+  const puntos = new THREE.Points(geoPolvo, new THREE.PointsMaterial({ color: 0xfff3d6, size: 0.022, transparent: true, opacity: 0.45, depthWrite: false, sizeAttenuation: true }));
+  if (N) escena.add(puntos);
+
+  // ---------- post-proceso: bloom suave (LEDs, pantallas, lámparas) y antialias ----------
+  if (!liviano) {
+    compositor = new EffectComposer(render);
+    compositor.addPass(new RenderPass(escena, camara));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(cont.clientWidth, cont.clientHeight), 0.32, 0.6, 0.86);
+    compositor.addPass(bloom);
+    compositor.addPass(new OutputPass());
+    compositor.addPass(new SMAAPass(cont.clientWidth, cont.clientHeight));
+  }
 
   // ---------- cada cuadro ----------
   const reloj = new THREE.Clock();
@@ -792,7 +895,17 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
       cercaAntes = id;
       ev.cerca(id);
     }
-    render.render(escena, camara);
+    if (N) {
+      const pos = geoPolvo.attributes.position as THREE.BufferAttribute;
+      for (let k = 0; k < N; k++) {
+        const y = pos.getY(k) + Math.sin(t * 0.6 + k) * 0.0006 + 0.0009;
+        pos.setY(k, y > 3.2 ? 0.3 : y);
+        pos.setX(k, pos.getX(k) + Math.cos(t * 0.4 + k * 0.7) * 0.0006);
+      }
+      pos.needsUpdate = true;
+    }
+    if (compositor) compositor.render();
+    else render.render(escena, camara);
   });
   ev.listo();
 
@@ -813,6 +926,7 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
         const m = o as THREE.Mesh;
         m.geometry?.dispose?.();
       });
+      compositor?.dispose();
       pmrem.dispose();
       render.dispose();
       render.domElement.remove();
