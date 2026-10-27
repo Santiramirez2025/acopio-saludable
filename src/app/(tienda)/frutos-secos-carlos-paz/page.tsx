@@ -94,6 +94,7 @@ export default async function FrutosSecosCarlosPaz() {
             [`/catalogo?categoria=${encodeURIComponent("Frutas desecadas")}`, "Frutas desecadas"],
             [`/catalogo?categoria=${encodeURIComponent("Semillas y granos")}`, "Semillas y granos"],
             ["/sin-tacc", "Sin TACC"],
+            ["/regalos-navidenos-cordoba", "Regalos navideños"],
             ["/combos", "Combos"],
             ["/envios", "Envíos"],
           ].map(([href, t]) => (
