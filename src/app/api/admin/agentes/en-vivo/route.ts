@@ -15,7 +15,7 @@ const VOCABULARIO = "Charla de trabajo de Acopio Saludable, una dietética de Ca
 
 import { HERRAMIENTAS } from "@/lib/herramientas-agentes";
 
-const ESFUERZO = (["minimal", "low", "medium", "high"].includes(process.env.OPENAI_REALTIME_ESFUERZO ?? "") ? process.env.OPENAI_REALTIME_ESFUERZO : "low") as string;
+const ESFUERZO = (["minimal", "low", "medium", "high"].includes(process.env.OPENAI_REALTIME_ESFUERZO ?? "") ? process.env.OPENAI_REALTIME_ESFUERZO : "minimal") as string; // minimal: arranca a hablar enseguida (la fluidez vale más que pensar de más)
 
 const MODELOS = [process.env.OPENAI_REALTIME_MODELO, "gpt-realtime-2.1", "gpt-realtime"].filter(Boolean) as string[];
 
