@@ -31,7 +31,7 @@ export type DatosEscena = { agentes: AgenteEscena[]; areas: string[]; kpis: { ti
 export type Eventos = { cerca: (id: string | null) => void; tocar: (id: string) => void; listo: () => void; progreso?: (p: number) => void };
 export type Control = { destruir: () => void; irA: (id: string, mirar?: boolean, saltar?: boolean, callado?: boolean) => void; enfocar: (id: string | null) => void; teclas: Set<string> };
 
-const MUJERES = new Set(["gerente", "hunter", "fidelizacion", "anuncios", "marketing", "finanzas", "alianzas", "corporativo"]);
+const MUJERES = new Set(["gerente", "hunter", "fidelizacion", "anuncios", "marketing", "finanzas", "alianzas", "corporativo", "marketplaces"]);
 const COLOR_AREA: Record<string, number> = { direccion: 0xd9a441, comercial: 0x2f9e6a, marketing: 0x8a6bd1, operaciones: 0x3b8fd1, administracion: 0x9c8b74 };
 const COLOR_ESTADO: Record<AgenteEscena["estado"], number> = { ok: 0x22c55e, falla: 0xef4444, atrasado: 0xf59e0b, pendiente: 0x38bdf8, descanso: 0x9ca3af };
 const A = 3.2; // medio ancho del pasillo

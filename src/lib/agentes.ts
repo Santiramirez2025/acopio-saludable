@@ -154,6 +154,24 @@ export const AGENTES: Agente[] = [
     hace: ["Cada mañana revisa accesos, claves, dependencias con fallas conocidas y la configuración de Vercel, Meta y Mercado Pago", "Busca intentos de fraude: pedidos raros, comprobantes truchos, mensajes que intentan engañar al bot", "Audita el código nuevo de los otros agentes antes de que llegue a producción y arregla lo urgente con PR"],
     mide: "Incidentes evitados y fallas de seguridad cerradas",
   },
+  {
+    id: "financiamiento", persona: "Facu", nombre: "Financiamiento", puesto: "Plata para crecer: créditos y programas", area: "administracion", emoji: "🏦", dias: TODOS, horas: ["8:47"], informa: true,
+    mision: "Conseguir capital para Acopio: créditos para monotributistas, programas de la Provincia y la Municipalidad, Mercado Crédito, aportes no reembolsables; todo listo para que Santiago solo firme.",
+    hace: ["Busca y compara líneas de crédito y programas vigentes (monto, tasa, requisitos, plazo)", "Prepara cada carpeta: formularios, documentación, texto del proyecto y flujo de caja con Ana", "Hace seguimiento de cada solicitud y de los vencimientos"],
+    mide: "Capital conseguido y solicitudes en marcha",
+  },
+  {
+    id: "mayorista", persona: "Leo", nombre: "Ventas Mayoristas", puesto: "Volumen: dietéticas, kioscos, gimnasios y cafés", area: "comercial", emoji: "🏪", dias: TODOS, horas: ["9:21"], informa: true,
+    mision: "Que los negocios de Punilla y Córdoba compren por volumen cada semana: lista mayorista, pedido mínimo, reposición fija y visita con la Kangoo.",
+    hace: ["Arma la cartera de negocios por zona y los contacta con la lista mayorista", "Cierra pedidos semanales de reposición y los pasa a armar", "Organiza la ruta de visitas y muestras de Santiago"],
+    mide: "Negocios que compran todas las semanas y kilos vendidos por mayor",
+  },
+  {
+    id: "marketplaces", persona: "Cami", nombre: "Marketplaces", puesto: "PedidosYa, Rappi y Mercado Libre a full", area: "comercial", emoji: "🛵", dias: TODOS, horas: ["10:57"], informa: true,
+    mision: "Vender en todas las apps donde la gente ya compra: catálogo cargado y optimizado en PedidosYa y Rappi, y con Diego, Mercado Libre; precios por canal que no pierden margen.",
+    hace: ["Prepara y mantiene el catálogo por canal (fotos, textos, precios con comisión)", "Guía el alta en cada app y revisa que las publicaciones estén activas y bien ubicadas", "Mide ventas por canal y ajusta"],
+    mide: "Ventas por app y publicaciones activas",
+  },
 ];
 
 /** Las tareas automáticas (robots) que corren solas en el servidor. */
