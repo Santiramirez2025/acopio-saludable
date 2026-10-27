@@ -18,6 +18,7 @@ import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
+import { dioPorCerrada } from "./whatsapp-recordatorio";
 import { AVISOS_WHATSAPP, avisarSantiago } from "./avisos";
 import { fotosOportunas } from "./galeria";
 import { esPedidoWeb, leerPedidoWeb, resolverPedidoWeb } from "./pedido-web";
@@ -431,7 +432,7 @@ export async function atender(e: Entrada): Promise<void> {
   // Dice «agendado» pero no hay pedido creado (no llegó al mínimo o no eligió cómo pagar): a Lilita le
   // pasó eso y el pedido nunca llegó al panel. Que Santiago se entere y lo cierre a mano.
   const dichoAhora = p.salientes.map((x) => textoParaPanel(x)).join(" ");
-  if (!guardado?.startsWith("orden:") && /agendad|confirmad/i.test(dichoAhora) && (await primeraVezHoy(`aviso-cerrar-${e.clave}`))) {
+  if (!guardado?.startsWith("orden:") && dioPorCerrada(dichoAhora) && (await primeraVezHoy(`aviso-cerrar-${e.clave}`))) {
     await avisarSantiago(
       `Venta por cerrar: ${e.nombre ?? e.clave}`,
       `🛒 El vendedor le dijo a ${e.nombre ?? e.clave} que el pedido queda agendado, pero no hay pedido creado en el panel (falta llegar al mínimo o elegir cómo paga). Revisalo: ${urlSitio()}/admin/whatsapp?c=${e.clave}`,

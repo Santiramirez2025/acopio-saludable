@@ -2,7 +2,43 @@ import { enviarSaliente, cloudActivo } from "./whatsapp-cloud";
 import { textoParaPanel } from "./whatsapp-interactivo";
 import { prisma } from "./prisma";
 import { AVISOS_WHATSAPP } from "./avisos";
-import { cerroLaCharla, enHorario, planRecordatorio, RECORDATORIO } from "./whatsapp-recordatorio";
+import { cerroLaCharla, enHorario, planRecordatorio, RECORDATORIO, type CarritoCotizado, type OfertaConcreta } from "./whatsapp-recordatorio";
+import { cotizarCarrito } from "./tienda";
+import { leerPedido } from "./pedido-enlace";
+
+/** El combo que se propone a quien no armó nada (lo que más se vende para casa). */
+export const OFERTA_RECORDATORIO = "alacena-de-frutos-secos";
+
+/** Qué trae, en una línea corta; si queda larga, no va (el precio y la pregunta importan más). */
+function resumir(partes: string[]): string | undefined {
+  const r = partes.filter(Boolean).join(", ");
+  return r && r.length <= 140 ? r : undefined;
+}
+
+/** Cotiza con el precio real de hoy; si algo falla, el recordatorio sale igual con el texto de siempre. */
+async function cotizar(camino: string): Promise<CarritoCotizado | null> {
+  try {
+    const cot = await cotizarCarrito(leerPedido(camino.replace(/^\/carrito\?p=/, "")));
+    if (!cot.subtotal) return null;
+    const resumen = resumir(cot.lineas.map((l) => (l.cantidad > 1 ? `${l.cantidad} × ${l.nombre}` : l.nombre)));
+    return { total: cot.subtotal, transferencia: cot.conTransferencia, resumen };
+  } catch (e) {
+    console.error("recordatorio: no se pudo cotizar", e);
+    return null;
+  }
+}
+
+async function ofertaConcreta(): Promise<OfertaConcreta | null> {
+  try {
+    const cot = await cotizarCarrito([{ tipo: "combo", id: OFERTA_RECORDATORIO, cantidad: 1 }]);
+    const l = cot.lineas[0];
+    if (!l || !cot.subtotal) return null;
+    return { nombre: l.nombre, total: cot.subtotal, transferencia: cot.conTransferencia, resumen: resumir(l.contenido) };
+  } catch (e) {
+    console.error("recordatorio: no se pudo cotizar la oferta", e);
+    return null;
+  }
+}
 
 type Charla = Parameters<typeof planRecordatorio>[0];
 
@@ -12,8 +48,11 @@ export async function correrRecordatorios(ahora = new Date()): Promise<{ enHorar
   if (!enHorario(ahora) || !cloudActivo() || process.env.RECORDATORIOS_APAGADOS === "1") return { enHorario: enHorario(ahora), enviados: 0, fallidos: 0 };
   let enviados = 0;
   let fallidos = 0;
-  for (const p of await pendientes()) {
-    const s = planRecordatorio(p);
+  const lista = await pendientes();
+  const oferta = lista.some((p) => !p.pedido && !p.anuncioTitulo?.match(/^(.+?)\s+a\s+\$/)) ? await ofertaConcreta() : null;
+  for (const p of lista) {
+    const carrito = p.pedido?.startsWith("/carrito?p=") ? await cotizar(p.pedido) : null;
+    const s = planRecordatorio(p, carrito, oferta);
     // Se reserva antes de mandar, con un id fijo por charla y último mensaje del cliente:
     // si dos corridas se pisan, solo una lo inserta y solo esa lo manda.
     if (!(await registrarRecordatorio(p.telefono, p.cliente, textoParaPanel(s)))) continue;
@@ -54,6 +93,17 @@ export async function pendientes(): Promise<Pendiente[]> {
       AND NOT EXISTS (
         SELECT 1 FROM "WhatsappMensaje" r
         WHERE r."telefono" = u."telefono" AND r."id" LIKE 'rec.%' AND r."fecha" > now() - interval '7 days'
+      )
+      -- Un agente o Santiago le escribió en las últimas 24 h: la charla es de ellos, no se le suma un automático.
+      AND NOT EXISTS (
+        SELECT 1 FROM "WhatsappMensaje" h
+        WHERE h."telefono" = u."telefono" AND h."de" = 'persona' AND h."fecha" > now() - interval '24 hours'
+      )
+      -- Máximo un automático sin respuesta por charla (a Azu le llegaban bienvenida + duda + reactivación seguidos).
+      AND NOT EXISTS (
+        SELECT 1 FROM "WhatsappMensaje" a
+        WHERE a."telefono" = u."telefono" AND a."fecha" > u.cliente
+          AND (a."id" LIKE 'react.%' OR a."id" LIKE 'seg.%' OR a."id" LIKE 'recompra.%')
       )
     ORDER BY u.cliente DESC
     LIMIT ${RECORDATORIO.porCorrida}

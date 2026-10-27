@@ -4,6 +4,9 @@
 // entre las 8 y las 21 (hora de Argentina): a la noche no se molesta, se espera a la mañana.
 // Solo dentro de las 24 horas desde el último mensaje del cliente, que es la ventana en la que
 // WhatsApp deja escribir sin plantilla. Uno por charla por semana: si no contesta o dice que no, no se insiste.
+// Nunca un genérico «¿te quedó alguna duda?» (27/10: salió a +40 personas y no vendió nada): repite el carrito
+// que tiene guardado con su total, o propone uno concreto (la Alacena), y cierra con «¿Te la separamos?».
+// Sin zona confirmada no promete «sin cargo» ni «mañana»: ofrece decir la ciudad.
 
 import { primerNombre, ID, type Saliente } from "./whatsapp-interactivo";
 
@@ -27,12 +30,37 @@ export function cerroLaCharla(ultimoBot: string): boolean {
 
 type Charla = { nombre: string | null; anuncioTitulo: string | null; pedido: string | null };
 
+/** Un carrito con su precio real (lo cotiza quien corre el recordatorio). */
+export type CarritoCotizado = { total: number; transferencia: number | null; resumen?: string };
+/** La propuesta concreta para quien no armó nada: nombre del combo, qué trae y precio real. */
+export type OfertaConcreta = CarritoCotizado & { nombre: string };
+
+/** Precio en mensaje: redondeado a la centena, sin centavos. */
+function monto(n: number): string {
+  return `$${(Math.round(n / 100) * 100).toLocaleString("es-AR")}`;
+}
+
+function precioCon(c: CarritoCotizado): string {
+  return c.transferencia && c.transferencia < c.total ? `${monto(c.total)} (${monto(c.transferencia)} por transferencia)` : monto(c.total);
+}
+
 /** El mensaje: corto, en plural, con una pregunta y sus respuestas como botones. */
-export function planRecordatorio(c: Charla): Saliente {
+export function planRecordatorio(c: Charla, carrito?: CarritoCotizado | null, oferta?: OfertaConcreta | null): Saliente {
   const nombre = primerNombre(c.nombre);
   const hola = `¡Hola${nombre ? ` ${nombre}` : ""}!`;
   if (c.pedido && !c.pedido.startsWith("orden:")) {
     // No se le vuelve a preguntar la ciudad: muchas veces ya la dijo (a Jose le pasó).
+    if (carrito && carrito.total > 0) {
+      return {
+        tipo: "botones",
+        cuerpo: `${hola} Te guardamos tu pedido${carrito.resumen ? `: ${carrito.resumen}` : ""}, ${precioCon(carrito)}. ¿Te lo separamos?`,
+        botones: [
+          { id: `${ID.opcion}Sí, separalo`, titulo: "Sí, separalo" },
+          { id: `${ID.opcion}Tengo una duda`, titulo: "Tengo una duda" },
+          { id: `${ID.opcion}Lo veo después`, titulo: "Lo veo después" },
+        ],
+      };
+    }
     return {
       tipo: "botones",
       cuerpo: `${hola} Te dejamos el pedido guardado 🙌 ¿Lo cerramos así te llega esta semana?`,
@@ -55,6 +83,17 @@ export function planRecordatorio(c: Charla): Saliente {
       ],
     };
   }
+  if (oferta && oferta.total > 0) {
+    return {
+      tipo: "botones",
+      cuerpo: `${hola} Para arrancar te propongo la ${oferta.nombre}${oferta.resumen ? `: ${oferta.resumen}` : ""}, ${precioCon(oferta)}. ¿Te la separamos?`,
+      botones: [
+        { id: `${ID.opcion}Sí, separala`, titulo: "Sí, separala" },
+        { id: `${ID.opcion}Te digo mi ciudad`, titulo: "Te digo mi ciudad" },
+        { id: `${ID.opcion}Lo veo después`, titulo: "Lo veo después" },
+      ],
+    };
+  }
   return {
     tipo: "botones",
     cuerpo: `${hola} ¿Te quedó alguna duda? La resolvemos por acá y lo encargás en un minuto.`,
@@ -66,3 +105,12 @@ export function planRecordatorio(c: Charla): Saliente {
   };
 }
 
+
+/**
+ * ¿El vendedor dio la venta por hecha? «Agendado», «confirmado», «Gracias por la compra», «Quedó la Despensa…».
+ * Si no hay pedido creado, Santiago tiene que enterarse: a Olga (26/10) le dijo «Gracias por la compra» con la
+ * dirección y el horario anotados y el pedido nunca llegó al panel.
+ */
+export function dioPorCerrada(dicho: string): boolean {
+  return /agendad|confirmad|gracias por (la|tu) compra|\bqued[oó] (la|el|tu) (pedido|despensa|alacena|combo|mix|kit)/i.test(dicho);
+}
