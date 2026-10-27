@@ -1,7 +1,7 @@
 // Landing del Equipo de Agentes: lo que Acopio vende a otras empresas. El precio va primero (filtra),
 // después el video y el formulario. Todo lleva al WhatsApp de Marcos con el texto #agentes.
 import type { Metadata } from "next";
-import { PRECIO_IMPLEMENTACION, PRECIO_MENSUAL } from "@/lib/vendedor-sistema";
+import { PRECIO_IMPLEMENTACION, PRECIO_MENSUAL } from "@/lib/oferta-sistema";
 import { Formulario } from "./formulario";
 
 export const metadata: Metadata = {

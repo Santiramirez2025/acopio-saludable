@@ -8,10 +8,10 @@ import { ultimoDelCliente } from "./whatsapp-memoria";
 import { sinPerfecto } from "./sin-perfecto";
 import { urlSitio } from "./sitio";
 
+import { PRECIO_IMPLEMENTACION, PRECIO_MENSUAL } from "./oferta-sistema";
+
 export const MARCA_SISTEMA = "sistema";
-export const PRECIO_IMPLEMENTACION = 4_900_000;
-export const PRECIO_MENSUAL = 490_000;
-export const WA_TEXTO_SISTEMA = "Hola, quiero el equipo de agentes de IA para mi empresa #agentes";
+export { PRECIO_IMPLEMENTACION, PRECIO_MENSUAL, WA_TEXTO_SISTEMA } from "./oferta-sistema";
 
 const pesos = (n: number) => `$${n.toLocaleString("es-AR")}`;
 

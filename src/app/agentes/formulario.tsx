@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { WA_TEXTO_SISTEMA } from "@/lib/vendedor-sistema";
+import { WA_TEXTO_SISTEMA } from "@/lib/oferta-sistema";
 
 const NUMERO = process.env.NEXT_PUBLIC_WHATSAPP_NUMERO || "5493541519630";
 const FACTURACION = ["Menos de $10.000.000", "$10 a $30 millones", "$30 a $100 millones", "Más de $100 millones"];
