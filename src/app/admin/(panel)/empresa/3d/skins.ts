@@ -153,10 +153,11 @@ export function accesorios(raiz: THREE.Object3D, id: string, h: { Head?: THREE.O
   }
   const cuello = h.Neck ?? cabeza;
   if (s.panuelo !== undefined) {
-    const p = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.028, 12, 40), mat(s.panuelo, 0.05, 0.85));
+    const p = new THREE.Mesh(new THREE.TorusGeometry(0.082, 0.026, 12, 40), mat(s.panuelo, 0.05, 0.85));
     p.rotation.x = Math.PI / 2;
     p.scale.z = 0.8;
-    const nw = cuello.getWorldPosition(new THREE.Vector3()).addScaledVector(arriba, 0.02).addScaledVector(adelante, 0.01);
+    // Un poco por debajo de la base de la cabeza: a la altura del cuello, no de las orejas.
+    const nw = hw.clone().addScaledVector(arriba, -0.07).addScaledVector(adelante, 0.015);
     enHueso(cuello, nw, p);
   }
   const pecho = h.Spine2 ?? h.Spine1;
