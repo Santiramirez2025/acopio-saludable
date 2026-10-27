@@ -815,6 +815,26 @@ test("whatsapp: «ver los productos» muestra, no pregunta", () => {
   assert.equal(p.length, 1);
 });
 
+import { ordenarParaVer } from "./whatsapp-interactivo";
+test("whatsapp: «ver combos» muestra primero la Alacena, la Mesa navideña y la Despensa, después por precio", () => {
+  const combos = [
+    { slug: "despensa-chica", precio: 20500 },
+    { slug: "merienda-sin-tacc", precio: 28000 },
+    { slug: "desayuno-30-dias", precio: 33000 },
+    { slug: "kit-alfajorcitos", precio: 35000 },
+    { slug: "despensa-4-kilos", precio: 35500 },
+    { slug: "pan-dulce-casero", precio: 38500 },
+    { slug: "alacena-de-frutos-secos", precio: 45000 },
+    { slug: "mesa-navidena", precio: 49000 },
+  ];
+  const orden = ordenarParaVer(combos).map((c) => c.slug);
+  assert.deepEqual(orden.slice(0, 4), ["alacena-de-frutos-secos", "mesa-navidena", "despensa-4-kilos", "despensa-chica"]);
+  assert.equal(orden.length, combos.length);
+  assert.equal(combos[0].slug, "despensa-chica"); // no toca el arreglo original
+  // Si un combo de los primeros no está disponible, sigue el resto por precio.
+  assert.deepEqual(ordenarParaVer(combos.filter((c) => c.slug !== "mesa-navidena")).map((c) => c.slug).slice(0, 3), ["alacena-de-frutos-secos", "despensa-4-kilos", "despensa-chica"]);
+});
+
 import { argumentoCombo } from "./combos-tema";
 test("combos: el argumento es el precio por kilo o por transferencia, no «ahorrás»", () => {
   const p = (n: number) => `$${n}`;
