@@ -1,8 +1,10 @@
 // Corrige costos (y si se pide, precio o nombre) de productos ya cargados, sin tocar nada más.
-// POST { items: [{ codigo, costo?, precioPublico?, producto? }] }. Registra el cambio en el historial.
+// POST { items: [{ codigo, costo?, precioPublico?, producto?, visible? }] }. Registra el cambio en el historial.
+// `visible:false` oculta un producto (p. ej. un duplicado) sin borrarlo; `visible:true` lo vuelve a mostrar.
 
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -13,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { items?: { codigo?: string; costo?: number; precioPublico?: number; producto?: string; crear?: boolean; fotoDe?: string }[] };
+  const b = (await req.json().catch(() => ({}))) as { items?: { codigo?: string; costo?: number; precioPublico?: number; producto?: string; crear?: boolean; fotoDe?: string; visible?: boolean }[] };
   const salida: Record<string, unknown> = {};
   // Descuento de un combo: { combos: [{ slug, descuentoPct }] }. Sirve para mantener el precio del combo cuando sube un producto.
   for (const c of ((b as { combos?: { slug?: string; descuentoPct?: number; crear?: boolean }[] }).combos ?? []).slice(0, 20)) {
@@ -60,12 +62,20 @@ export async function POST(req: Request) {
     const precioPublico = Number.isFinite(it.precioPublico) && Number(it.precioPublico) > 0 ? Number(it.precioPublico) : Number(previo.precioPublico);
     const producto = typeof it.producto === "string" && it.producto.trim() ? it.producto.trim().slice(0, 120) : previo.producto;
     await prisma.$transaction([
-      prisma.product.update({ where: { codigo }, data: { costo, precioPublico, producto, margenPct: margenPct(precioPublico, costo) } }),
+      prisma.product.update({
+        where: { codigo },
+        data: {
+          costo, precioPublico, producto, margenPct: margenPct(precioPublico, costo),
+          ...(typeof it.visible === "boolean" ? { visible: it.visible, ocultoMotivo: it.visible ? null : "Duplicado u oculto por compras" } : {}),
+        },
+      }),
       ...(costo !== Number(previo.costo) || precioPublico !== Number(previo.precioPublico)
         ? [prisma.priceHistory.create({ data: { codigo, costo, precioPublico, origen: "manual" } })]
         : []),
     ]);
-    salida[codigo] = { costo: [Number(previo.costo), costo], precio: [Number(previo.precioPublico), precioPublico], margen: margenPct(precioPublico, costo) };
+    salida[codigo] = { costo: [Number(previo.costo), costo], precio: [Number(previo.precioPublico), precioPublico], margen: margenPct(precioPublico, costo), ...(typeof it.visible === "boolean" ? { visible: it.visible } : {}) };
   }
+  // Que la tienda y el bot muestren enseguida el precio nuevo (y no el de la página cacheada).
+  revalidatePath("/", "layout");
   return NextResponse.json(salida);
 }
