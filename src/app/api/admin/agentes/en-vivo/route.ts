@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { esAdminOTv as esAdmin } from "@/lib/admin-acceso";
 import { AGENTES, IDS_AGENTES } from "@/lib/agentes";
 import { promptAgente } from "@/lib/agentes-chat";
-import { VOCES_EN_VIVO } from "@/lib/voz-agentes";
+import { VELOCIDAD_VOZ, VOCES_EN_VIVO } from "@/lib/voz-agentes";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
                 ? { type: "semantic_vad", eagerness: "low", create_response: true, interrupt_response: true }
                 : { type: "server_vad", threshold: 0.55, prefix_padding_ms: 300, silence_duration_ms: 1000, create_response: true, interrupt_response: true },
             },
-            output: { voice: VOCES_EN_VIVO[agente] ?? "marin" },
+            output: { voice: VOCES_EN_VIVO[agente] ?? "marin", ...(nivel >= 1 ? { speed: VELOCIDAD_VOZ[agente] ?? 1 } : {}) },
           },
           tools: [
             {

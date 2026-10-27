@@ -11,11 +11,20 @@ export const VOCES: Record<string, string> = {
   estratega: "cedar", sociedades: "cedar", ventas: "cedar", mercadolibre: "cedar", web: "cedar", disenador: "cedar", community: "cedar", reels: "cedar", seo: "cedar", compras: "cedar", logistica: "cedar",
 };
 
-/** Voces de la llamada en vivo (Realtime): marin y cedar son las más naturales. */
+/**
+ * Voces de la llamada en vivo (Realtime). Las 10 voces del modelo repartidas para que cada persona del
+ * equipo suene distinta: las que comparten voz se separan por velocidad y por carácter (voz-estilo.ts).
+ * Mujeres: marin, coral, sage, shimmer, alloy. Hombres: cedar, ash, echo, verse, ballad.
+ */
 export const VOCES_EN_VIVO: Record<string, string> = {
-  // Las dos voces más claras y naturales del modelo: «marin» para ellas y «cedar» para ellos.
-  gerente: "marin", corporativo: "marin", hunter: "marin", fidelizacion: "marin", anuncios: "marin", marketing: "marin", alianzas: "marin", finanzas: "marin",
-  estratega: "cedar", sociedades: "cedar", ventas: "cedar", mercadolibre: "cedar", web: "cedar", disenador: "cedar", community: "cedar", reels: "cedar", seo: "cedar", compras: "cedar", logistica: "cedar",
+  gerente: "marin", corporativo: "sage", hunter: "coral", fidelizacion: "shimmer", anuncios: "alloy", marketing: "coral", alianzas: "shimmer", finanzas: "sage",
+  estratega: "cedar", sociedades: "ash", ventas: "echo", mercadolibre: "verse", web: "ballad", disenador: "ash", community: "echo", reels: "verse", seo: "ballad", compras: "cedar", logistica: "cedar",
+};
+
+/** Velocidad del habla por persona (0.25 a 1.5): separa a los que comparten voz y acompaña el carácter. */
+export const VELOCIDAD_VOZ: Record<string, number> = {
+  gerente: 1.0, corporativo: 0.97, hunter: 1.1, fidelizacion: 0.98, anuncios: 1.04, marketing: 1.08, alianzas: 1.12, finanzas: 0.95,
+  estratega: 1.1, sociedades: 1.03, ventas: 1.08, mercadolibre: 1.05, web: 0.97, disenador: 0.95, community: 1.12, reels: 1.1, seo: 0.94, compras: 0.96, logistica: 1.02,
 };
 
 const INSTRUCCIONES =
