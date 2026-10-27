@@ -89,37 +89,38 @@ export function accesorios(raiz: THREE.Object3D, id: string, h: { Head?: THREE.O
   arriba.normalize();
   const adelante = raiz.getWorldDirection(new THREE.Vector3()).setY(0).normalize();
   const lado = new THREE.Vector3().crossVectors(arriba, adelante).normalize();
-  const k = 1 / escala; // metros → unidades del modelo (los huesos no tienen escala propia)
-
+  void escala;
   const enHueso = (hueso: THREE.Object3D, mundo: THREE.Vector3, obj: THREE.Object3D) => {
     hueso.add(obj);
     obj.position.copy(hueso.worldToLocal(mundo.clone()));
     // Orientación: que el «adelante» del objeto apunte hacia adelante de la persona.
     const q = hueso.getWorldQuaternion(new THREE.Quaternion()).invert();
     obj.quaternion.copy(q.multiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), adelante)));
-    obj.scale.setScalar(k);
+    // Metros → unidades locales del hueso (en Mixamo los huesos vienen en centímetros).
+    const ws = hueso.getWorldScale(new THREE.Vector3());
+    obj.scale.setScalar(1 / Math.max(1e-6, (ws.x + ws.y + ws.z) / 3));
   };
   const mat = (color: number, metal = 0.6, rough = 0.35) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rough });
 
   if (s.anteojos !== undefined) {
     const g = new THREE.Group();
     const m = mat(s.anteojos, 0.7, 0.3);
-    const lente = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.9, roughness: 0.05, thickness: 0.002, transparent: true, opacity: 0.35 });
+    const lente = new THREE.MeshStandardMaterial({ color: 0x9fb3c8, transparent: true, opacity: 0.22, roughness: 0.1, metalness: 0.2, depthWrite: false });
     for (const sx of [-1, 1]) {
-      const aro = new THREE.Mesh(new THREE.TorusGeometry(0.021, 0.0022, 10, 32), m);
-      aro.position.set(sx * 0.031, 0, 0);
+      const aro = new THREE.Mesh(new THREE.TorusGeometry(0.0165, 0.0017, 10, 32), m);
+      aro.position.set(sx * 0.0255, 0, 0);
       g.add(aro);
-      const vidrio = new THREE.Mesh(new THREE.CircleGeometry(0.02, 24), lente);
-      vidrio.position.set(sx * 0.031, 0, 0);
+      const vidrio = new THREE.Mesh(new THREE.CircleGeometry(0.0158, 24), lente);
+      vidrio.position.set(sx * 0.0255, 0, -0.0005);
       g.add(vidrio);
-      const patilla = new THREE.Mesh(new THREE.BoxGeometry(0.0025, 0.0035, 0.11), m);
-      patilla.position.set(sx * 0.054, 0.004, -0.052);
+      const patilla = new THREE.Mesh(new THREE.BoxGeometry(0.002, 0.003, 0.1), m);
+      patilla.position.set(sx * 0.044, 0.003, -0.048);
       g.add(patilla);
     }
-    const puente = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.003, 0.003), m);
+    const puente = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.0025, 0.0025), m);
     g.add(puente);
     // Ojos: a ~45% de la cabeza hacia arriba y ~9,5 cm hacia adelante.
-    const pos = hw.clone().addScaledVector(arriba, altoCabeza * 0.5).addScaledVector(adelante, 0.095);
+    const pos = hw.clone().addScaledVector(arriba, altoCabeza * 0.52).addScaledVector(adelante, 0.085);
     enHueso(cabeza, pos, g);
   }
   if (s.vincha !== undefined) {
