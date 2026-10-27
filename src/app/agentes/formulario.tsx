@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { WA_TEXTO_SISTEMA } from "@/lib/oferta-sistema";
+import { medir } from "@/lib/medicion";
 
 const NUMERO = process.env.NEXT_PUBLIC_WHATSAPP_NUMERO || "5493541519630";
 const FACTURACION = ["Menos de $10.000.000", "$10 a $30 millones", "$30 a $100 millones", "Más de $100 millones"];
@@ -24,6 +25,8 @@ export function Formulario() {
       return;
     }
     setEstado("listo");
+    // Evento Lead para que Meta pueda optimizar la campaña de Conversiones por este formulario, no solo por vista de página.
+    medir("lead_sistema");
     const texto = `${WA_TEXTO_SISTEMA}. Soy ${d.nombre} de ${d.empresa} (${d.rubro}, ${d.ciudad}).`;
     window.location.href = `https://wa.me/${NUMERO}?text=${encodeURIComponent(texto)}`;
   };
