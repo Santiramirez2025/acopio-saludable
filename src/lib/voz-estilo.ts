@@ -22,5 +22,8 @@ export const ESTILO_VOZ: Record<string, string> = {
   compras: "Pablo: de pocas palabras, confiable, sabe de precios y de bolsas. Habla de kilos y de La Granja con total naturalidad.",
   logistica: "Gonza: el que arma y reparte: concreto, con buen humor, habla de pedidos, direcciones y horarios como quien los tiene en la cabeza.",
   seguridad: "Rodri: el de ciberseguridad: calmo, preciso, un poco paranoico con cariño. Habla de riesgos con ejemplos simples («es como dejar la puerta sin llave»), nunca asusta de más y siempre termina con qué hacer.",
+  financiamiento: "Facu: gestor con calle y paciencia de banco: conoce cada ventanilla, explica requisitos como si fueran pasos de receta, y festeja cada carpeta aprobada.",
+  mayorista: "Leo: viajante de toda la vida: cálido, insistente sin molestar, habla de kilos, reposición y «¿cuántos cajones te dejo?». Le encantan los negocios de barrio.",
+  marketplaces: "Cami: rápida, práctica, de apps y rankings; habla de «subir», «posicionar», «foto que vende». Entusiasta con los números por canal.",
   finanzas: "Ana: ordenada y serena, voz de confianza. Los números los dice redondos y con una lectura: qué significan.",
 };

@@ -1454,3 +1454,9 @@ test("vendedor: después de la lista por kilo propone un carrito armado y no pro
   // La reactivación no lleva un precio escrito a mano (la Despensa sale $35.500, no $35.000).
   assert.ok(!txt.includes("la Despensa de 4 kilos a $35.000"));
 });
+
+test("canales: Rappi deja al menos lo que deja la web", async () => {
+  const { precioCanal, netoCanal } = await import("./canales");
+  const p = precioCanal(35500, "rappi");
+  assert.ok(p > 35500 && netoCanal(p, "rappi") >= 35500);
+});

@@ -42,6 +42,9 @@ const LEMAS: Record<string, string> = {
   logistica: "Cada pedido a tiempo",
   finanzas: "Números claros",
   seguridad: "Nada entra sin permiso",
+  financiamiento: "Plata para crecer",
+  mayorista: "Por mayor y todas las semanas",
+  marketplaces: "En todas las apps",
 };
 
 const mat = (color: number, rough = 0.6, metal = 0, extra: Partial<THREE.MeshStandardMaterialParameters> = {}) =>
@@ -162,7 +165,7 @@ export function decorarOficina(l: Lugar) {
     caja(1.7, 1.0, 0.05, negro, S * (Math.abs(l.xIn) + 2.2), 1.75, l.z2 - 0.06, false);
   };
 
-  if (tema === "logistica" || tema === "compras" || tema === "mercadolibre") {
+  if (tema === "logistica" || tema === "compras" || tema === "mercadolibre" || tema === "mayorista" || tema === "marketplaces") {
     // Pila de cajas / bolsas de frutos secos
     const amarillo = mat(0xffe600, 0.6);
     const m = tema === "mercadolibre" ? amarillo : carton;
@@ -203,7 +206,12 @@ export function decorarOficina(l: Lugar) {
         c.fillText("Ruta de hoy", 30, 45);
       });
     }
-    if (tema === "mercadolibre") tele(graficoSubida);
+    if (tema === "mercadolibre" || tema === "mayorista" || tema === "marketplaces") tele(graficoSubida);
+    if (tema === "marketplaces") {
+      // Mochila de delivery
+      caja(0.45, 0.5, 0.4, mat(0xf97316, 0.7), px + S * 1.3, 0.25, pz + 0.25);
+      caja(0.45, 0.06, 0.4, mat(0xea580c, 0.7), px + S * 1.3, 0.53, pz + 0.25);
+    }
     l.bloquea(px - 0.4, px + S * 1.6, pz - 0.35, pz + 0.4);
   } else if (tema === "marketing" || tema === "community" || tema === "reels" || tema === "alianzas") {
     // Aro de luz con trípode y cámara
@@ -258,7 +266,7 @@ export function decorarOficina(l: Lugar) {
     caja(0.04, 0.04, 0.8, madera, px - S * 0.03, 0.78, pz);
     tele(graficoSubida);
     l.bloquea(px - 0.35, px + 0.35, pz - 0.45, pz + 0.45);
-  } else if (tema === "finanzas") {
+  } else if (tema === "finanzas" || tema === "financiamiento") {
     // Archivero y caja fuerte
     caja(0.5, 1.3, 0.6, mat(0x6b7280, 0.35, 0.6), px, 0.65, pz);
     for (let k = 0; k < 3; k++) caja(0.02, 0.03, 0.18, mat(0xd1d5db, 0.2, 0.8), px + S * 0.26, 0.3 + k * 0.42, pz);
