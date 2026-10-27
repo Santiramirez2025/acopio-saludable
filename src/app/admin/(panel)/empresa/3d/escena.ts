@@ -10,6 +10,7 @@ import { clone as clonarEsqueleto } from "three/examples/jsm/utils/SkeletonUtils
 import { huesos, sentar, type Huesos } from "./pose";
 import { decorarOficina, decorarPasillo } from "./decor";
 import { sonar } from "./sonidos";
+import { accesorios, pintar } from "./skins";
 
 export type AgenteEscena = {
   id: string;
@@ -402,7 +403,6 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
     const bocas: { m: THREE.Mesh; i: number }[] = [];
     raiz.traverse((z) => {
       const m = z as THREE.Mesh;
-      if (z.name === "Wolf3D_Headwear") z.visible = false;
       if (m.isMesh) {
         m.castShadow = true;
         m.receiveShadow = true;
@@ -411,13 +411,15 @@ export async function crearEscena(cont: HTMLElement, datos: DatosEscena, ev: Eve
           m.material = (m.material as THREE.MeshStandardMaterial).clone();
           (m.material as THREE.MeshStandardMaterial).color = color.clone().lerp(new THREE.Color(0xffffff), 0.15);
         }
-        if (/Beard/.test(m.name) && i % 3 === 0) m.visible = false;
         const idx = m.morphTargetDictionary?.mouthOpen;
         if (idx !== undefined) bocas.push({ m, i: idx });
       }
     });
+    // Cada uno con su skin: piel, barba, gorra, ropa y accesorios.
+    pintar(raiz, a.id, MUJERES.has(a.id));
     const h = sentar(raiz);
     raiz.updateMatrixWorld(true);
+    accesorios(raiz, a.id, h, raiz.scale.x);
     const cad = h.Hips.getWorldPosition(new THREE.Vector3());
     raiz.position.y += 0.6 - cad.y;
     const base = new Map<THREE.Bone, THREE.Quaternion>();
