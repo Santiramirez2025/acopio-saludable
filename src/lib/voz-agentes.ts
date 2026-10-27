@@ -23,8 +23,8 @@ export const VOCES_EN_VIVO: Record<string, string> = {
 
 /** Velocidad del habla por persona (0.25 a 1.5): separa a los que comparten voz y acompaña el carácter. */
 export const VELOCIDAD_VOZ: Record<string, number> = {
-  gerente: 1.0, corporativo: 0.97, hunter: 1.1, fidelizacion: 0.98, anuncios: 1.04, marketing: 1.08, alianzas: 1.12, finanzas: 0.95,
-  estratega: 1.1, sociedades: 1.03, ventas: 1.08, mercadolibre: 1.05, web: 0.97, disenador: 0.95, community: 1.12, reels: 1.1, seo: 0.94, compras: 0.96, logistica: 1.02,
+  gerente: 1.1, corporativo: 1.07, hunter: 1.2, fidelizacion: 1.08, anuncios: 1.14, marketing: 1.18, alianzas: 1.22, finanzas: 1.05,
+  estratega: 1.2, sociedades: 1.13, ventas: 1.18, mercadolibre: 1.15, web: 1.07, disenador: 1.05, community: 1.22, reels: 1.2, seo: 1.04, compras: 1.06, logistica: 1.12,
 };
 
 const INSTRUCCIONES =
