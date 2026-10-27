@@ -13,7 +13,7 @@ import { claveValida, ultimoErrorMeta } from "@/lib/meta-mensajes";
 import { cambiarEstado, guardarPedido, marcarLeida, registrarSalida, ventanaAbierta } from "@/lib/whatsapp-memoria";
 import { enviarMedia, enviarSaliente, subirMedia } from "@/lib/whatsapp-cloud";
 import { marca } from "@/lib/whatsapp-media";
-import { ID, planVer, textoParaPanel, type Saliente } from "@/lib/whatsapp-interactivo";
+import { ID, ordenarParaVer, planVer, textoParaPanel, type Saliente } from "@/lib/whatsapp-interactivo";
 import { combosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
 import { urlSitio } from "@/lib/sitio";
@@ -76,9 +76,7 @@ export async function POST(req: Request) {
     const cfgArg = await leerConfig();
     const extra: Saliente[] = cuerpo.combos
       ? planVer(
-          (await combosTienda({ activo: true, tipo: "COMBO" }))
-            .filter((x) => x.disponible)
-            .sort((a, b) => a.precio - b.precio)
+          ordenarParaVer((await combosTienda({ activo: true, tipo: "COMBO" })).filter((x) => x.disponible))
             .map((x) => ({ slug: x.slug, nombre: x.nombre, precio: pesos(Math.round(x.precio)), argumento: argumentoCombo(x, cfgArg.descuentoTransferenciaPct, pesos).corto })),
           `${urlSitio()}/combos`,
         )

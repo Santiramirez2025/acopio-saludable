@@ -13,7 +13,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
@@ -530,12 +530,10 @@ export async function pensar(c: {
     const salientes = planSinApuro(c.nombre, urlSitio(), yaMandoReal ? undefined : `${urlSitio()}${REALES[0] ? "/img/galeria/real-asi-llega.jpg" : ""}`);
     return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
   }
-  // «Ver los productos»: se muestran, sin preguntar ni gastar el modelo. Primero el de entrada, después por precio.
+  // «Ver los productos»: se muestran, sin preguntar ni gastar el modelo. Primero los que vendemos, después por precio.
   if (quiereVer(c.texto)) {
     const cfgArg = await leerConfig();
-    const combos = (await combosTienda({ activo: true, tipo: "COMBO" }))
-      .filter((x) => x.disponible)
-      .sort((a, b) => a.precio - b.precio)
+    const combos = ordenarParaVer((await combosTienda({ activo: true, tipo: "COMBO" })).filter((x) => x.disponible))
       .map((x) => ({ slug: x.slug, nombre: x.nombre, precio: pesos(Math.round(x.precio)), argumento: argumentoCombo(x, cfgArg.descuentoTransferenciaPct, pesos).corto }));
     if (combos.length) return { salientes: planVer(combos, `${urlSitio()}/combos`), respuesta: { texto: "" }, derivar: false, conIA: false };
   }

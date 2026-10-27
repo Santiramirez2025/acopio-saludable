@@ -331,6 +331,19 @@ export function planSinApuro(nombre: string | null, tienda: string, fotoReal?: s
   ];
 }
 
+// «Ver combos»: primero los que vendemos (la Alacena es la oferta de entrada, la Mesa navideña es la de la temporada,
+// la Despensa de 4 kilos es la del anuncio) y después el resto por precio. Ordenando solo por precio, con el tope de 6
+// renglones y 3 botones, la Alacena ($45.000) y la Mesa navideña ($49.000) no aparecían nunca y los botones eran los
+// tres más baratos (la Despensa chica ni llega a la compra mínima de Córdoba).
+export const COMBOS_PRIMERO = ["alacena-de-frutos-secos", "mesa-navidena", "despensa-4-kilos"];
+export function ordenarParaVer<T extends { slug: string; precio: number }>(combos: T[]): T[] {
+  const rango = (slug: string) => {
+    const i = COMBOS_PRIMERO.indexOf(slug);
+    return i < 0 ? COMBOS_PRIMERO.length : i;
+  };
+  return [...combos].sort((a, b) => rango(a.slug) - rango(b.slug) || a.precio - b.precio);
+}
+
 export function planVer(combos: { slug: string; nombre: string; precio: string; argumento: string }[], _tienda?: string): Saliente[] {
   // Los combos a la vista, no escondidos en una lista: la lista se abría poco y la charla moría ahí.
   const renglones = combos.slice(0, 6).map((c) => `• ${c.nombre}: ${c.precio}`);
