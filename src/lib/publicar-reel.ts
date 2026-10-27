@@ -35,7 +35,7 @@ async function instagram(ig: string, token: string, params: Record<string, strin
       await dormir(5000);
       const s = await graph(id, token, { fields: "status_code,status" }, "GET");
       if (s.status_code === "FINISHED") break;
-      if (s.status_code === "ERROR" || s.status_code === "EXPIRED") throw new Error(`Meta no pudo procesar el video: ${String(s.status ?? s.status_code)}`);
+      if (s.status_code === "ERROR" || s.status_code === "EXPIRED") throw new Error(`Meta no pudo procesar el archivo: ${String(s.status ?? s.status_code)}`);
       if (i === 39) throw new Error("Meta tardó demasiado en procesar el video");
     }
     const p = await graph(`${ig}/media_publish`, token, { creation_id: id });
@@ -62,6 +62,14 @@ async function facebook(pagina: string, token: string, video: string, texto: str
   } catch (e) {
     return { donde, ok: false, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+/** Historia de imagen (JPG/PNG público) en Instagram. Sirve cuando Metricool llega a su tope de historias. */
+export async function publicarHistoriaImagen(imagen: string): Promise<Resultado[]> {
+  const p = await paginaMeta();
+  if (!p) return [{ donde: "Meta", ok: false, error: "El token no ve la página de Acopio" }];
+  if (!p.instagram) return [{ donde: "Instagram", ok: false, error: "La página no tiene Instagram conectado" }];
+  return [await instagram(p.instagram, p.token, { media_type: "STORIES", image_url: imagen }, "Instagram historia (imagen)")];
 }
 
 export async function publicarReel(video: string, texto: string, opciones: { historia?: boolean; facebook?: boolean } = {}): Promise<Resultado[]> {
