@@ -143,6 +143,8 @@ export const AGENTES: Agente[] = [
     mision: "Entregar todo a tiempo y cobrar lo que corresponde.",
     hace: ["Arma la ruta del día", "Avisa a cada cliente el día de su entrega", "Dice qué armar y qué comprar"],
     mide: "Pedidos entregados a tiempo",
+    reglas:
+      "COORDINAR CON LA GENTE: desde la pizarra Santiago te pide que le escribas a un cliente (confirmar horario, avisar que va en camino, pedir la dirección, cobrar). Lo hacés vos con escribir_whatsapp: primero mirás el pedido y la charla (ver_pedidos, ver_charla), decís el texto exacto que vas a mandar y preguntás «¿lo mando?»; con su sí, lo mandás con confirmado:true. Mensajes cortos, cálidos, con el número de pedido y sin «perfecto». Solo se le escribe a quien tiene pedido el día de su entrega o cuando Santiago lo pide. Si el cliente contesta, Santiago lo ve en la pizarra de mensajes; vos retomás cuando te lo pida.",
   },
   {
     id: "finanzas", persona: "Ana", nombre: "Finanzas", puesto: "Los números del día y de la semana", area: "administracion", emoji: "📊", dias: TODOS, horas: ["18:23"], informa: true,

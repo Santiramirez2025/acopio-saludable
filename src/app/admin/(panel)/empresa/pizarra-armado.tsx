@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PedidoArmado, Pizarra } from "@/lib/armado";
 import { linkRuta } from "@/lib/mapa";
+import { Ficha, type AgenteVista } from "./oficina";
 
 function etiquetaCombo(slug: string): string {
   const t = slug.replace(/^c-/, "").replace(/-/g, " ");
@@ -83,8 +84,10 @@ function Tarjeta({ p, puedeMarcar, alListo }: { p: PedidoArmado; puedeMarcar: bo
   );
 }
 
-export function PizarraArmado({ p, puedeMarcar, volver }: { p: Pizarra; puedeMarcar: boolean; volver?: string }) {
+export function PizarraArmado({ p, puedeMarcar, volver, gonza }: { p: Pizarra; puedeMarcar: boolean; volver?: string; gonza?: AgenteVista }) {
   const router = useRouter();
+  // Hablar con Gonza desde la pizarra: le das órdenes por mensaje o por voz y él coordina con la gente.
+  const [charla, setCharla] = useState(false);
   const [error, setError] = useState("");
   const [verTotales, setVerTotales] = useState(true);
   useEffect(() => {
@@ -127,6 +130,7 @@ export function PizarraArmado({ p, puedeMarcar, volver }: { p: Pizarra; puedeMar
           <div className="mt-1 text-xl text-white/60">{unidades ? `${unidades} productos · ` : ""}listos {p.listos.length} · en camino {p.enCamino.length} · actualizado {p.actualizado}</div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {gonza ? <button onClick={() => setCharla(true)} className="rounded-full bg-amber-400 px-5 py-3 text-lg font-semibold text-black">💬 Hablar con Gonza</button> : null}
           {puedeMarcar ? <button onClick={() => void mandarWa()} className="rounded-full bg-emerald-500 px-5 py-3 text-lg font-semibold text-black">{enviado || "📲 Reparto a mi WhatsApp"}</button> : null}
           {ruta ? <a href={ruta} target="_blank" rel="noopener noreferrer" className="rounded-full bg-sky-500 px-5 py-3 text-lg font-semibold text-white">🗺️ Ruta del reparto</a> : null}
           <button onClick={() => setVerTotales((v) => !v)} className="rounded-full bg-white/10 px-5 py-3 text-lg">{verTotales ? "Ocultar totales" : "Ver totales"}</button>
@@ -136,6 +140,7 @@ export function PizarraArmado({ p, puedeMarcar, volver }: { p: Pizarra; puedeMar
         </div>
       </header>
       {error ? <p className="mt-3 text-xl text-red-400">{error}</p> : null}
+      {charla && gonza ? <Ficha a={gonza} tv={false} angosta onCerrar={() => setCharla(false)} onCambio={() => router.refresh()} /> : null}
 
       {verTotales && p.totales.length ? (
         <section className="mt-6 rounded-3xl bg-amber-400/10 p-5">
