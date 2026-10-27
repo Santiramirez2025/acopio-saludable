@@ -13,7 +13,7 @@ async function main() {
   await db.setting.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
 
   const filas = leerCatalogoCsv(readFileSync(join(DATA, "distrimay_catalogo.csv"), "utf8"));
-  const resumen = await importarCatalogo(db, filas, { origen: "seed", estadoNuevos: "ACTIVO" });
+  const resumen = await importarCatalogo(db, filas, { origen: "seed", estadoNuevos: "ACTIVO", soloAltas: true });
   console.log("Catálogo:", resumen);
 
   const rutaFotos = join(DATA, "distrimay_fotos.json");
