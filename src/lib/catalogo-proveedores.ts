@@ -114,7 +114,22 @@ export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   { codigo: "LG-YUKA-GALL-VAI", codigoProveedor: "903-004", producto: "Galletas de vainilla sin TACC", marca: "Yuka", presentacion: "x 150 g", categoria: "Galletas, alfajores y discos", contenido: 150, unidad: "g", costo: 2229, pesoBrutoG: 170 },
   { codigo: "LG-DONINAS-COCO", codigoProveedor: "907-008", producto: "Galletitas de coco y dulce de leche", marca: "Doninas", presentacion: "x 200 g", categoria: "Galletas, alfajores y discos", contenido: 200, unidad: "g", costo: 2700, pesoBrutoG: 230 },
   { codigo: "LG-DONINAS-CHIPS", codigoProveedor: "907-007", producto: "Galletitas con chips de chocolate", marca: "Doninas", presentacion: "x 200 g", categoria: "Galletas, alfajores y discos", contenido: 200, unidad: "g", costo: 2700, pesoBrutoG: 230 },
+  // ——— Navidad 2026 (combo «Mesa navideña», experimento E3): costos de La Granja del 27/10 que pasó Pablo,
+  // precios de venta sugeridos por él (ya con el recargo de la tienda): 6.500 · 9.500 · 14.000 · 8.500 · 9.000 · 2.000.
+  // Sin foto propia todavía: la ficha muestra la ilustración de la casa hasta que Lucas tenga las reales. ———
+  { codigo: "LG-GARRAPMANI-500", producto: "Garrapiñada de maní", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutos secos y mix", contenido: 500, unidad: "g", costo: 3880, margen: 0.5512, pesoBrutoG: 520, porQueLoElegimos: "La garrapiñada de maní de las fiestas, crocante y acaramelada. Medio kilo para la mesa navideña." },
+  { codigo: "LG-ALMGARRAP-250", producto: "Almendras garrapiñadas", marca: SUELTO, presentacion: "x 250 g", categoria: "Frutos secos y mix", contenido: 250, unidad: "g", costo: 6320, margen: 0.3918, pesoBrutoG: 270, porQueLoElegimos: "Almendras enteras con baño de caramelo crocante: un clásico de la mesa dulce." },
+  { codigo: "LG-PASASCHOC-400", producto: "Pasas de uva con chocolate sin TACC", marca: SUELTO, presentacion: "x 400 g", categoria: "Frutas desecadas", contenido: 400, unidad: "g", costo: 9820, margen: 0.3201, pesoBrutoG: 420 },
+  { codigo: "LG-PANDULCE-CERAL", producto: "Pan dulce diet con frutas", marca: "Ceral", presentacion: "x 400 g", categoria: "Almacen", contenido: 400, unidad: "g", costo: 5570, margen: 0.413, pesoBrutoG: 450 },
+  // Medio kilo del Mix Clásico con cajú, para el combo. Costo conservador de Pablo (receta con La Granja).
+  { codigo: "TG-MIXC-500", codigoProveedor: "propio", producto: "Mix Clásico con cajú", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutos secos y mix", contenido: 500, unidad: "g", costo: 7000, margen: 0.1905, pesoBrutoG: 520, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní y pasas de uva. Sin girasol. Medio kilo." },
+  { codigo: "LG-BOLSAREGALO", producto: "Bolsa regalo navideña", marca: SUELTO, presentacion: "x 1 unidad", categoria: "Almacen", contenido: 1, unidad: "g", costo: 1500, margen: 0.2346, pesoBrutoG: 50, porQueLoElegimos: "Bolsa para regalo: armamos tu pedido adentro, listo para entregar." },
 ];
+
+/** Productos del catálogo propio que todavía no tienen foto propia en public/img/productos/prov. */
+const SIN_FOTO_PROPIA = ["TG-ALFAJORFS", "LG-SAL", "LG-GARRAPMANI-500", "LG-ALMGARRAP-250", "LG-PASASCHOC-400", "LG-PANDULCE-CERAL", "LG-BOLSAREGALO"];
+/** Presentaciones que usan la foto de otra (mismo producto, otro peso). */
+const FOTO_DE: Record<string, string> = { "TG-MIXC-500": "TG-MIXC" };
 
 export function precioDe(p: ProductoProveedor): number {
   return Math.round(p.costo * (1 + (p.margen ?? MARGEN_FRACCIONADO)));
@@ -137,6 +152,8 @@ export const COMBOS_PROVEEDORES: ComboProveedor[] = [
   { slug: "mix-caju-banana", nombre: "Mix de cajú y banana · 2 kilos", descuentoPct: 5, destacado: true, items: [{ codigo: "TG-MIXCAJUBAN", cantidad: 2 }] },
   { slug: "alfajorcitos-caseros", nombre: "Kit alfajorcitos caseros", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-TAPITAS-VAI", cantidad: 2 }, { codigo: "LG-TAPITAS-CHOC", cantidad: 1 }, { codigo: "LG-DDL-REPOSTERO", cantidad: 1 }] },
   { slug: "merienda-sin-tacc-yuka", nombre: "Merienda sin TACC", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-YUKA-ALF-DDL", cantidad: 1 }, { codigo: "LG-YUKA-ALF-CHOC", cantidad: 1 }, { codigo: "LG-YUKA-GALL-VAI", cantidad: 1 }, { codigo: "LG-DONINAS-COCO", cantidad: 1 }, { codigo: "LG-DONINAS-CHIPS", cantidad: 1 }] },
+  // Combo Navidad (opción A de Pablo, 27/10): costo $34.090, se vende a $49.000 (margen 30,4%). La suma suelta da $49.500.
+  { slug: "mesa-navidena", nombre: "Mesa navideña", descuentoPct: 1.01, destacado: true, items: [{ codigo: "LG-GARRAPMANI-500", cantidad: 1 }, { codigo: "LG-ALMGARRAP-250", cantidad: 1 }, { codigo: "LG-PASASCHOC-400", cantidad: 1 }, { codigo: "LG-PANDULCE-CERAL", cantidad: 1 }, { codigo: "TG-MIXC-500", cantidad: 1 }, { codigo: "LG-BOLSAREGALO", cantidad: 1 }] },
   { slug: "arranque-gym", nombre: "Pack gym del mes", descuentoPct: 5, items: [{ codigo: "LG-GPROTE", cantidad: 1 }, { codigo: "LG-AVENA", cantidad: 1 }, { codigo: "LG-CACAO-250", cantidad: 1 }, { codigo: "LG-ALMNP-500", cantidad: 1 } ] },
 ];
 
@@ -172,9 +189,11 @@ export const OCULTOS_PROPIOS = [
 ];
 
 /** Fotos propias, generadas con el estilo de los anuncios (public/img/productos/prov y combos/v2). */
-const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !["TG-ALFAJORFS", "LG-SAL"].includes(c)));
-export const fotoProducto = (codigo: string) => (CON_FOTO.has(codigo) ? `/img/productos/prov/${codigo.toLowerCase()}.webp` : null);
-export const fotoCombo = (slug: string) => `/img/combos/v3/${slug}.webp`;
+const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !SIN_FOTO_PROPIA.includes(c)));
+export const fotoProducto = (codigo: string) => (CON_FOTO.has(codigo) ? `/img/productos/prov/${(FOTO_DE[codigo] ?? codigo).toLowerCase()}.webp` : null);
+/** Combos sin portada propia en public/img/combos/v3: sin foto, la página muestra los productos (no una imagen rota). */
+const COMBOS_SIN_PORTADA = new Set(["mesa-navidena"]);
+export const fotoCombo = (slug: string) => (COMBOS_SIN_PORTADA.has(slug) ? null : `/img/combos/v3/${slug}.webp`);
 
 OCULTAR.codigos.push(...Object.keys(REEMPLAZOS));
 

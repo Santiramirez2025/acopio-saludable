@@ -80,7 +80,8 @@ export default async function ComboPagina({ params }: Props) {
           ))}
         </ul>
         </div>
-        <div className="h-fit space-y-3 rounded-xl border border-tierra-200 bg-white p-5">
+        {/* En el celular el precio y «Agregar combo» van antes de la lista: si no, quedan abajo del pliegue. */}
+        <div className="order-first h-fit space-y-3 rounded-xl border border-tierra-200 bg-white p-5 lg:order-none">
           {c.ahorro > 0 && <p className="text-sm tabular-nums text-stone-600 line-through">{pesos(c.precioLista)}</p>}
           <p className="text-3xl font-semibold tabular-nums">{pesos(c.precio)}</p>
           {c.ahorro > 0 && <p className="text-sm text-acopio-700">Ahorrás {pesos(c.ahorro)} ({c.descuentoPct}%)</p>}
