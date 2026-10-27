@@ -123,7 +123,7 @@ export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   { codigo: "LG-PANDULCE-CERAL", producto: "Pan dulce diet con frutas", marca: "Ceral", presentacion: "x 400 g", categoria: "Almacen", contenido: 400, unidad: "g", costo: 5570, margen: 0.413, pesoBrutoG: 450 },
   // Medio kilo del Mix Clásico con cajú, para el combo. Costo conservador de Pablo (receta con La Granja).
   { codigo: "TG-MIXC-500", codigoProveedor: "propio", producto: "Mix Clásico con cajú", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutos secos y mix", contenido: 500, unidad: "g", costo: 7000, margen: 0.1905, pesoBrutoG: 520, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní y pasas de uva. Sin girasol. Medio kilo." },
-  { codigo: "LG-BOLSAREGALO", producto: "Bolsa regalo navideña", marca: SUELTO, presentacion: "x 1 unidad", categoria: "Almacen", contenido: 1, unidad: "g", costo: 1500, margen: 0.2346, pesoBrutoG: 50, porQueLoElegimos: "Bolsa para regalo: armamos tu pedido adentro, listo para entregar." },
+  { codigo: "LG-BOLSAREGALO", producto: "Bolsa regalo navideña", marca: SUELTO, presentacion: "x 1 unidad", categoria: "Almacen", contenido: 0 /* no se vende por peso: sin «1 g» en la ficha */, unidad: "g", costo: 1500, margen: 0.2346, pesoBrutoG: 50, porQueLoElegimos: "Bolsa para regalo: armamos tu pedido adentro, listo para entregar." },
 ];
 
 /** Productos del catálogo propio que todavía no tienen foto propia en public/img/productos/prov. */
