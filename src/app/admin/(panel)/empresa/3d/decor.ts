@@ -41,6 +41,7 @@ const LEMAS: Record<string, string> = {
   compras: "Comprar mejor, siempre",
   logistica: "Cada pedido a tiempo",
   finanzas: "Números claros",
+  seguridad: "Nada entra sin permiso",
 };
 
 const mat = (color: number, rough = 0.6, metal = 0, extra: Partial<THREE.MeshStandardMaterialParameters> = {}) =>
@@ -265,6 +266,41 @@ export function decorarOficina(l: Lugar) {
     cil(0.08, 0.08, 0.03, mat(0xd9a441, 0.2, 0.9), px + S * 1.03, 0.32, pz);
     tele(graficoSubida);
     l.bloquea(px - 0.35, px + S * 1.1, pz - 0.4, pz + 0.4);
+  } else if (tema === "seguridad") {
+    // Rack de servidores con luces, candado grande y pantalla con «todo protegido».
+    const rack = caja(0.6, 1.8, 0.7, mat(0x111827, 0.35, 0.6), px, 0.9, pz);
+    void rack;
+    for (let k = 0; k < 7; k++) {
+      caja(0.56, 0.16, 0.02, mat(0x1f2937, 0.4, 0.5), px, 0.25 + k * 0.23, pz - S * 0.36, false);
+      for (let q = 0; q < 4; q++) add(new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 8), new THREE.MeshBasicMaterial({ color: q === 1 && k % 3 === 0 ? 0xf59e0b : 0x22c55e })), px - 0.18 + q * 0.1, 0.25 + k * 0.23, pz - S * 0.38, false);
+    }
+    const cuerpo = cil(0.17, 0.17, 0.22, mat(0xd9a441, 0.3, 0.8), px + S * 0.95, 0.11, pz + 0.1);
+    void cuerpo;
+    const arco = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.025, 10, 24, Math.PI), mat(0x9ca3af, 0.3, 0.9));
+    add(arco, px + S * 0.95, 0.22, pz + 0.1);
+    tele((c) => {
+      c.fillStyle = "#020617";
+      c.fillRect(0, 0, 640, 360);
+      c.strokeStyle = "#22c55e";
+      c.lineWidth = 10;
+      c.beginPath();
+      c.moveTo(320, 60);
+      c.lineTo(430, 100);
+      c.lineTo(420, 210);
+      c.lineTo(320, 290);
+      c.lineTo(220, 210);
+      c.lineTo(210, 100);
+      c.closePath();
+      c.stroke();
+      c.fillStyle = "#22c55e";
+      c.font = "700 36px Inter, sans-serif";
+      c.textAlign = "center";
+      c.fillText("TODO PROTEGIDO", 320, 335);
+      c.font = "500 22px monospace";
+      c.fillStyle = "#86efac";
+      for (let k = 0; k < 6; k++) c.fillText(`ok · ${["vercel", "meta", "mercado pago", "neon", "whatsapp", "deps"][k]}`, 320, 120 + k * 28);
+    });
+    l.bloquea(px - 0.4, px + S * 1.2, pz - 0.45, pz + 0.45);
   } else if (tema === "web" || tema === "seo" || tema === "anuncios") {
     // Rack con luces y pantalla de métricas
     caja(0.6, 1.6, 0.6, mat(0x111827, 0.4, 0.5), px, 0.8, pz);

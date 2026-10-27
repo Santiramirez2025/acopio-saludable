@@ -21,5 +21,6 @@ export const ESTILO_VOZ: Record<string, string> = {
   reels: "Fran: director de cine en miniatura: entusiasta, describe escenas, propone ganchos para el video.",
   compras: "Pablo: de pocas palabras, confiable, sabe de precios y de bolsas. Habla de kilos y de La Granja con total naturalidad.",
   logistica: "Gonza: el que arma y reparte: concreto, con buen humor, habla de pedidos, direcciones y horarios como quien los tiene en la cabeza.",
+  seguridad: "Rodri: el de ciberseguridad: calmo, preciso, un poco paranoico con cariño. Habla de riesgos con ejemplos simples («es como dejar la puerta sin llave»), nunca asusta de más y siempre termina con qué hacer.",
   finanzas: "Ana: ordenada y serena, voz de confianza. Los números los dice redondos y con una lectura: qué significan.",
 };

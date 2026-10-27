@@ -2,7 +2,7 @@
 
 // La empresa en la TV, sin 3D: un mural liviano que anda en cualquier Smart TV (las TVs no se bancan
 // la oficina 3D y quedaba en blanco). Se diseña a 1920×1080 y se escala a la pantalla que tenga la TV.
-// Muestra los números del día, las 19 personas con su estado y lo último que hizo cada una, rotando.
+// Muestra los números del día, las 20 personas con su estado y lo último que hizo cada una, rotando.
 // Se maneja desde el celular (panel → «Mostrar en la TV»); el control remoto no hace falta.
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -78,7 +78,7 @@ export function MuralTv({ datos }: { datos: DatosOficina }) {
           <div>
             <div style={{ fontSize: 64, fontWeight: 900, lineHeight: 1 }}>Acopio.</div>
             <div style={{ fontSize: 26, color: "rgba(255,255,255,.7)", marginTop: 8 }}>
-              19 personas trabajando para vos · {trabajan.length ? `${cumplieron} de ${trabajan.length} ya trabajaron hoy` : "hoy el equipo descansa"}
+              {datos.agentes.length} personas trabajando para vos · {trabajan.length ? `${cumplieron} de ${trabajan.length} ya trabajaron hoy` : "hoy el equipo descansa"}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
