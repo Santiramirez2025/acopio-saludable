@@ -24,6 +24,14 @@ async function candidatos(): Promise<Candidato[]> {
           BETWEEN now() - interval '6 days' AND now() - interval '20 hours'
       AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" s WHERE s."telefono" = c."telefono" AND s."id" LIKE 'seg.%' AND s."fecha" > now() - interval '7 days')
       AND NOT EXISTS (SELECT 1 FROM "Order" o WHERE right(regexp_replace(o."telefono", '[^0-9]', '', 'g'), 10) = right(c."telefono", 10) AND o."createdAt" > now() - interval '7 days')
+      -- Un agente o Santiago le escribió en las últimas 24 h: no se le suma un automático.
+      AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" h WHERE h."telefono" = c."telefono" AND h."de" = 'persona' AND h."fecha" > now() - interval '24 hours')
+      -- Máximo un automático sin respuesta: si ya hubo uno (recordatorio, reactivación, seguimiento) después de su último mensaje, no va otro.
+      AND NOT EXISTS (
+        SELECT 1 FROM "WhatsappMensaje" a WHERE a."telefono" = c."telefono" AND a."de" = 'bot'
+          AND (a."id" LIKE 'rec.%' OR a."id" LIKE 'react.%' OR a."id" LIKE 'seg.%' OR a."id" LIKE 'recompra.%')
+          AND a."fecha" > (SELECT max(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente')
+      )
     ORDER BY c."ultimoMensaje" DESC
     LIMIT ${TOPE}`;
 }

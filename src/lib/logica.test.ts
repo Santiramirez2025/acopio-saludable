@@ -1460,3 +1460,23 @@ test("canales: Rappi deja al menos lo que deja la web", async () => {
   const p = precioCanal(35500, "rappi");
   assert.ok(p > 35500 && netoCanal(p, "rappi") >= 35500);
 });
+
+import { dioPorCerrada } from "./whatsapp-recordatorio";
+test("venta dada por hecha sin pedido: se avisa (Olga 26/10)", () => {
+  assert.ok(dioPorCerrada("Dale, Olga. Quedó la Despensa de 4 kilos por $35.500, con entrega en Esparta 437 y Beker, y la pagás al recibir. Gracias por la compra, que la disfrutes."));
+  assert.ok(dioPorCerrada("Tu pedido queda agendado para el jueves."));
+  assert.ok(!dioPorCerrada("La Alacena sale $45.000. ¿Te la separo?"));
+});
+
+test("recordatorio: carrito con total real o propuesta concreta, nunca la duda genérica si hay precio", () => {
+  const conCarrito = planRecordatorio({ nombre: "Sara Muñoz", anuncioTitulo: null, pedido: "/carrito?p=TG-NUEZ*1" }, { total: 25000, transferencia: 23000, resumen: "Nuez Mariposa" }) as { cuerpo: string; botones: { id: string }[] };
+  assert.equal(conCarrito.cuerpo, "¡Hola Sara! Te guardamos tu pedido: Nuez Mariposa, $25.000 ($23.000 por transferencia). ¿Te lo separamos?");
+  assert.equal(conCarrito.botones[0].id, "op|Sí, separalo");
+  const oferta = { nombre: "Alacena de frutos secos", total: 45000, transferencia: 41400, resumen: "1 kg de nuez, 1 kg de mix con cajú y 1 kg de pasas" };
+  const sinNada = planRecordatorio({ nombre: "Azu", anuncioTitulo: "La ves antes de pagar · Carlos Paz", pedido: null }, null, oferta) as { cuerpo: string; botones: { titulo: string }[] };
+  assert.match(sinNada.cuerpo, /^¡Hola Azu! Para arrancar te propongo la Alacena de frutos secos: .*\$45\.000 \(\$41\.400 por transferencia\)\. ¿Te la separamos\?$/);
+  assert.doesNotMatch(sinNada.cuerpo, /sin cargo|mañana|duda/);
+  assert.ok(sinNada.botones.some((b) => /ciudad/.test(b.titulo)));
+  // Sin precio a mano, sale el texto de siempre.
+  assert.match((planRecordatorio({ nombre: null, anuncioTitulo: null, pedido: null }) as { cuerpo: string }).cuerpo, /duda/);
+});
