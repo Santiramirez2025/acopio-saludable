@@ -12,11 +12,28 @@ import { AVISO_SUPLEMENTOS, SITIO, urlSitio } from "@/lib/sitio";
 export const dynamic = "force-dynamic";
 
 // Datos del negocio para buscadores: tienda online con base en Villa Carlos Paz, sin local a la calle.
+// Las redes (sameAs) y el teléfono le dicen a Google que el sitio, el Instagram, el YouTube y el perfil de
+// negocio son la misma entidad: es lo que arma el panel de marca aunque el Perfil de Negocio tarde en verificarse.
+export const REDES = {
+  instagram: "https://www.instagram.com/acopio.saludable/",
+  youtube: "https://www.youtube.com/@AcopioSaludable",
+  facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL || "",
+};
 const NEGOCIO = {
   "@context": "https://schema.org",
-  "@type": "OnlineStore",
+  "@type": ["OnlineStore", "HealthFoodStore"],
+  "@id": `${urlSitio()}/#negocio`,
   name: SITIO.nombre,
+  alternateName: ["Acopio Saludable Carlos Paz", "Acopio Saludable dietética"],
   url: urlSitio(),
+  telephone: "+54 9 3541 51-9630",
+  priceRange: "$$",
+  currenciesAccepted: "ARS",
+  paymentAccepted: "Transferencia, Mercado Pago, efectivo",
+  openingHoursSpecification: [{ "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], opens: "00:00", closes: "23:59" }],
+  sameAs: Object.values(REDES).filter(Boolean),
+  contactPoint: [{ "@type": "ContactPoint", contactType: "sales", telephone: "+54 9 3541 51-9630", availableLanguage: "es", areaServed: "AR" }],
+  founder: { "@type": "Person", name: "Santiago Agustín Ramírez" },
   logo: `${urlSitio()}/marca/acopio-isotipo.svg`,
   image: `${urlSitio()}/img/portadas/hero.webp`,
   description: SITIO.descripcion,
@@ -45,6 +62,11 @@ export default async function TiendaLayout({ children }: { children: React.React
             <div>
               <p className="text-white"><Logo invertido conBajada /></p>
               <p className="mt-1">{SITIO.base}. Envíos a todo el país.</p>
+              <p className="mt-2 flex flex-wrap gap-x-4">
+                <a href={REDES.instagram} target="_blank" rel="noopener noreferrer" className="flex min-h-[48px] items-center hover:text-white hover:underline">Instagram</a>
+                <a href={REDES.youtube} target="_blank" rel="noopener noreferrer" className="flex min-h-[48px] items-center hover:text-white hover:underline">YouTube</a>
+                {REDES.facebook ? <a href={REDES.facebook} target="_blank" rel="noopener noreferrer" className="flex min-h-[48px] items-center hover:text-white hover:underline">Facebook</a> : null}
+              </p>
               <Link href="/sin-tacc" className="flex min-h-[48px] items-center font-semibold text-white underline underline-offset-4">Productos sin TACC</Link>
               <Link href="/dietetica-villa-carlos-paz" className="flex min-h-[48px] items-center hover:text-white hover:underline">Dietética en Villa Carlos Paz</Link>
             </div>
