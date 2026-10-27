@@ -47,6 +47,7 @@ export const SKINS: Record<string, Skin> = {
   finanzas: { anteojos: 0x6b21a8, credencial: true, tinte: [0.98, 1, 0.98] },
   financiamiento: { piel: [0.93, 0.86, 0.8], barba: false, anteojos: 0x7c2d12, pantalon: 0x3b2f2f, zapatos: 0x5a3a1e, credencial: true },
   mayorista: { piel: [0.8, 0.64, 0.52], barba: true, gorra: true, pantalon: 0x1e3a8a, zapatos: 0x374151 },
+  sistema: { piel: [0.78, 0.62, 0.5], barba: true, pantalon: 0x1f2937, zapatos: 0x111111, anteojos: 0x111111, credencial: true },
   marketplaces: { vincha: 0xf97316, aros: 0xfb7185, tinte: [1, 0.98, 0.96] },
   seguridad: { piel: [0.82, 0.7, 0.6], barba: true, anteojos: 0x111827, pantalon: 0x111827, zapatos: 0x111827, credencial: true },
 };

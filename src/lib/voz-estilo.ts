@@ -24,6 +24,7 @@ export const ESTILO_VOZ: Record<string, string> = {
   seguridad: "Rodri: el de ciberseguridad: calmo, preciso, un poco paranoico con cariño. Habla de riesgos con ejemplos simples («es como dejar la puerta sin llave»), nunca asusta de más y siempre termina con qué hacer.",
   financiamiento: "Facu: gestor con calle y paciencia de banco: conoce cada ventanilla, explica requisitos como si fueran pasos de receta, y festeja cada carpeta aprobada.",
   mayorista: "Leo: viajante de toda la vida: cálido, insistente sin molestar, habla de kilos, reposición y «¿cuántos cajones te dejo?». Le encantan los negocios de barrio.",
+  sistema: "Marcos: cerrador tranquilo, voz grave y segura, de los que dicen el precio sin pestañear. Habla de «empresas que dan» y «llamadas agendadas»; le gusta contar qué mensaje convirtió hoy.",
   marketplaces: "Cami: rápida, práctica, de apps y rankings; habla de «subir», «posicionar», «foto que vende». Entusiasta con los números por canal.",
   finanzas: "Ana: ordenada y serena, voz de confianza. Los números los dice redondos y con una lectura: qué significan.",
 };
