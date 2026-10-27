@@ -24,7 +24,7 @@ export type Skin = {
 export const SKINS: Record<string, Skin> = {
   // Dirección
   gerente: { credencial: true, aros: 0xd4af37, tinte: [1, 0.98, 0.97] },
-  corporativo: { panuelo: 0x8b1e3f, aros: 0xc0c0c0, tinte: [0.97, 0.97, 1] },
+  corporativo: { panuelo: 0x1e3a8a, aros: 0xc0c0c0, tinte: [0.97, 0.97, 1] },
   sociedades: { piel: [0.78, 0.6, 0.48], barba: true, pantalon: 0x2b2b2b, zapatos: 0x5a3a1e },
   estratega: { piel: [1, 0.95, 0.9], barba: false, anteojos: 0x222222, pantalon: 0x1f2a44, zapatos: 0xffffff },
   // Comercial
@@ -153,11 +153,11 @@ export function accesorios(raiz: THREE.Object3D, id: string, h: { Head?: THREE.O
   }
   const cuello = h.Neck ?? cabeza;
   if (s.panuelo !== undefined) {
-    const p = new THREE.Mesh(new THREE.TorusGeometry(0.082, 0.026, 12, 40), mat(s.panuelo, 0.05, 0.85));
+    const p = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.03, 12, 40), mat(s.panuelo, 0.05, 0.85));
     p.rotation.x = Math.PI / 2;
-    p.scale.z = 0.8;
+    p.scale.set(1, 1, 0.55);
     // Un poco por debajo de la base de la cabeza: a la altura del cuello, no de las orejas.
-    const nw = hw.clone().addScaledVector(arriba, -0.07).addScaledVector(adelante, 0.015);
+    const nw = hw.clone().addScaledVector(arriba, -0.15).addScaledVector(adelante, 0.02);
     enHueso(cuello, nw, p);
   }
   const pecho = h.Spine2 ?? h.Spine1;
