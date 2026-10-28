@@ -477,6 +477,7 @@ export function comoTexto(s: Saliente): string {
  */
 export function listaDeProductos(texto: string): string[] {
   const limpio = texto
+    .replace(/<(\w+)>[\s\S]*?<\/\1>/g, "")
     .replace(/^[\s\S]*?(precios?|cu[aá]nto sale[n]?|cotiz[aá]me|necesito|quiero|busco)( saber)?( el| los)?( precios?)?( de| del)?\s*[:\-]?/i, (m) => (m.length < 80 ? "" : m))
     .replace(/\b(por|x)\s*(kg|kilo)\b/gi, "");
   const partes = limpio
