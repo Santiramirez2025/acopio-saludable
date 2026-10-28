@@ -121,7 +121,7 @@ export default async function RegalosNavidenosCordoba() {
             ["/frutos-secos-carlos-paz", "Frutos secos por kilo"],
             ["/combos", "Combos"],
             ["/armador", "Armá tu pedido"],
-            ["/sin-tacc", "Sin TACC"],
+            ["/sin-tacc-carlos-paz", "Sin TACC en Carlos Paz"],
             ["/dietetica-villa-carlos-paz", "Dietética en Villa Carlos Paz"],
             ["/envios", "Envíos"],
           ].map(([href, t]) => (

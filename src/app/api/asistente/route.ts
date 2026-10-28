@@ -124,7 +124,7 @@ export async function POST(req: Request) {
         r.aviso = "Productos marcados sin TACC en el catálogo. Revisá siempre el rotulado del envase.";
         break;
       }
-      r = { texto: "Tenemos una sección con todos los productos sin TACC del catálogo. Revisá siempre el rotulado del envase antes de consumir.", enlaces: [{ href: "/sin-tacc", texto: "Ver productos sin TACC" }, { href: "/combos/alacena-sin-tacc", texto: "Combo Alacena sin TACC" }] };
+      r = { texto: "Tenemos una sección con todos los productos sin TACC del catálogo. Revisá siempre el rotulado del envase antes de consumir.", enlaces: [{ href: "/sin-tacc", texto: "Ver productos sin TACC" }, { href: "/sin-tacc-carlos-paz", texto: "Sin TACC con entrega en Carlos Paz" }] };
       break;
     }
     case "negocio":

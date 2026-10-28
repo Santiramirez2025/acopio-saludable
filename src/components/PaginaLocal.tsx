@@ -64,7 +64,7 @@ export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
       <section>
         <TituloSeccion>Góndolas</TituloSeccion>
         <ul className="flex flex-wrap gap-2">
-          <li><Link href="/sin-tacc" className="chip min-h-[48px] bg-acopio-900 px-4 text-sm text-white">Sin TACC</Link></li>
+          <li><Link href="/sin-tacc-carlos-paz" className="chip min-h-[48px] bg-acopio-900 px-4 text-sm text-white">Sin TACC</Link></li>
           <li><Link href="/frutos-secos-carlos-paz" className="chip min-h-[48px] bg-acopio-900 px-4 text-sm text-white">Frutos secos por kilo</Link></li>
           <li><Link href="/regalos-navidenos-cordoba" className="chip min-h-[48px] bg-acopio-900 px-4 text-sm text-white">Regalos navideños</Link></li>
           {categorias.map((c) => (
