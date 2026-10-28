@@ -1545,3 +1545,18 @@ test("cobro anticipado: «lo pienso» no promete pagar al recibir", () => {
   assert.doesNotMatch(texto, /reci[eé]n ah[ií] pag|al recibir|antes de pagar/i);
   assert.ok(plan.some((s) => s.tipo === "imagen"));
 });
+
+test("prospección del sistema: exclusiones, mails válidos y ventana de envío", async () => {
+  const o = await import("./oferta-sistema");
+  assert.equal(o.excluido("Clínica Mottura", "esteticamottura.com"), true);
+  assert.equal(o.excluido("Azul Colchones", "azulcolchones.com"), true);
+  assert.equal(o.excluido("Distribuidora del Centro", "districentro.com.ar"), false);
+  assert.equal(o.emailValido("ventas@districentro.com.ar"), true);
+  assert.equal(o.emailValido("noreply@x.com"), false);
+  assert.equal(o.emailValido("sin-arroba"), false);
+  // Miércoles 28/10/2026 11:00 en Córdoba = 14:00 UTC: en horario. Sábado, no. Miércoles 20 hs, no.
+  assert.equal(o.enVentanaDeEnvio(new Date("2026-10-28T14:00:00Z")), true);
+  assert.equal(o.enVentanaDeEnvio(new Date("2026-10-31T14:00:00Z")), false);
+  assert.equal(o.enVentanaDeEnvio(new Date("2026-10-28T23:00:00Z")), false);
+  assert.equal(o.diasHabiles(new Date("2026-10-30T12:00:00Z"), new Date("2026-11-05T12:00:00Z")), 4);
+});

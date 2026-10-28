@@ -82,6 +82,9 @@ async function responder(clave: string, texto0: string): Promise<boolean> {
   return enviado;
 }
 
+/** El mismo envío de texto, para quien escribe fuera de una charla entrante (seguimientos de Marcos). */
+export const responderTexto = responder;
+
 /** Manda una tanda de mensajes de WhatsApp en orden y deja cada uno en el panel. */
 async function responderWhatsapp(clave: string, salientes0: Saliente[]): Promise<void> {
   for (const m of salientes0.map(limpiarSaliente)) {
