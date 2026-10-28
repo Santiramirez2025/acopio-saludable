@@ -8,7 +8,7 @@ import { ultimoDelCliente } from "./whatsapp-memoria";
 import { sinPerfecto } from "./sin-perfecto";
 import { urlSitio } from "./sitio";
 
-import { PRECIO_IMPLEMENTACION, PRECIO_MENSUAL } from "./oferta-sistema";
+import { PRECIO_IMPLEMENTACION, PRECIO_MENSUAL, admiteLead } from "./oferta-sistema";
 
 export const MARCA_SISTEMA = "sistema";
 export { PRECIO_IMPLEMENTACION, PRECIO_MENSUAL, WA_TEXTO_SISTEMA } from "./oferta-sistema";
@@ -25,13 +25,24 @@ export async function marcarLeadSistema(telefono: string): Promise<void> {
   await prisma.$executeRaw`UPDATE "WhatsappConversacion" SET "prospecto" = ${MARCA_SISTEMA} WHERE "telefono" = ${telefono}`.catch(() => null);
 }
 
-/** Pedidos del formulario de la landing: quedan en la bitácora (lead-sistema-…) y le llegan a Santiago. */
-export async function registrarLeadFormulario(d: { nombre: string; empresa: string; rubro: string; ciudad: string; facturacion: string; telefono: string; cargo?: string }): Promise<void> {
+/** Pedidos del formulario de la landing: quedan en la bitácora (lead-sistema-…) y le llegan a Santiago.
+ *  Devuelve false si se pasó el freno (muchos envíos en 15 min o el mismo teléfono varias veces en el día):
+ *  no se guarda ni se avisa; el navegador igual lo lleva a WhatsApp. */
+export async function registrarLeadFormulario(d: { nombre: string; empresa: string; rubro: string; ciudad: string; facturacion: string; telefono: string; cargo?: string }): Promise<boolean> {
+  const [{ n15, nTel }] = await prisma.$queryRaw<{ n15: number; nTel: number }[]>`
+    SELECT count(*) FILTER (WHERE "fecha" > now() - interval '15 minutes')::int AS "n15",
+           count(*) FILTER (WHERE "nombre" = ${`lead-sistema-${d.telefono}`} AND "fecha" > now() - interval '24 hours')::int AS "nTel"
+    FROM "CronCorrida" WHERE "nombre" LIKE 'lead-sistema-%' AND "fecha" > now() - interval '24 hours'`.catch(() => [{ n15: 0, nTel: 0 }]);
+  if (!admiteLead(n15, nTel)) {
+    console.warn("lead del formulario frenado", { ultimos15min: n15, mismoTelefonoHoy: nTel });
+    return false;
+  }
   await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${`lead-sistema-${d.telefono}`}, true, ${JSON.stringify({ ...d, cuando: new Date().toISOString(), origen: "formulario" })})`.catch(() => null);
   await avisarSantiago(
     `Lead del sistema de agentes: ${d.empresa}`,
     `🧠 ${d.nombre}${d.cargo ? ` (${d.cargo})` : ""} · ${d.empresa} · ${d.rubro} · ${d.ciudad} · factura ${d.facturacion}/mes · WhatsApp ${d.telefono}\nMarcos lo sigue por WhatsApp cuando escriba. ${urlSitio()}/admin/whatsapp?c=${d.telefono}`,
   );
+  return true;
 }
 
 function promptMarcos(nombre: string | null): string {

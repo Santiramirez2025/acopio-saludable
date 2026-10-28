@@ -1500,3 +1500,11 @@ test("recordatorio: carrito con total real o propuesta concreta, nunca la duda g
   // Sin precio a mano, sale el texto de siempre.
   assert.match((planRecordatorio({ nombre: null, anuncioTitulo: null, pedido: null }) as { cuerpo: string }).cuerpo, /duda/);
 });
+
+import { admiteLead, LEADS_MAX_15MIN, LEADS_MAX_TELEFONO_DIA } from "./oferta-sistema";
+test("formulario /agentes: freno general cada 15 min y por teléfono por día", () => {
+  assert.ok(admiteLead(0, 0));
+  assert.ok(admiteLead(LEADS_MAX_15MIN - 1, LEADS_MAX_TELEFONO_DIA - 1));
+  assert.ok(!admiteLead(LEADS_MAX_15MIN, 0));
+  assert.ok(!admiteLead(0, LEADS_MAX_TELEFONO_DIA));
+});
