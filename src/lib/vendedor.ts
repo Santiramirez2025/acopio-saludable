@@ -61,9 +61,14 @@ const HERRAMIENTAS = [
       type: "object" as const,
       properties: {
         consulta: { type: "string", description: "Qué buscar, por ejemplo «almendras» o «barritas de cereal»." },
+        consultas: {
+          type: "array",
+          items: { type: "string" },
+          description: "Cuando la persona nombra VARIOS productos (una lista), uno por elemento: [«dátiles», «cacao amargo», «harina de coco»]. Trae el resultado de cada uno por separado, así no se saltea ninguno.",
+        },
         solo_sin_tacc: { type: "boolean", description: "true para traer únicamente productos marcados sin TACC." },
       },
-      required: ["consulta"],
+      required: [],
     },
   },
   {
@@ -268,8 +273,25 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     if (!fotos.length) return { texto: "No hay fotos cargadas de eso. Decile que las ve en la web (acopiosaludable.com/catalogo) y seguí con la venta." };
     return { texto: `Se mandan ${fotos.length} fotos: ${fotos.map((f) => f.pie).join("; ")}. Escribí una frase corta («Te paso las fotos») y seguí con la pregunta de cierre.`, fotos };
   }
+  if (nombre === "buscar_productos" && Array.isArray(entrada.consultas) && entrada.consultas.length > 1) {
+    // Lista de productos: cada uno con su resultado, para contestar TODOS (el 28/10 a Sara se le contestaron 3 de 8).
+    const consultas = (entrada.consultas as unknown[]).map((c) => String(c ?? "").trim()).filter(Boolean).slice(0, 15);
+    const soloSinTacc = entrada.solo_sin_tacc === true;
+    const partes = await Promise.all(
+      consultas.map(async (c) => {
+        const ps = (await hallarProductos(c, soloSinTacc)).slice(0, 3);
+        if (!ps.length) return `«${c}»: NO LO TENEMOS (decilo así, y si hay algo parecido en otra línea, ofrecelo).`;
+        return `«${c}»:\n${ps.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}`).join("\n")}`;
+      }),
+    );
+    return {
+      texto:
+        partes.join("\n") +
+        "\nCONTESTÁ CADA UNO de la lista, en el mismo orden, un renglón por producto con presentación y precio (o «no lo tenemos»). Debajo, el TOTAL sumando uno de cada uno de los que sí hay, y una sola pregunta para cerrar.",
+    };
+  }
   if (nombre === "buscar_productos") {
-    const consulta = String(entrada.consulta ?? "");
+    const consulta = String(entrada.consulta ?? (Array.isArray(entrada.consultas) ? entrada.consultas[0] : "") ?? "");
     const soloSinTacc = entrada.solo_sin_tacc === true;
     const [productos, combos] = await Promise.all([
       hallarProductos(consulta, soloSinTacc).then((x) => x.slice(0, 6)),
@@ -553,7 +575,7 @@ function instrucciones(compraMinima: string, lecciones = ""): string {
     "CÓMO HABLÁS",
     "- Rioplatense, de vos, cálido y natural, como por WhatsApp con un cliente de confianza. Frases cortas, nada de lenguaje de sistema.",
     "- Nunca digas «encontré N opciones», «según el catálogo», «no coincide con el anuncio», «soy un asistente» ni nada que suene a robot.",
-    "- DE A POCO: la gente por WhatsApp no lee bloques. Un mensaje = un dato importante + una pregunta. Máximo 30 palabras; el primer mensaje de la charla, 25. Lo demás (el combo, el precio por transferencia, el envío) va en el mensaje siguiente, cuando contesta. Si mandás todo junto, no responde.",
+    "- DE A POCO: la gente por WhatsApp no lee bloques. Un mensaje = un dato importante + una pregunta. Máximo 30 palabras; el primer mensaje de la charla, 25. EXCEPCIÓN: si la persona pidió precios de una lista de productos, la respuesta lleva la lista completa (ver LISTA DE PRODUCTOS), aunque pase las 30 palabras. Lo demás (el combo, el precio por transferencia, el envío) va en el mensaje siguiente, cuando contesta. Si mandás todo junto, no responde.",
     "- TERMINÁ SIEMPRE CON UNA PREGUNTA fácil, que se conteste con una palabra o un toque: «¿Para tu casa o para un negocio?», «¿De qué ciudad sos? Así te digo el envío», «¿Te la separo?», «¿Cuál te gusta más?». Sin pregunta la charla muere (de 70 primeras respuestas, solo 2 terminaban en pregunta). Nunca dos preguntas juntas.",
     "  Ejemplo primer mensaje: «¡Hola Quique! El maní saborizado sale $X el kilo y el mix con cajú $Y. ¿Para tu casa o para un negocio?»",
     "- Si pregunta un precio: el precio de UNA presentación y el combo que lo trae. Las otras presentaciones y opciones van solas en los botones de abajo: no las escribas.",
@@ -563,6 +585,7 @@ function instrucciones(compraMinima: string, lecciones = ""): string {
     "- Como mucho un emoji y solo si suma.",
     "- HORARIO DE ENTREGA: anotá el horario que te dice como preferencia, pero nunca confirmes un día ni una hora puntual («alrededor de las 13:30», «hoy a la tarde»): decile «lo anotamos y Santiago te confirma el horario del reparto por acá». El reparto lo arma Santiago y una hora prometida que no se cumple es un cliente perdido.",
     "- SI PIDE QUE LO LLAMEN: nunca digas que no llamamos. Decí «Dale, Santiago te llama en un rato» y seguí ayudando por acá (a Santiago le llega el aviso solo).",
+    "- LISTA DE PRODUCTOS (la persona nombra 3 o más cosas, o pide «precio de cada uno»): llamá buscar_productos UNA vez con consultas = [uno por producto] y contestá TODOS, ninguno salteado, en el orden en que los pidió: un renglón por producto con presentación y precio («• Dátiles x 1 kg — $15.700»), y «• Aceite de coco — no lo tenemos» para los que no hay. Si pidió dos variantes de lo mismo (cacao en polvo y en tableta), una línea por cada una. Debajo: «Total: $X» sumando uno de cada uno de los que sí hay, y una sola pregunta para cerrar. Sin fotos en ese mensaje. Este mensaje puede ser largo: la lista completa vale más que la brevedad. Si es un negocio (kiosco, dietética, almacén), aclarar en una línea que desde 5 kg en total tiene 10% menos y desde 10 kg 15% menos.",
     "- Si decís «te paso el pedido» o «te paso los precios», pasalo EN ESE MISMO MENSAJE, con cada producto y su precio de las herramientas y el total. Nunca prometas mandarlo después.",
     "- RECOMPRA: si en la charla hay un mensaje [Recompra pedido …] y la persona dice «Sí, lo mismo» (o parecido), armá exactamente ese pedido anterior con agregar_al_pedido usando los códigos y slugs que figuran ahí (precios de hoy), decí el total en una frase y preguntá solo «¿Te lo llevamos a la misma dirección, <dirección>?». Si dice «Quiero cambiar algo», preguntá qué le saca o le suma y armalo. Si dice «Ahora no», agradecé en una frase y no insistas.",
     "- Nunca uses la palabra «perfecto» (suena a robot). Usá «dale», «buenísimo», «listo» o directamente seguí con lo que viene.",
