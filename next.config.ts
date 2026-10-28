@@ -29,9 +29,21 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [{ source: "/:path((?!api/).*)", has: [{ type: "host", value: "acopio-saludable.vercel.app" }], destination: "https://www.acopiosaludable.com/:path", permanent: true }];
   },
-  // Las piezas de anuncios se suben a Meta desde el navegador: necesitan CORS abierto.
+  // Headers de seguridad en todo el sitio (HSTS ya lo pone Vercel):
+  // nadie puede meter la tienda ni el panel en un iframe ajeno (clickjacking), el navegador no adivina
+  // tipos de archivo, no se filtra la URL completa a terceros y solo nuestras páginas pueden usar el
+  // micrófono (las llamadas del panel); cámara y ubicación quedan cerradas. Sin CSP por ahora: la
+  // tienda carga Meta Pixel, Analytics, YouTube y Three.js y una CSP a ciegas rompería ventas.
   async headers() {
+    const seguridad = [
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
+    ];
     return [
+      { source: "/:path*", headers: seguridad },
+      // Las piezas de anuncios se suben a Meta desde el navegador: necesitan CORS abierto.
       { source: "/img/anuncios/:file*", headers: [{ key: "Access-Control-Allow-Origin", value: "*" }] },
       { source: "/video/:file*", headers: [{ key: "Access-Control-Allow-Origin", value: "*" }] },
     ];

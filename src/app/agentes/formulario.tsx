@@ -20,7 +20,8 @@ export function Formulario() {
     e.preventDefault();
     setEstado("mandando");
     const r = await fetch("/api/leads-sistema", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(d) }).catch(() => null);
-    if (!r?.ok) {
+    // 429 = freno a robots del servidor: a la persona la llevamos igual a WhatsApp, que es donde Marcos atiende.
+    if (!r || (!r.ok && r.status !== 429)) {
       setEstado("error");
       return;
     }
