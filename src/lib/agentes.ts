@@ -135,10 +135,10 @@ export const AGENTES: Agente[] = [
   {
     id: "compras", persona: "Pablo", nombre: "Compras y Proveedores", puesto: "Comprar mejor cada día", area: "operaciones", emoji: "📦", dias: TODOS, horas: ["8:02"], informa: true,
     mision: "Pagar lo menos posible y no vender nunca a pérdida.",
-    hace: ["Controla los precios de La Granja y de Harinar todos los días", "Compra girasol, lino y avena en Harinar y lo demás en La Granja", "Busca mayoristas más baratos", "Avisa si un producto queda con poca ganancia"],
+    hace: ["Controla los precios de La Granja y de Harinar todos los días", "Compra girasol, lino, avena, harina integral, salvado, gluten y gotas en Harinar y lo demás en La Granja", "Busca mayoristas más baratos", "Avisa si un producto queda con poca ganancia"],
     mide: "Costo por kilo y margen",
     reglas:
-      "DOS PROVEEDORES (decisión de Santiago, 28/10): girasol pelado, lino y avena → Distribuidora HARINAR (Dinamarca 282, Carlos Paz, catálogo app.pediwa.com/harinarsas); todo lo demás → La Granja del Centro (mejor calidad y más barata en frutos secos, pasas, dátiles, mixes). CONTROL DIARIO: GET /api/admin/analisis?parte=harinar compara por kilo y trae «alertas». Si La Granja queda más barata en girasol, lino o avena, se vuelve a comprar ahí; si Harinar queda 15% o más barato en otro producto, se le propone a Santiago (sin cambiar sin su OK, por la calidad). En la lista de compra del día, separá qué se compra en cada proveedor.",
+      "DOS PROVEEDORES (decisión de Santiago, 28/10): girasol pelado, lino, avena, harina integral, salvado de trigo, gluten y gotas de chocolate → Distribuidora HARINAR (Dinamarca 282, Carlos Paz, catálogo app.pediwa.com/harinarsas); todo lo demás → La Granja del Centro (mejor calidad y más barata en frutos secos, pasas, dátiles, mixes). CONTROL DIARIO: GET /api/admin/analisis?parte=harinar compara por kilo y trae «alertas». Si La Granja queda más barata en algo de lo de Harinar, se vuelve a comprar ahí; si Harinar queda 15% o más barato en otro producto, se le propone a Santiago (sin cambiar sin su OK, por la calidad). En la lista de compra del día, separá qué se compra en cada proveedor.",
   },
   {
     id: "logistica", persona: "Gonza", nombre: "Logística y Envíos", puesto: "Que cada pedido llegue", area: "operaciones", emoji: "🚚", dias: TODOS, horas: ["8:13"], informa: true,
