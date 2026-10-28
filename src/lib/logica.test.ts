@@ -1414,6 +1414,15 @@ test("vendedor: el mix con cajú mantiene el mismo producto y precio que pasó e
   assert.ok(txt.includes("Mix Clásico con cajú y girasol"));
 });
 
+test("vendedor: ningún texto modelo le hace decir al bot que se paga al recibir", () => {
+  const txt = readFileSync("src/lib/vendedor.ts", "utf8");
+  // Frases entre «» que el bot copia tal cual: ninguna puede prometer pago al recibir (política 28/10).
+  const frases = txt.match(/«[^»]*»/g) ?? [];
+  // («recién ahí pagás» aparece solo como frase prohibida: «Nunca digas…»).
+  const malas = frases.filter((f) => /(la |lo |y )pag[aá]s al recibir/i.test(f));
+  assert.deepEqual(malas, []);
+});
+
 test("mapa: link de navegación con la dirección completa y sin repetir", async () => {
   const { linkMapa, direccionCompleta, linkRuta } = await import("./mapa");
   assert.equal(direccionCompleta("Virgen de Lourdes 4480", "Cordoba", "Córdoba"), "Virgen de Lourdes 4480, Cordoba, Argentina");
