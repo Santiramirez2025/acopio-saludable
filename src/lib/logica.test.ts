@@ -1322,6 +1322,25 @@ test("ML: el precio mínimo deja la ganancia mínima y no sube si ya alcanza", a
   assert.equal(precioMinimoMl(25800) % 500, 0);
 });
 
+test("Plantilla dietética: regla mayorista única y cobro anticipado", async () => {
+  const { contextoProspecto } = await import("./whatsapp-plantillas");
+  const c = contextoProspecto("dietética", "Dietética Sol");
+  assert.match(c, /−10% desde 5 kg, −15% desde 10 kg y −20% desde 25 kg/);
+  assert.match(c, /mínimo \$60\.000/);
+  assert.doesNotMatch(c, /\$10\.000 el kilo|\$50\.000|pagando al recibir|martes Punilla/);
+});
+
+test("ML: fila de precios marca la promoción y el precio final bajo el piso", async () => {
+  const { filaPrecioMl } = await import("./mercadolibre-reglas");
+  const it = { id: "MLA1", title: "Alacena 3 kg", price: 58000, original_price: null, listing_type_id: "gold_special" };
+  const f = filaPrecioMl(it, "AS-ALACENA-3KG", { amount: 52200, regular_amount: 58000, metadata: { promotion_type: "DEAL" } }, 65000);
+  assert.deepEqual([f.lista, f.final, f.promo, f.promoTipo, f.bajoPiso], [58000, 52200, true, "DEAL", true]);
+  const sin = filaPrecioMl({ ...it, price: 70000 }, "AS-ALACENA-3KG", null, 65000);
+  assert.deepEqual([sin.lista, sin.final, sin.promo, sin.bajoPiso], [70000, 70000, false, false]);
+  const conOriginal = filaPrecioMl({ ...it, price: 52200, original_price: 58000 }, "X", null, null);
+  assert.deepEqual([conOriginal.lista, conOriginal.final, conOriginal.promo, conOriginal.bajoPiso], [58000, 52200, true, false]);
+});
+
 test("estadoAgente: descanso, pendiente, ok, atrasado y falla", async () => {
   const { AGENTES, estadoAgente } = await import("./agentes");
   const logi = AGENTES.find((a) => a.id === "logistica")!;

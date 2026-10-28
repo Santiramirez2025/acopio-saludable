@@ -102,7 +102,9 @@ export function MedidorPedido() {
   const { cotizacion, lineas } = useCarrito();
   if (!lineas.length || !cotizacion || cotizacion.subtotal <= 0) return null;
   if (ruta.startsWith("/carrito") || ruta.startsWith("/checkout") || ruta.startsWith("/pedido")) return null;
-  const { falta, progresoPct, subtotal, puedePagar } = cotizacion;
+  const { falta, progresoPct, subtotal } = cotizacion;
+  // Con la compra mínima de Carlos Paz y la zona ya se puede ir al checkout (ahí se controla la zona).
+  const puedePagar = cotizacion.puedePagar || cotizacion.puedePagarEnZona;
   return (
     <aside aria-label="Tu pedido" className="fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 mx-auto max-w-md md:inset-x-auto md:bottom-5 md:right-24 md:w-[380px]">
       <Link href={puedePagar ? "/checkout" : "/carrito"} className="fondo-oscuro block overflow-hidden rounded-2xl bg-acopio-900 text-white shadow-dock" aria-label={puedePagar ? "Finalizar la compra" : "Ver tu pedido"}>
@@ -110,7 +112,7 @@ export function MedidorPedido() {
           <div className="min-w-0 flex-1">
             <p className="font-display text-lg font-bold leading-none tabular-nums">{pesosCliente(subtotal)}</p>
             <p className="mt-1 truncate text-xs text-white/75" aria-live="polite">
-              {falta > 0 ? `Te faltan ${pesosCliente(falta)} para el mínimo` : "Llegaste al mínimo. Ya podés comprar."}
+              {falta === 0 ? "Llegaste al mínimo. Ya podés comprar." : puedePagar ? "Ya podés comprar en Carlos Paz y la zona" : `Te faltan ${pesosCliente(Math.max(0, cotizacion.compraMinimaPropia - subtotal) || falta)} para el mínimo`}
             </p>
           </div>
           <span className="flex min-h-[44px] items-center rounded-full bg-sol px-4 text-sm font-bold text-acopio-900">{puedePagar ? "Comprar" : "Ver pedido"}</span>

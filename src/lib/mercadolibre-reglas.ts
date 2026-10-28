@@ -43,3 +43,18 @@ export function precioMinimoMl(costo: number): number {
   while (p > 500 && netoMl(p - 500) - costo - ML.bolsa >= ganancia) p -= 500;
   return p;
 }
+
+/** Fila de control de precio de una publicación: lista, final con promoción y piso de ganancia (Clásica). */
+export type FilaPrecioMl = { id: string; titulo: string; sku: string; tipo: string | null; lista: number; final: number; promo: boolean; promoTipo: string | null; piso: number | null; bajoPiso: boolean };
+
+export function filaPrecioMl(
+  it: { id: string; title: string; price: number; original_price?: number | null; listing_type_id?: string | null },
+  sku: string,
+  venta: { amount?: number | null; regular_amount?: number | null; metadata?: { promotion_type?: string | null } | null } | null,
+  piso: number | null,
+): FilaPrecioMl {
+  const final = Number(venta?.amount ?? it.price);
+  const lista = Math.max(final, Number(venta?.regular_amount ?? it.original_price ?? it.price));
+  const promo = lista > final;
+  return { id: it.id, titulo: it.title, sku, tipo: it.listing_type_id ?? null, lista, final, promo, promoTipo: promo ? (venta?.metadata?.promotion_type ?? "descuento") : null, piso, bajoPiso: piso !== null && final < piso };
+}

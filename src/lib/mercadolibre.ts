@@ -10,7 +10,7 @@
 import { prisma } from "./prisma";
 import { urlSitio } from "./sitio";
 import { avisarSantiago } from "./avisos";
-import { textoRespuestaMl, precioMinimoMl, SKU_ML } from "./mercadolibre-reglas";
+import { textoRespuestaMl, precioMinimoMl, SKU_ML, filaPrecioMl, type FilaPrecioMl } from "./mercadolibre-reglas";
 
 const API = "https://api.mercadolibre.com";
 const MODELO = process.env.VENDEDOR_MODELO || "claude-haiku-5-5";
@@ -248,4 +248,26 @@ export async function cambiarPrecioMl(itemId: string, precio: number): Promise<{
   if (piso === null && nuevo < it.price) throw new Error("No conozco el costo de esa publicación: solo se puede subir el precio");
   await ml(`/items/${id}`, { method: "PUT", body: JSON.stringify({ price: nuevo }) });
   return { antes: it.price, despues: nuevo, piso };
+}
+
+/**
+ * Solo lectura: por cada publicación activa, precio de lista, precio final (con la promoción que esté
+ * corriendo), si hay promoción y el piso de ganancia. Para que el Encargado de ML controle pisos sin Chrome.
+ * No cambia nada en Mercado Libre.
+ */
+export async function preciosMl(): Promise<FilaPrecioMl[]> {
+  const uid = await miUsuario();
+  const ids = (await ml<{ results: string[] }>(`/users/${uid}/items/search?status=active&limit=50`)).results;
+  if (!ids.length) return [];
+  type It = { id: string; title: string; price: number; original_price?: number | null; listing_type_id?: string | null; seller_custom_field?: string | null; attributes?: { id: string; value_name?: string | null }[] };
+  const r = await ml<{ code: number; body: It }[]>(`/items?ids=${ids.join(",")}&attributes=id,title,price,original_price,listing_type_id,seller_custom_field,attributes`);
+  const filas = await Promise.all(
+    r.filter((x) => x.code === 200).map(async ({ body: it }) => {
+      const sku = it.seller_custom_field || it.attributes?.find((a) => a.id === "SELLER_SKU")?.value_name || "";
+      const venta = await ml<{ amount?: number | null; regular_amount?: number | null; metadata?: { promotion_type?: string | null } | null }>(`/items/${it.id}/sale_price?context=channel_marketplace`).catch(() => null);
+      const costo = await costoDeSku(sku).catch(() => null);
+      return filaPrecioMl(it, sku, venta, costo === null ? null : precioMinimoMl(costo));
+    }),
+  );
+  return filas.sort((a, b) => Number(b.bajoPiso) - Number(a.bajoPiso) || a.titulo.localeCompare(b.titulo));
 }

@@ -1,17 +1,18 @@
 // Prueba y estado de Mercado Libre desde el panel. Solo administrador.
-// GET: si está conectado, corre el parte (visitas, ventas, reputación, preguntas) y lo devuelve.
+// GET: si está conectado, corre el parte (visitas, ventas, reputación, preguntas) y lo devuelve, con los precios
+// de cada publicación (lista, final con promoción, piso). GET ?solo=precios: solo los precios, sin correr el parte.
 // POST { accion: "precio", item: "MLA…", precio } → cambia el precio (nunca bajo el piso de ganancia).
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { cambiarPrecioMl, conectado, parteDiario } from "@/lib/mercadolibre";
+import { cambiarPrecioMl, conectado, parteDiario, preciosMl } from "@/lib/mercadolibre";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-export async function GET() {
+export async function GET(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const id = (process.env.ML_CLIENT_ID ?? "").trim();
   const secreto = (process.env.ML_CLIENT_SECRET ?? "").trim();
@@ -24,7 +25,9 @@ export async function GET() {
   }).then(async (r) => (r.ok ? "aceptadas" : `rechazadas (${r.status}: ${(await r.text()).slice(0, 120)})`)).catch((e) => `sin respuesta: ${e}`);
   if (!(await conectado())) return NextResponse.json({ conectado: false, credenciales, prueba });
   try {
-    return NextResponse.json({ conectado: true, parte: await parteDiario() });
+    if (new URL(req.url).searchParams.get("solo") === "precios") return NextResponse.json({ conectado: true, precios: await preciosMl() });
+    const [parte, precios] = await Promise.all([parteDiario(), preciosMl().catch((e) => String(e))]);
+    return NextResponse.json({ conectado: true, parte, precios });
   } catch (e) {
     return NextResponse.json({ conectado: true, error: String(e) }, { status: 500 });
   }
