@@ -677,6 +677,34 @@ function contexto(carrito: CarritoVisto | null): string {
   ].join("\n");
 }
 
+/** Palabras que cuentan para saber si un producto es lo que pidió («harina de coco» ≠ «coco rallado»). */
+function claves(t: string): string[] {
+  const VACIAS = new Set(["de", "del", "la", "el", "los", "las", "con", "sin", "x", "y", "en", "al", "para", "por", "kg", "kilo", "gr", "g", "polvo"]);
+  return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").split(/\s+/)
+    .filter((w) => w.length > 2 && !VACIAS.has(w))
+    .map((w) => (w.length > 4 ? w.replace(/(es|s)$/, "") : w));
+}
+
+/** Cada producto de la lista con su presentación y precio, o «no lo tenemos», y el total de uno de cada uno. */
+export async function listaConPrecios(lista: string[]): Promise<{ texto: string; total: number }> {
+  let total = 0;
+  const renglones = await Promise.all(
+    lista.map(async (pedido) => {
+      const pedidas = claves(pedido);
+      const p = (await hallarProductos(pedido, false)).find((x) => {
+        const nombre = new Set(claves(`${x.producto} ${x.presentacion}`));
+        const coinciden = pedidas.filter((w) => nombre.has(w)).length;
+        return coinciden >= Math.min(2, pedidas.length);
+      });
+      const nombre = pedido.charAt(0).toUpperCase() + pedido.slice(1);
+      if (!p) return `• ${nombre} — no lo tenemos`;
+      total += p.precio;
+      return `• ${p.producto} ${p.presentacion} — ${pesos(p.precio)}`.replace(/\s+/g, " ");
+    }),
+  );
+  return { texto: ["Te paso cada uno:", ...renglones, "", `Total, uno de cada uno: ${pesos(total)}`, "¿Te armo el pedido con todo?"].join("\n"), total };
+}
+
 export async function responderComoVendedor(
   mensaje: string,
   historial: Turno[] = [],
@@ -771,6 +799,16 @@ export async function responderComoVendedor(
           const tres = fichas.slice(0, 3).map((f) => `${f.nombre.replace(/^Combo /, "")} ${presentacionDe(f)} a ${f.precio}`.replace(/\s+/g, " "));
           texto = `Te paso los precios: ${tres.join(", ")}. ¿Cuál te llevás?`;
           }
+        }
+        // Lista de productos: si el modelo no puso un renglón con precio por producto, la lista la arma el código.
+        if (lista.length) {
+          const renglonesConPrecio = texto.split("\n").filter((l) => /\$\s?\d/.test(l)).length;
+          if (renglonesConPrecio < Math.min(lista.length, 3)) {
+            const armada = await listaConPrecios(lista);
+            texto = armada.texto;
+            opciones.splice(0, opciones.length, "Sí, armalo", "Solo algunos", "Tengo una duda");
+          }
+          fichas = [];
         }
         const mostradas = sep.texto ? fichasNombradas(fichas, texto) : fichas.slice(0, 4);
         return {
