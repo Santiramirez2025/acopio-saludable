@@ -46,16 +46,27 @@ export function productosDeHtml(html: string): [string, number][] {
 /** Último estado de la lectura de Pediwa, para diagnosticar si nos bloquea. */
 export let estadoLectura: string[] = [];
 
+const NAVEGADOR = {
+  "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+  accept: "text/html,application/xhtml+xml",
+  "accept-language": "es-AR,es;q=0.9",
+};
+
+/** Pediwa muestra las categorías solo con la sesión de la tienda: se entra primero a la portada y se guarda la cookie. */
+async function sesionTienda(): Promise<string> {
+  const res = await fetch("https://app.pediwa.com/harinarsas/0?tp=0", { headers: NAVEGADOR, cache: "no-store", signal: AbortSignal.timeout(20_000) }).catch(() => null);
+  const cookies = res?.headers.getSetCookie?.() ?? [];
+  return cookies.map((c) => c.split(";")[0]).join("; ");
+}
+
 export async function listaHarinar(): Promise<[string, number, string][]> {
   estadoLectura = [];
+  const cookie = await sesionTienda();
+  estadoLectura.push(`sesión: ${cookie ? cookie.split("; ").length + " cookies" : "sin cookie"}`);
   const partes = await Promise.all(
     Object.entries(CATEGORIAS).map(async ([id, cat]) => {
       const res = await fetch(`https://app.pediwa.com/categoria/harinarsas/${id}`, {
-        headers: {
-          "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
-          accept: "text/html,application/xhtml+xml",
-          "accept-language": "es-AR,es;q=0.9",
-        },
+        headers: { ...NAVEGADOR, ...(cookie ? { cookie } : {}), referer: "https://app.pediwa.com/harinarsas/0?tp=0" },
         cache: "no-store",
         signal: AbortSignal.timeout(20_000),
       }).catch((e: unknown) => {
