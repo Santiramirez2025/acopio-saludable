@@ -102,11 +102,12 @@ async function lagranja() {
 
 /** Harinar vs La Granja por kilo, y qué se compra en cada uno (ver lib/harinar.ts). */
 async function harinar() {
-  const { listaHarinar, comparar, COMPRAR_EN_HARINAR } = await import("@/lib/harinar");
+  const harinarLib = await import("@/lib/harinar");
+  const { listaHarinar, comparar, COMPRAR_EN_HARINAR } = harinarLib;
   const [h, g] = await Promise.all([listaHarinar(), lagranja()]);
   const lista = "lista" in g ? (g.lista as [string, string, number][]) : [];
   const comparacion = comparar(h, lista);
-  return { comprarEnHarinar: COMPRAR_EN_HARINAR, productosHarinar: h.length, listaGranja: "archivo" in g ? g.archivo : null, comparacion, alertas: comparacion.filter((c) => c.alerta) };
+  return { comprarEnHarinar: COMPRAR_EN_HARINAR, productosHarinar: h.length, lectura: harinarLib.estadoLectura, listaGranja: "archivo" in g ? g.archivo : null, comparacion, alertas: comparacion.filter((c) => c.alerta) };
 }
 
 export async function GET(req: Request) {

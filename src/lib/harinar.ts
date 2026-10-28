@@ -43,11 +43,29 @@ export function productosDeHtml(html: string): [string, number][] {
   return out.filter((p, k, a) => a.findIndex((x) => x[0] === p[0]) === k);
 }
 
+/** Último estado de la lectura de Pediwa, para diagnosticar si nos bloquea. */
+export let estadoLectura: string[] = [];
+
 export async function listaHarinar(): Promise<[string, number, string][]> {
+  estadoLectura = [];
   const partes = await Promise.all(
     Object.entries(CATEGORIAS).map(async ([id, cat]) => {
-      const html = await fetch(`https://app.pediwa.com/categoria/harinarsas/${id}`, { signal: AbortSignal.timeout(20_000) }).then((r) => r.text()).catch(() => "");
-      return productosDeHtml(html).map(([n, p]) => [n, p, cat] as [string, number, string]);
+      const res = await fetch(`https://app.pediwa.com/categoria/harinarsas/${id}`, {
+        headers: {
+          "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+          accept: "text/html,application/xhtml+xml",
+          "accept-language": "es-AR,es;q=0.9",
+        },
+        cache: "no-store",
+        signal: AbortSignal.timeout(20_000),
+      }).catch((e: unknown) => {
+        estadoLectura.push(`${cat}: ${String(e).slice(0, 80)}`);
+        return null;
+      });
+      const html = res?.ok ? await res.text() : "";
+      const productos = productosDeHtml(html);
+      if (res) estadoLectura.push(`${cat}: HTTP ${res.status}, ${html.length} bytes, ${productos.length} productos`);
+      return productos.map(([n, p]) => [n, p, cat] as [string, number, string]);
     }),
   );
   return partes.flat();
