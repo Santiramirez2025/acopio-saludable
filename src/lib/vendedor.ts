@@ -691,11 +691,16 @@ export async function listaConPrecios(lista: string[]): Promise<{ texto: string;
   const renglones = await Promise.all(
     lista.map(async (pedido) => {
       const pedidas = claves(pedido);
-      const p = (await hallarProductos(pedido, false)).find((x) => {
+      // Tiene que coincidir lo principal («harina», «cacao»…) y lo que lo distingue («coco» en harina de coco);
+      // los adjetivos sueltos («pasas», «amargo») no hacen falta. Entre los que sirven, primero el de 1 kg.
+      const BLANDAS = new Set(["pasa", "deshidratado", "natural", "organico", "amargo", "especial", "pura", "puro", "fraccionado", "fraccionada"]);
+      const fuertes = pedidas.filter((w) => !BLANDAS.has(w));
+      const sirve = (x: { producto: string; presentacion: string }) => {
         const nombre = new Set(claves(`${x.producto} ${x.presentacion}`));
-        const coinciden = pedidas.filter((w) => nombre.has(w)).length;
-        return coinciden >= Math.min(2, pedidas.length);
-      });
+        return fuertes.length ? fuertes.every((w) => nombre.has(w)) : pedidas.some((w) => nombre.has(w));
+      };
+      const candidatos = (await hallarProductos(pedido, false)).filter(sirve);
+      const p = candidatos.find((x) => /\b1\s?kg\b|1000\s?g/i.test(x.presentacion)) ?? candidatos[0];
       const nombre = pedido.charAt(0).toUpperCase() + pedido.slice(1);
       if (!p) return `• ${nombre} — no lo tenemos`;
       total += p.precio;

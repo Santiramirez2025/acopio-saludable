@@ -14,7 +14,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
@@ -636,7 +636,7 @@ export async function pensar(c: {
   if (!respuesta.envio && envio) respuesta = { ...respuesta, envio };
   const pedido = await pedidoDe(lineas, envio);
   // Imágenes en el momento justo (duda, combo nombrado, producto cotizado, pedido agendado), sin saturar.
-  if (c.canal === "whatsapp" && !web && !derivar && !respuesta.fotos?.length && estadoOrden !== "ENTREGADO" && estadoOrden !== "ENVIADO") {
+  if (c.canal === "whatsapp" && !web && !derivar && !respuesta.fotos?.length && !listaDeProductos(c.texto).length && estadoOrden !== "ENTREGADO" && estadoOrden !== "ENVIADO") {
     const combos = [
       ...(respuesta.acciones ?? []).filter((a) => a.clase === "combo").map((a) => a.id),
       ...(respuesta.fichas ?? []).map((f) => f.href.match(/^\/combos\/(.+)$/)?.[1]).filter((x): x is string => Boolean(x)),
