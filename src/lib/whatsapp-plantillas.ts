@@ -69,7 +69,7 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "Si pide fotos, mandalas con mandar_fotos; no digas «te mando las fotos» si no las mandás. " +
       "Precios mayoristas de los mixes (de hoy, pueden aumentar en cualquier momento): Mix Clásico con girasol a granel $10.000 el kilo (lo vende a $14.000), Mix Clásico con cajú $11.500 (lo vende a $16.000), " +
       "Mix Tropical sin maní $16.500 (lo vende a $23.000) y bolsa de 500 g de Mix Clásico lista para la góndola $5.500 (la vende a $7.500). Para otros productos usá el precio de la tienda. " +
-      "Condiciones: primer pedido desde $50.000 pagando al recibir, entrega sin cargo en la ruta semanal (martes Punilla norte, jueves Carlos Paz, Tanti y alrededores). " +
+      "Condiciones: primer pedido desde $50.000 con pago antes de la entrega (transferencia o Mercado Pago), entrega sin cargo en la ruta semanal (martes Punilla norte, jueves Carlos Paz, Tanti y alrededores). " +
       "Si confirma, anotá qué lleva, cuántos, la dirección del local y el día de la ruta, y decile que queda agendado.",
   },
 };
