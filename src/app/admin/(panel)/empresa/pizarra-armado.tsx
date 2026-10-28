@@ -13,6 +13,12 @@ function etiquetaCombo(slug: string): string {
   return `Combo ${t.charAt(0).toUpperCase()}${t.slice(1)}`;
 }
 
+// Link directo al chat de WhatsApp del cliente (abre la app o WhatsApp Web).
+function linkWa(tel: string): string | null {
+  const d = (tel ?? "").replace(/\D/g, "");
+  return d.length >= 8 ? `https://wa.me/${d}` : null;
+}
+
 function Tarjeta({ p, puedeMarcar, alListo }: { p: PedidoArmado; puedeMarcar: boolean; alListo: (id: number) => void }) {
   const clave = `acopio-armado-${p.id}`;
   const [hechos, setHechos] = useState<number[]>([]);
@@ -49,6 +55,9 @@ function Tarjeta({ p, puedeMarcar, alListo }: { p: PedidoArmado; puedeMarcar: bo
           ) : (
             <div className="mt-1 text-base text-amber-300/80">📍 Falta la dirección</div>
           )}
+          {linkWa(p.telefono) ? (
+            <a href={linkWa(p.telefono)!} target="_blank" rel="noopener noreferrer" className="ml-2 mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-base text-emerald-200 hover:bg-emerald-500/30">💬 WhatsApp</a>
+          ) : null}
           <div className="text-lg text-white/60">{p.codigo} · {p.zona}{p.estado === "ENVIADO" ? <span className="ml-2 rounded-full bg-sky-400/20 px-2 py-0.5 text-sm text-sky-200">ya le avisamos: va en el reparto de hoy</span> : null}</div>
         </div>
         <div className={`rounded-2xl px-3 py-2 text-right text-lg font-bold ${p.pagado ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-400/20 text-amber-300"}`}>{p.cobrar}</div>
@@ -172,7 +181,12 @@ export function PizarraArmado({ p, puedeMarcar, volver, gonza }: { p: Pizarra; p
               <h3 className="font-bold">{t as string} ({(lista as PedidoArmado[]).length})</h3>
               <ul className="mt-2 space-y-1 text-white/70">
                 {(lista as PedidoArmado[]).map((x) => (
-                  <li key={x.id}>{x.cliente} · {x.zona.split(" · ")[0]} · {x.cobrar}</li>
+                  <li key={x.id}>
+                    {x.cliente} · {x.zona.split(" · ")[0]} · {x.cobrar}
+                    {linkWa(x.telefono) ? (
+                      <a href={linkWa(x.telefono)!} target="_blank" rel="noopener noreferrer" className="ml-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-base text-emerald-200 hover:bg-emerald-500/30">💬</a>
+                    ) : null}
+                  </li>
                 ))}
               </ul>
             </div>
