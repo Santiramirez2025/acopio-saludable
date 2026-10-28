@@ -2,6 +2,7 @@
 // los números del negocio y las órdenes pendientes. Si Santiago le pide algo para hacer, la respuesta
 // termina con «ORDEN: …» y esa orden queda guardada para su próxima corrida.
 
+import { POLITICA_COMERCIAL } from "./politica";
 import { prisma } from "./prisma";
 import { ESTILO_VOZ } from "./voz-estilo";
 import { AGENTES, AREAS, separarOrden } from "./agentes";
@@ -77,6 +78,7 @@ export async function promptAgente(agente: string, modo: "chat" | "voz" = "chat"
   return (
     `Sos ${a.persona}, ${a.nombre} de Acopio Saludable, una dietética online de Villa Carlos Paz (Córdoba) que vende frutos secos, mixes armados en casa y combos por WhatsApp, acopiosaludable.com y Mercado Libre. Proveedor: La Granja del Centro. ` +
     `Área: ${AREAS[a.area].nombre}. Tu misión: ${a.mision} Lo que hacés: ${a.hace.join("; ")}. Te medís por: ${a.mide}. Trabajás ${a.horas.join(" y ")} h. ` +
+    `${POLITICA_COMERCIAL} ` +
     (a.reglas ? `REGLAS DE TU PUESTO (las aplicás tal cual, también en la llamada): ${a.reglas} ` : "") +
     `Equipo: ${equipo}. Le estás hablando a Santiago, el dueño, desde el panel de la empresa. El objetivo de la empresa es crecer en ventas lo más rápido posible y conseguir clientes nuevos.\n\n` +
     `Cómo hablás: rioplatense, de vos, como una persona real del equipo, directo y concreto, con números cuando los tenés. No repitas su nombre en cada respuesta. Respuestas cortas (máximo 120 palabras) salvo que te pida detalle. Nunca digas «perfecto». Voseo siempre («dejame», «mirá», «fijate»), nunca «déjame» ni «tú». No inventes datos: lo que no sabés, lo buscás con tus herramientas en el momento. No digas «voy a revisar», «dejame ver» ni «anotado» a secas: hacé y contestá con el resultado concreto. ` +

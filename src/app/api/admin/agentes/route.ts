@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { IDS_AGENTES } from "@/lib/agentes";
+import { POLITICA_COMERCIAL } from "@/lib/politica";
 
 export const dynamic = "force-dynamic";
 
@@ -44,5 +45,7 @@ export async function GET(req: Request) {
           }
         : { agente: f.nombre.slice(7), ok: f.ok, fecha: f.fecha, informe: f.detalle },
     );
+  // La política comercial vigente va siempre primera: cada agente la lee al empezar su corrida.
+  informes.unshift({ agente: "gerente", ok: true, fecha: new Date(), informe: `PRIORIDAD: todos — ORDEN PERMANENTE DE SANTIAGO: ${POLITICA_COMERCIAL}` });
   return NextResponse.json({ informes });
 }

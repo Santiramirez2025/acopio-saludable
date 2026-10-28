@@ -5,6 +5,7 @@
 // una persona tomó la charla o si el prospecto pidió la baja, y contesta el mismo vendedor.
 // Lo único que cambia por canal es cómo se manda la respuesta.
 
+import { PAGO_AL_RECIBIR } from "./politica";
 import { conPresentacion } from "./whatsapp-saludo";
 import { zonaDeLugar } from "./envio-zona";
 import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
@@ -182,8 +183,10 @@ async function cerrarVenta(
   if (direccion) await completarEntrega(pedido.id, { direccion });
   const partes = direccion
     ? [
-        `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Te llega a ${direccion.slice(0, 120)} en ${cfg.plazoEntregaPropia} y lo pagás ahí${medio === "TRANSFERENCIA" ? " por transferencia" : ", en efectivo o por transferencia"} 🙌`,
-        "Si tenés un horario que te quede mejor, decime y lo anoto.",
+        medio === "TRANSFERENCIA"
+          ? `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}${cfg.descuentoTransferenciaPct > 0 ? `, ya con el ${cfg.descuentoTransferenciaPct}% de descuento por transferencia` : ""}. Va a ${direccion.slice(0, 120)}: apenas se acredita la transferencia, sale en el próximo reparto 🙌`
+          : `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Te llega a ${direccion.slice(0, 120)} en ${cfg.plazoEntregaPropia} y lo pagás ahí, en efectivo o por transferencia 🙌`,
+        medio === "TRANSFERENCIA" && cfg.transferenciaDatos ? `Los datos para transferir:\n${cfg.transferenciaDatos}\nMandame el comprobante por acá.` : "Si tenés un horario que te quede mejor, decime y lo anoto.",
       ]
     : medio === "TRANSFERENCIA"
       ? [
@@ -418,14 +421,14 @@ export async function atender(e: Entrada): Promise<void> {
   if (toque?.tipo === "pagar") return cobrarConLink(e.clave, toque.camino);
   if (toque?.tipo === "transferencia") return cerrarVenta(e.clave, e.nombre, "TRANSFERENCIA", toque.camino, toque.envio);
   // Un botón viejo de «Pago al recibir» fuera de Carlos Paz y alrededores se cierra por transferencia: se cobra antes de salir.
-  if (toque?.tipo === "recibir") return cerrarVenta(e.clave, e.nombre, recibeEnZonaPropia(toque.envio?.lugar) ? "AL_RECIBIR" : "TRANSFERENCIA", toque.camino, toque.envio);
+  if (toque?.tipo === "recibir") return cerrarVenta(e.clave, e.nombre, PAGO_AL_RECIBIR && recibeEnZonaPropia(toque.envio?.lugar) ? "AL_RECIBIR" : "TRANSFERENCIA", toque.camino, toque.envio);
 
   // «Pago aquí» con el pedido armado: se cierra al recibir, sin preguntar zona (pagar al recibir
   // es solo en Carlos Paz y alrededores). Si en el mismo mensaje viene la dirección, queda anotada.
   const guardado = canal === "whatsapp" ? await pedidoGuardado(e.clave) : null;
   // Solo si el último envío que le dijimos no es de otra zona (Córdoba capital, correo): ahí lo ve el vendedor.
   const ultimoEnvio = [...(await historialDe(e.clave, 9))].reverse().find((h) => h.de === "acopio" && /Envío a [^:]+:/.test(h.texto))?.texto.match(/Envío a ([^:]+):/)?.[1];
-  if (guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (ultimoEnvio ? recibeEnZonaPropia(ultimoEnvio) : false)) {
+  if (PAGO_AL_RECIBIR && guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (ultimoEnvio ? recibeEnZonaPropia(ultimoEnvio) : false)) {
     const direccion = tieneDireccion(texto) ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160) : undefined;
     console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
     return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: "Villa Carlos Paz" }, direccion || undefined);
