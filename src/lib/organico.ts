@@ -176,7 +176,7 @@ export async function aprender(): Promise<Leccion[]> {
       model: MODELO,
       max_tokens: 700,
       system:
-        "Sos el entrenador de un vendedor por WhatsApp de Acopio Saludable (frutos secos y mixes, Villa Carlos Paz; entrega sin cargo y pago al recibir en la zona; combos como la Despensa de 4 kilos). " +
+        "Sos el entrenador de un vendedor por WhatsApp de Acopio Saludable (frutos secos y mixes, Villa Carlos Paz; entrega sin cargo en la zona desde la compra mínima, pago anticipado por transferencia o Mercado Pago, prioridad pedidos grandes; combos como la Despensa de 4 kilos). " +
         "Leés las charlas de ayer y sacás lecciones CONCRETAS y ACCIONABLES para que el vendedor venda más mañana: qué frase o movida hizo comprar, en qué momento exacto se perdieron las charlas y qué tendría que haber dicho. " +
         "Nada genérico («sé amable», «hacé seguimiento»): cada lección es una regla que se puede aplicar en el próximo mensaje, en rioplatense, de vos, máximo 30 palabras, con la evidencia en pocas palabras (cuántas charlas lo muestran). " +
         "Si ayer no hubo nada claro, devolvé lista vacía: una lección mala es peor que ninguna. Respondé SOLO JSON: {\"lecciones\":[{\"texto\":\"...\",\"evidencia\":\"...\"}]} con 0 a 3 lecciones.",

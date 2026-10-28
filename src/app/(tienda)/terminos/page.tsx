@@ -21,7 +21,7 @@ export default async function Pagina() {
         <h2>Precios</h2>
         <p>Están en pesos argentinos e incluyen impuestos. Pueden cambiar sin aviso, pero el precio de tu pedido queda fijo en el momento en que lo confirmás.</p>
         <h2>Compra mínima y medios de pago</h2>
-        <p>La compra mínima es de {pesos(cfg.compraMinima)}{cfg.compraMinimaPropia < cfg.compraMinima ? ` (${pesos(cfg.compraMinimaPropia)} en la zona de reparto propio)` : ""}. Se puede pagar por transferencia bancaria, con {cfg.descuentoTransferenciaPct}% de descuento, o con tarjeta y dinero en cuenta a través de Mercado Pago. En Villa Carlos Paz y alrededores también podés pagar al recibir, en efectivo o por transferencia.</p>
+        <p>La compra mínima es de {pesos(cfg.compraMinima)}{cfg.compraMinimaPropia < cfg.compraMinima ? ` (${pesos(cfg.compraMinimaPropia)} en la zona de reparto propio)` : ""}. Se puede pagar por transferencia bancaria, con {cfg.descuentoTransferenciaPct}% de descuento, o con tarjeta y dinero en cuenta a través de Mercado Pago. El pedido se abona antes del envío y sale apenas se acredita el pago.</p>
         <h2>Disponibilidad</h2>
         <p>Trabajamos con stock propio de los productos más pedidos y compramos el resto a nuestros proveedores después de cada pedido. Si un producto no está disponible, te avisamos y elegís entre un reemplazo o el reintegro.</p>
         <h2>Entregas, cambios y devoluciones</h2>

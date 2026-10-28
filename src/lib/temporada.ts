@@ -31,7 +31,7 @@ export const TEMPORADAS: Temporada[] = [
     slugs: ["pan-dulce-casero", "mesa-navidena", "regalo-navideno"],
     patron: /\b(navid|pan dulce|pan dulces|panes dulces|fiestas|fin de ano|ano nuevo|noche buena|nochebuena|regalo|canasta|mesa dulce|turron|budin navide|para las fiestas)/,
     titulo: "Llegan las fiestas: armá tu mesa sin salir de casa",
-    bajada: "Nueces, almendras, pasas y chips para el pan dulce, y la mesa navideña de frutos secos lista para servir. Te lo llevamos y pagás al recibir.",
+    bajada: "Nueces, almendras, pasas y chips para el pan dulce, y la mesa navideña de frutos secos lista para servir. Te lo llevamos sin cargo en Carlos Paz y alrededores.",
     vendedor:
       "Estamos en temporada de Navidad y fin de año: es la época del año en que más se venden frutos secos. Si menciona pan dulce, budín, las fiestas, regalos o la mesa navideña, ofrecé primero el combo de la temporada que corresponda (Kit Pan Dulce casero para cocinar, Mesa navideña para servir, Bolsa regalo para regalar). " +
       "Si pide un producto suelto de repostería (nuez, pasas, almendras), dale el precio y contale que el Kit Pan Dulce trae todo junto. Si dice que es para más adelante, ofrecé dejarlo reservado con fecha de entrega en diciembre.",

@@ -6,6 +6,7 @@
 // que no conoce, y escribir cansa. Un botón se toca, se ve oficial y la charla avanza sola.
 // El link aparece recién cuando la persona eligió pagar, y va dentro de un botón «Pagar».
 
+import { PAGO_AL_RECIBIR } from "./politica";
 import { pesos } from "./precios";
 import type { EnvioCotizado, Ficha, Respuesta } from "./asistente-catalogo";
 
@@ -149,7 +150,7 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
           { id: corte(`${ID.pagar}${pedido.camino}`, 256), titulo: "Mercado Pago" },
           { id: corte(`${ID.transferencia}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Transferencia" },
           // Pagar al recibir solo en Carlos Paz y alrededores: en Córdoba capital hay zonas donde no conviene ir a cobrar.
-          pedido.envio.alRecibir
+          PAGO_AL_RECIBIR && pedido.envio.alRecibir
             ? { id: corte(`${ID.recibir}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Pago al recibir" }
             : { id: `${ID.opcion}Sumar algo más`, titulo: "Sumar algo más" },
         ],

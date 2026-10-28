@@ -709,10 +709,11 @@ test("whatsapp: productos van en lista para tocar, pedido con botones de pago, s
   assert.equal(pedido[0].tipo, "botones");
   const cp = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Carlos Paz", costo: 0, detalle: "x", propia: true, alRecibir: true, totalConEnvio: "$ 35.268", transferenciaConEnvio: "$ 32.447" } });
   const b = cp[0] as Extract<(typeof cp)[number], { tipo: "botones" }>;
-  assert.deepEqual(b.botones.map((x) => x.titulo), ["Mercado Pago", "Transferencia", "Pago al recibir"]);
-  assert.equal(b.botones[2].id, "recibir|/carrito?p=c-despensa*1~0~Carlos Paz");
+  // Desde el 28/10 no hay pago al recibir: el tercer botón es «Sumar algo más» también en Carlos Paz.
+  assert.deepEqual(b.botones.map((x) => x.titulo), ["Mercado Pago", "Transferencia", "Sumar algo más"]);
+  assert.equal(b.botones[2].id, "op|Sumar algo más");
   assert.equal(b.botones[0].id, "pagar|/carrito?p=c-despensa*1");
-  assert.match(textoParaPanel(b), /\[Botones: Mercado Pago · Transferencia · Pago al recibir\]/);
+  assert.match(textoParaPanel(b), /\[Botones: Mercado Pago · Transferencia · Sumar algo más\]/);
 
   const corto = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=1*1", renglones: ["Algo — $ 5.000"], total: "$ 5.000", conTransferencia: null, falta: "$ 30.000" });
   assert.match((corto[0] as { cuerpo: string }).cuerpo, /Te faltan \$ 30\.000/);
