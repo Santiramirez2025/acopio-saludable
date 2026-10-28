@@ -109,7 +109,14 @@ export async function charlarConAgente(
   const { HERRAMIENTAS_CLAUDE } = await import("./herramientas-agentes");
   type Bloque = { type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> };
   type Resultado = { type: "tool_result"; tool_use_id: string; content: string };
-  const conv: { role: "user" | "assistant"; content: string | Bloque[] | Resultado[] }[] = [...mensajes];
+  // Dos mensajes seguidos del mismo lado (mandó dos veces sin respuesta) se juntan: la API pide turnos alternados.
+  const conv: { role: "user" | "assistant"; content: string | Bloque[] | Resultado[] }[] = [];
+  for (const m of mensajes) {
+    const u = conv[conv.length - 1];
+    if (u && u.role === m.role && typeof u.content === "string") {
+      if (u.content.trim() !== m.content.trim()) u.content += `\n${m.content}`;
+    } else conv.push({ ...m });
+  }
   let texto = "";
   // Igual que en la llamada: mira y hace en el momento (pizarra, pedidos, charlas), no «en la próxima corrida».
   for (let vuelta = 0; vuelta < 5; vuelta++) {
@@ -124,7 +131,20 @@ export async function charlarConAgente(
     const bloques = d.content ?? [];
     const usos = bloques.filter((c) => c.type === "tool_use");
     texto = bloques.filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n");
-    if (!usos.length) break;
+    // En la última vuelta se le pide el texto sin herramientas: nunca vuelve una respuesta vacía.
+    if (!usos.length && texto.trim()) break;
+    if (!usos.length || vuelta === 4) {
+      if (usos.length) conv.push({ role: "assistant", content: bloques }, { role: "user", content: usos.map((u) => ({ type: "tool_result" as const, tool_use_id: String(u.id), content: "No hay más vueltas: contestá con lo que ya tenés." })) });
+      else conv.push({ role: "assistant", content: bloques.length ? bloques : "…" }, { role: "user", content: "(Contestale a Santiago en texto, corto, con lo que ya sabés.)" });
+      const fin = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
+        body: JSON.stringify({ model: MODELO, max_tokens: 900, system, messages: conv, tools: HERRAMIENTAS_CLAUDE, tool_choice: { type: "none" } }),
+        signal: AbortSignal.timeout(45_000),
+      });
+      if (fin.ok) texto = (((await fin.json()) as { content?: Bloque[] }).content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n");
+      break;
+    }
     conv.push({ role: "assistant", content: bloques });
     const { POST: accion } = await import("@/app/api/admin/agentes/accion/route");
     const resultados: Resultado[] = [];
