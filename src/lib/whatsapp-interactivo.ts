@@ -316,7 +316,7 @@ export function planSinApuro(nombre: string | null, tienda: string, fotoReal?: s
   const n = primerNombre(nombre);
   const quien = n ? `, ${n}` : "";
   // «Lo pienso» es donde más se corta la venta. En vez de soltar, una foto real y una sola pregunta de cierre blando.
-  const foto: Saliente[] = fotoReal ? [{ tipo: "imagen", url: fotoReal, pie: "Así llega tu pedido: lo ves y recién ahí pagás" }] : [];
+  const foto: Saliente[] = fotoReal ? [{ tipo: "imagen", url: fotoReal, pie: "Así llega tu pedido: en bolsa kraft, fraccionado y con una nota para vos" }] : [];
   return [
     ...foto,
     {
