@@ -1560,3 +1560,19 @@ test("prospección del sistema: exclusiones, mails válidos y ventana de envío"
   assert.equal(o.enVentanaDeEnvio(new Date("2026-10-28T23:00:00Z")), false);
   assert.equal(o.diasHabiles(new Date("2026-10-30T12:00:00Z"), new Date("2026-11-05T12:00:00Z")), 4);
 });
+
+test("harinar: lee precios de Pediwa y compara por kilo con La Granja", async () => {
+  const { productosDeHtml, comparar } = await import("./harinar");
+  const html = `<div><h5>SEMILLA DE GIRASOL PELADA X KG</h5><span>$3.019,30</span></div><div><p>SEMILLA DE LINO X 1 KG</p><b>$2.850,39</b></div><div>NUECES BLANCAS MARIPOZAS X 1 KG</div><div>$17.008,50</div>`;
+  const h = productosDeHtml(html).map(([n, p]) => [n, p, "x"] as [string, number, string]);
+  assert.equal(h.length, 3);
+  assert.equal(h[0][1], 3019.3);
+  const g: [string, string, number][] = [["1", "GIRASOL PELADO X 1 KG", 4503], ["2", "LINO SEMILLAS X 1 KG", 2500], ["3", "NUEZ MARIPOSA LIGHT X 1 KG", 16500]];
+  const c = comparar(h, g);
+  const gir = c.find((x) => x.producto === "girasol")!;
+  assert.equal(gir.conviene, "Harinar");
+  assert.equal(gir.alerta, null);
+  const lino = c.find((x) => x.producto === "lino")!;
+  assert.equal(lino.conviene, "La Granja");
+  assert.match(lino.alerta ?? "", /volver a comprarlo/);
+});

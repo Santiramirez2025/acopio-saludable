@@ -1,5 +1,5 @@
 // Radiografía del negocio para replantear el catálogo: qué se vendió, qué preguntó la gente y qué
-// tiene La Granja hoy. Solo administrador. GET ?parte=pedidos|whatsapp|catalogo|lagranja
+// tiene La Granja hoy. Solo administrador. GET ?parte=pedidos|whatsapp|catalogo|lagranja|harinar
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -100,10 +100,19 @@ async function lagranja() {
   return { archivo: decodeURIComponent(url.split("/").pop() ?? ""), renglones: lista.length, lista: lista.map((r) => [r.codigo, r.nombre.slice(0, 48), r.precio]) };
 }
 
+/** Harinar vs La Granja por kilo, y qué se compra en cada uno (ver lib/harinar.ts). */
+async function harinar() {
+  const { listaHarinar, comparar, COMPRAR_EN_HARINAR } = await import("@/lib/harinar");
+  const [h, g] = await Promise.all([listaHarinar(), lagranja()]);
+  const lista = "lista" in g ? (g.lista as [string, string, number][]) : [];
+  const comparacion = comparar(h, lista);
+  return { comprarEnHarinar: COMPRAR_EN_HARINAR, productosHarinar: h.length, listaGranja: "archivo" in g ? g.archivo : null, comparacion, alertas: comparacion.filter((c) => c.alerta) };
+}
+
 export async function GET(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const parte = new URL(req.url).searchParams.get("parte");
-  const f = { pedidos, whatsapp, catalogo, lagranja }[parte ?? ""];
-  if (!f) return NextResponse.json({ error: "parte = pedidos | whatsapp | catalogo | lagranja" }, { status: 400 });
+  const f = { pedidos, whatsapp, catalogo, lagranja, harinar }[parte ?? ""];
+  if (!f) return NextResponse.json({ error: "parte = pedidos | whatsapp | catalogo | lagranja | harinar" }, { status: 400 });
   return NextResponse.json(await f());
 }
