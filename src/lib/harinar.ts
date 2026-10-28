@@ -25,6 +25,26 @@ export const EQUIVALENCIAS: { clave: string; harinar: RegExp; kgH: number; granj
   { clave: "miel", harinar: /MIEL PURA .* X 5 KG/, kgH: 5, granja: /DOS ZANGANOS - MIEL DE ABEJAS 6 X 1 KG/, kgG: 1 },
 ];
 
+/** Precios de Harinar relevados a mano el 28/10/2026 (Pediwa no deja leer el catálogo desde el servidor).
+ *  Se usan cuando la lectura en vivo no trae nada; la comparación lo avisa con la fecha. */
+export const PRECIOS_REFERENCIA: { fecha: string; lista: [string, number, string][] } = {
+  fecha: "2026-10-28",
+  lista: [
+    ["SEMILLA DE GIRASOL PELADA X KG", 3019.3, "cereales y semillas"],
+    ["SEMILLA DE LINO X 1 KG", 2850.39, "cereales y semillas"],
+    ["AVENA GRUESA  X1 KG", 1678.86, "cereales y semillas"],
+    ["SEMILLA DE CHIA X 1KG", 5489.64, "cereales y semillas"],
+    ["SEMILLA DE SESAMO INTEGRAL X 1 KG", 1982.37, "cereales y semillas"],
+    ["CASTAÑAS DE CAJU X 1000 GR.", 19941, "frutas secas"],
+    ["NUECES BLANCAS MARIPOZAS X 1 KG", 17008.5, "frutas secas"],
+    ["ALMENDRA NON PAREIL CHILE X 1 KG", 28152, "frutas secas"],
+    ["PASAS DE UVA SIN SEMILLAS X 10KG.", 44574, "frutas secas"],
+    ["MIX FRUTA TROPICAL X 1 KG", 12903, "frutas secas"],
+    ["AZUCAR MASCABO X 2.5 KG", 11172.82, "azúcar"],
+    ["MIEL PURA M. SILVINA X 5 KG", 41146.48, "dulces y miel"],
+  ],
+};
+
 /** «$17.008,50» → 17008.5 */
 export function precioAr(t: string): number {
   return Number(t.replace(/[^\d,]/g, "").replace(",", ".")) || 0;
