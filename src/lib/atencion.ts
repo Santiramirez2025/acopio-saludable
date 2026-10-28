@@ -202,8 +202,8 @@ async function cerrarVenta(
 
 export async function atender(e: Entrada): Promise<void> {
   const canal = canalDe(e.clave);
-  let texto = e.texto !== null ? e.texto.trim().slice(0, 400) : `[${e.tipo}]`;
-  const nuevo = await registrarEntrante(e.idMensaje, e.clave, e.nombre, (e.guardar ?? texto).slice(0, 600));
+  let texto = e.texto !== null ? e.texto.trim().slice(0, 1200) : `[${e.tipo}]`;
+  const nuevo = await registrarEntrante(e.idMensaje, e.clave, e.nombre, (e.guardar ?? texto).slice(0, 1200));
   if (!nuevo) {
     console.log("chat: repetido, se ignora", e.idMensaje);
     return;
