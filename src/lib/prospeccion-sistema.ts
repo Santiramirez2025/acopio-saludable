@@ -198,3 +198,13 @@ export async function resumen(): Promise<Record<string, number | string>> {
   for (const p of todos) cuenta[p.estado] = Number(cuenta[p.estado] ?? 0) + 1;
   return cuenta;
 }
+
+/** Prueba del envío: un mail de muestra al mail de contacto de Santiago, sin guardar nada en la lista. */
+export async function probarEnvio(): Promise<{ ok: boolean; para: string | null; remitente: string | null }> {
+  const cfg = await leerConfig();
+  const para = cfg.emailContacto ?? null;
+  const remitente = process.env.EMAIL_FROM_PROSPECCION || process.env.EMAIL_FROM || null;
+  if (!para) return { ok: false, para, remitente };
+  const r: Registro = { empresa: "Prueba", email: para, senal: "prueba", asunto: "Prueba: así le llega el mail de Marcos a una empresa", cuerpo: "Vi que tienen 3 sucursales y que están buscando vendedor para WhatsApp.\n\nA Acopio Saludable la manejan 23 agentes de IA: el de WhatsApp vende y cobra solo las 24 horas.\n\nLo implementamos a medida desde $4.900.000 + IVA, para empresas que ya facturan más de $10 M por mes.\n\n¿Te muestro en 20 minutos cómo quedaría en tu empresa?", estado: "pendiente", creado: new Date().toISOString() };
+  return { ok: await mandar(r, r.cuerpo, r.asunto), para, remitente };
+}

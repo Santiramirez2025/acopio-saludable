@@ -34,6 +34,10 @@ export async function POST(req: Request) {
   if (b.accion === "marcar" && b.clave && (b.estado === "respondio" || b.estado === "rebotado" || b.estado === "baja")) {
     return NextResponse.json({ ok: await marcar(b.clave, b.estado, b.nota) });
   }
+  if (b.accion === "prueba") {
+    const { probarEnvio } = await import("@/lib/prospeccion-sistema");
+    return NextResponse.json(await probarEnvio());
+  }
   if (b.accion === "seguir_whatsapp") {
     const { seguirLeadsSistema } = await import("@/lib/vendedor-sistema");
     const { responderTexto } = await import("@/lib/atencion");
