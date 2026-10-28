@@ -1518,3 +1518,11 @@ test("vendedor: detecta una lista de productos para contestar cada uno", async (
   assert.equal(listaDeProductos("Hola, precio de nueces, almendras y castañas").length, 3);
   assert.deepEqual(listaDeProductos("Hola quiero la despensa de 4 kilos"), []);
 });
+
+
+test("cobro anticipado: «lo pienso» no promete pagar al recibir", () => {
+  const plan = planSinApuro("Ana", "Acopio Saludable", "https://x/foto.jpg");
+  const texto = JSON.stringify(plan);
+  assert.doesNotMatch(texto, /reci[eé]n ah[ií] pag|al recibir|antes de pagar/i);
+  assert.ok(plan.some((s) => s.tipo === "imagen"));
+});
