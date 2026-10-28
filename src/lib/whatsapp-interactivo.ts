@@ -470,3 +470,18 @@ export function comoTexto(s: Saliente): string {
       return `${s.cuerpo}\n${s.url}`;
   }
 }
+
+/**
+ * La persona mandó una LISTA de productos («precio de: dátiles, cacao, harina de coco…» o uno por renglón).
+ * Devuelve los productos si son 3 o más; si no, []. Con lista, el vendedor contesta cada uno y el total.
+ */
+export function listaDeProductos(texto: string): string[] {
+  const limpio = texto
+    .replace(/^[\s\S]*?(precios?|cu[aá]nto sale[n]?|cotiz[aá]me|necesito|quiero|busco)( saber)?( el| los)?( precios?)?( de| del)?\s*[:\-]?/i, (m) => (m.length < 80 ? "" : m))
+    .replace(/\b(por|x)\s*(kg|kilo)\b/gi, "");
+  const partes = limpio
+    .split(/\n|,|;|•|\s-\s|\by\b(?=\s+[a-záéíóúñ])/i)
+    .map((p) => p.replace(/^[\s\-*•\d.)]+/, "").replace(/[.?!]+$/, "").trim())
+    .filter((p) => p.length >= 3 && p.length <= 60 && !/^(hola|buen[oa]s?|gracias|sii?|pero|por ejemplo)\b/i.test(p));
+  return partes.length >= 3 ? partes.slice(0, 15) : [];
+}
