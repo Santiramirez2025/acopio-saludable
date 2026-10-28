@@ -29,7 +29,7 @@ const NEGOCIO = {
   telephone: "+54 9 3541 51-9630",
   priceRange: "$$",
   currenciesAccepted: "ARS",
-  paymentAccepted: "Transferencia, Mercado Pago, efectivo",
+  paymentAccepted: "Transferencia, Mercado Pago",
   openingHoursSpecification: [{ "@type": "OpeningHoursSpecification", dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], opens: "00:00", closes: "23:59" }],
   sameAs: Object.values(REDES).filter(Boolean),
   contactPoint: [{ "@type": "ContactPoint", contactType: "sales", telephone: "+54 9 3541 51-9630", availableLanguage: "es", areaServed: "AR" }],

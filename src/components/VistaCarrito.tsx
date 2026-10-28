@@ -23,6 +23,10 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
     );
   }
   const { puedePagar, falta, subtotal, conTransferencia, gananciaReventa, corte } = cotizacion;
+  // En Carlos Paz y la zona la compra mínima es más baja: con eso ya se puede seguir; el checkout
+  // controla el mínimo de la zona elegida (y el servidor también).
+  const puedeSeguir = puedePagar || cotizacion.puedePagarEnZona;
+  const faltaZona = Math.max(0, cotizacion.compraMinimaPropia - subtotal);
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
@@ -83,7 +87,7 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
           </div>
         )}
         <CuentaRegresiva corte={corte} />
-        {puedePagar && !cotizando ? (
+        {puedeSeguir && !cotizando ? (
           <Link href="/checkout" className="btn-comprar w-full">Continuar con la compra</Link>
         ) : (
           <button type="button" className="btn-comprar w-full" disabled aria-describedby="motivo-bloqueo">Continuar con la compra</button>
@@ -100,9 +104,14 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
           </a>
         )}
         <p className="text-xs text-stone-600">Al confirmar el pedido quedan fijos los precios de hoy. El envío se calcula en el paso siguiente.</p>
-        {!puedePagar && (
+        {!puedeSeguir && (
           <p id="motivo-bloqueo" className="text-sm text-tierra-700">
-            Te faltan {pesosCliente(falta)} para llegar a la compra mínima. <Link href="/catalogo" className="underline">Seguir sumando</Link>
+            Te faltan {pesosCliente(faltaZona || falta)} para llegar a la compra mínima. <Link href="/catalogo" className="underline">Seguir sumando</Link>
+          </p>
+        )}
+        {puedeSeguir && !puedePagar && (
+          <p className="text-sm text-stone-700">
+            En Carlos Paz y la zona ya podés pedir. Para envíos a otras localidades la compra mínima es {pesosCliente(cotizacion.compraMinima)} (te faltan {pesosCliente(falta)}).
           </p>
         )}
       </aside>
