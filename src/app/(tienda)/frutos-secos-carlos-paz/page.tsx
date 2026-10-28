@@ -93,7 +93,7 @@ export default async function FrutosSecosCarlosPaz() {
             ["/dietetica-villa-carlos-paz", "Dietética en Villa Carlos Paz"],
             [`/catalogo?categoria=${encodeURIComponent("Frutas desecadas")}`, "Frutas desecadas"],
             [`/catalogo?categoria=${encodeURIComponent("Semillas y granos")}`, "Semillas y granos"],
-            ["/sin-tacc", "Sin TACC"],
+            ["/sin-tacc-carlos-paz", "Sin TACC en Carlos Paz"],
             ["/regalos-navidenos-cordoba", "Regalos navideños"],
             ["/combos", "Combos"],
             ["/envios", "Envíos"],
