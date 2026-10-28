@@ -105,6 +105,8 @@ ${esc(texto).split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px">${p.replace(
 </div>`;
 }
 
+let ultimoError = "";
+
 async function mandar(r: Registro, texto: string, asunto: string): Promise<boolean> {
   const from = process.env.EMAIL_FROM_PROSPECCION || process.env.EMAIL_FROM;
   if (!process.env.RESEND_API_KEY || !from) return false;
@@ -122,7 +124,10 @@ async function mandar(r: Registro, texto: string, asunto: string): Promise<boole
     }),
     signal: AbortSignal.timeout(10_000),
   }).catch(() => null);
-  if (!res?.ok) console.error("prospección: mail rechazado", res?.status, await res?.text().catch(() => ""));
+  if (!res?.ok) {
+    ultimoError = `${res?.status ?? "sin respuesta"} ${res ? (await res.text().catch(() => "")).slice(0, 300) : ""}`.trim();
+    console.error("prospección: mail rechazado", ultimoError);
+  }
   return Boolean(res?.ok);
 }
 
@@ -200,11 +205,12 @@ export async function resumen(): Promise<Record<string, number | string>> {
 }
 
 /** Prueba del envío: un mail de muestra al mail de contacto de Santiago, sin guardar nada en la lista. */
-export async function probarEnvio(): Promise<{ ok: boolean; para: string | null; remitente: string | null }> {
+export async function probarEnvio(): Promise<{ ok: boolean; para: string | null; remitente: string | null; error?: string }> {
   const cfg = await leerConfig();
   const para = cfg.emailContacto ?? null;
   const remitente = process.env.EMAIL_FROM_PROSPECCION || process.env.EMAIL_FROM || null;
   if (!para) return { ok: false, para, remitente };
   const r: Registro = { empresa: "Prueba", email: para, senal: "prueba", asunto: "Prueba: así le llega el mail de Marcos a una empresa", cuerpo: "Vi que tienen 3 sucursales y que están buscando vendedor para WhatsApp.\n\nA Acopio Saludable la manejan 23 agentes de IA: el de WhatsApp vende y cobra solo las 24 horas.\n\nLo implementamos a medida desde $4.900.000 + IVA, para empresas que ya facturan más de $10 M por mes.\n\n¿Te muestro en 20 minutos cómo quedaría en tu empresa?", estado: "pendiente", creado: new Date().toISOString() };
-  return { ok: await mandar(r, r.cuerpo, r.asunto), para, remitente };
+  const ok = await mandar(r, r.cuerpo, r.asunto);
+  return { ok, para, remitente, ...(ok ? {} : { error: ultimoError || "falta RESEND_API_KEY o remitente" }) };
 }
