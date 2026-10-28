@@ -1509,3 +1509,12 @@ test("formulario /agentes: freno general cada 15 min y por teléfono por día", 
   assert.ok(!admiteLead(LEADS_MAX_15MIN, 0));
   assert.ok(!admiteLead(0, LEADS_MAX_TELEFONO_DIA));
 });
+
+test("vendedor: detecta una lista de productos para contestar cada uno", async () => {
+  const { listaDeProductos } = await import("./whatsapp-interactivo");
+  const sara = listaDeProductos("Sii. Pero me gusta armar mi propio pedido\nPor ejemplo necesito saber precio\nDátiles  por kg\nCacao amargo al 80 % /en polvo y tableta para derretir \nHarina de almendras \nHarina de maní\nHarina de coco \nArándanos pasas\nManteca de mani\nAceite de coco");
+  assert.equal(sara.length, 9, sara.join(" | ")); // cacao en polvo y en tableta van por separado
+  assert.equal(sara[0], "Dátiles");
+  assert.equal(listaDeProductos("Hola, precio de nueces, almendras y castañas").length, 3);
+  assert.deepEqual(listaDeProductos("Hola quiero la despensa de 4 kilos"), []);
+});

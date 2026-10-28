@@ -20,7 +20,7 @@ import { cuantoTrae, pesos, renglonCombo } from "./precios";
 import { zonaPagaDe } from "./envios/tabla";
 import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
-import { cortada, fichasNombradas, presentacionDe, separarOpciones } from "./whatsapp-interactivo";
+import { cortada, fichasNombradas, presentacionDe, separarOpciones, listaDeProductos } from "./whatsapp-interactivo";
 import { argumentoCombo, COMBO_ENTRADA, temaDe } from "./combos-tema";
 import type { Accion, Enlace, EnvioCotizado, Ficha, Foto, Respuesta } from "./asistente-catalogo";
 import { urlSitio } from "./sitio";
@@ -697,6 +697,12 @@ export async function responderComoVendedor(
     ...historial.slice(-8).map((t) => ({ role: (t.de === "yo" ? "user" : "assistant") as "user" | "assistant", content: t.texto })),
     { role: "user" as const, content: carritoTxt ? `${carritoTxt}\n\n${mensaje}` : mensaje },
   ];
+  // Lista de productos: se le marca al modelo para que no conteste solo algunos (el 28/10, a Sara 3 de 8).
+  const lista = listaDeProductos(mensaje);
+  if (lista.length) {
+    const ultimo = mensajes[mensajes.length - 1];
+    ultimo.content = `${ultimo.content}\n\n(LISTA DE ${lista.length} PRODUCTOS: ${lista.map((p) => `«${p}»`).join(", ")}. Usá buscar_productos con consultas = esa lista, sin recomendar_combo ni fotos, y contestá TODOS en orden con presentación y precio, o «no lo tenemos». Al final el total y una pregunta.)`;
+  }
 
   let fichas: Ficha[] = [];
   let acciones: Accion[] = [];
@@ -714,7 +720,7 @@ export async function responderComoVendedor(
         body: JSON.stringify({
           model: MODELO,
           // Las respuestas son de tres frases: un techo bajo corta las que se van de largo.
-          max_tokens: 500,
+          max_tokens: lista.length ? 1100 : 500,
           // El cache_control al final del system cubre las herramientas y las instrucciones:
           // son el 90% de lo que se manda y no cambian entre mensajes.
           system: [{ type: "text", text: instrucciones(pesos(cfg.compraMinima), lecciones), cache_control: { type: "ephemeral" } }],
@@ -776,7 +782,7 @@ export async function responderComoVendedor(
           derivar: derivar || undefined,
           envio,
           entregaGuardada: entregaGuardada || undefined,
-          fotos: fotos.length ? fotos : undefined,
+          fotos: fotos.length && !lista.length ? fotos : undefined,
           reemplazaPedido: reemplazaPedido || undefined,
         };
       }
