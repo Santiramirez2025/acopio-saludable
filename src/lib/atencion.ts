@@ -259,6 +259,8 @@ export async function atender(e: Entrada): Promise<void> {
         const audio = /^\[audio·([^\]\s]+)\]/.exec(e.guardar ?? "")?.[1];
         const r = audio ? await transcribirAudio(audio) : { texto: null };
         if (r.texto) await prisma.$executeRaw`UPDATE "WhatsappMensaje" SET "texto" = ${`(audio) ${r.texto}`} WHERE "id" = ${e.idMensaje}`.catch(() => null);
+        // Sin transcripción (por ejemplo, sin crédito en OpenAI): Marcos igual contesta y le pide que lo escriba.
+        else if (audio) await prisma.$executeRaw`UPDATE "WhatsappMensaje" SET "texto" = ${"(mandó un audio que no se pudo escuchar: pedile, amable y en una línea, que te lo escriba)"} WHERE "id" = ${e.idMensaje}`.catch(() => null);
         else if (e.tipo !== "image") return;
       }
       await atenderLeadSistema(e.clave, e.nombre ?? null, e.idMensaje, responder).catch((x) => console.error("Marcos falló", x));
