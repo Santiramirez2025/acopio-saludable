@@ -104,10 +104,12 @@ async function lagranja() {
 async function harinar() {
   const harinarLib = await import("@/lib/harinar");
   const { listaHarinar, comparar, COMPRAR_EN_HARINAR } = harinarLib;
-  const [h, g] = await Promise.all([listaHarinar(), lagranja()]);
+  const [vivo, g] = await Promise.all([listaHarinar(), lagranja()]);
+  const enVivo = vivo.length > 0;
+  const h = enVivo ? vivo : harinarLib.PRECIOS_REFERENCIA.lista;
   const lista = "lista" in g ? (g.lista as [string, string, number][]) : [];
   const comparacion = comparar(h, lista);
-  return { comprarEnHarinar: COMPRAR_EN_HARINAR, productosHarinar: h.length, lectura: harinarLib.estadoLectura, listaGranja: "archivo" in g ? g.archivo : null, comparacion, alertas: comparacion.filter((c) => c.alerta) };
+  return { comprarEnHarinar: COMPRAR_EN_HARINAR, productosHarinar: h.length, preciosHarinar: enVivo ? "en vivo" : `de referencia del ${harinarLib.PRECIOS_REFERENCIA.fecha}: Pediwa no deja leer el catálogo desde el servidor; si cambian, pedile a Santiago la lista nueva`, lectura: harinarLib.estadoLectura, listaGranja: "archivo" in g ? g.archivo : null, comparacion, alertas: comparacion.filter((c) => c.alerta) };
 }
 
 export async function GET(req: Request) {
