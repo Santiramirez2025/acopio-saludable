@@ -4,16 +4,20 @@
 // Pablo (compras) controla la lista todos los días con GET /api/admin/analisis?parte=harinar.
 
 /** Lo que se compra en Harinar. Si La Granja queda más barata en alguno, se vuelve a La Granja (y se avisa). */
-export const COMPRAR_EN_HARINAR = ["girasol", "lino", "avena"] as const;
+export const COMPRAR_EN_HARINAR = ["girasol", "lino", "avena", "harina integral", "salvado de trigo", "gluten", "gotas de chocolate"] as const;
 
 /** Categorías de Pediwa que importan para Acopio (las demás son de panadería). */
-const CATEGORIAS = { 1039: "frutas secas", 1040: "cereales y semillas", 1044: "azúcar", 1042: "dulces y miel", 1050: "harinas" } as const;
+const CATEGORIAS = { 1039: "frutas secas", 1040: "cereales y semillas", 1044: "azúcar", 1042: "dulces y miel", 1050: "harinas", 1051: "almidón", 1047: "chocolates" } as const;
 
 /** Producto de Harinar ↔ de La Granja, con los kilos de cada presentación para comparar por kilo. */
 export const EQUIVALENCIAS: { clave: string; harinar: RegExp; kgH: number; granja: RegExp; kgG: number }[] = [
   { clave: "girasol", harinar: /GIRASOL PELADA/, kgH: 1, granja: /^GIRASOL PELADO X 1 KG/, kgG: 1 },
   { clave: "lino", harinar: /SEMILLA DE LINO X 1/, kgH: 1, granja: /^LINO SEMILLAS X 1 KG/, kgG: 1 },
   { clave: "avena", harinar: /AVENA GRUESA\s+X1 KG/, kgH: 1, granja: /AVENA ARROLLADA GRUESA MARCILLI X 3 KG/, kgG: 1 },
+  { clave: "harina integral", harinar: /HARINA INTEGRAL CTIAL X 25/, kgH: 25, granja: /^HARINA INTEGRAL X 5 KG/, kgG: 1 },
+  { clave: "salvado de trigo", harinar: /SALVADO DE TRIGO .*X 20/, kgH: 20, granja: /SALVADO DE TRIGO GRUESO X 2 KG/, kgG: 1 },
+  { clave: "gluten", harinar: /^GLUTEN X 1 KG/, kgH: 1, granja: /GLUTEN DE TRIGO X 2.5 KG/, kgG: 1 },
+  { clave: "gotas de chocolate", harinar: /GOTAS AGUILA\s+NEGRAS X 1 KG/, kgH: 1, granja: /GOTAS DE CHOCOLATE SEMIAMARGO X 1 KG/, kgG: 1 },
   { clave: "chía", harinar: /SEMILLA DE CHIA X 1/, kgH: 1, granja: /^CHIA SEMILLA X KG/, kgG: 1 },
   { clave: "sésamo integral", harinar: /SESAMO INTEGRAL X 1/, kgH: 1, granja: /^SESAMO INTEGRAL X 1 KG/, kgG: 1 },
   { clave: "cajú", harinar: /CAJU X 1000/, kgH: 1, granja: /CASTAÑA DE CAJU SK3 X 1 KG/, kgG: 1 },
@@ -34,6 +38,10 @@ export const PRECIOS_REFERENCIA: { fecha: string; lista: [string, number, string
     ["SEMILLA DE LINO X 1 KG", 2850.39, "cereales y semillas"],
     ["AVENA GRUESA  X1 KG", 1678.86, "cereales y semillas"],
     ["SEMILLA DE CHIA X 1KG", 5489.64, "cereales y semillas"],
+    ["HARINA INTEGRAL CTIAL X 25 KG", 21583.2, "harinas"],
+    ["SALVADO DE TRIGO CELESTIAL X 20 KG", 13249.04, "harinas"],
+    ["GLUTEN X 1 KG", 9221, "almidón"],
+    ["GOTAS AGUILA  NEGRAS X 1 KG", 10578.28, "chocolates"],
     ["SEMILLA DE SESAMO INTEGRAL X 1 KG", 1982.37, "cereales y semillas"],
     ["CASTAÑAS DE CAJU X 1000 GR.", 19941, "frutas secas"],
     ["NUECES BLANCAS MARIPOZAS X 1 KG", 17008.5, "frutas secas"],
