@@ -140,7 +140,7 @@ export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   { codigo: "LG-PASASCHOC-400", producto: "Pasas de uva con chocolate sin TACC", marca: SUELTO, presentacion: "x 400 g", categoria: "Frutas desecadas", contenido: 400, unidad: "g", costo: 9820, margen: 0.3201, pesoBrutoG: 420 },
   { codigo: "LG-PANDULCE-CERAL", producto: "Pan dulce diet con frutas", marca: "Ceral", presentacion: "x 400 g", categoria: "Almacen", contenido: 400, unidad: "g", costo: 5570, margen: 0.413, pesoBrutoG: 450 },
   // Medio kilo del Mix Clásico con cajú, para el combo. Costo conservador de Pablo (receta con La Granja).
-  { codigo: "TG-MIXC-500", codigoProveedor: "propio", producto: "Mix Clásico con cajú", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutos secos y mix", contenido: 500, unidad: "g", costo: 7000, margen: 0.1905, pesoBrutoG: 520, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní y pasas de uva. Sin girasol. Medio kilo." },
+  { codigo: "TG-MIXC-500", codigoProveedor: "propio", producto: "Mix Clásico con cajú", marca: SUELTO, presentacion: "x 500 g", categoria: "Frutos secos y mix", contenido: 500, unidad: "g", costo: 7000, margen: 0.2434, pesoBrutoG: 520, porQueLoElegimos: "Nueces, almendras, castañas de cajú, maní y pasas de uva. Sin girasol. Medio kilo." },
   { codigo: "LG-BOLSAREGALO", producto: "Bolsa regalo navideña", marca: SUELTO, presentacion: "x 1 unidad", categoria: "Almacen", contenido: 0 /* no se vende por peso: sin «1 g» en la ficha */, unidad: "g", costo: 1500, margen: 0.2346, pesoBrutoG: 50, porQueLoElegimos: "Bolsa para regalo: armamos tu pedido adentro, listo para entregar." },
 ];
 
@@ -171,7 +171,7 @@ export const COMBOS_PROVEEDORES: ComboProveedor[] = [
   { slug: "alfajorcitos-caseros", nombre: "Kit alfajorcitos caseros", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-TAPITAS-VAI", cantidad: 2 }, { codigo: "LG-TAPITAS-CHOC", cantidad: 1 }, { codigo: "LG-DDL-REPOSTERO", cantidad: 1 }] },
   { slug: "merienda-sin-tacc-yuka", nombre: "Merienda sin TACC", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-YUKA-ALF-DDL", cantidad: 1 }, { codigo: "LG-YUKA-ALF-CHOC", cantidad: 1 }, { codigo: "LG-YUKA-GALL-VAI", cantidad: 1 }, { codigo: "LG-DONINAS-COCO", cantidad: 1 }, { codigo: "LG-DONINAS-CHIPS", cantidad: 1 }] },
   // Combo Navidad (opción A de Pablo, 27/10): costo $34.090, se vende a $49.000 (margen 30,4%). La suma suelta da $49.500.
-  { slug: "mesa-navidena", nombre: "Mesa navideña", descuentoPct: 1.01, destacado: true, items: [{ codigo: "LG-GARRAPMANI-500", cantidad: 1 }, { codigo: "LG-ALMGARRAP-250", cantidad: 1 }, { codigo: "LG-PASASCHOC-400", cantidad: 1 }, { codigo: "LG-PANDULCE-CERAL", cantidad: 1 }, { codigo: "TG-MIXC-500", cantidad: 1 }, { codigo: "LG-BOLSAREGALO", cantidad: 1 }] },
+  { slug: "mesa-navidena", nombre: "Mesa navideña", descuentoPct: 1.8, destacado: true, items: [{ codigo: "LG-GARRAPMANI-500", cantidad: 1 }, { codigo: "LG-ALMGARRAP-250", cantidad: 1 }, { codigo: "LG-PASASCHOC-400", cantidad: 1 }, { codigo: "LG-PANDULCE-CERAL", cantidad: 1 }, { codigo: "TG-MIXC-500", cantidad: 1 }, { codigo: "LG-BOLSAREGALO", cantidad: 1 }] },
   { slug: "arranque-gym", nombre: "Pack gym del mes", descuentoPct: 5, items: [{ codigo: "LG-GPROTE", cantidad: 1 }, { codigo: "LG-AVENA", cantidad: 1 }, { codigo: "LG-CACAO-250", cantidad: 1 }, { codigo: "LG-ALMNP-500", cantidad: 1 } ] },
 ];
 

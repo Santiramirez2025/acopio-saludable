@@ -26,7 +26,7 @@ export const COMBOS_INICIALES: {
   {
     // Combo Navidad (27/10): el contenido y el precio están en catalogo-proveedores.ts (se carga con /catalogo/sumar).
     // Antes traía el 702, un duplicado de almendras que se ocultó, y por eso no se veía en la tienda.
-    slug: "mesa-navidena", nombre: "Mesa navideña", tipo: "COMBO", destacado: true, descuentoPct: 1.01,
+    slug: "mesa-navidena", nombre: "Mesa navideña", tipo: "COMBO", destacado: true, descuentoPct: 1.8,
     vigenteDesde: "2026-10-20", vigenteHasta: "2026-12-31",
     items: [["LG-GARRAPMANI-500"], ["LG-ALMGARRAP-250"], ["LG-PASASCHOC-400"], ["LG-PANDULCE-CERAL"], ["TG-MIXC-500"], ["LG-BOLSAREGALO"]],
   },
