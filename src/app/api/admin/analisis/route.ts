@@ -110,6 +110,7 @@ async function trafico(dias: number) {
   const paginas: Record<string, number> = {};
   const origenes: Record<string, number> = {};
   const porSesion: Record<string, Set<string>> = {};
+  const origenDeSesion: Record<string, string> = {};
   for (const f of filas) {
     const e = f.nombre.slice(3);
     let d: { r?: string | null; s?: string | null; o?: string | null } = {};
@@ -123,6 +124,7 @@ async function trafico(dias: number) {
     }
     if (e === "pagina" && d.r) paginas[d.r] = (paginas[d.r] ?? 0) + 1;
     if (e === "pagina" && d.o && !/acopiosaludable/.test(d.o)) origenes[d.o] = (origenes[d.o] ?? 0) + 1;
+    if (d.s && d.o && !/acopiosaludable/.test(d.o) && !origenDeSesion[d.s]) origenDeSesion[d.s] = d.o;
   }
   for (const k of Object.keys(porDia)) porDia[k].sesiones = sesionesDia[k]?.size ?? 0;
   const ses = Object.values(porSesion);
@@ -136,7 +138,18 @@ async function trafico(dias: number) {
     carritosAbandonados: ses.filter((x) => x.has("agregar") && !x.has("iniciar_compra") && !x.has("compra") && !x.has("contacto")).length,
   };
   const top = (o: Record<string, number>) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 12);
-  return { dias, desde: "registro propio desde el 28/10/2026", porDia, embudo, paginas: top(paginas), origenes: top(origenes) };
+  // Qué hizo cada origen (link con utm o sitio que la mandó): para medir influencers, piezas y campañas.
+  const porOrigen: Record<string, { sesiones: number; agregaron: number; whatsapp: number; compraron: number }> = {};
+  for (const [s, o] of Object.entries(origenDeSesion)) {
+    const x = (porOrigen[o] ??= { sesiones: 0, agregaron: 0, whatsapp: 0, compraron: 0 });
+    const ev = porSesion[s] ?? new Set<string>();
+    x.sesiones++;
+    if (ev.has("agregar")) x.agregaron++;
+    if (ev.has("contacto")) x.whatsapp++;
+    if (ev.has("compra")) x.compraron++;
+  }
+  const campanas = Object.entries(porOrigen).sort((a, b) => b[1].sesiones - a[1].sesiones).slice(0, 20);
+  return { dias, desde: "registro propio desde el 28/10/2026", porDia, embudo, paginas: top(paginas), origenes: top(origenes), campanas, nota: "campanas: sesiones por origen; los links con ?utm_source=…&utm_campaign=… aparecen como utm:fuente/campaña" };
 }
 
 /** Harinar vs La Granja por kilo, y qué se compra en cada uno (ver lib/harinar.ts). */

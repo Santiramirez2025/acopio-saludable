@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     r: typeof b?.r === "string" ? b.r.slice(0, 120) : null,
     v: typeof b?.v === "number" && Number.isFinite(b.v) ? Math.round(b.v) : null,
     s: typeof b?.s === "string" ? b.s.replace(/[^a-z0-9-]/gi, "").slice(0, 16) : null,
-    o: typeof b?.o === "string" ? b.o.replace(/[^a-z0-9.-]/gi, "").slice(0, 60) : null,
+    o: typeof b?.o === "string" ? b.o.replace(/[^a-z0-9.:/_-]/gi, "").slice(0, 60) : null,
   });
   await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${`ev-${e}`}, true, ${detalle})`.catch(() => null);
   return new NextResponse(null, { status: 204 });
