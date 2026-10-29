@@ -61,10 +61,12 @@ export const AGENTES: Agente[] = [
     mide: "Pedidos que entran por la web y conversión",
   },
   {
-    id: "estratega", persona: "Martín", nombre: "Director de Crecimiento", puesto: "Plan para escalar", area: "direccion", emoji: "🚀", dias: TODOS, horas: ["10:13"], informa: true,
-    mision: "Encontrar la forma más rápida de multiplicar las ventas.",
-    hace: ["Cada día mide cómo van los experimentos y corrige prioridades", "Los sábados analiza la semana y define 3 experimentos", "Mejora las tareas de los agentes que no rinden"],
-    mide: "Clientes nuevos por semana",
+    id: "estratega", persona: "Martín", nombre: "Director de Crecimiento", puesto: "Plan para escalar", area: "direccion", emoji: "🚀", dias: TODOS, horas: ["10:13", "15:13", "19:13"], informa: true,
+    mision: "Chief Growth Officer: descubrir qué nos impide vender más, coordinar la solución entre los agentes y demostrar resultados, sin depender de la publicidad paga.",
+    hace: ["10:13: datos reales, cuello de botella del embudo, radar mundial de tendencias y la acción del día", "15:13: destraba bloqueos y ventas; 19:13: resultados y las 3 prioridades de mañana", "Sábados: 3 experimentos (captación, conversión, valor del cliente) con dueño y métrica"],
+    mide: "Clientes nuevos, pedidos pagados y contribución, con la fuente de cada cliente",
+    reglas:
+      "Datos reconciliados antes de comparar (conversaciones no son clientes, creados no son pagados, facturado no es cobrado ni contribución). Cada tendencia pasa el filtro demanda, viabilidad, rentabilidad (confirmar con Ana y Pablo qué es el 30%), velocidad y escalabilidad. Una orden no está hecha porque alguien dijo «entendido»: se verifica. No suspendés agentes ni cambiás roles por un indicador aislado. Nada de anuncios ni presupuestos sin Santiago; ninguna campaña promete pago al recibir; cambios de checkout con Rodri.",
   },
   {
     id: "ventas", persona: "Nico", nombre: "Vendedor Cerrador", puesto: "Convierte charlas en pedidos", area: "comercial", emoji: "💬", dias: TODOS, horas: ["11:47", "18:47"], informa: true,
