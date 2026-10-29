@@ -799,6 +799,8 @@ import { esRespuestaAutomatica } from "./asistente";
 test("whatsapp: no se le contesta a otro bot", () => {
   assert.ok(esRespuestaAutomatica("Hola, ¿cómo estás? Un gusto saludarte. Gracias por comunicarte y elegir nuestros servicios, soy Terra el asistente virtual de Terra Firma"));
   assert.ok(esRespuestaAutomatica("Gracias por tu mensaje. En breve te responderemos."));
+  assert.ok(esRespuestaAutomatica("☝️Este es un canal de notificaciones. Si recibiste un mensaje nuestro, no respondas por acá."));
+  assert.ok(esRespuestaAutomatica("Hola! 👋 Gracias por comunicarte con Tiendas Eatwell"));
   assert.ok(esRespuestaAutomatica("Nuestro horario de atención es de 9 a 18 hs"));
   assert.ok(!esRespuestaAutomatica("Sí, pasame precios"));
   assert.ok(!esRespuestaAutomatica("Hola, somos 20 habitaciones, qué tienen para el desayuno?"));

@@ -41,7 +41,7 @@ export function pidePersona(texto: string): boolean {
  * Si el vendedor le contesta, los dos bots se hablan en bucle: para WhatsApp eso es spam.
  */
 export function esRespuestaAutomatica(texto: string): boolean {
-  return /\b(asistente virtual|respuesta automatica|mensaje automatico|soy (el|la|un|una) (asistente|bot)|gracias por comunicarte|gracias por (tu|su) mensaje|en breve (te|le|nos) (responde|contesta|comunica)|a la brevedad (te|le) (responde|contesta)|fuera (del|de) horario|nuestro horario de atencion es|este es un mensaje automatico|no respondas? a este)/.test(normalizar(texto));
+  return /\b(asistente virtual|respuesta automatica|mensaje automatico|soy (el|la|un|una) (asistente|bot)|gracias por comunicarte|gracias por (tu|su) mensaje|en breve (te|le|nos) (responde|contesta|comunica)|a la brevedad (te|le) (responde|contesta)|fuera (del|de) horario|nuestro horario de atencion es|este es un mensaje automatico|no respondas? a este|canal de notificaciones|este (numero|canal) no (recibe|acepta|responde)|no (recibimos|leemos) (mensajes|respuestas) (en|por) este)/.test(normalizar(texto));
 }
 
 export function detectar(texto: string): Intencion {

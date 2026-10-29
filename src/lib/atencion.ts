@@ -464,6 +464,13 @@ export async function atender(e: Entrada): Promise<void> {
     ).catch((err) => console.error("aviso de venta por cerrar falló", err));
   }
 
+  if (p.derivar && p.sinIA) {
+    // Bot sin IA: mensaje de espera (una sola vez) y la charla queda para Santiago.
+    if (p.respuesta.texto) await responder(e.clave, p.respuesta.texto);
+    await cambiarEstado(e.clave, "persona");
+    await avisarSantiago("Charla sin IA para vos", `⏳ ${e.nombre ?? "Alguien"} (${e.clave}) escribió y el bot está sin IA: contestale vos.\nÚltimo mensaje: «${texto.slice(0, 200)}»\n${urlSitio()}/admin/whatsapp?c=${e.clave}`, { mail: false });
+    return;
+  }
   if (p.derivar) {
     await responder(e.clave, DERIVADO);
     await cambiarEstado(e.clave, "persona");
@@ -490,7 +497,7 @@ export async function atender(e: Entrada): Promise<void> {
   if (salida) await responder(e.clave, salida);
 }
 
-export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: boolean; conIA: boolean; guardarPedido?: string; aPersona?: boolean };
+export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: boolean; conIA: boolean; guardarPedido?: string; aPersona?: boolean; sinIA?: boolean };
 
 /**
  * Qué contestar, sin mandar nada ni tocar la base de mensajes. Lo usa atender() y lo usa el
@@ -605,12 +612,27 @@ export async function pensar(c: {
 
   let respuesta: Respuesta;
   if (r) respuesta = r;
-  else {
-    // Sin IA (caída o sin clave): el buscador, pero dicho como lo diría una persona.
+  else if (c.canal === "whatsapp") {
+    // Sin IA (29/10: se acabó el saldo y el bot contestó «Contame qué estás buscando» a todos, también al
+    // hotel que tocó «Sí, pasame precios»). Nunca más el saludo genérico: el cliente recibe un mensaje de
+    // espera útil y la charla pasa a Santiago («Te esperan»), que ya recibió la alerta de IA caída.
+    const yaEspera = c.historial.slice(-4).some((h) => h.de === "acopio" && /en un rato te escribe Santiago/i.test(h.texto));
+    const texto = c.negocio
+      ? `¡Gracias! Te dejo la lista por mayor con fotos y precios: ${urlSitio()}/mayorista\nEn un rato te escribe Santiago para armarte el pedido.`
+      : `¡Gracias por escribirnos! En un rato te escribe Santiago por acá con los precios. Mientras, podés ver todo en ${urlSitio()}`;
+    return {
+      salientes: yaEspera ? [] : [{ tipo: "texto" as const, texto }],
+      respuesta: { texto: yaEspera ? "" : texto },
+      derivar: true,
+      conIA: false,
+      sinIA: true,
+    };
+  } else {
+    // Web sin IA: el buscador, dicho como lo diría una persona.
     const b = await buscarEnCatalogo(c.texto);
     respuesta = b.fichas?.length
       ? { ...b, texto: "¡Hola! Te paso lo que tengo de eso, tocá el que te interese y lo sumamos a tu pedido 👇", enlaces: undefined, opciones: ["Ver combos", "Hablar con Santiago"] }
-      : { texto: "¡Hola! Contame qué estás buscando y te paso precio al toque. Tenemos frutos secos, semillas, harinas sin TACC, cereales y combos armados.", opciones: ["Frutos secos", "Ver combos", "Sin TACC"] };
+      : { texto: "¡Hola! Contame qué estás buscando y te paso precio al toque. Tenemos frutos secos, semillas, cereales y combos armados.", opciones: ["Frutos secos", "Ver combos"] };
   }
 
   // Vino del anuncio de un combo y todavía no lo eligió: la respuesta lleva la tarjeta del combo,
