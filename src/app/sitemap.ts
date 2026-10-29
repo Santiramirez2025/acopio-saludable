@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.product.groupBy({ by: ["categoria"], where: wherePublicado(cfg.margenMinimoPct) }),
   ]);
   return [
-    ...["", "/catalogo", "/sin-tacc", "/nichos", "/objetivos", "/combos", "/mi-lista", "/armador", "/cotizador-hoteles", "/nosotros", "/dietetica-villa-carlos-paz", "/frutos-secos-carlos-paz", "/regalos-navidenos-cordoba", "/sin-tacc-carlos-paz", "/guias", "/novedades", "/envios", "/cambios-y-devoluciones", "/contacto", "/app", "/terminos", "/privacidad"].map((r) => ({ url: `${base}${r}` })),
+    ...["", "/catalogo", "/sin-tacc", "/nichos", "/objetivos", "/combos", "/mi-lista", "/armador", "/cotizador-hoteles", "/nosotros", "/dietetica-villa-carlos-paz", "/frutos-secos-carlos-paz", "/regalos-navidenos-cordoba", "/mesa-dulce-navidad", "/sin-tacc-carlos-paz", "/guias", "/novedades", "/envios", "/cambios-y-devoluciones", "/contacto", "/app", "/terminos", "/privacidad"].map((r) => ({ url: `${base}${r}` })),
     ...categorias.filter((c) => c.categoria !== "Sin categoría").map((c) => ({ url: `${base}/catalogo?categoria=${encodeURIComponent(c.categoria)}` })),
     ...LOCALIDADES.map((l) => ({ url: `${base}/dietetica/${l.slug}` })),
     ...GUIAS.map((g) => ({ url: `${base}/guias/${g.slug}`, lastModified: new Date(g.actualizada) })),

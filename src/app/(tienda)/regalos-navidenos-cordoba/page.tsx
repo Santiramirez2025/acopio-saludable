@@ -118,6 +118,7 @@ export default async function RegalosNavidenosCordoba() {
         <TituloSeccion>También te puede servir</TituloSeccion>
         <ul className="flex flex-wrap gap-2">
           {[
+            ["/mesa-dulce-navidad", "Mesa dulce: cuánto comprar"],
             ["/frutos-secos-carlos-paz", "Frutos secos por kilo"],
             ["/combos", "Combos"],
             ["/armador", "Armá tu pedido"],
