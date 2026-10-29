@@ -1618,3 +1618,20 @@ test("mesa dulce: redondea envases hacia arriba y suma con el precio vigente", (
   assert.equal(r.lineas[0].envases, 2);
   assert.equal(r.total, 2000);
 });
+
+test("mayorista: escalera con piso de costo + 25% y −10% fijo en almendras, cajú, maní, banana y ciruelas", async () => {
+  const { precioMayorista, topeEscalon } = await import("./mayorista-precios");
+  // Sin problema de margen: escalera completa.
+  assert.deepEqual(precioMayorista(10000, 5000, "Dátiles Deglet Nour", 15), { precio: 8500, pct: 15 });
+  // Coco: al −15% quedaría bajo costo + 25% → se recorta.
+  const coco = precioMayorista(12700, 9500, "Coco rallado", 15);
+  assert.ok(coco.precio >= 9500 * 1.25 && coco.pct < 15, JSON.stringify(coco));
+  // Piso arriba de la lista: precio de lista, sin descuento.
+  assert.deepEqual(precioMayorista(10000, 9000, "Lentejas", 15), { precio: 10000, pct: 0 });
+  // Fijo −10%: no pasa de 10 aunque el escalón sea 15; los mixes y la harina de maní siguen la escalera.
+  assert.equal(topeEscalon("Almendras Non Pareil x 500 g", 15), 10);
+  assert.equal(topeEscalon("Castanas Caju x500g Fraccionada", 15), 10);
+  assert.equal(topeEscalon("Maní con sal", 15), 10);
+  assert.equal(topeEscalon("Mix de cajú y banana chips", 15), 15);
+  assert.equal(topeEscalon("Harina de maní", 15), 15);
+});
