@@ -21,7 +21,7 @@ const TEMAS: [string, RegExp][] = [
   ["ciruelas", /ciruela/], ["pan dulce/navidad", /pan dulce|navid|fiesta|regalo/], ["despensa/combo", /despensa|combo|alacena/],
   ["keto/proteína", /keto|prote/], ["legumbres", /lenteja|garbanzo|poroto/], ["cacao/chocolate", /cacao|chocolate/],
   ["precio", /precio|cu[aá]nto|sale|vale/], ["envío", /env[ií]o|llega|mandan|domicilio/], ["mercado libre", /mercado ?libre|\bml\b/],
-  ["tarjeta/cuotas", /tarjeta|cuota|cr[eé]dito/], ["transferencia", /transfer/], ["retiro/local", /retir|local|direcci[oó]n|d[oó]nde est/],
+  ["tarjeta/cuotas", /tarjeta|cuota|cr[eé]dito/], ["transferencia", /transfer/], ["pago al recibir/efectivo", /al recibir|contra ?entrega|efectivo|pago en mano|pag(o|ar) cuando (llega|me llega|lo reciba)/], ["retiro/local", /retir|local|direcci[oó]n|d[oó]nde est/],
   ["mayorista/negocio", /mayor|negocio|revend|kiosco|dietética|dietetica/],
 ];
 
