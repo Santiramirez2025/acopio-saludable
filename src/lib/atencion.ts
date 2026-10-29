@@ -468,8 +468,17 @@ export async function atender(e: Entrada): Promise<void> {
   }
 
   if (p.derivar && p.sinIA) {
-    // Bot sin IA: mensaje de espera (una sola vez) y la charla queda para Santiago.
-    if (p.respuesta.texto) await responder(e.clave, p.respuesta.texto);
+    // Bot sin IA: mensaje de espera (una sola vez) y la charla queda para Santiago. No sale si ya salió en
+    // la última hora (dos mensajes juntos lo mandaban dos veces) ni si una persona o un agente le escribió
+    // en las últimas 3 h: ahí la charla ya está atendida y el «en un rato te escribe Santiago» confunde (Sara, 29/10).
+    const tel = e.clave;
+    const [atendida] = await prisma.$queryRaw<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM "WhatsappMensaje"
+      WHERE "telefono" = ${tel} AND (
+        ("de" = 'persona' AND "fecha" > now() - interval '3 hours') OR
+        ("de" = 'bot' AND "texto" ILIKE '%en un rato te escribe Santiago%' AND "fecha" > now() - interval '1 hour')
+      )`.catch(() => [{ n: 0 }]);
+    if (p.respuesta.texto && !atendida?.n) await responder(e.clave, p.respuesta.texto);
     await cambiarEstado(e.clave, "persona");
     await avisarSantiago("Charla sin IA para vos", `⏳ ${e.nombre ?? "Alguien"} (${e.clave}) escribió y el bot está sin IA: contestale vos.\nÚltimo mensaje: «${texto.slice(0, 200)}»\n${urlSitio()}/admin/whatsapp?c=${e.clave}`, { mail: false });
     return;
