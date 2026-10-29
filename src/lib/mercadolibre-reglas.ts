@@ -22,6 +22,7 @@ export const SKU_ML: Record<string, { combo?: string; codigo?: string; cantidad?
   "AS-ALACENA-3KG": { combo: "alacena-de-frutos-secos" },
   "AS-PANDULCE": { combo: "pan-dulce-casero" },
   "AS-REGALO-NAVIDAD": { combo: "regalo-navideno" },
+  "AS-MESA-NAVIDENA": { combo: "mesa-navidena" },
   "AS-MIXC-2KG": { codigo: "TG-MIXC", cantidad: 2 },
   "AS-MIXC-3KG": { codigo: "TG-MIXC", cantidad: 3 },
 };
