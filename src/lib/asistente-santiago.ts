@@ -25,7 +25,7 @@ const HERRAMIENTAS = [
   { name: "ver_pedidos", description: "Pedidos abiertos y de los últimos 7 días (código, cliente, estado, total, si está pago).", input_schema: { type: "object", properties: {} } },
   {
     name: "cambiar_estado_pedido",
-    description: "Cambia el estado de un pedido. Por defecto NO le avisa nada al cliente (avisar_cliente=false). ENTREGADO de un pedido al recibir registra el cobro.",
+    description: "Cambia el estado de un pedido. Por defecto NO le avisa nada al cliente (avisar_cliente=false). ENTREGADO registra el cobro si todavía no figuraba pagado (Santiago marca Entregado solo cuando ya cobró).",
     input_schema: { type: "object", properties: { pedido: { type: "string", description: "Código (AS-00027), número o nombre del cliente" }, estado: { type: "string", enum: ESTADOS }, avisar_cliente: { type: "boolean" } }, required: ["pedido", "estado"] },
   },
   { name: "marcar_pagado", description: "Registra que un pedido ya está pago (transferencia que entró, efectivo). No le avisa al cliente.", input_schema: { type: "object", properties: { pedido: { type: "string" }, nota: { type: "string" } }, required: ["pedido"] } },
