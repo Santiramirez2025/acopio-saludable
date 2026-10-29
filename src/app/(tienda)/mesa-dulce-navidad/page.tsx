@@ -69,7 +69,7 @@ export default async function MesaDulceNavidad() {
           <p className="mb-3 max-w-2xl text-sm text-stone-700">
             Es una estimación nuestra para una noche con varias cosas en la mesa: cada uno prueba un poco de todo. Suma unos {gramosPersona} g por persona. Si hay también turrones, budines o helado, bajalo.
           </p>
-          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-2 gap-2 lg:grid-cols-3">
             {renglones.map((r) => (
               <li key={r.codigo} className="rounded-2xl bg-white p-4 shadow-ficha">
                 <p className="font-display text-2xl font-extrabold tabular-nums">{r.gramosPorPersona} g</p>
@@ -89,7 +89,7 @@ export default async function MesaDulceNavidad() {
               <thead>
                 <tr className="border-b border-tierra-200 text-left">
                   <th className="p-3">Producto</th>
-                  {presupuestos.map((p) => <th key={p.personas} className="p-3 text-right">{p.personas} personas</th>)}
+                  {presupuestos.map((p) => <th key={p.personas} className="whitespace-nowrap p-3 text-right">{p.personas} personas</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -100,7 +100,7 @@ export default async function MesaDulceNavidad() {
                       <td className="p-3"><Link href={`/producto/${encodeURIComponent(prod.codigo)}`} className="underline underline-offset-4">{prod.producto}</Link> <span className="text-stone-500">{prod.presentacion}</span></td>
                       {presupuestos.map((p) => {
                         const l = p.lineas.find((x) => x.codigo === r.codigo);
-                        return <td key={p.personas} className="p-3 text-right tabular-nums">{l ? <>{l.envases} × <span className="text-stone-500">({kilos(l.gramos)})</span></> : "—"}</td>;
+                        return <td key={p.personas} className="whitespace-nowrap p-3 text-right tabular-nums">{l ? <>{l.envases} × <span className="text-stone-500">({kilos(l.gramos)})</span></> : "—"}</td>;
                       })}
                     </tr>
                   );
