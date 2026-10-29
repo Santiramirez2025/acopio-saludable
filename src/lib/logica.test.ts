@@ -854,7 +854,7 @@ test("postergar la compra: se le da tiempo, sin pedido ni zonas", () => {
   for (const t of ["dale, lo quiero", "hola", "lo veo tranquila, ¿hacen envío a Tanti?", "gracias", "Sí, dejámelo listo", "quiero la despensa", "Carlos Paz"]) assert.ok(!postergaCompra(t), t);
   const [s] = planSinApuro("Gloria Pérez", "https://x.com");
   assert.equal(s.tipo, "botones");
-  assert.ok(s.tipo === "botones" && s.cuerpo.startsWith("¡Dale, Gloria!") && s.botones[0].titulo === "Sí, traémelo mañana");
+  assert.ok(s.tipo === "botones" && s.cuerpo.startsWith("¡Dale, Gloria!") && s.botones[0].titulo === "Sí, dejalo listo");
   const [foto, b] = planSinApuro("Ana", "https://x.com", "https://x.com/img/galeria/real-asi-llega.jpg");
   assert.equal(foto.tipo, "imagen");
   assert.equal(b.tipo, "botones");
@@ -1553,7 +1553,7 @@ test("vendedor: detecta una lista de productos para contestar cada uno", async (
 test("cobro anticipado: «lo pienso» no promete pagar al recibir", () => {
   const plan = planSinApuro("Ana", "Acopio Saludable", "https://x/foto.jpg");
   const texto = JSON.stringify(plan);
-  assert.doesNotMatch(texto, /reci[eé]n ah[ií] pag|al recibir|antes de pagar/i);
+  assert.doesNotMatch(texto, /reci[eé]n ah[ií] (pag|decid)|decid[ií]s si lo pag|sin compromiso|en tu puerta|al recibir|antes de pagar|tra[eé]melo/i);
   assert.ok(plan.some((s) => s.tipo === "imagen"));
 });
 

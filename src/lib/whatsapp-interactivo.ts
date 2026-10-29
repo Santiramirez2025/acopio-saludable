@@ -321,9 +321,9 @@ export function planSinApuro(nombre: string | null, tienda: string, fotoReal?: s
     ...foto,
     {
       tipo: "botones",
-      cuerpo: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. Si querés, te lo llevamos mañana sin compromiso: lo ves en tu puerta y recién ahí decidís si lo pagás.`,
+      cuerpo: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. Cuando quieras, lo pagás por transferencia (te sale más barato) o Mercado Pago y en Carlos Paz y la zona te lo llevamos sin cargo en el próximo reparto.`,
       botones: [
-        { id: `${ID.opcion}Sí, traémelo mañana`, titulo: "Sí, traémelo mañana" },
+        { id: `${ID.opcion}Sí, dejalo listo`, titulo: "Sí, dejalo listo" },
         { id: `${ID.opcion}Tengo una duda`, titulo: "Tengo una duda" },
         { id: `${ID.opcion}Más adelante`, titulo: "Más adelante" },
       ],
