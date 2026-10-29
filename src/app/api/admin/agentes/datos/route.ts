@@ -5,7 +5,7 @@
 //   GET ?que=resumenes&horas=48      → una línea por charla: calor (caliente/tibio/frio/cliente), qué quiere y próximo paso
 //   POST { accion: "notas", id, notas, nota? } → corrige las notas del pedido (qué se cobra, cambios acordados)
 //   POST { accion: "estado", id, estado, nota?, silencioso? } → cambia el estado de un pedido (mismo efecto que el panel:
-//        ENVIADO avisa «ya está en el reparto de hoy, el repartidor te escribe» por WhatsApp; ENTREGADO con pago manda gracias + referidos; silencioso = sin avisos)
+//        ENVIADO avisa «ya está en el reparto de hoy, el repartidor te escribe» por WhatsApp; ENTREGADO = cobrado (registra el pago si faltaba) y manda gracias + referidos; silencioso = sin avisos)
 import { NextResponse } from "next/server";
 import type { EstadoPedido } from "@prisma/client";
 import { esAdmin } from "@/lib/admin-acceso";

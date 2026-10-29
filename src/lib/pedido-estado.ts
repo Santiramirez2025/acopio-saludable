@@ -15,10 +15,10 @@ export async function aplicarEstadoPedido(
   if (estado === "PENDIENTE_PAGO" && pedido.estado !== "PENDIENTE_PAGO") throw new Error("Un pedido ya pagado no puede volver a pendiente");
   // El estado del pedido (en compra, preparado, enviado, entregado) y el pago van por separado:
   // mover el pedido NUNCA lo marca como pagado. El pago se registra eligiendo «Pagado» o con el botón
-  // «Registrar pago». Única excepción: pago al recibir entregado = cobrado en mano, sin avisarle nada.
+  // «Registrar pago». Única excepción: ENTREGADO. Regla de Santiago (29/10): él marca Entregado solo
+  // cuando ya cobró, sea cual sea el medio de pago; entonces Entregado = cobrado, sin avisarle nada.
   // (El 21/10 pasar a Julieta a Enviado le mandó el comprobante de pago sin haber pagado.)
-  const alRecibir = pedido.medioPago === "AL_RECIBIR";
-  if (alRecibir && estado === "ENTREGADO" && !pedido.pagadoAt) {
+  if (estado === "ENTREGADO" && !pedido.pagadoAt) {
     await registrarCobroAlRecibir(id, nota ?? "Cobrado al entregar");
   } else if (estado === "PAGADO" && !pedido.pagadoAt) {
     if (pedido.estado === "PENDIENTE_PAGO" && !silencioso) await confirmarPago(id, nota ?? (pedido.medioPago === "TRANSFERENCIA" ? "Transferencia verificada" : "Pago confirmado a mano"));
