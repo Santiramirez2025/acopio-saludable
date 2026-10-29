@@ -79,6 +79,7 @@ export async function promptAgente(agente: string, modo: "chat" | "voz" = "chat"
     `Sos ${a.persona}, ${a.nombre} de Acopio Saludable, una dietética online de Villa Carlos Paz (Córdoba) que vende frutos secos, mixes armados en casa y combos por WhatsApp, acopiosaludable.com y Mercado Libre. Proveedor: La Granja del Centro. ` +
     `Área: ${AREAS[a.area].nombre}. Tu misión: ${a.mision} Lo que hacés: ${a.hace.join("; ")}. Te medís por: ${a.mide}. Trabajás ${a.horas.join(" y ")} h. ` +
     `${POLITICA_COMERCIAL} ` +
+    (modo === "chat" ? "BÚSQUEDA WEB: en el chat tenés web_search. Usala cuando Santiago pida datos de afuera (tendencias, estudios, competencia, precios); citá siempre la fuente con su link y la fecha, y si no encontrás algo verificable decilo: nunca inventes cifras. " : "") +
     (a.reglas ? `REGLAS DE TU PUESTO (las aplicás tal cual, también en la llamada): ${a.reglas} ` : "") +
     `Equipo: ${equipo}. Le estás hablando a Santiago, el dueño, desde el panel de la empresa. El objetivo de la empresa es crecer en ventas lo más rápido posible y conseguir clientes nuevos.\n\n` +
     `Cómo hablás: rioplatense, de vos, como una persona real del equipo, directo y concreto, con números cuando los tenés. No repitas su nombre en cada respuesta. Respuestas cortas (máximo 120 palabras) salvo que te pida detalle. Nunca digas «perfecto». Voseo siempre («dejame», «mirá», «fijate»), nunca «déjame» ni «tú». No inventes datos: lo que no sabés, lo buscás con tus herramientas en el momento. No digas «voy a revisar», «dejame ver» ni «anotado» a secas: hacé y contestá con el resultado concreto. ` +
@@ -107,6 +108,8 @@ export async function charlarConAgente(
   if (!clave) throw new Error("Falta ANTHROPIC_API_KEY");
   const system = await promptAgente(agente, "chat");
   const { HERRAMIENTAS_CLAUDE } = await import("./herramientas-agentes");
+  // Búsqueda web del lado de Anthropic: el agente trae datos de fuentes reales, con link, sin pedir permiso.
+  const HERRAMIENTAS_CHAT = [...HERRAMIENTAS_CLAUDE, { type: "web_search_20250305", name: "web_search", max_uses: 4 }];
   type Bloque = { type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> };
   type Resultado = { type: "tool_result"; tool_use_id: string; content: string };
   // Dos mensajes seguidos del mismo lado (mandó dos veces sin respuesta) se juntan: la API pide turnos alternados.
@@ -123,7 +126,7 @@ export async function charlarConAgente(
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: MODELO, max_tokens: 900, system, messages: conv, tools: HERRAMIENTAS_CLAUDE }),
+      body: JSON.stringify({ model: MODELO, max_tokens: 1400, system, messages: conv, tools: HERRAMIENTAS_CHAT }),
       signal: AbortSignal.timeout(45_000),
     });
     if (!res.ok) throw new Error(`Claude respondió ${res.status}: ${(await res.text()).slice(0, 150)}`);
@@ -139,7 +142,7 @@ export async function charlarConAgente(
       const fin = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model: MODELO, max_tokens: 900, system, messages: conv, tools: HERRAMIENTAS_CLAUDE, tool_choice: { type: "none" } }),
+        body: JSON.stringify({ model: MODELO, max_tokens: 1400, system, messages: conv, tools: HERRAMIENTAS_CHAT, tool_choice: { type: "none" } }),
         signal: AbortSignal.timeout(45_000),
       });
       if (fin.ok) texto = (((await fin.json()) as { content?: Bloque[] }).content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n");

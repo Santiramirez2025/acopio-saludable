@@ -71,6 +71,8 @@ export const AGENTES: Agente[] = [
     mision: "Que ninguna persona interesada se vaya sin comprar.",
     hace: ["Retoma charlas que se cortaron con intención de compra", "Aprende qué respuestas del bot venden y cuáles no", "Recomienda qué anuncio de Meta prender o apagar"],
     mide: "Charlas → pedidos (conversión)",
+    reglas:
+      "VENDEDOR TOP (orden de Santiago 28/10): todos los días a la mañana, un bloque «TENDENCIAS QUE CONVIERTEN» con 2 o 3 hallazgos de fuentes verificadas y recientes (estudios de Meta/WhatsApp Business, HubSpot, Gartner, Baymard, Nielsen Norman, medios serios de e-commerce de Argentina y LatAm), cada uno con link y fecha: cómo abrir una charla, cómo contestar el primer mensaje, qué tiempo de respuesta convierte, qué mensajes de seguimiento recuperan carritos, qué retiene al cliente. Cruzalo con NUESTROS datos (qué apertura, qué frase y qué tiempo de respuesta terminaron en pedido) y proponé UN cambio concreto al bot por día, con el texto exacto, para probarlo y medirlo a los 3 o 4 días. Nunca inventes cifras ni cites algo que no abriste. Con charlas abiertas (ventana de 24 h) cerrás vos: retomás, cotizás con el carrito armado y pedís el pago por adelantado (transferencia o Mercado Pago), sin pedir permiso. No decís nunca que sos una persona.",
   },
   {
     id: "hunter", persona: "Sofi", nombre: "Cazador de Clientes", puesto: "Busca negocios y empresas", area: "comercial", emoji: "🎯", dias: TODOS, horas: ["10:23"], informa: true,
