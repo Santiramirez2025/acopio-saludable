@@ -1,6 +1,13 @@
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { _reiniciarFreno, admiteFreno, igualesSeguro, ipDe } from "./freno";
+import { _reiniciarFreno, admiteFreno, admiteMedicion, igualesSeguro, ipDe, MEDICION_MAX_MINUTO } from "./freno";
+
+test("medición: tope global por minuto contado en la base", () => {
+  assert.equal(admiteMedicion(0), true);
+  assert.equal(admiteMedicion(MEDICION_MAX_MINUTO - 1), true);
+  assert.equal(admiteMedicion(MEDICION_MAX_MINUTO), false);
+  assert.equal(admiteMedicion(MEDICION_MAX_MINUTO + 500), false);
+});
 
 beforeEach(() => _reiniciarFreno());
 
