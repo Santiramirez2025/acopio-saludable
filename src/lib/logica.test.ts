@@ -1600,3 +1600,21 @@ test("sin TACC: solo envasado con marca, nunca fraccionado ni sin marca", () => 
   assert.equal(t.producto, "Pasas de uva con chocolate");
   assert.equal(textosSeguros({ producto: "Alfajores sin TACC", presentacion: "x 6", marca: "Yuka" }).producto, "Alfajores sin TACC");
 });
+
+import { presupuestoMesa } from "./mesa-dulce";
+
+test("mesa dulce: redondea envases hacia arriba y suma con el precio vigente", () => {
+  const prods = [
+    { codigo: "A", precio: 1000, contenido: 500 },
+    { codigo: "B", precio: 2000, contenido: null },
+  ];
+  const r = presupuestoMesa(12, prods, [
+    { codigo: "A", gramosPorPersona: 50, para: "" },
+    { codigo: "B", gramosPorPersona: 10, para: "" },
+    { codigo: "C", gramosPorPersona: 10, para: "" },
+  ]);
+  assert.equal(r.lineas.length, 1); // sin contenido o sin producto, no se presupuesta
+  assert.equal(r.lineas[0].gramos, 600);
+  assert.equal(r.lineas[0].envases, 2);
+  assert.equal(r.total, 2000);
+});
