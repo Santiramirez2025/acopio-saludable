@@ -5,7 +5,7 @@ import { prisma } from "./prisma";
 import { leerConfig } from "./config";
 import { proximoCorte } from "./corte";
 import { calcularCombo, renglonCombo, precioRedondo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
-import { wherePublicado, esSinTacc } from "./filtros-producto";
+import { wherePublicado, esSinTacc, textosSeguros } from "./filtros-producto";
 import { prolijo } from "./nombres";
 
 export type ProductoTienda = {
@@ -33,11 +33,12 @@ export type ReglasPrecio = { recargoPrecioPct?: number; recargoSugeridoPct?: num
 
 export function aTienda(p: Product, reglas: ReglasPrecio = {}): ProductoTienda {
   const precio = precioVenta(Number(p.precioPublico), reglas.recargoPrecioPct ?? 0);
+  const textos = textosSeguros(p);
   return {
     codigo: p.codigo,
-    producto: prolijo(p.producto),
+    producto: prolijo(textos.producto),
     marca: p.marca,
-    presentacion: prolijo(p.presentacion),
+    presentacion: prolijo(textos.presentacion),
     categoria: p.categoria,
     formato: p.formato,
     precio,

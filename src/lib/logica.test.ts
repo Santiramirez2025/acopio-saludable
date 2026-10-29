@@ -1587,3 +1587,16 @@ test("harinar: lee precios de Pediwa y compara por kilo con La Granja", async ()
   assert.equal(lino.conviene, "La Granja");
   assert.match(lino.alerta ?? "", /volver a comprarlo/);
 });
+
+import { esSinTacc, textosSeguros } from "./filtros-producto";
+
+test("sin TACC: solo envasado con marca, nunca fraccionado ni sin marca", () => {
+  assert.equal(esSinTacc({ producto: "Alfajores de chocolate sin TACC", presentacion: "x 6 unidades", marca: "Yuka" }), true);
+  assert.equal(esSinTacc({ producto: "Pasas de uva con chocolate sin TACC", presentacion: "x 400 g", marca: "" }), false);
+  assert.equal(esSinTacc({ producto: "Miel Organica Mistol sin tacc", presentacion: "x 480 gs", marca: "Sin marca" }), false);
+  assert.equal(esSinTacc({ producto: "Harina de arroz sin TACC", presentacion: "x1kg Fraccionada", marca: "Granja" }), false);
+  assert.equal(esSinTacc({ producto: "Nuez Mariposa", presentacion: "x 1 kg", marca: "Yuka" }), false);
+  const t = textosSeguros({ producto: "Pasas de uva con chocolate sin Tacc", presentacion: "x 400 g", marca: "" });
+  assert.equal(t.producto, "Pasas de uva con chocolate");
+  assert.equal(textosSeguros({ producto: "Alfajores sin TACC", presentacion: "x 6", marca: "Yuka" }).producto, "Alfajores sin TACC");
+});

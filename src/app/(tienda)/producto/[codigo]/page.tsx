@@ -19,6 +19,7 @@ import { BotonAgregar } from "@/components/Carrito";
 import { AvisoSuplementos, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { PRODUCTOS_PROVEEDORES } from "@/lib/catalogo-proveedores";
+import { textosSeguros } from "@/lib/filtros-producto";
 
 type Props = { params: Promise<{ codigo: string }> };
 
@@ -31,7 +32,8 @@ async function cargar(codigoCrudo: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await cargar((await params).codigo);
   if (!p) return { title: "Producto no disponible" };
-  const titulo = `${p.producto} ${p.presentacion}`;
+  const t = textosSeguros(p);
+  const titulo = `${t.producto} ${t.presentacion}`;
   return {
     title: `${titulo}: precio y envío`,
     description: cortarEnPalabra(`${titulo}${marcaVisible(p.marca) ? ` de ${p.marca}` : ""}, en ${p.categoria.toLowerCase()}. Precio actualizado, entrega sin cargo en Villa Carlos Paz y envíos a todo el país.`, 158),
