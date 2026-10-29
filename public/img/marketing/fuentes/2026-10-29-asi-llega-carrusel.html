@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<!-- ACOPIO_CONFIANZA_ASI_LLEGA_CARRUSEL_V01 · 4 placas 1080x1350 · fotos: fotogramas reales de public/video/reels (llega-asi, asmr-mix) -->
+<!-- Plantilla reutilizable: cambiar foto (.foto img), número de paso (.n), título (h2) y bajada (p). Retícula fija: margen 72, foto 936x820. -->
+<style>
+:root{--crema:#F4EEDD;--verde:#10251C;--rojo:#C8392B;--sol:#FFC83D;--gris:#4A5A50}
+*{box-sizing:border-box;margin:0}
+body{background:#888;font-family:Inter,sans-serif}
+.placa{width:1080px;height:1350px;background:var(--crema);position:relative;overflow:hidden;padding:72px;display:flex;flex-direction:column}
+.marca{display:flex;align-items:center;gap:16px;font:700 34px Inter;color:var(--verde);letter-spacing:-.01em}
+.marca img{width:60px;height:60px;border-radius:50%}
+.marca .pag{margin-left:auto;font:600 26px Inter;color:var(--gris)}
+.foto{margin-top:40px;width:936px;height:820px;border-radius:36px;overflow:hidden;position:relative;box-shadow:0 24px 50px -28px rgba(16,37,28,.6)}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.chip{position:absolute;left:28px;top:28px;background:var(--rojo);color:#fff;font:800 24px Inter;letter-spacing:.18em;padding:12px 22px;border-radius:999px}
+.real{position:absolute;right:24px;bottom:24px;background:rgba(16,37,28,.82);color:#fff;font:600 22px Inter;padding:10px 18px;border-radius:999px}
+.texto{margin-top:44px;display:flex;gap:28px;align-items:flex-start}
+.n{flex:none;width:96px;height:96px;border-radius:50%;background:var(--verde);color:var(--sol);font:800 54px Inter;display:flex;align-items:center;justify-content:center}
+h1{font:800 92px/0.98 Inter;letter-spacing:-.045em;color:var(--verde)}
+h1 em{font-style:normal;color:var(--rojo)}
+h2{font:800 62px/1.02 Inter;letter-spacing:-.035em;color:var(--verde)}
+p{margin-top:14px;font:400 32px/1.3 Inter;color:var(--gris)}
+.swipe{position:absolute;right:72px;bottom:64px;font:700 28px Inter;color:var(--rojo)}
+.cta{margin-top:auto;background:var(--verde);border-radius:32px;padding:30px 36px;text-align:center}
+.cta b{display:block;font:800 46px Inter;color:var(--sol);letter-spacing:-.01em}
+.cta span{display:block;margin-top:6px;font:500 28px Inter;color:#E9E4D3}
+</style></head><body>
+
+<!-- 1 PORTADA -->
+<section class="placa" id="s1">
+  <div class="marca"><img src="../../../icono-192.png" alt="">Acopio Saludable<span class="pag">1/4</span></div>
+  <div class="foto"><img src="frames/bolsa-sticker.jpg" style="object-position:50% 60%"><span class="chip">DETRÁS DE ESCENA</span><span class="real">Foto real · Villa Carlos Paz</span></div>
+  <div class="texto" style="display:block">
+    <h1>Así llega <em>tu pedido.</em></h1>
+    <p>Del armado a tu puerta, en 3 pasos.</p>
+  </div>
+  <div class="swipe">Deslizá →</div>
+</section>
+
+<!-- 2 MEZCLA -->
+<section class="placa" id="s2">
+  <div class="marca"><img src="../../../icono-192.png" alt="">Acopio Saludable<span class="pag">2/4</span></div>
+  <div class="foto"><img src="frames/mezcla.jpg" style="object-position:50% 55%"><span class="real">Foto real</span></div>
+  <div class="texto"><div class="n">1</div><div>
+    <h2>Lo mezclamos en el día.</h2>
+    <p>El mix se arma a mano el mismo día que sale.</p></div></div>
+</section>
+
+<!-- 3 BALANZA -->
+<section class="placa" id="s3">
+  <div class="marca"><img src="../../../icono-192.png" alt="">Acopio Saludable<span class="pag">3/4</span></div>
+  <div class="foto"><img src="frames/balanza.jpg" style="object-position:50% 72%"><span class="real">Foto real</span></div>
+  <div class="texto"><div class="n">2</div><div>
+    <h2>Lo pesamos justo.</h2>
+    <p>Un kilo es un kilo (y un poquito más).</p></div></div>
+</section>
+
+<!-- 4 SALE + CTA -->
+<section class="placa" id="s4">
+  <div class="marca"><img src="../../../icono-192.png" alt="">Acopio Saludable<span class="pag">4/4</span></div>
+  <div class="foto" style="height:640px"><img src="frames/camioneta.jpg" style="object-position:50% 45%"><span class="real">Foto real</span></div>
+  <div class="texto"><div class="n">3</div><div>
+    <h2>Sale para tu casa.</h2>
+    <p>En bolsa kraft, con una ficha para guardarlo bien.</p></div></div>
+  <div class="cta"><b>WhatsApp 3541 51-9630</b><span>acopiosaludable.com · Carlos Paz y la zona</span></div>
+</section>
+</body></html>
