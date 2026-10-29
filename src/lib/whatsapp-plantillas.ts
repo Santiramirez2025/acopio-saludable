@@ -56,10 +56,10 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "usá pedido_para_negocio con «gimnasio», hablale de reventa (precio sugerido y cuánto gana por unidad) y preguntá cuántos socios tiene para armarle el pedido.",
   },
   dietetica: {
-    nombre: "acopio_negocios_dietetica_v1",
+    nombre: "acopio_negocios_dietetica_v2",
     cuerpo:
       "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
-      "Armamos mixes de frutos secos propios en el día (clásico, con cajú y tropical sin maní) y se los vendemos a las dietéticas de Punilla a granel o fraccionados, listos para la góndola. Entrega sin cargo en nuestra ruta semanal y el primer pedido se paga al recibir.\n\n" +
+      "Armamos mixes de frutos secos propios en el día (clásico, con cajú y tropical sin maní) y se los vendemos a las dietéticas de Punilla a granel o fraccionados, listos para la góndola. Entrega sin cargo en nuestra ruta semanal por Carlos Paz y la zona.\n\n" +
       "¿Le paso precios a quien hace las compras?",
     botones: ["Sí, pasame precios", "No, gracias"],
     contexto:

@@ -7,13 +7,15 @@
 import { prisma } from "./prisma";
 import { primerNombre } from "./whatsapp-interactivo";
 
-export const PLANTILLA_REACTIVACION = "acopio_reactivacion_v1";
+// v2 (29/10): la v1 decía «lo ves y recién ahí pagás», que choca con el cobro anticipado. Hasta que Meta
+// apruebe la v2, los envíos fallan y no sale nada: mejor eso que prometer pago al recibir.
+export const PLANTILLA_REACTIVACION = "acopio_reactivacion_v2";
 const GRAPH = "https://graph.facebook.com/v21.0";
 const TOPE = 60;
 
 export const CUERPO_REACTIVACION =
   "Hola {{1}}, soy Santiago, de Acopio Saludable (Villa Carlos Paz). Nos escribiste por los frutos secos y creo que no llegamos a pasarte todo. " +
-  "Armamos los mixes en el día y te los llevamos a tu casa: lo ves y recién ahí pagás. ¿Te paso los precios por kilo de hoy?";
+  "Armamos los mixes en el día y te los llevamos a tu casa en Carlos Paz y la zona. ¿Te paso los precios por kilo de hoy?";
 
 type Candidato = { telefono: string; nombre: string | null };
 
