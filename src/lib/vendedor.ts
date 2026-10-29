@@ -47,6 +47,31 @@ export type CarritoVisto = {
 const MODELO = process.env.VENDEDOR_MODELO || "claude-haiku-5-5";
 const MAX_VUELTAS = 5;
 
+/**
+ * La IA del vendedor no responde (29/10: se acabó el saldo de Anthropic y el bot contestó con el buscador
+ * genérico durante horas, perdiendo prospectos). Aviso inmediato a Santiago; el texto es fijo por causa,
+ * así que avisarSantiago no lo repite más de una vez cada 30 minutos.
+ */
+async function alertarIACaida(status: number, cuerpo: string): Promise<void> {
+  const saldo = /credit balance|billing|plans/i.test(cuerpo);
+  const causa = saldo
+    ? "SE ACABÓ EL SALDO de la API de Anthropic. Cargá crédito en console.anthropic.com → Billing (y activá la recarga automática)."
+    : status === 401 || status === 403
+      ? "la clave de Anthropic fue rechazada (revisá ANTHROPIC_API_KEY en Vercel)."
+      : status === 429 || status === 529
+        ? "Anthropic está saturado o llegamos al límite de uso."
+        : `Anthropic respondió ${status}.`;
+  try {
+    const { avisarSantiago } = await import("./avisos");
+    await avisarSantiago(
+      "🚨 Bot de WhatsApp sin IA",
+      `🚨 El vendedor de WhatsApp no puede usar la IA: ${causa}\nMientras tanto, cada charla nueva queda para vos en «Te esperan» del panel, con un mensaje de espera al cliente.`,
+    );
+  } catch (e) {
+    console.error("alerta de IA caída falló", e);
+  }
+}
+
 export function vendedorActivo(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
 }
@@ -766,7 +791,9 @@ export async function responderComoVendedor(
         signal: AbortSignal.timeout(25_000),
       });
       if (!res.ok) {
-        console.error("vendedor: la API rechazó", res.status, (await res.text()).slice(0, 300));
+        const cuerpo = (await res.text()).slice(0, 300);
+        console.error("vendedor: la API rechazó", res.status, cuerpo);
+        await alertarIACaida(res.status, cuerpo);
         return null;
       }
       const data = (await res.json()) as { content?: Bloque[]; stop_reason?: string };
