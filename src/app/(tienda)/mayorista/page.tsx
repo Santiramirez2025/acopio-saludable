@@ -55,7 +55,7 @@ export default async function Mayorista() {
                     const a = precioMayorista(p.precio, costo, p.producto, 10);
                     const b = precioMayorista(p.precio, costo, p.producto, 15);
                     if (!a.pct) return <div className="text-sm text-stone-500">Precio de lista (no entra en la escalera)</div>;
-                    if (b.precio === a.precio) return <div className="text-sm text-acopio-900">Por volumen: <b>{pesos(a.precio)}</b> <span className="text-stone-500">(−{a.pct}% fijo)</span></div>;
+                    if (b.precio === a.precio) return <div className="text-sm text-acopio-900">Por volumen: <b>{pesos(a.precio)}</b> <span className="text-stone-500">(−{a.pct}%{a.pct === 10 ? " fijo" : ""})</span></div>;
                     return (
                       <>
                         <div className="text-sm text-acopio-900">Desde 5 kg: <b>{pesos(a.precio)}</b></div>
