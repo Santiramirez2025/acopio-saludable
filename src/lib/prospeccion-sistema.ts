@@ -32,10 +32,20 @@ export type Prospecto = {
   cuerpo: string;
   /** Seguimiento, texto plano, para mandar si no contestó en 4 días hábiles. */
   seguimiento?: string;
+  /** Scoring 0–100 de Marcos 2.0: encaje 30 + problema 25 + señales 20 + acceso al decisor 15 + capacidad económica 10. */
+  puntaje?: number;
+  /** Desglose y evidencia del puntaje (verificable; lo desconocido se dice desconocido). */
+  porQue?: string;
+  /** Ángulo del mail: A pérdida de oportunidades · B seguimiento · C tiempo operativo · D vender más sin más carga · E experiencia del cliente. */
+  angulo?: string;
 };
 
+/** Etapas después del contacto: las marca Marcos (o Santiago) con lo que pasó de verdad. */
+export const ETAPAS = ["respondio", "calificado", "reunion_agendada", "reunion_realizada", "propuesta", "ganado", "perdido", "baja", "rebotado"] as const;
+export type Etapa = (typeof ETAPAS)[number];
+
 type Registro = Prospecto & {
-  estado: "pendiente" | "enviado" | "seguido" | "respondio" | "baja" | "rebotado";
+  estado: "pendiente" | "enviado" | "seguido" | Etapa;
   creado: string;
   enviado?: string;
   seguido?: string;
@@ -139,6 +149,9 @@ export async function proponer(p: Prospecto): Promise<ResultadoPropuesta> {
   if (!p.empresa || !emailValido(email)) return { ok: false, motivo: "falta empresa o el email no sirve" };
   if (!p.asunto?.trim() || !p.cuerpo?.trim() || !p.senal?.trim()) return { ok: false, motivo: "falta asunto, cuerpo o la señal de por qué califica" };
   if (p.cuerpo.length > 1400) return { ok: false, motivo: "el mail es largo: máximo 120 palabras" };
+  const puntaje = Number(p.puntaje);
+  if (!Number.isFinite(puntaje)) return { ok: false, motivo: "falta el puntaje 0–100 (encaje 30, problema 25, señales 20, decisor 15, capacidad 10) con su porQue" };
+  if (puntaje < 60) return { ok: false, motivo: `puntaje ${puntaje}: baja prioridad, no se contacta (seguí investigando o descartala)` };
   const clave = claveDe(email);
   if (excluido(p.empresa, dominioDe(email))) return { ok: false, motivo: "excluida (familia, cliente o demo de Santiago): no se contacta" };
   if (await leer(clave)) return { ok: false, motivo: "ya está en la lista: no se le escribe de nuevo" };
@@ -153,7 +166,8 @@ export async function enviarPendientes(): Promise<string[]> {
   if (!enVentanaDeEnvio()) return [];
   let cupo = MAILS_POR_DIA - (await mandadosHoy());
   const mandados: string[] = [];
-  const pendientes = (await pipeline()).filter((p) => p.estado === "pendiente").sort((a, b) => a.creado.localeCompare(b.creado));
+  // Primero los de prioridad alta (puntaje 80+), después por antigüedad.
+  const pendientes = (await pipeline()).filter((p) => p.estado === "pendiente").sort((a, b) => Number(b.puntaje ?? 0) - Number(a.puntaje ?? 0) || a.creado.localeCompare(b.creado));
   for (const p of pendientes) {
     if (cupo <= 0) break;
     if (await mandar(p, p.cuerpo, p.asunto)) {
@@ -186,13 +200,15 @@ export async function enviarSeguimientos(): Promise<string[]> {
 }
 
 /** Cambia el estado a mano (respondió, rebotó) o por la baja. */
-export async function marcar(clave: string, estado: "respondio" | "baja" | "rebotado", nota?: string): Promise<boolean> {
+export async function marcar(clave: string, estado: Etapa, nota?: string): Promise<boolean> {
   const r = await leer(clave);
   if (!r) {
     if (estado === "baja") await guardar(clave, { empresa: clave, email: clave.includes("@") ? clave : `baja@${clave}`, senal: "-", asunto: "-", cuerpo: "-", estado, creado: new Date().toISOString() });
     return estado === "baja";
   }
-  await guardar(clave, { ...r, estado, nota: nota ?? r.nota });
+  // Historial de etapas con fecha: una reunión «realizada» no se confunde con una reservada.
+  const historial = [...((r as Registro & { etapas?: { etapa: string; fecha: string; nota?: string }[] }).etapas ?? []), { etapa: estado, fecha: new Date().toISOString(), ...(nota ? { nota } : {}) }];
+  await guardar(clave, { ...r, estado, nota: nota ?? r.nota, etapas: historial } as Registro);
   return true;
 }
 
