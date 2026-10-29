@@ -14,7 +14,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
@@ -26,6 +26,9 @@ import { esPedidoWeb, leerPedidoWeb, resolverPedidoWeb } from "./pedido-web";
 import { catalogo } from "./asistente-catalogo";
 import { leerConfig } from "./config";
 import { pesos, renglonCombo } from "./precios";
+
+/** Transferencia de la Despensa redondeada a $100, la misma que ya cotizan el bot y el equipo ($35.500 → $32.700). */
+const transferenciaAlCien = (precio: number, pct: number) => (pct > 0 ? Math.round((precio * (1 - pct / 100)) / 100) * 100 : null);
 import { urlSitio } from "./sitio";
 import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
 import { cambiarEstado, estadoDe, guardarPedido, respuestasRecientes, historialDe, pedidoGuardado, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
@@ -626,6 +629,16 @@ export async function pensar(c: {
         conIA: false,
         sinIA: true,
       };
+    }
+    // «Quiero precios de frutos secos por kilo» (el anuncio): la lista de hoy y la Despensa, sin esperar a nadie.
+    // La charla igual pasa a Santiago para el cierre.
+    if (!c.negocio && pidePreciosPorKilo(c.texto) && !c.historial.slice(-4).some((h) => h.de === "acopio" && h.texto.includes(MARCA_PRECIOS_POR_KILO))) {
+      const [productos, despensas, cfg] = await Promise.all([catalogo(), combosTienda({ slug: "despensa-4-kilos" }), leerConfig()]);
+      const despensa = despensas.find((d) => d.disponible) ?? null;
+      const lista = textoPreciosPorKilo(productos, despensa, cfg.descuentoTransferenciaPct, pesos, transferenciaAlCien);
+      if (lista) {
+        return { salientes: [{ tipo: "texto" as const, texto: lista }], respuesta: { texto: lista }, derivar: true, conIA: false, sinIA: true };
+      }
     }
     const yaEspera = c.historial.slice(-4).some((h) => h.de === "acopio" && /en un rato te escribe Santiago/i.test(h.texto));
     const texto = c.negocio

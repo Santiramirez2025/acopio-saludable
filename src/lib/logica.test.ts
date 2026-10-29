@@ -1641,3 +1641,34 @@ test("sin IA: «Más adelante» y «No, gracias» se cierran amable, sin «te es
   for (const t of ["Más adelante", "No, gracias", "X ahora No", "por ahora no gracias", "Lo pienso", "no por el momento"]) assert.ok(noPorAhora(t), t);
   for (const t of ["Sí, agendalo", "no tengo el alias", "¿más adelante hay stock?", "no se cuanto sale la nuez", "hola", "no"]) assert.ok(!noPorAhora(t), t);
 });
+
+import { pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO } from "./whatsapp-interactivo";
+import { pesos as pesosAR } from "./precios";
+const transfAR = (precio: number, pct: number) => (pct > 0 ? Math.round((precio * (1 - pct / 100)) / 100) * 100 : null);
+test("sin IA: «Quiero precios de frutos secos por kilo» recibe la lista de hoy y la Despensa, con cobro antes", () => {
+  for (const t of ["¡Hola! Quiero precios de frutos secos por kilo", "precio x kg?", "cuanto sale el kilo de nuez", "Me pasás la lista de precios por kilo"]) assert.ok(pidePreciosPorKilo(t), t);
+  for (const t of ["hola", "Más adelante", "quiero 2 kilos de pasas", "pasame el alias", "precio del envío a Tanti"]) assert.ok(!pidePreciosPorKilo(t), t);
+  const kg = (producto: string, precio: number) => ({ producto, precio, contenido: 1, unidad: "kg" });
+  const productos = [
+    kg("Mix Clásico con cajú y girasol x 1 kg", 12500),
+    kg("Mix Clásico con cajú x 1 kg", 15400),
+    { producto: "Mix Clásico con cajú x 500 g", precio: 8000, contenido: 500, unidad: "g" },
+    kg("Nuez Mariposa blanca light x 1 kg", 25000),
+    kg("Pasas de uva rubias x 1 kg", 9000),
+    { producto: "Pasas de uva negras sin semilla x 1 kg", precio: 7800, contenido: null, unidad: null },
+    kg("Dátiles Deglet Nour con carozo (Argelia) x 1 kg", 11000),
+  ];
+  const despensa = { precio: 35500, items: ["Mix Clásico con cajú y girasol x 1 kg", "Dátiles Deglet Nour con carozo (Argelia) x 1 kg", "Pasas de uva negras sin semilla x 1 kg", "Mix de semillas para el desayuno x 1 kg"].map((producto) => ({ producto: { producto } })) };
+  const t = textoPreciosPorKilo(productos, despensa, 8, pesosAR, transfAR)!;
+  assert.ok(t.includes(MARCA_PRECIOS_POR_KILO));
+  assert.match(t, /Mix clásico con cajú \$\s?15\.400/);
+  assert.match(t, /Mix con cajú y girasol \$\s?12\.500/);
+  assert.match(t, /Pasas de uva \$\s?7\.800/);
+  assert.match(t, /Despensa de 4 kilos \(Mix Clásico con cajú y girasol, Dátiles/);
+  assert.match(t, /\$\s?35\.500, \$\s?32\.700 por transferencia/);
+  assert.match(t, /se paga antes del reparto/);
+  assert.ok(!/al recibir|recién ahí|ves antes de pagar/i.test(t));
+  assert.ok(!t.includes("500 g"));
+  assert.equal(textoPreciosPorKilo(productos, null, 8, pesosAR, transfAR), null);
+  assert.equal(textoPreciosPorKilo([], despensa, 8, pesosAR, transfAR), null);
+});
