@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { medir } from "@/lib/medicion";
+import { medir, registrar } from "@/lib/medicion";
 
 /** Cuenta cada cambio de página para Meta (la primera la cuenta el propio píxel). */
 export function PaginaVista() {
@@ -19,6 +19,7 @@ export function PaginaVista() {
     return () => document.removeEventListener("click", alTocar, true);
   }, []);
   useEffect(() => {
+    registrar("pagina");
     if (primera.current) { primera.current = false; return; }
     if (ruta.startsWith("/admin")) return;
     (window as Window & { fbq?: (...a: unknown[]) => void }).fbq?.("track", "PageView");

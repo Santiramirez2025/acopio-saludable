@@ -91,6 +91,14 @@ export async function POST(req: Request) {
       case "cambiar_precio_ml":
         r = await mlPost(json(`${base}/api/admin/ml`, { accion: "precio", item: String(a.item ?? ""), precio: Number(a.precio) }));
         break;
+      case "pasar_a_agente": {
+        const destino = String(a.agente ?? "").toLowerCase().trim();
+        const texto = String(a.texto ?? "").trim();
+        if (!IDS_AGENTES.includes(destino) || !texto) return NextResponse.json({ ok: false, resultado: `Agente = ${IDS_AGENTES.join(", ")}; falta el texto` });
+        const { guardarOrden } = await import("@/lib/agentes-chat");
+        await guardarOrden(destino, `(pedido de ${agente}, con OK de Santiago en el chat) ${texto}`);
+        return NextResponse.json({ ok: true, resultado: `Listo: ${destino} lo lee al empezar su próxima corrida.` });
+      }
       case "cargar_negocios":
         r = await prospectosPost(json(`${base}/api/admin/whatsapp/prospectos`, { accion: "semilla", lista: Array.isArray(a.lista) ? a.lista.slice(0, 30) : [] }));
         break;
