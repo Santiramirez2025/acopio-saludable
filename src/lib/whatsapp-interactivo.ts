@@ -281,6 +281,69 @@ export function noPorAhora(texto: string): boolean {
 /** Cierre amable para ese no, sin IA: sin precios, sin «te escribe Santiago». */
 export const CIERRE_NO_POR_AHORA = "¡Dale, gracias por avisar! Cuando quieras nos escribís por acá 🙌";
 
+/**
+ * «Quiero precios de frutos secos por kilo» (el texto del anuncio) o «precio x kg»: pide la lista.
+ * Sin IA (29/10) esa charla esperaba a una persona entre 6 y 33 minutos; la lista sale de la tienda.
+ */
+export function pidePreciosPorKilo(texto: string): boolean {
+  const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+  if (!t || t.length > 120) return false;
+  if (!/\bprecios?\b|\bcuanto (sale|esta|cuesta|vale)n?\b|\blista\b/.test(t)) return false;
+  return /\b(por|x|el|al) ?(kilo|kg)\b|\bkilos?\b|\bfrutos secos\b/.test(t);
+}
+
+/** Marca para no mandar la lista dos veces seguidas. */
+export const MARCA_PRECIOS_POR_KILO = "Te paso precios por kilo de hoy";
+
+/** Lo que piden los que escriben por el anuncio, en este orden (Nico, 29/10). */
+const LISTA_POR_KILO: { etiqueta: string; si: RegExp; no?: RegExp }[] = [
+  { etiqueta: "Mix clásico con cajú", si: /\bmix clasico con caju\b/, no: /girasol|sin mani|tropical/ },
+  { etiqueta: "Mix con cajú y girasol", si: /\bmix clasico con caju y girasol\b/ },
+  { etiqueta: "Nuez mariposa", si: /\bnuez mariposa\b/ },
+  { etiqueta: "Castañas de cajú", si: /\bcasta(n|ñ)as de caju\b/, no: /pasas/ },
+  { etiqueta: "Pasas de uva", si: /\bpasas de uva\b/, no: /rubia|chocolate/ },
+  { etiqueta: "Dátiles", si: /\bdatiles\b/ },
+];
+
+const esUnKilo = (p: { producto: string; contenido: number | null; unidad: string | null }) => {
+  const u = (p.unidad ?? "").toLowerCase();
+  if (p.contenido) return (u === "kg" && p.contenido === 1) || (u === "g" && p.contenido === 1000);
+  return /\bx ?1 ?(kg|kilo)s?\s*$/i.test(p.producto.trim());
+};
+
+/**
+ * La respuesta fija, sin IA, con los precios vigentes de la tienda: los kilos sueltos que más piden y la
+ * Despensa como la opción que más sale. Cobro antes del reparto (política del 28/10). null si falta la Despensa
+ * o no se encontró ningún producto: en ese caso sigue el mensaje de espera.
+ */
+export function textoPreciosPorKilo(
+  productos: { producto: string; precio: number; contenido: number | null; unidad: string | null }[],
+  despensa: { precio: number; items: { producto: { producto: string } }[] } | null,
+  descuentoTransferenciaPct: number,
+  pesos: (n: number) => string,
+  precioTransferencia: (precio: number, pct: number) => number | null,
+): string | null {
+  if (!despensa || !(despensa.precio > 0)) return null;
+  const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+  const kilos = productos.filter((p) => esUnKilo(p) && p.precio > 0);
+  const renglones: string[] = [];
+  for (const l of LISTA_POR_KILO) {
+    const p = kilos.find((k) => l.si.test(norm(k.producto)) && !(l.no && l.no.test(norm(k.producto))));
+    if (p) renglones.push(`• ${l.etiqueta} ${pesos(p.precio)}`);
+  }
+  if (!renglones.length) return null;
+  const transf = precioTransferencia(despensa.precio, descuentoTransferenciaPct);
+  const trae = despensa.items.map((i) => i.producto.producto.replace(/\s+x\s+\d.*$/i, "").trim()).filter(Boolean);
+  return [
+    `¡Hola! ${MARCA_PRECIOS_POR_KILO}:`,
+    ...renglones,
+    "",
+    `Lo que más sale es la Despensa de 4 kilos${trae.length ? ` (${trae.join(", ")})` : ""}: ${pesos(despensa.precio)}${transf ? `, ${pesos(transf)} por transferencia` : ""}.`,
+    "En Carlos Paz y la zona te la llevamos sin cargo; se paga antes del reparto, por transferencia o Mercado Pago.",
+    "¿De qué ciudad sos, así te digo el envío?",
+  ].join("\n");
+}
+
 const limpio = (texto: string) => texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
 
 /**
