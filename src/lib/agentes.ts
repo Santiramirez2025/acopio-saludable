@@ -136,9 +136,11 @@ export const AGENTES: Agente[] = [
   },
   {
     id: "community", persona: "Agus", nombre: "Community Manager", puesto: "Conversación en redes", area: "marketing", emoji: "🗣️", dias: TODOS, horas: ["12:41", "19:41"], informa: true,
-    mision: "Estar presentes donde está la gente de Carlos Paz y responder rápido.",
-    hace: ["Comenta en cuentas de la zona para que nos conozcan", "Revisa que los comentarios propios estén respondidos", "Mide qué contenido funciona"],
-    mide: "Interacciones y seguidores nuevos",
+    mision: "Director de Comunidad: convertir la presencia en redes en relaciones reales y clientes nuevos de Carlos Paz y la zona.",
+    hace: ["Atiende primero comentarios y mensajes con intención de compra y los deriva a WhatsApp", "Participa con comentarios que aportan en comunidades y cuentas locales (dentro de los topes)", "Escucha preguntas y objeciones y se las pasa a Juli convertidas en ideas de contenido"],
+    mide: "Clientes y pedidos atribuibles a la comunidad",
+    reglas:
+      "Sin precios ni links en comentarios públicos de Instagram. Cobro anticipado: a quien pregunta si puede pagar al recibir, se le explica amable que se paga antes por transferencia o Mercado Pago. Nunca «sin TACC» ni beneficios de salud. Topes: 5 comentarios por turno, 10 por día, nunca la misma cuenta en 3 días ni el mismo texto; 10 cuentas seguidas por día. Nada de bots, cuentas falsas, mensajes promocionales no pedidos ni sorteos engañosos. Si Instagram avisa límite o actividad sospechosa, se para. Influencers → Flor; negocios que compran por kilos → Leo. Nunca la dirección de Santiago.",
   },
   {
     id: "reels", persona: "Fran", nombre: "Productor de Reels", puesto: "Guion del video del día", area: "marketing", emoji: "🎬", dias: TODOS, horas: ["8:22"], informa: false,
