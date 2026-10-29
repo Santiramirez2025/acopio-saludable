@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { IDS_AGENTES } from "@/lib/agentes";
+import { AGENTES, IDS_AGENTES } from "@/lib/agentes";
 import { POLITICA_COMERCIAL } from "@/lib/politica";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +46,8 @@ export async function GET(req: Request) {
         : { agente: f.nombre.slice(7), ok: f.ok, fecha: f.fecha, informe: f.detalle },
     );
   // La política comercial vigente va siempre primera: cada agente la lee al empezar su corrida.
+  // Las reglas de cada puesto (las mismas del chat y la voz) también llegan a las corridas programadas.
+  for (const a of [...AGENTES].reverse()) if (a.reglas) informes.unshift({ agente: "gerente", ok: true, fecha: new Date(), informe: `PRIORIDAD: ${a.id} — REGLAS PERMANENTES DE TU PUESTO (de Santiago): ${a.reglas}` });
   informes.unshift({ agente: "gerente", ok: true, fecha: new Date(), informe: `PRIORIDAD: todos — ORDEN PERMANENTE DE SANTIAGO: ${POLITICA_COMERCIAL}` });
   return NextResponse.json({ informes });
 }
