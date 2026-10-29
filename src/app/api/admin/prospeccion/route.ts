@@ -2,12 +2,12 @@
 //   GET                                         → resumen y la lista (últimos 80, del más nuevo al más viejo)
 //   POST { accion: "proponer", prospectos: [] } → valida, guarda y manda si es horario y hay cupo
 //   POST { accion: "enviar" }                   → manda pendientes y seguimientos que tocan
-//   POST { accion: "marcar", clave, estado, nota? } → respondio | rebotado | baja
+//   POST { accion: "marcar", clave, estado, nota? } → respondio | calificado | reunion_agendada | reunion_realizada | propuesta | ganado | perdido | baja | rebotado
 //   POST { accion: "seguir_whatsapp" }          → un seguimiento a los leads de WhatsApp que dejaron de contestar
 //   POST { accion: "leccion", texto }           → Marcos guarda lo que aprendió (entra en su prompt)
 import { NextResponse } from "next/server";
 import { esAdmin } from "@/lib/admin-acceso";
-import { enviarPendientes, enviarSeguimientos, marcar, pipeline, proponer, resumen, type Prospecto } from "@/lib/prospeccion-sistema";
+import { ETAPAS, enviarPendientes, enviarSeguimientos, marcar, pipeline, proponer, resumen, type Etapa, type Prospecto } from "@/lib/prospeccion-sistema";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -31,8 +31,8 @@ export async function POST(req: Request) {
     const [pendientes, seguimientos] = [await enviarPendientes(), await enviarSeguimientos()];
     return NextResponse.json({ pendientes, seguimientos });
   }
-  if (b.accion === "marcar" && b.clave && (b.estado === "respondio" || b.estado === "rebotado" || b.estado === "baja")) {
-    return NextResponse.json({ ok: await marcar(b.clave, b.estado, b.nota) });
+  if (b.accion === "marcar" && b.clave && (ETAPAS as readonly string[]).includes(String(b.estado))) {
+    return NextResponse.json({ ok: await marcar(b.clave, b.estado as Etapa, b.nota) });
   }
   if (b.accion === "prueba") {
     const { probarEnvio } = await import("@/lib/prospeccion-sistema");
