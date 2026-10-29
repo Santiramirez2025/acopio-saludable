@@ -35,6 +35,17 @@ export function ipDe(req: Request): string {
   return ip || "desconocida";
 }
 
+/**
+ * Tope global de la medición: cuántos eventos por minuto acepta la tienda entera, contados en la base
+ * (que sí es compartida entre instancias). Hoy el sitio registra decenas de eventos por DÍA; 300 por
+ * minuto deja margen a un pico real (una publicación viral) y acota cuánto puede crecer la tabla si
+ * alguien la quiere llenar desde muchas IPs.
+ */
+export const MEDICION_MAX_MINUTO = 300;
+export function admiteMedicion(eventosUltimoMinuto: number): boolean {
+  return eventosUltimoMinuto < MEDICION_MAX_MINUTO;
+}
+
 /** Compara una firma o clave que llega de afuera con la esperada sin que el tiempo de respuesta delate cuántos caracteres acertó. */
 export function igualesSeguro(recibida: string, esperada: string): boolean {
   const a = Buffer.from(String(recibida));

@@ -3,15 +3,17 @@
 // Lo leen Tomi y el panel con GET /api/admin/analisis?parte=trafico.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { admiteFreno, ipDe } from "@/lib/freno";
+import { admiteFreno, admiteMedicion, ipDe } from "@/lib/freno";
 
 export const dynamic = "force-dynamic";
 
 const EVENTOS = new Set(["pagina", "contacto", "ver_producto", "agregar", "iniciar_compra", "compra", "lead_sistema"]);
 const ROBOTS = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|vercel/i;
-// Una persona navegando a mano genera unos pocos eventos por minuto; 60 por IP por minuto deja margen a
-// una familia detrás del mismo wifi y frena a un script que quiera llenar la tabla. Al frenado se le
-// contesta igual 204 (sin guardar): no hay nada que adivinar ni reintentar.
+// Dos frenos, los dos contestan 204 sin guardar (nada que adivinar ni reintentar):
+// 1) por IP en memoria de la instancia (60 por minuto: una persona genera unos pocos; para un script que
+//    pega muchas veces seguidas en la misma instancia), y 2) global contado en la base, que sí comparten
+//    todas las instancias: por más IPs o instancias que use, la tabla no crece más de MEDICION_MAX_MINUTO
+//    filas por minuto. El 1) solo no alcanzó: en producción pedidos seguidos caen en instancias distintas.
 const MAX_POR_MINUTO = 60;
 const CUERPO_MAX = 1500;
 
@@ -22,6 +24,9 @@ export async function POST(req: Request) {
   const b = (await req.json().catch(() => null)) as { e?: unknown; r?: unknown; v?: unknown; s?: unknown; o?: unknown } | null;
   const e = typeof b?.e === "string" ? b.e : "";
   if (!EVENTOS.has(e)) return new NextResponse(null, { status: 204 });
+  const [{ n }] = await prisma.$queryRaw<{ n: number }[]>`
+    SELECT count(*)::int AS n FROM "CronCorrida" WHERE "nombre" LIKE 'ev-%' AND "fecha" > now() - interval '1 minute'`.catch(() => [{ n: 0 }]);
+  if (!admiteMedicion(n)) return new NextResponse(null, { status: 204 });
   const detalle = JSON.stringify({
     r: typeof b?.r === "string" ? b.r.slice(0, 120) : null,
     v: typeof b?.v === "number" && Number.isFinite(b.v) ? Math.round(b.v) : null,
