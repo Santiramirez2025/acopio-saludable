@@ -7,6 +7,7 @@
 // las reglas de Meta y puede hacer que bloqueen el número del bot. El mail 1 a 1, con quién somos y la
 // baja, es el canal correcto para B2B.
 import { createHmac } from "node:crypto";
+import { igualesSeguro } from "./freno";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
 import { urlSitio } from "./sitio";
@@ -67,7 +68,7 @@ export function linkBaja(email: string): string {
 }
 
 export function bajaValida(clave: string, firma: string): boolean {
-  return Boolean(clave) && firma === firmaBaja(clave);
+  return Boolean(clave) && igualesSeguro(firma, firmaBaja(clave));
 }
 
 async function leer(clave: string): Promise<Registro | null> {
