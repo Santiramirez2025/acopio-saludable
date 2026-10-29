@@ -1635,3 +1635,9 @@ test("mayorista: escalera con piso de costo + 25% y −10% fijo en almendras, ca
   assert.equal(topeEscalon("Mix de cajú y banana chips", 15), 15);
   assert.equal(topeEscalon("Harina de maní", 15), 15);
 });
+
+import { noPorAhora } from "./whatsapp-interactivo";
+test("sin IA: «Más adelante» y «No, gracias» se cierran amable, sin «te escribe Santiago»", () => {
+  for (const t of ["Más adelante", "No, gracias", "X ahora No", "por ahora no gracias", "Lo pienso", "no por el momento"]) assert.ok(noPorAhora(t), t);
+  for (const t of ["Sí, agendalo", "no tengo el alias", "¿más adelante hay stock?", "no se cuanto sale la nuez", "hola", "no"]) assert.ok(!noPorAhora(t), t);
+});

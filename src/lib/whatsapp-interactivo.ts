@@ -267,6 +267,20 @@ export function postergaCompra(texto: string): boolean {
   return /\b(lo|la|los|las) (veo|miro|reviso|pienso|charlo|hablo|consulto)\b|\bveo tra?n?quil|\b(miro|reviso|veo) (con calma|tranquil|bien)|\b(lo|la) voy a (pensar|ver|mirar|consultar)|\bvoy a (pensar|ver|mirar)lo\b|\b(despues|luego|mas tarde|manana|en un rato|en otro momento|la semana que viene|cuando (cobre|pueda|vuelva))\b.*\b(te )?(escribo|aviso|confirmo|hablo|encargo|pido)|\bte (escribo|aviso|confirmo|hablo) (despues|luego|mas tarde|manana|en un rato|para encargar)|\bte escribo para (encargar|pedir)|\b(cualquier cosa|si me decido) te (escribo|aviso)|\b(pregunto|consulto|averiguo|veo|lo hablo|lo charlo) y te (digo|aviso|confirmo|escribo|cuento)/.test(t);
 }
 
+/**
+ * «Más adelante», «No, gracias», «Por ahora no»: un no corto (casi siempre el botón del seguimiento).
+ * Sin IA el bot le contestaba «En un rato te escribe Santiago con los precios» (Bety y Bibiana, 29/10):
+ * una promesa que no pidió y una charla más en la cola de Santiago.
+ */
+export function noPorAhora(texto: string): boolean {
+  const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  if (!t || t.length > 40 || texto.includes("?")) return false;
+  return /^(mas adelante|no gracias|no por ahora|por ahora no|x ahora no|ahora no|no ahora|no por el momento|por el momento no|en otro momento|otro dia|lo pienso)( gracias| muchas gracias)?$/.test(t);
+}
+
+/** Cierre amable para ese no, sin IA: sin precios, sin «te escribe Santiago». */
+export const CIERRE_NO_POR_AHORA = "¡Dale, gracias por avisar! Cuando quieras nos escribís por acá 🙌";
+
 const limpio = (texto: string) => texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
 
 /**

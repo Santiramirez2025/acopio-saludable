@@ -14,7 +14,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
@@ -616,6 +616,17 @@ export async function pensar(c: {
     // Sin IA (29/10: se acabó el saldo y el bot contestó «Contame qué estás buscando» a todos, también al
     // hotel que tocó «Sí, pasame precios»). Nunca más el saludo genérico: el cliente recibe un mensaje de
     // espera útil y la charla pasa a Santiago («Te esperan»), que ya recibió la alerta de IA caída.
+    // Un «Más adelante» / «No, gracias» no espera a nadie: se cierra amable y no pasa a Santiago.
+    if (!c.negocio && noPorAhora(c.texto)) {
+      const yaCerro = c.historial.slice(-2).some((h) => h.de === "acopio" && h.texto === CIERRE_NO_POR_AHORA);
+      return {
+        salientes: yaCerro ? [] : [{ tipo: "texto" as const, texto: CIERRE_NO_POR_AHORA }],
+        respuesta: { texto: yaCerro ? "" : CIERRE_NO_POR_AHORA },
+        derivar: false,
+        conIA: false,
+        sinIA: true,
+      };
+    }
     const yaEspera = c.historial.slice(-4).some((h) => h.de === "acopio" && /en un rato te escribe Santiago/i.test(h.texto));
     const texto = c.negocio
       ? `¡Gracias! Te dejo la lista por mayor con fotos y precios: ${urlSitio()}/mayorista\nEn un rato te escribe Santiago para armarte el pedido.`
