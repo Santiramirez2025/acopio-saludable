@@ -1,5 +1,5 @@
 // Radiografía del negocio para replantear el catálogo: qué se vendió, qué preguntó la gente y qué
-// tiene La Granja hoy. Solo administrador. GET ?parte=pedidos|whatsapp|catalogo|lagranja|harinar
+// tiene La Granja hoy. Solo administrador. GET ?parte=pedidos|whatsapp|catalogo|lagranja|harinar|trafico (&dias=N)
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -100,6 +100,45 @@ async function lagranja() {
   return { archivo: decodeURIComponent(url.split("/").pop() ?? ""), renglones: lista.length, lista: lista.map((r) => [r.codigo, r.nombre.slice(0, 48), r.precio]) };
 }
 
+/** Tráfico propio de la tienda (ver /api/medicion): por día, embudo, páginas y carritos abandonados. */
+async function trafico(dias: number) {
+  const filas = await prisma.$queryRaw<{ nombre: string; detalle: string | null; fecha: Date }[]>`
+    SELECT "nombre", "detalle", "fecha" FROM "CronCorrida" WHERE "nombre" LIKE 'ev-%' AND "fecha" >= ${new Date(Date.now() - dias * 86_400_000)}`;
+  const dia = (f: Date) => f.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Cordoba" });
+  const porDia: Record<string, Record<string, number> & { sesiones?: number }> = {};
+  const sesionesDia: Record<string, Set<string>> = {};
+  const paginas: Record<string, number> = {};
+  const origenes: Record<string, number> = {};
+  const porSesion: Record<string, Set<string>> = {};
+  for (const f of filas) {
+    const e = f.nombre.slice(3);
+    let d: { r?: string | null; s?: string | null; o?: string | null } = {};
+    try { d = JSON.parse(f.detalle ?? "{}"); } catch {}
+    const k = dia(f.fecha);
+    porDia[k] ??= {};
+    porDia[k][e] = (porDia[k][e] ?? 0) + 1;
+    if (d.s) {
+      (sesionesDia[k] ??= new Set()).add(d.s);
+      (porSesion[d.s] ??= new Set()).add(e);
+    }
+    if (e === "pagina" && d.r) paginas[d.r] = (paginas[d.r] ?? 0) + 1;
+    if (e === "pagina" && d.o && !/acopiosaludable/.test(d.o)) origenes[d.o] = (origenes[d.o] ?? 0) + 1;
+  }
+  for (const k of Object.keys(porDia)) porDia[k].sesiones = sesionesDia[k]?.size ?? 0;
+  const ses = Object.values(porSesion);
+  const embudo = {
+    sesiones: ses.length,
+    vieronProducto: ses.filter((x) => x.has("ver_producto")).length,
+    agregaron: ses.filter((x) => x.has("agregar")).length,
+    iniciaronCompra: ses.filter((x) => x.has("iniciar_compra")).length,
+    tocaronWhatsapp: ses.filter((x) => x.has("contacto")).length,
+    compraron: ses.filter((x) => x.has("compra")).length,
+    carritosAbandonados: ses.filter((x) => x.has("agregar") && !x.has("iniciar_compra") && !x.has("compra") && !x.has("contacto")).length,
+  };
+  const top = (o: Record<string, number>) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  return { dias, desde: "registro propio desde el 28/10/2026", porDia, embudo, paginas: top(paginas), origenes: top(origenes) };
+}
+
 /** Harinar vs La Granja por kilo, y qué se compra en cada uno (ver lib/harinar.ts). */
 async function harinar() {
   const harinarLib = await import("@/lib/harinar");
@@ -115,7 +154,8 @@ async function harinar() {
 export async function GET(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const parte = new URL(req.url).searchParams.get("parte");
-  const f = { pedidos, whatsapp, catalogo, lagranja, harinar }[parte ?? ""];
-  if (!f) return NextResponse.json({ error: "parte = pedidos | whatsapp | catalogo | lagranja | harinar" }, { status: 400 });
+  const dias = Math.min(60, Math.max(1, Number(new URL(req.url).searchParams.get("dias")) || 7));
+  const f = { pedidos, whatsapp, catalogo, lagranja, harinar, trafico: () => trafico(dias) }[parte ?? ""];
+  if (!f) return NextResponse.json({ error: "parte = pedidos | whatsapp | catalogo | lagranja | harinar | trafico" }, { status: 400 });
   return NextResponse.json(await f());
 }
