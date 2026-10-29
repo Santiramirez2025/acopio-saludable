@@ -1,7 +1,8 @@
 // Crear a mano el pedido de una venta cerrada en el chat (por ejemplo, una de antes de que
 // las ventas por WhatsApp se cargaran solas). Solo administrador.
 //
-// POST { telefono, nombre, camino, medio: "TRANSFERENCIA" | "AL_RECIBIR", lugar, costoEnvio, direccion?, horario? }
+// POST { telefono, nombre, camino, medio: "TRANSFERENCIA" | "AL_RECIBIR", lugar, costoEnvio, direccion?, horario?, mayoristaPct? }
+// mayoristaPct (10, 15 o 20): precio por volumen sobre la lista web; reemplaza el descuento por transferencia.
 
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
@@ -27,8 +28,9 @@ export async function POST(req: Request) {
     nombre: s("nombre"),
     telefono,
     envio: { lugar: s("lugar") || "A confirmar", costo: Number.isFinite(Number(b.costoEnvio)) && b.costoEnvio !== "" ? Number(b.costoEnvio) : null },
+    mayoristaPct: Number(b.mayoristaPct) || 0,
   });
   if (s("direccion") || s("horario")) await completarEntrega(pedido.id, { direccion: s("direccion"), horario: s("horario") });
   await guardarPedido(telefono, `orden:${pedido.id}`);
-  return NextResponse.json({ ok: true, pedido: numeroPedido(pedido.id), id: pedido.id });
+  return NextResponse.json({ ok: true, pedido: numeroPedido(pedido.id), id: pedido.id, total: Number(pedido.total) });
 }

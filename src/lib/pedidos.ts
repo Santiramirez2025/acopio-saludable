@@ -298,8 +298,11 @@ export async function crearPedidoWhatsapp(a: {
   nombre: string;
   telefono: string;
   envio: { lugar: string; costo: number | null };
+  /** Precio por volumen (escalera mayorista −10/−15/−20%): reemplaza el descuento por transferencia, no se suma. */
+  mayoristaPct?: number;
 }): Promise<Order> {
   const cfg = await leerConfig();
+  const mayoristaPct = Math.min(20, Math.max(0, Math.round(Number(a.mayoristaPct) || 0)));
   const [cotizacion, renglones] = await Promise.all([cotizarCarrito(a.lineas), expandirCarrito(a.lineas, cfg)]);
   if (!renglones.length) throw new ErrorPedido("El pedido está vacío");
   // Ya hay un pedido abierto de este teléfono con lo mismo (de los últimos 3 días): se devuelve ese, no se crea otro.
@@ -315,7 +318,9 @@ export async function crearPedidoWhatsapp(a: {
   }
   const bultos = armarBultos(renglones.map((r) => ({ pesoG: r.pesoG ?? PESO_POR_DEFECTO_G, cantidad: r.cantidad })));
   const envio = a.envio.costo ?? 0;
-  const { descuento, envioCobrado, total, comisionPago } = totales(cotizacion.subtotal, envio, a.medioPago, cfg);
+  const { descuento, envioCobrado, total, comisionPago } = mayoristaPct
+    ? totales(cotizacion.subtotal, envio, a.medioPago, { ...cfg, descuentoTransferenciaPct: 0 }, mayoristaPct)
+    : totales(cotizacion.subtotal, envio, a.medioPago, cfg);
   const propia = a.envio.costo !== null && (a.envio.costo === 0 || a.medioPago === "AL_RECIBIR");
   const charla = await prisma.$queryRaw<{ anuncioTitulo: string | null; prospecto: string | null }[]>`SELECT "anuncioTitulo", "prospecto" FROM "WhatsappConversacion" WHERE "telefono" = ${a.telefono}`;
   const origen = charla[0]?.prospecto ? `whatsapp · prospección: ${charla[0].prospecto}` : charla[0]?.anuncioTitulo ? `whatsapp · anuncio: ${charla[0].anuncioTitulo}` : "whatsapp";
@@ -330,7 +335,7 @@ export async function crearPedidoWhatsapp(a: {
       ciudad: a.envio.lugar.slice(0, 100),
       provincia: "Córdoba",
       cp: "",
-      notas: "Venta por WhatsApp",
+      notas: mayoristaPct ? `Venta por WhatsApp · precio mayorista −${mayoristaPct}%` : "Venta por WhatsApp",
       subtotal: cotizacion.subtotal,
       descuento,
       envioCobrado,
