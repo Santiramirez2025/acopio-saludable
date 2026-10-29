@@ -271,3 +271,71 @@ export async function preciosMl(): Promise<FilaPrecioMl[]> {
   );
   return filas.sort((a, b) => Number(b.bajoPiso) - Number(a.bajoPiso) || a.titulo.localeCompare(b.titulo));
 }
+
+// ——— Acciones del Encargado de ML por API (sin Chrome) ———————————————————————————————————————
+
+const mla = (itemId: string) => (itemId.toUpperCase().startsWith("MLA") ? itemId.toUpperCase() : `MLA${itemId}`);
+
+/** Cambia el título (ML lo permite mientras la publicación no tenga ventas). Máximo 60 caracteres. */
+export async function cambiarTituloMl(itemId: string, titulo: string): Promise<{ antes: string; despues: string }> {
+  const t = titulo.replace(/\s+/g, " ").trim().slice(0, 60);
+  if (t.length < 10) throw new Error("Título muy corto");
+  const it = await ml<{ title: string }>(`/items/${mla(itemId)}?attributes=title`);
+  await ml(`/items/${mla(itemId)}`, { method: "PUT", body: JSON.stringify({ title: t }) });
+  return { antes: it.title, despues: t };
+}
+
+/** Cambia la descripción (texto plano). */
+export async function cambiarDescripcionMl(itemId: string, texto: string): Promise<{ ok: true }> {
+  const t = texto.trim().slice(0, 50_000);
+  if (t.length < 30) throw new Error("Descripción muy corta");
+  await ml(`/items/${mla(itemId)}/description?api_version=2`, { method: "PUT", body: JSON.stringify({ plain_text: t }) });
+  return { ok: true };
+}
+
+/** Pausa o reactiva una publicación. */
+export async function estadoPublicacionMl(itemId: string, estado: "paused" | "active"): Promise<{ estado: string }> {
+  await ml(`/items/${mla(itemId)}`, { method: "PUT", body: JSON.stringify({ status: estado }) });
+  return { estado };
+}
+
+/** Las promociones en las que está una publicación (para sacar las que perforan el piso). */
+export async function promocionesMl(itemId: string): Promise<unknown> {
+  return ml(`/seller-promotions/items/${mla(itemId)}?app_version=v2`);
+}
+
+/** Saca una publicación de una promoción (por ejemplo, un descuento que la deja bajo el piso). */
+export async function quitarPromocionMl(itemId: string, tipo: string, promocionId?: string): Promise<{ ok: true }> {
+  const q = new URLSearchParams({ promotion_type: tipo, app_version: "v2", ...(promocionId ? { promotion_id: promocionId } : {}) });
+  await ml(`/seller-promotions/items/${mla(itemId)}?${q}`, { method: "DELETE" });
+  return { ok: true };
+}
+
+/** Qué categoría sugiere ML para un título (para publicar bien). */
+export async function categoriaMl(titulo: string): Promise<unknown> {
+  return ml(`/sites/MLA/domain_discovery/search?limit=3&q=${encodeURIComponent(titulo)}`);
+}
+
+/**
+ * Publica un producto nuevo. El precio nunca por debajo del piso de ganancia del SKU (costo actual);
+ * si no se conoce el costo del SKU, no se publica.
+ */
+export async function publicarMl(p: { titulo: string; categoria: string; precio: number; stock?: number; sku: string; fotos: string[]; descripcion?: string; atributos?: { id: string; value_name: string }[]; tipo?: "gold_special" | "gold_pro" }): Promise<{ id: string; link: string; piso: number }> {
+  const costo = await costoDeSku(p.sku);
+  if (costo === null) throw new Error(`No conozco el costo del SKU ${p.sku}: no se publica sin piso de ganancia`);
+  const piso = precioMinimoMl(costo);
+  const precio = Math.round(p.precio / 500) * 500;
+  if (precio < piso) throw new Error(`$${precio} queda por debajo del piso de ganancia ($${piso})`);
+  if (!p.fotos.length) throw new Error("Falta al menos una foto (URL pública)");
+  const item = await ml<{ id: string; permalink: string }>("/items", {
+    method: "POST",
+    body: JSON.stringify({
+      title: p.titulo.slice(0, 60), category_id: p.categoria, price: precio, currency_id: "ARS", available_quantity: Math.max(1, Math.min(p.stock ?? 20, 999)),
+      buying_mode: "buy_it_now", condition: "new", listing_type_id: p.tipo ?? "gold_special",
+      pictures: p.fotos.slice(0, 10).map((source) => ({ source })),
+      attributes: [{ id: "SELLER_SKU", value_name: p.sku }, ...(p.atributos ?? [])],
+    }),
+  });
+  if (p.descripcion) await cambiarDescripcionMl(item.id, p.descripcion).catch(() => null);
+  return { id: item.id, link: item.permalink, piso };
+}
