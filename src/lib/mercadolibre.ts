@@ -327,14 +327,16 @@ export async function publicarMl(p: { titulo: string; categoria: string; precio:
   const precio = Math.round(p.precio / 500) * 500;
   if (precio < piso) throw new Error(`$${precio} queda por debajo del piso de ganancia ($${piso})`);
   if (!p.fotos.length) throw new Error("Falta al menos una foto (URL pública)");
-  const item = await ml<{ id: string; permalink: string }>("/items", {
-    method: "POST",
-    body: JSON.stringify({
-      title: p.titulo.slice(0, 60), category_id: p.categoria, price: precio, currency_id: "ARS", available_quantity: Math.max(1, Math.min(p.stock ?? 20, 999)),
+  // ML (modelo de productos de usuario) exige family_name; en algunas categorías además rechaza title.
+  const cuerpo = (conTitulo: boolean) => JSON.stringify({
+      ...(conTitulo ? { title: p.titulo.slice(0, 60) } : {}), family_name: p.titulo.slice(0, 60), category_id: p.categoria, price: precio, currency_id: "ARS", available_quantity: Math.max(1, Math.min(p.stock ?? 20, 999)),
       buying_mode: "buy_it_now", condition: "new", listing_type_id: p.tipo ?? "gold_special",
       pictures: p.fotos.slice(0, 10).map((source) => ({ source })),
       attributes: [{ id: "SELLER_SKU", value_name: p.sku }, ...(p.atributos ?? [])],
-    }),
+    });
+  const item = await ml<{ id: string; permalink: string }>("/items", { method: "POST", body: cuerpo(true) }).catch((e: unknown) => {
+    if (/\btitle\b/i.test(String(e instanceof Error ? e.message : e))) return ml<{ id: string; permalink: string }>("/items", { method: "POST", body: cuerpo(false) });
+    throw e;
   });
   if (p.descripcion) await cambiarDescripcionMl(item.id, p.descripcion).catch(() => null);
   return { id: item.id, link: item.permalink, piso };
