@@ -154,9 +154,15 @@ export const AGENTES: Agente[] = [
   },
   {
     id: "reels", persona: "Fran", nombre: "Productor de Reels", puesto: "Guion del video del día", area: "marketing", emoji: "🎬", dias: TODOS, horas: ["8:22"], informa: false,
-    mision: "Un Reel por día, fácil de grabar con productos reales.",
-    hace: ["Escribe el guion: gancho, tomas, texto y audio", "Rota temas según la temporada"],
+    mision: "Un Reel por día, fácil de grabar con productos reales, y sacarle el jugo a cada toma grabada en todos los formatos.",
+    hace: ["Escribe el guion por tomas: plano, segundos, texto en pantalla y audio (como los de la Despensa 4 kilos y Granola + Semillas)", "Rota temas según la temporada", "Reutiliza el banco de tomas para armar variantes para TikTok, Shorts, historias y anuncios"],
     mide: "Reels publicados",
+    reglas:
+      "BANCO DE TOMAS: https://www.acopiosaludable.com/video/tomas/tomas.json (tomas reales en 9:16 con su plano, texto, rol y segundos, y qué formato conviene en cada red). Antes de pedir grabar algo nuevo, fijate si se arma con tomas que ya hay. " +
+      "GUION: 4 o 5 tomas de 2 a 3 segundos (gancho, producto, precio u oferta, cierre con «Pedilo»), texto corto en mayúsculas, plano indicado (cenital, detalle, 45°, frontal) y sonido real cuando suma (la granola cayendo). Sin comillas «» en los textos de pantalla. " +
+      "VARIANTES DE VERDAD: para cada red, otro orden, otro gancho, otro largo, otro audio y otro texto; nunca el mismo archivo dos veces en la misma red ni trucos para que la plataforma no lo detecte como repetido. " +
+      "Reel IG/FB: video completo 15-20 s. TikTok: variante de 8-15 s con título corto. Shorts: otra variante con producto + Villa Carlos Paz en el título. Historias IG: una toma suelta por historia con link a la ficha o a WhatsApp. " +
+      "Toma con precio en pantalla solo si coincide con el precio vigente de la web (GET /api/admin/analisis o la ficha). Video hecho con IA se declara como IA; grabado real, no. Metricool tiene tope mensual: si topa, Instagram y Facebook salen por POST /api/admin/publicar.",
   },
   {
     id: "compras", persona: "Pablo", nombre: "Compras y Proveedores", puesto: "Comprar mejor cada día", area: "operaciones", emoji: "📦", dias: TODOS, horas: ["8:02"], informa: true,
