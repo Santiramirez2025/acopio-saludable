@@ -317,7 +317,7 @@ export async function atender(e: Entrada): Promise<void> {
     if (vista) {
       texto = `[Mandó una foto: ${vista}]`;
       console.log("chat: foto descripta", cola(e.clave), vista.slice(0, 80));
-      // Un comprobante: se lee el monto y, si coincide con su pedido, el pago queda registrado.
+      // Un comprobante: se lee el monto y queda anotado en su pedido; el pago lo confirma Santiago contra su cuenta.
       if (id && /comprobante|transferencia|pago|mercado pago/i.test(vista)) {
         const r = await procesarComprobante(e.clave, e.nombre, id);
         if (r) {
@@ -754,9 +754,13 @@ async function procesarComprobante(clave: string, nombre: string | null, mediaId
   const quien = nombre ?? clave;
   const monto = r.monto ? pesos(r.monto) : "un monto que no se lee";
   console.log("chat: comprobante", cola(clave), r.tipo, r.monto);
-  if (r.tipo === "registrado") {
-    await avisarSantiago("Pago por comprobante", `💸 ${quien} mandó el comprobante por ${monto}: coincide con el pedido ${r.codigo} y lo marqué pagado (no hay que cobrarle). Fijate que se haya acreditado.\n${urlSitio()}/admin/whatsapp?c=${clave}`);
-    return `[Mandó el comprobante de pago por ${monto}. Ya quedó registrado en su pedido ${r.codigo}: agradecé en una frase y decile que quedó todo listo, que no tiene que abonar nada al recibir. No pidas nada más.]`;
+  if (r.tipo === "coincide") {
+    // Coincide el monto, pero una captura no es plata acreditada: el pedido sigue pendiente hasta que Santiago lo confirme.
+    await avisarSantiago(
+      "Comprobante para verificar",
+      `💸 ${quien} mandó el comprobante por ${monto}: coincide con el pedido ${r.codigo}, pero sigue PENDIENTE hasta que lo confirmes. Fijate que esté acreditado en tu cuenta y, si está, pasalo a Pagado (panel o «marcá pagado ${r.codigo}» por acá). No lo despaches antes.\n${urlSitio()}/admin/whatsapp?c=${clave}`,
+    );
+    return `[Mandó el comprobante de pago por ${monto} por su pedido ${r.codigo}. Agradecé en una frase y decile que Santiago verifica la acreditación y le confirma por acá; recién con el pago acreditado sale el pedido. No digas que ya quedó pagado ni que no debe nada. No confirmes el pago vos. No pidas nada más.]`;
   }
   if (r.tipo === "revisar") {
     await avisarSantiago("Comprobante para revisar", `🧾 ${quien} mandó un comprobante por ${monto}, pero el pedido ${r.codigo} debe ${pesos(r.debe)}. Revisalo antes de cobrar.\n${urlSitio()}/admin/whatsapp?c=${clave}`);
