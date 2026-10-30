@@ -1,0 +1,22 @@
+/* Sistema visual Acopio · piezas de marketing (Lucas, 30/10/2026). Crema + verde + chip rojo/amarillo. */
+@font-face{font-family:"Brico";src:url(fonts/bricolage-grotesque-latin-wght-normal.woff2) format("woff2");font-weight:200 800}
+@font-face{font-family:"Fig";src:url(fonts/figtree-latin-wght-normal.woff2) format("woff2");font-weight:300 900}
+:root{--crema:#F4EEE1;--verde:#10251C;--verde2:#0F6B4F;--rojo:#C3322B;--amarillo:#FFC83D;--gris:#4D5E55}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Fig";color:var(--verde);background:var(--crema);-webkit-font-smoothing:antialiased;overflow:hidden}
+.c{position:relative;overflow:hidden;background:var(--crema)}
+.logo{display:inline-flex;align-items:center;gap:14px;font:800 34px "Fig";color:var(--verde)}
+.logo svg{width:52px;height:52px}
+.ceja{display:inline-block;background:var(--rojo);color:#fff;border-radius:999px;padding:10px 26px;font:800 23px "Fig";letter-spacing:.16em;text-transform:uppercase}
+h1{font:800 92px/.95 "Brico";letter-spacing:-.03em}
+h1 em{font-style:normal;color:var(--rojo)}
+.sub{font:500 34px/1.3 "Fig";color:#33473C}
+.chips{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+.chip{border-radius:999px;padding:14px 28px;font:800 30px "Fig";white-space:nowrap}
+.chip.r{background:var(--rojo);color:#fff}.chip.a{background:var(--amarillo);color:var(--verde)}.chip.v{background:var(--verde);color:var(--crema)}.chip.b{background:#fff;color:var(--verde);box-shadow:inset 0 0 0 3px rgba(16,37,28,.15)}
+.btn{display:flex;align-items:center;justify-content:center;gap:16px;background:var(--verde);color:#fff;border-radius:999px;font:800 40px "Fig"}
+.btn svg{width:44px;height:44px}
+.foto{border-radius:34px;overflow:hidden;box-shadow:0 26px 50px -28px rgba(16,37,28,.55);position:relative}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.foto .et{position:absolute;left:16px;bottom:16px;background:var(--verde);color:#fff;border-radius:999px;padding:9px 20px;font:800 24px "Fig"}
+.real{filter:brightness(1.08) contrast(1.06) saturate(1.08)}
