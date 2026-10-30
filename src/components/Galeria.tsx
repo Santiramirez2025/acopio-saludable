@@ -9,8 +9,9 @@ export function Galeria({ fotos, alt, etiqueta }: { fotos: string[]; alt: string
   const actual = fotos[activa] ?? fotos[0] ?? null;
   return (
     <div>
-      <div className="rounded-3xl bg-white p-2.5 shadow-ficha">
-        <Foto key={actual ?? "sin"} src={actual} alt={alt} etiqueta={etiqueta} className="aspect-square w-full rounded-2xl" prioridad sizes="(max-width: 768px) 100vw, 560px" />
+      {/* En celular la foto va más chica: así el precio y «Agregar al pedido» entran en la primera pantalla. */}
+      <div className="rounded-3xl bg-white p-2.5 shadow-ficha max-md:mx-auto max-md:max-w-[16rem]">
+        <Foto key={actual ?? "sin"} src={actual} alt={alt} etiqueta={etiqueta} className="aspect-square w-full rounded-2xl" prioridad sizes="(max-width: 768px) 256px, 560px" />
       </div>
       {fotos.length > 1 && (
         <div className="riel mt-3 md:mx-0 md:px-0" role="tablist" aria-label="Fotos del producto">
