@@ -318,11 +318,16 @@ export async function atender(e: Entrada): Promise<void> {
       texto = `[Mandó una foto: ${vista}]`;
       console.log("chat: foto descripta", cola(e.clave), vista.slice(0, 80));
       // Un comprobante: se lee el monto y queda anotado en su pedido; el pago lo confirma Santiago contra su cuenta.
-      if (id && /comprobante|transferencia|pago|mercado pago/i.test(vista)) {
+      if (id && /comprobante|transferencia|transferi|pago|mercado pago|alias|cvu|cbu|motivo|operaci[oó]n/i.test(vista)) {
         const r = await procesarComprobante(e.clave, e.nombre, id);
         if (r) {
           texto = r;
           await anotarEnMensaje(e.idMensaje, r);
+        } else if (/alias|cvu|cbu|transferencia|transferi|comprobante/i.test(vista)) {
+          // Parece un comprobante pero no se pudo leer el monto: nunca se trata como lista de productos.
+          texto = "[Mandó una foto que parece el comprobante de la transferencia. Agradecé en una frase y decile que Santiago verifica la acreditación y le confirma por acá. No confirmes el pago vos. No pidas nada más.]";
+          await anotarEnMensaje(e.idMensaje, "[foto: parece comprobante, monto sin leer]");
+          await avisarSantiago("Comprobante para revisar", `🧾 ${e.nombre ?? e.clave} mandó una foto que parece un comprobante, pero no se pudo leer el monto. Revisalo y fijate la acreditación.\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
         }
       }
       // Una captura de Maps o algo con su dirección: si su pedido no tiene dirección, se carga sola.
