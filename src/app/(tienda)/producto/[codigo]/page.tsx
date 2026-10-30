@@ -94,12 +94,12 @@ export default async function Producto({ params }: Props) {
     <div className="space-y-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, migas]).replace(/</g, "\\u003c") }} />
       <Medir evento="ver_producto" ids={[p.codigo]} valor={p.precio} />
-      <nav className="!-mt-3 -mb-3 flex flex-wrap items-center text-sm text-stone-600" aria-label="Ubicación">
+      <nav className="!-mt-3 -mb-8 md:-mb-3 flex flex-wrap items-center text-sm text-stone-600" aria-label="Ubicación">
         <Link href="/catalogo" className="flex min-h-[48px] items-center underline underline-offset-4">Catálogo</Link>
         <span className="px-1.5">/</span>
         <Link href={`/catalogo?categoria=${encodeURIComponent(p.categoria)}`} className="flex min-h-[48px] items-center underline underline-offset-4">{p.categoria}</Link>
       </nav>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-10">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-10">
         <Galeria fotos={fila.fotos.length ? fila.fotos : fila.fotoUrl ? [fila.fotoUrl] : []} alt={`${p.producto} ${p.presentacion}`} etiqueta={p.categoria} />
         <div className="space-y-5">
           <div>
