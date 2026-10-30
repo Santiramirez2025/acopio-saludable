@@ -1,7 +1,11 @@
 // Comprobantes de transferencia: cuando el cliente manda la captura o el PDF, se lee (monto, fecha, a quién,
-// número de operación) y, si coincide con su pedido, queda registrado el pago. Así nadie le cobra dos veces
-// en la puerta (le pasó a Beatriz el 26/10). Si no coincide, queda anotado para revisar.
-// Se registra SIN mandarle nada al cliente: la charla la sigue el vendedor con su propia respuesta.
+// número de operación) y queda ANOTADO en su pedido, con aviso a Santiago. Así nadie le cobra dos veces en la
+// puerta (le pasó a Beatriz el 26/10) y Santiago sabe qué pedido verificar.
+// REGLA (seguridad, 30/10): una captura nunca confirma un pago. Un comprobante se edita en un minuto y la
+// plata que no entró no se recupera (estafas con comprobantes falsos: Paraná 8/10, Sunchales 28/10/2026).
+// El pago lo registra Santiago cuando ve la acreditación en su cuenta («Pagado» en el panel o «marcar pagado»
+// por su WhatsApp). Hasta entonces el pedido sigue PENDIENTE_PAGO y no sale al reparto.
+// Se anota SIN mandarle nada al cliente: la charla la sigue el vendedor con su propia respuesta.
 import { telefonoFin } from "./telefono";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
@@ -89,14 +93,49 @@ export async function leerComprobante(mediaId: string): Promise<Comprobante | nu
 }
 
 export type ResultadoComprobante =
-  | { tipo: "registrado"; codigo: string; monto: number }
+  /** El monto coincide con lo que debe: queda anotado, pero el pago lo confirma Santiago contra su cuenta. */
+  | { tipo: "coincide"; codigo: string; monto: number }
   | { tipo: "revisar"; codigo: string; monto: number | null; debe: number }
   | { tipo: "sin-pedido"; monto: number | null };
 
-/** Aplica el comprobante al pedido abierto de ese teléfono. No le manda nada al cliente. */
+/** Texto que queda en el historial del pedido cuando llega un comprobante. Nunca marca el pago. */
+export function notaComprobante(detalle: string, coincide: boolean): string {
+  return coincide
+    ? `Mandó comprobante (${detalle}): coincide con lo que debe. SIN VERIFICAR: confirmar la acreditación en la cuenta antes de pasarlo a Pagado o despacharlo.`
+    : `Mandó comprobante (no coincide con lo que debe, revisar): ${detalle}`;
+}
+
+type PedidoAbierto = { id: number; estado: string; total: unknown; notas: string | null };
+
+/** Lo que debe un pedido: el total o, si hay una nota «cobrar $X» (seña ya pagada), eso. */
+export function debeDelPedido(o: PedidoAbierto): number {
+  return Number(o.notas?.match(/cobrar\s*\$?\s*([\d.]+)/i)?.[1]?.replace(/\./g, "")) || Math.round(Number(o.total));
+}
+
+/** Texto del comprobante para el historial y los avisos: monto, fecha, destinatario y operación. */
+export function detalleComprobante(c: Comprobante): string {
+  return [c.monto ? `$ ${c.monto.toLocaleString("es-AR")}` : "monto sin leer", c.fecha, c.destinatario ? `a ${c.destinatario}` : null, c.operacion ? `op. ${c.operacion}` : null].filter(Boolean).join(" · ");
+}
+
+/**
+ * Decide qué se anota con un comprobante (puro, sin base): a qué pedido va y si el monto coincide.
+ * Decidir NUNCA significa cobrar: el resultado solo describe una nota para el historial.
+ */
+export function decidirComprobante<T extends PedidoAbierto>(abiertos: T[], c: Comprobante): { tipo: ResultadoComprobante["tipo"]; pedido: T | null; nota: string | null; debe: number | null } {
+  const detalle = detalleComprobante(c);
+  if (!abiertos.length) return { tipo: "sin-pedido", pedido: null, nota: null, debe: null };
+  const pedido = abiertos.find((o) => c.monto && (coincideMonto(c.monto, Math.round(Number(o.total))) || coincideMonto(c.monto, debeDelPedido(o)))) ?? null;
+  if (pedido && c.monto) return { tipo: "coincide", pedido, nota: notaComprobante(detalle, true), debe: debeDelPedido(pedido) };
+  const o = abiertos[0];
+  return { tipo: "revisar", pedido: o, nota: notaComprobante(detalle, false), debe: debeDelPedido(o) };
+}
+
+/**
+ * Anota el comprobante en el pedido abierto de ese teléfono. No le manda nada al cliente y NO registra el pago:
+ * eso lo hace Santiago cuando ve la plata acreditada (una captura se falsifica; la acreditación no).
+ */
 export async function aplicarComprobante(clave: string, c: Comprobante): Promise<ResultadoComprobante> {
   const { prisma } = await import("./prisma");
-  const { registrarPago } = await import("./pedidos");
   const { numeroPedido } = await import("./pedido-calculos");
   const fin = telefonoFin(clave);
   const abiertos = (
@@ -106,17 +145,10 @@ export async function aplicarComprobante(clave: string, c: Comprobante): Promise
       take: 50,
     })
   ).filter((o) => telefonoFin(o.telefono) === fin);
-  const detalle = [c.monto ? `$ ${c.monto.toLocaleString("es-AR")}` : "monto sin leer", c.fecha, c.destinatario ? `a ${c.destinatario}` : null, c.operacion ? `op. ${c.operacion}` : null].filter(Boolean).join(" · ");
-  if (!abiertos.length) return { tipo: "sin-pedido", monto: c.monto };
-  // Lo que debe: el total o, si hay una nota «cobrar $X» (seña ya pagada), eso.
-  const debeDe = (o: (typeof abiertos)[number]) => Number(o.notas?.match(/cobrar\s*\$?\s*([\d.]+)/i)?.[1]?.replace(/\./g, "")) || Math.round(Number(o.total));
-  const pedido = abiertos.find((o) => c.monto && (coincideMonto(c.monto, Math.round(Number(o.total))) || coincideMonto(c.monto, debeDe(o)))) ?? null;
-  if (pedido && c.monto) {
-    await registrarPago(pedido.id, `Comprobante leído del chat: ${detalle}`, { avisarCliente: false, avisarSantiago: false });
-    await prisma.order.updateMany({ where: { id: pedido.id, estado: "PENDIENTE_PAGO" }, data: { estado: "PAGADO" } });
-    return { tipo: "registrado", codigo: numeroPedido(pedido.id), monto: c.monto };
-  }
-  const o = abiertos[0];
-  await prisma.orderEvent.create({ data: { orderId: o.id, estado: o.estado, nota: `Mandó comprobante (no coincide con lo que debe, revisar): ${detalle}` } });
-  return { tipo: "revisar", codigo: numeroPedido(o.id), monto: c.monto, debe: debeDe(o) };
+  const d = decidirComprobante(abiertos, c);
+  if (d.tipo === "sin-pedido" || !d.pedido || !d.nota) return { tipo: "sin-pedido", monto: c.monto };
+  // Solo queda anotado en el historial: el estado del pedido y pagadoAt no se tocan.
+  await prisma.orderEvent.create({ data: { orderId: d.pedido.id, estado: d.pedido.estado, nota: d.nota } });
+  if (d.tipo === "coincide" && c.monto) return { tipo: "coincide", codigo: numeroPedido(d.pedido.id), monto: c.monto };
+  return { tipo: "revisar", codigo: numeroPedido(d.pedido.id), monto: c.monto, debe: d.debe ?? Math.round(Number(d.pedido.total)) };
 }
