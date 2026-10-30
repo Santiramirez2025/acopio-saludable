@@ -1547,6 +1547,7 @@ test("vendedor: detecta una lista de productos para contestar cada uno", async (
   assert.equal(sara[0], "Dátiles");
   assert.equal(listaDeProductos("Hola, precio de nueces, almendras y castañas").length, 3);
   assert.deepEqual(listaDeProductos("Hola quiero la despensa de 4 kilos"), []);
+  assert.deepEqual(listaDeProductos("[Mandó una foto: comprobante de transferencia\n- Al alias acopio.saludable\n- Con motivo Cuotas\n- Sin producto ni combo identificable.]"), []);
 });
 
 

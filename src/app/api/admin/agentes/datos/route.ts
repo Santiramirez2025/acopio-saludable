@@ -4,6 +4,9 @@
 //   GET ?que=charla&telefono=549…    → una charla entera (últimos 60 mensajes)
 //   GET ?que=resumenes&horas=48      → una línea por charla: calor (caliente/tibio/frio/cliente), qué quiere y próximo paso
 //   POST { accion: "notas", id, notas, nota? } → corrige las notas del pedido (qué se cobra, cambios acordados)
+//   POST { accion: "item", id, producto, presentacion?, cantidad, precio, costo? } → suma al pedido un renglón sin código
+//        (producto cotizado a mano). Solo pedidos sin pagar. Suma precio × cantidad al subtotal y al total.
+//   POST { accion: "total", id, total, nota } → corrige el total de un pedido sin pagar (la diferencia va como descuento o recargo).
 //   POST { accion: "estado", id, estado, nota?, silencioso? } → cambia el estado de un pedido (mismo efecto que el panel:
 //        ENVIADO avisa «ya está en el reparto de hoy, el repartidor te escribe» por WhatsApp; ENTREGADO = cobrado (registra el pago si faltaba) y manda gracias + referidos; silencioso = sin avisos)
 import { NextResponse } from "next/server";
@@ -110,7 +113,35 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { accion?: string; id?: number; estado?: string; nota?: string; notas?: string; silencioso?: boolean };
+  const b = (await req.json().catch(() => ({}))) as { accion?: string; id?: number; estado?: string; nota?: string; notas?: string; silencioso?: boolean; producto?: string; presentacion?: string; cantidad?: number; precio?: number; costo?: number; total?: number };
+  // Pedido cotizado a mano (Sara, 29/10: cacao Alzol y pasas rubias sin código): el panel quedaba $22.100 abajo.
+  if (b.accion === "item" || b.accion === "total") {
+    const id = Number(b.id);
+    const o = id ? await prisma.order.findUnique({ where: { id } }) : null;
+    if (!o) return NextResponse.json({ error: "No existe el pedido" }, { status: 404 });
+    if (o.pagadoAt || o.estado === "CANCELADO" || o.estado === "ENTREGADO") return NextResponse.json({ error: "Solo se corrigen pedidos abiertos y sin pagar" }, { status: 400 });
+    if (b.accion === "item") {
+      const cantidad = Math.max(1, Math.round(Number(b.cantidad) || 1));
+      const precio = Math.round(Number(b.precio) || 0);
+      if (!b.producto?.trim() || precio <= 0) return NextResponse.json({ error: "Faltan producto y precio" }, { status: 400 });
+      const suma = precio * cantidad;
+      await prisma.$transaction([
+        prisma.orderItem.create({ data: { orderId: id, codigo: "MANUAL", producto: b.producto.trim().slice(0, 120), presentacion: (b.presentacion ?? "").slice(0, 60), cantidad, precioUnitario: precio, costoUnitario: Math.round(Number(b.costo) || 0) } }),
+        prisma.order.update({ where: { id }, data: { subtotal: { increment: suma }, total: { increment: suma }, costoProductos: { increment: Math.round(Number(b.costo) || 0) * cantidad } } }),
+        prisma.orderEvent.create({ data: { orderId: id, estado: o.estado, nota: `Agregado a mano: ${cantidad}× ${b.producto.trim()} $${suma.toLocaleString("es-AR")}` } }),
+      ]);
+      const n = await prisma.order.findUniqueOrThrow({ where: { id } });
+      return NextResponse.json({ ok: true, total: Number(n.total) });
+    }
+    const total = Math.round(Number(b.total) || 0);
+    if (total <= 0 || !b.nota?.trim()) return NextResponse.json({ error: "Faltan total y nota (por qué cambia)" }, { status: 400 });
+    const dif = Number(o.total) - total;
+    await prisma.$transaction([
+      prisma.order.update({ where: { id }, data: { total, descuento: { increment: dif } } }),
+      prisma.orderEvent.create({ data: { orderId: id, estado: o.estado, nota: `Total corregido de $${Math.round(Number(o.total)).toLocaleString("es-AR")} a $${total.toLocaleString("es-AR")}: ${b.nota.slice(0, 200)}` } }),
+    ]);
+    return NextResponse.json({ ok: true, total });
+  }
   // Corregir las notas del pedido (lo que se cobra, cambios acordados): queda registrado en el historial.
   if (b.accion === "notas") {
     const id = Number(b.id);
