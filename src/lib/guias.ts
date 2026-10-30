@@ -8,12 +8,35 @@ export type Guia = {
   resumen: string[];
   secciones: { titulo: string; parrafos?: string[]; lista?: string[] }[];
   fuentes?: { nombre: string; url: string }[];
+  /** Combo que resuelve la guía: se muestra con su precio vigente y cuánto rinde (gramos del combo ÷ gramosPorUnidad). */
+  combo?: { slug: string; gramosPorUnidad: number; unidad: string };
 };
 
 const CAA = { nombre: "Código Alimentario Argentino (ANMAT)", url: "https://www.argentina.gob.ar/anmat/codigoalimentario" };
 const ALG = { nombre: "Listado Integrado de Alimentos Libres de Gluten (ANMAT)", url: "https://listadoalg.anmat.gob.ar/" };
 
 export const GUIAS: Guia[] = [
+  {
+    slug: "cuanto-relleno-lleva-el-pan-dulce-casero",
+    titulo: "Pan dulce casero: cuánta nuez, pasas y chips lleva",
+    descripcion: "Cuánto relleno ponerle a cada pan dulce casero, en qué proporción mezclar nuez, pasas y chips de chocolate, cuánto comprar según cuántos panes hacés y cómo evitar que se vaya al fondo.",
+    actualizada: "2026-10-30",
+    gondola: "Frutos secos y mix",
+    combo: { slug: "pan-dulce-casero", gramosPorUnidad: 175, unidad: "panes de medio kilo" },
+    resumen: ["Para un pan de unos 500 g, entre 150 y 200 g de relleno.", "Una mezcla pareja: 70 g de nuez, 70 g de pasas y 35 g de chips por pan.", "Pasas hidratadas y todo pasado por harina: así no se va al fondo."],
+    secciones: [
+      { titulo: "La cuenta rápida", parrafos: ["Las recetas caseras más publicadas ponen entre 150 y 200 gramos de relleno por cada pan dulce de medio kilo. Por ejemplo, con un kilo de harina salen seis panes medianos y se usa más o menos un kilo de relleno entre todos. Con mucho menos queda un pan de masa con alguna nuez suelta; con mucho más, a la masa le cuesta levar y se desarma al cortar."] },
+      { titulo: "Una proporción que funciona", parrafos: ["Por cada pan de medio kilo, una mezcla pareja y fácil de repetir es esta. Si no te gusta alguno, repartí sus gramos entre los otros dos."], lista: ["Nuez picada gruesa: 70 g.", "Pasas de uva: 70 g.", "Chips de chocolate: 35 g.", "Si sumás frutas abrillantadas o almendras, bajá la misma cantidad de lo demás para no pasarte de los 200 g."] },
+      { titulo: "Cuánto comprar según cuántos panes hacés", lista: ["3 panes: 210 g de nuez, 210 g de pasas y 105 g de chips.", "6 panes: 420 g de nuez, 420 g de pasas y 210 g de chips.", "12 panes: 840 g de nuez, 840 g de pasas y 420 g de chips.", "Si los hacés para regalar o vender, comprar por kilo sale más barato que en bolsitas, y lo que sobra de nuez se guarda en la heladera o el freezer."] },
+      { titulo: "Para que el relleno no se vaya al fondo", lista: ["Hidratá las pasas 15 minutos en agua tibia (o en un chorrito de licor) y secalas muy bien con un repasador.", "Pasá nuez, pasas y chips por una cucharada de harina antes de sumarlos.", "Incorporalos al final del amasado, cuando la masa ya está lisa, doblándola sobre el relleno.", "Picá la nuez en trozos grandes: picada muy fina se pierde en la miga."] },
+      { titulo: "Antes de hornear", parrafos: ["Tené el relleno pesado y separado por pan antes de empezar a amasar: es lo que más ordena una tanda grande. Una vez frío, envolvé cada pan en bolsa cerrada o film para que no se seque."] },
+    ],
+    fuentes: [
+      { nombre: "Diario UNO: pan dulce con 1 kilo de harina que rinde 6 panes", url: "https://www.diariouno.com.ar/recetas/como-hacer-pan-dulce-la-receta-1-kilo-harina-que-rinde-6-panes-esponjosos-y-tiernos-n1579517" },
+      { nombre: "MDZ: pan dulce casero con 500 g de harina", url: "https://www.mdzol.com/estilo/pan-dulce-casero-la-receta-que-se-prepara-cada-diciembre-n1390292" },
+      { nombre: "Crónica: pan dulce con chips de chocolate", url: "https://www.cronica.com.ar/cocina/Receta-de-pan-dulce-con-chips-de-chocolate-para-palpitar-la-Navidad-20211116-0053.html" },
+    ],
+  },
   {
     slug: "como-conservar-frutos-secos",
     titulo: "Cómo conservar frutos secos para que no se pongan rancios",

@@ -142,6 +142,7 @@ export default async function MesaDulceNavidad() {
           {[
             ["/regalos-navidenos-cordoba", "Regalos navideños"],
             ["/frutos-secos-carlos-paz", "Frutos secos en Carlos Paz"],
+            ["/guias/cuanto-relleno-lleva-el-pan-dulce-casero", "Pan dulce casero: cuánto relleno"],
             ["/guias/como-conservar-frutos-secos", "Cómo conservar frutos secos"],
             ["/combos", "Combos"],
             ["/envios", "Envíos"],

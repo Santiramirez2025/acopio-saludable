@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GUIAS, fechaLarga } from "@/lib/guias";
-import { productosTienda } from "@/lib/tienda";
+import { combosTienda, productosTienda } from "@/lib/tienda";
+import { pesos } from "@/lib/precios";
 import { SITIO, urlSitio } from "@/lib/sitio";
 import { Prosa } from "@/components/Prosa";
-import { RielProductos, Titulo, TituloSeccion } from "@/components/Tienda";
+import { RielProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -25,7 +26,14 @@ export default async function GuiaPagina({ params }: Props) {
   const { slug } = await params;
   const g = GUIAS.find((x) => x.slug === slug);
   if (!g) notFound();
-  const productos = await productosTienda({ where: { categoria: g.gondola }, take: 8 });
+  const [productos, combos] = await Promise.all([
+    productosTienda({ where: { categoria: g.gondola }, take: 8 }),
+    g.combo ? combosTienda({ slug: g.combo.slug }) : Promise.resolve([]),
+  ]);
+  // Rinde del combo con el contenido y el precio vigentes (no se escribe a mano en la guía).
+  const combo = combos.find((c) => c.disponible);
+  const gramosCombo = combo ? combo.items.reduce((s, i) => s + (i.producto.contenido ?? 0) * i.cantidad, 0) : 0;
+  const rinde = combo && g.combo && gramosCombo > 0 ? Math.floor(gramosCombo / g.combo.gramosPorUnidad) : 0;
   const base = urlSitio();
   const datos = [
     { "@context": "https://schema.org", "@type": "Article", headline: g.titulo, description: g.descripcion, dateModified: g.actualizada, datePublished: g.actualizada, inLanguage: "es-AR", mainEntityOfPage: `${base}/guias/${g.slug}`, author: { "@type": "Organization", name: SITIO.nombre }, publisher: { "@type": "Organization", name: SITIO.nombre, logo: { "@type": "ImageObject", url: `${base}/marca/acopio-isotipo.svg` } } },
@@ -58,6 +66,18 @@ export default async function GuiaPagina({ params }: Props) {
           </section>
         )}
       </Prosa>
+      {combo && g.combo && (
+        <section className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_300px] sm:items-start">
+          <div className="space-y-2">
+            <TituloSeccion href={`/combos/${combo.slug}`} enlace="Ver el combo">Todo junto: {combo.nombre}</TituloSeccion>
+            <p className="max-w-xl text-[15px] text-stone-700">
+              Trae {combo.items.map((i) => i.producto.producto).join(", ")}
+              {rinde > 0 ? `: con unos ${g.combo.gramosPorUnidad} g de relleno por pan, alcanza para unos ${rinde} ${g.combo.unidad} (cerca de ${pesos(combo.precio / rinde)} de relleno por pan).` : "."} Sale {pesos(combo.precio)} con los precios de hoy.
+            </p>
+          </div>
+          <TarjetaCombo c={combo} />
+        </section>
+      )}
       {productos.length > 0 && (
         <section>
           <TituloSeccion href={`/catalogo?categoria=${encodeURIComponent(g.gondola)}`} enlace="Ver la góndola">{g.gondola} por volumen</TituloSeccion>
