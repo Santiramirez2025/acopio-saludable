@@ -54,7 +54,7 @@ h1.largo{font-size:70px}
 .full .sub{color:rgba(246,241,231,.9)}
 `;
 
-const pie = `<div class="pie"><span>Villa Carlos Paz · Entrega sin cargo, pagás al recibir</span><span class="url">${isotipo}acopiosaludable.com</span></div>`;
+const pie = `<div class="pie"><span>Villa Carlos Paz · Entrega sin cargo en la zona</span><span class="url">${isotipo}acopiosaludable.com</span></div>`;
 const marca = `<div class="marca">${isotipo}Acopio Saludable</div>`;
 const agua = `<div class="agua">${isotipo}acopiosaludable.com</div>`;
 
