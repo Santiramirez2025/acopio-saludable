@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   // Un archivo (foto o documento) llega como multipart: se sube a Meta y se manda con el texto como pie.
   if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) return responderConArchivo(req);
-  let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown; pedido?: unknown; zonas?: unknown; combos?: unknown };
+  let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown; pedido?: unknown; zonas?: unknown; combos?: unknown; silencioso?: unknown };
   try {
     cuerpo = await req.json();
   } catch {
@@ -42,6 +42,11 @@ export async function POST(req: Request) {
 
   // Devolvérsela al vendedor: si el cliente quedó esperando, el vendedor le contesta ya.
   if (cuerpo.accion === "bot") {
+    // silencioso: vuelve al vendedor sin contestar el último mensaje (un «gracias» o un emoji no se responde).
+    if (cuerpo.silencioso === true) {
+      await cambiarEstado(telefono, "bot");
+      return NextResponse.json({ ok: true, estado: "bot", contesto: false });
+    }
     const contesto = await retomarCharla(telefono).catch((e) => {
       console.error("retomar charla falló", e);
       return false;
