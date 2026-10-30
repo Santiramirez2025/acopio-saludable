@@ -908,7 +908,7 @@ test("pago aquí y dirección", () => {
   for (const t of ["Pago aquí.", "gracias", "quiero 2 kilos"]) assert.ok(!tieneDireccion(t), t);
 });
 
-import { planRecordatorio, cerroLaCharla, enHorario, horaArgentina } from "./whatsapp-recordatorio";
+import { planRecordatorio, cerroLaCharla, clienteDijoQueNo, enHorario, horaArgentina } from "./whatsapp-recordatorio";
 test("recordatorio: corto, con pregunta, y nunca de noche", () => {
   const conPedido = planRecordatorio({ nombre: "Patricia Sanchez", anuncioTitulo: null, pedido: "/carrito?p=c-despensa*1" }) as { cuerpo: string; botones: { id: string }[] };
   assert.match(conPedido.cuerpo, /^¡Hola Patricia!.*\?/);
@@ -1672,4 +1672,9 @@ test("sin IA: «Quiero precios de frutos secos por kilo» recibe la lista de hoy
   assert.ok(!t.includes("500 g"));
   assert.equal(textoPreciosPorKilo(productos, null, 8, pesosAR, transfAR), null);
   assert.equal(textoPreciosPorKilo([], despensa, 8, pesosAR, transfAR), null);
+});
+
+test("recordatorio: no se insiste a quien dijo «Más adelante» o «Lo pienso»", () => {
+  for (const no of ["Más adelante", "Lo pienso", "Lo veo después", "No, gracias", "Por ahora no", "Lo veo tranquila y te escribo"]) assert.ok(clienteDijoQueNo(no), no);
+  for (const si of ["Sí, agendalo", "¿Cuánto sale el envío?", "Quiero la despensa", "Busco nueces y pasas rubias", "", null]) assert.ok(!clienteDijoQueNo(si), String(si));
 });

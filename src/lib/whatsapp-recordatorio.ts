@@ -8,7 +8,7 @@
 // que tiene guardado con su total, o propone uno concreto (la Alacena), y cierra con «¿Te la separamos?».
 // Sin zona confirmada no promete «sin cargo» ni «mañana»: ofrece decir la ciudad.
 
-import { primerNombre, ID, type Saliente } from "./whatsapp-interactivo";
+import { primerNombre, ID, noPorAhora, postergaCompra, type Saliente } from "./whatsapp-interactivo";
 
 export const RECORDATORIO = { horasSinRespuesta: 3, ventanaHoras: 23, desde: 8, hasta: 21, porCorrida: 30 } as const;
 
@@ -26,6 +26,16 @@ export function enHorario(ahora = new Date()): boolean {
 export function cerroLaCharla(ultimoBot: string): boolean {
   const t = ultimoBot.trim();
   return /^¡?(De nada|Dale|Gracias a vos)\b/i.test(t) || /cuando quieras|acá estamos/i.test(t) || /te escribe alguien del equipo/i.test(t) || /Tu pedido es el|Anotado:|Ya lo tenemos/i.test(t);
+}
+
+/**
+ * El cliente ya dijo que no o pidió tiempo en su último mensaje («Más adelante», «Lo pienso», «Lo veo después»):
+ * no se le manda el recordatorio. A MateoRuffo (29/10, «Más adelante») y a Monica («Lo pienso») les volvía a
+ * llegar «¿Te lo separamos?» a la mañana siguiente, porque la respuesta sin IA no parecía un cierre.
+ */
+export function clienteDijoQueNo(ultimoCliente: string | null | undefined): boolean {
+  const t = (ultimoCliente ?? "").trim();
+  return !!t && (noPorAhora(t) || postergaCompra(t));
 }
 
 type Charla = { nombre: string | null; anuncioTitulo: string | null; pedido: string | null };

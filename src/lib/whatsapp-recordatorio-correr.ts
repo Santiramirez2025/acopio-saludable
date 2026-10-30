@@ -2,7 +2,7 @@ import { enviarSaliente, cloudActivo } from "./whatsapp-cloud";
 import { textoParaPanel } from "./whatsapp-interactivo";
 import { prisma } from "./prisma";
 import { AVISOS_WHATSAPP } from "./avisos";
-import { cerroLaCharla, enHorario, planRecordatorio, RECORDATORIO, type CarritoCotizado, type OfertaConcreta } from "./whatsapp-recordatorio";
+import { cerroLaCharla, clienteDijoQueNo, enHorario, planRecordatorio, RECORDATORIO, type CarritoCotizado, type OfertaConcreta } from "./whatsapp-recordatorio";
 import { cotizarCarrito } from "./tienda";
 import { leerPedido } from "./pedido-enlace";
 
@@ -62,7 +62,7 @@ export async function correrRecordatorios(ahora = new Date()): Promise<{ enHorar
   return { enHorario: true, enviados, fallidos };
 }
 
-export type Pendiente = Charla & { telefono: string; ultimoBot: string; cliente: Date };
+export type Pendiente = Charla & { telefono: string; ultimoBot: string; ultimoCliente: string | null; cliente: Date };
 
 /** Charlas que esperan el recordatorio ahora. */
 export async function pendientes(): Promise<Pendiente[]> {
@@ -72,7 +72,8 @@ export async function pendientes(): Promise<Pendiente[]> {
         (SELECT max(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente') AS cliente,
         (SELECT m."de" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1) AS ultimo_de,
         (SELECT m."fecha" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1) AS ultimo_fecha,
-        (SELECT m."texto" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1) AS ultimo_texto
+        (SELECT m."texto" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" ORDER BY m."fecha" DESC LIMIT 1) AS ultimo_texto,
+        (SELECT m."texto" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente' ORDER BY m."fecha" DESC LIMIT 1) AS ultimo_cliente
       FROM "WhatsappConversacion" c
       WHERE c."estado" = 'bot' AND c."baja" = false AND c."prospecto" IS NULL
         AND (c."pedido" IS NULL OR c."pedido" NOT LIKE 'orden:%')
@@ -85,7 +86,7 @@ export async function pendientes(): Promise<Pendiente[]> {
         )
         AND c."ultimoMensaje" > now() - interval '1 day'
     )
-    SELECT u."telefono", u."nombre", u."anuncioTitulo", u."pedido", u.ultimo_texto AS "ultimoBot", u.cliente AS "cliente"
+    SELECT u."telefono", u."nombre", u."anuncioTitulo", u."pedido", u.ultimo_texto AS "ultimoBot", u.ultimo_cliente AS "ultimoCliente", u.cliente AS "cliente"
     FROM ult u
     WHERE u.ultimo_de = 'bot'
       AND u.cliente > now() - (${RECORDATORIO.ventanaHoras} * interval '1 hour')
@@ -108,7 +109,8 @@ export async function pendientes(): Promise<Pendiente[]> {
     ORDER BY u.cliente DESC
     LIMIT ${RECORDATORIO.porCorrida}
   `;
-  return filas.filter((f) => !cerroLaCharla(f.ultimoBot ?? ""));
+  // Si su último mensaje fue «Más adelante» o «Lo pienso», no se insiste (aunque la respuesta del bot no lo cerrara).
+  return filas.filter((f) => !cerroLaCharla(f.ultimoBot ?? "") && !clienteDijoQueNo(f.ultimoCliente));
 }
 
 /** Se guarda con id «rec.<teléfono>.<último mensaje del cliente>»: uno solo por charla y respuesta. */
