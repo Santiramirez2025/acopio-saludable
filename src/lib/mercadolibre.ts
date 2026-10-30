@@ -293,6 +293,21 @@ export async function cambiarDescripcionMl(itemId: string, texto: string): Promi
   return { ok: true };
 }
 
+/** Reemplaza la primera foto por una URL pública (las demás quedan igual, en el mismo orden). */
+export async function cambiarFotoPrincipalMl(itemId: string, url: string): Promise<{ antes: string | null; fotos: number }> {
+  if (!/^https:\/\//.test(url)) throw new Error("La foto tiene que ser una URL https");
+  const it = await ml<{ pictures?: { id: string; secure_url?: string }[] }>(`/items/${mla(itemId)}?attributes=pictures`);
+  const resto = (it.pictures ?? []).slice(1).map((f) => ({ id: f.id }));
+  await ml(`/items/${mla(itemId)}`, { method: "PUT", body: JSON.stringify({ pictures: [{ source: url }, ...resto] }) });
+  return { antes: it.pictures?.[0]?.secure_url ?? null, fotos: resto.length + 1 };
+}
+
+/** Estado real de una publicación (activa, pausada, en revisión) y por qué. */
+export async function estadoRealMl(itemId: string): Promise<{ estado: string; motivo: string[]; titulo: string; fotos: number }> {
+  const it = await ml<{ status: string; sub_status?: string[]; title: string; pictures?: unknown[] }>(`/items/${mla(itemId)}?attributes=status,sub_status,title,pictures`);
+  return { estado: it.status, motivo: it.sub_status ?? [], titulo: it.title, fotos: it.pictures?.length ?? 0 };
+}
+
 /** Pausa o reactiva una publicación. */
 export async function estadoPublicacionMl(itemId: string, estado: "paused" | "active"): Promise<{ estado: string }> {
   await ml(`/items/${mla(itemId)}`, { method: "PUT", body: JSON.stringify({ status: estado }) });
