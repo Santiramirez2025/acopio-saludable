@@ -468,19 +468,25 @@ export async function atender(e: Entrada): Promise<void> {
   }
 
   if (p.derivar && p.sinIA) {
-    // Bot sin IA: mensaje de espera (una sola vez) y la charla queda para Santiago. No sale si ya salió en
-    // la última hora (dos mensajes juntos lo mandaban dos veces) ni si una persona o un agente le escribió
-    // en las últimas 3 h: ahí la charla ya está atendida y el «en un rato te escribe Santiago» confunde (Sara, 29/10).
-    const tel = e.clave;
+    // Bot sin IA (29/10). Regla: no molestar. El cliente recibe UN mensaje de espera solo si es una charla
+    // nueva sin atender; nunca si ya hay pedido, si una persona o un agente le escribió en las últimas 24 h,
+    // ni si ya se le mandó la espera hoy. A Sara le llegó dos veces mientras esperábamos su transferencia.
+    // La charla NO pasa a «persona»: cuando vuelve la IA, el vendedor sigue solo.
+    // Si llegaron dos mensajes juntos, contesta solo el último (sin esto salían dos esperas iguales).
+    const ultimo = await ultimoDelCliente(e.clave).catch(() => null);
+    if (ultimo && ultimo !== e.idMensaje) return;
     const [atendida] = await prisma.$queryRaw<{ n: number }[]>`
       SELECT count(*)::int AS n FROM "WhatsappMensaje"
-      WHERE "telefono" = ${tel} AND (
-        ("de" = 'persona' AND "fecha" > now() - interval '3 hours') OR
-        ("de" = 'bot' AND "texto" ILIKE '%en un rato te escribe Santiago%' AND "fecha" > now() - interval '1 hour')
-      )`.catch(() => [{ n: 0 }]);
-    if (p.respuesta.texto && !atendida?.n) await responder(e.clave, p.respuesta.texto);
-    await cambiarEstado(e.clave, "persona");
-    await avisarSantiago("Charla sin IA para vos", `⏳ ${e.nombre ?? "Alguien"} (${e.clave}) escribió y el bot está sin IA: contestale vos.\nÚltimo mensaje: «${texto.slice(0, 200)}»\n${urlSitio()}/admin/whatsapp?c=${e.clave}`, { mail: false });
+      WHERE "telefono" = ${e.clave} AND (
+        ("de" = 'persona' AND "fecha" > now() - interval '24 hours') OR
+        ("de" = 'bot' AND "texto" ILIKE '%en un rato te escribe Santiago%' AND "fecha" > now() - interval '24 hours')
+      )`.catch(() => [{ n: 1 }]);
+    const conPedido = Boolean(guardado?.startsWith("orden:"));
+    if (p.respuesta.texto && !atendida?.n && !conPedido) await responder(e.clave, p.respuesta.texto);
+    // A Santiago, un aviso por charla por día (no uno por mensaje).
+    if (await primeraVezHoy(`sin-ia-${e.clave}`)) {
+      await avisarSantiago("Charla sin IA para vos", `⏳ ${e.nombre ?? "Alguien"} (${e.clave}) escribió y el bot está sin IA.\nÚltimo mensaje: «${texto.slice(0, 200)}»\n${urlSitio()}/admin/whatsapp?c=${e.clave}`, { mail: false });
+    }
     return;
   }
   if (p.derivar) {
