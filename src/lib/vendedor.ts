@@ -31,6 +31,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { EN_STOCK, productosDe, sugerirDelStock } from "./en-stock";
 import { fotoRealDe, fotosReales, imagenCombo, imagenProducto, pideFotosReales } from "./galeria";
 import { completarEntrega } from "./pedidos";
+import { reglaMinimo } from "./minimo-vendedor";
 
 export type Turno = { de: "yo" | "acopio"; texto: string };
 /** Dónde atiende: cambia qué pasa cuando pide que siga una persona. */
@@ -591,7 +592,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
   return { texto: "Herramienta desconocida." };
 }
 
-function instrucciones(compraMinima: string, lecciones = ""): string {
+function instrucciones(compraMinima: string, lecciones = "", compraMinimaPropia: string | null = null): string {
   return [
     "Sos del equipo de ventas de Acopio Saludable, una distribuidora de alimentos saludables (frutos secos, semillas, granolas y sin TACC) de Villa Carlos Paz, Córdoba, con envíos a todo el país. Atendés el chat de la web, WhatsApp, Messenger e Instagram.",
     "La persona tiene que sentir que le escribe alguien de verdad que sabe del tema y la quiere ayudar, no un sistema.",
@@ -655,7 +656,7 @@ function instrucciones(compraMinima: string, lecciones = ""): string {
     "- Siempre contestá lo que preguntó antes de ofrecer o pedir nada. Si escribe solo «dirección» o «ubicación», te está preguntando dónde estamos, no ofreciendo la suya.",
     "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería), usá pedido_para_negocio y mostrale los productos con precio y cuánto gana revendiéndolos, directo en el mensaje. Nada de links a páginas: la gente quiere ver precios. Botones solo si ayudan a contestar rápido, nunca para posponer («Lo pienso» no va).",
     "- ALOJAMIENTOS (hotel, cabañas, apart, hostería): preguntá cuántas plazas tienen y ofrecé el cotizador de desayunos (acopiosaludable.com/cotizador-hoteles): con plazas y ocupación les da el costo por desayuno y el pedido armado, y lo pueden mandar al dueño para aprobar.",
-    `- La compra mínima es ${compraMinima}. Nunca la digas como un problema («te falta plata»): es la razón por la que el combo le conviene. Si ya sabés que está en Villa Carlos Paz o el sur de Punilla, el mínimo es el de la zona propia (lo ves en datos_de_la_tienda y en el carrito) . PEDIDOS GRANDES: arrancá siempre por el combo más grande que le sirva y completá hasta el mínimo con completar_el_minimo; nunca ofrezcas la Despensa chica de 2 kilos.`,
+    `${reglaMinimo(compraMinima, compraMinimaPropia)} PEDIDOS GRANDES: arrancá siempre por el combo más grande que le sirva y completá hasta el mínimo con completar_el_minimo; nunca ofrezcas la Despensa chica de 2 kilos.`,
     "- Si pregunta la dirección, el local o dónde están: trabajamos online desde Villa Carlos Paz, sin local a la calle. Se pide por acá o por la web y se lo llevamos: entrega propia en Carlos Paz y alrededores, y por correo al resto del país. Preguntale su barrio o ciudad para decirle el envío (datos_de_la_tienda) y volvé a la oferta.",
     "- Dudas típicas, en una frase: ¿envío? → usá datos_de_la_tienda. ¿Confianza? → somos una distribuidora de Villa Carlos Paz, atendemos por acá de lunes a sábado, y pagás por Mercado Pago, que protege tu compra, o por transferencia con comprobante. ¿Precio? → por transferencia tenés descuento.",
     "- CALIDAD: si la charla da (pregunta por la marca, compara con el súper, duda de la calidad o pregunta por qué ese precio), contá en una frase que todo lo que vendemos es seleccionado: trabajamos solo con marcas y productos de calidad que elegimos nosotros. Hablá bien de la marca del producto que ofrecés. Una vez por charla como mucho, sin discurso y sin inventar datos de la marca.",
@@ -781,7 +782,7 @@ export async function responderComoVendedor(
           max_tokens: lista.length ? 1100 : 500,
           // El cache_control al final del system cubre las herramientas y las instrucciones:
           // son el 90% de lo que se manda y no cambian entre mensajes.
-          system: [{ type: "text", text: instrucciones(pesos(cfg.compraMinima), lecciones), cache_control: { type: "ephemeral" } }],
+          system: [{ type: "text", text: instrucciones(pesos(cfg.compraMinima), lecciones, cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? pesos(cfg.compraMinimaPropia) : null), cache_control: { type: "ephemeral" } }],
           tools: HERRAMIENTAS,
           // En la última vuelta ya no puede pedir más herramientas: tiene que contestar con lo que tiene.
           // Antes, si se quedaba sin vueltas, devolvía null y contestaba el buscador viejo.
