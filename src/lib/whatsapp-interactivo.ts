@@ -588,9 +588,11 @@ export function comoTexto(s: Saliente): string {
 export function listaDeProductos(texto: string): string[] {
   // Una foto, un audio o un comprobante descripto no es una lista de compras (a Mireya, 30/10, su comprobante
   // se leyó como «Al alias acopio.saludable — no lo tenemos»).
-  if (/^\s*\[Mandó/.test(texto)) return [];
-  const limpio = texto
-    .replace(/<(\w+)>[\s\S]*?<\/\1>/g, "")
+  // Ojo: al vendedor le llega con etiquetas delante (<cliente>, <anuncio>…), así que se mira sin ellas
+  // (a Vanesa, 31/10, su audio transcripto se contestó «Hola — no lo tenemos… Total $0»).
+  const sinEtiquetas = texto.replace(/<(\w+)>[\s\S]*?<\/\1>/g, "");
+  if (/^\s*\[Mandó/.test(sinEtiquetas) || /\[Mandó (un audio|una foto|un archivo|el comprobante|un comprobante)/.test(texto)) return [];
+  const limpio = sinEtiquetas
     .replace(/^[\s\S]*?(precios?|cu[aá]nto sale[n]?|cotiz[aá]me|necesito|quiero|busco)( saber)?( el| los)?( precios?)?( de| del)?\s*[:\-]?/i, (m) => (m.length < 80 ? "" : m))
     .replace(/\b(por|x)\s*(kg|kilo)\b/gi, "");
   const partes = limpio
