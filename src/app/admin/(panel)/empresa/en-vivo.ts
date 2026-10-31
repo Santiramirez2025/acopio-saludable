@@ -116,8 +116,15 @@ export async function llamar(o: Opciones): Promise<Llamada> {
     limpiar.push(() => document.removeEventListener("visibilitychange", visibilidad));
     dc.onopen = () => {
       o.onEstado("escuchando");
-      // Que salude primero, corto.
-      enviar({ type: "response.create" });
+      // Que salude primero y SOLO eso: hola + quién es, en una frase. Nada de retomar la charla anterior;
+      // Santiago arranca hablando él (antes leía un montón de lo que había quedado de la vez pasada).
+      enviar({
+        type: "response.create",
+        response: {
+          instructions:
+            "Arranca la llamada. Decí SOLO un saludo cortísimo de una frase, con tu nombre y tu área (ej.: «Hola, soy Cami, de Marketplaces. ¿Qué necesitás?»), y callate esperando que Santiago hable. No retomes temas anteriores, no des novedades, números ni pendientes, no uses herramientas.",
+        },
+      });
     };
     dc.onmessage = (m) => {
       let ev: Record<string, unknown>;
