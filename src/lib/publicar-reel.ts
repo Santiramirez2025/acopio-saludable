@@ -83,3 +83,39 @@ export async function publicarReel(video: string, texto: string, opciones: { his
   if (opciones.facebook !== false) salida.push(await facebook(p.id, p.token, video, texto));
   return salida;
 }
+
+/** Lo que sabe publicar el programador propio en Instagram y Facebook (sin Metricool). */
+export type RedPropia = "instagram_reel" | "instagram_historia" | "instagram_post" | "facebook_reel" | "facebook_post";
+export const REDES_PROPIAS: RedPropia[] = ["instagram_reel", "instagram_historia", "instagram_post", "facebook_reel", "facebook_post"];
+
+/** Publica una pieza en una sola red. video o imagen tienen que ser URLs https públicas. */
+export async function publicarEn(red: RedPropia, media: { video?: string | null; imagen?: string | null }, texto: string): Promise<Resultado> {
+  const p = await paginaMeta();
+  if (!p) return { donde: red, ok: false, error: "El token no ve la página de Acopio" };
+  const { video, imagen } = media;
+  if (red.startsWith("instagram") && !p.instagram) return { donde: red, ok: false, error: "La página no tiene Instagram conectado" };
+  const ig = p.instagram as string;
+  switch (red) {
+    case "instagram_reel":
+      if (!video) return { donde: red, ok: false, error: "El reel necesita video" };
+      return instagram(ig, p.token, { media_type: "REELS", video_url: video, caption: texto, share_to_feed: "true" }, "Instagram reel");
+    case "instagram_historia":
+      if (video) return instagram(ig, p.token, { media_type: "STORIES", video_url: video }, "Instagram historia");
+      if (imagen) return instagram(ig, p.token, { media_type: "STORIES", image_url: imagen }, "Instagram historia (imagen)");
+      return { donde: red, ok: false, error: "La historia necesita video o imagen" };
+    case "instagram_post":
+      if (!imagen) return { donde: red, ok: false, error: "El post necesita imagen (para video usá instagram_reel)" };
+      return instagram(ig, p.token, { image_url: imagen, caption: texto }, "Instagram post");
+    case "facebook_reel":
+      if (!video) return { donde: red, ok: false, error: "El reel necesita video" };
+      return facebook(p.id, p.token, video, texto);
+    case "facebook_post":
+      try {
+        if (!imagen) throw new Error("El post necesita imagen (para video usá facebook_reel)");
+        const r = await graph(`${p.id}/photos`, p.token, { url: imagen, caption: texto });
+        return { donde: "Facebook post", ok: true, id: String(r.post_id ?? r.id) };
+      } catch (e) {
+        return { donde: "Facebook post", ok: false, error: e instanceof Error ? e.message : String(e) };
+      }
+  }
+}
