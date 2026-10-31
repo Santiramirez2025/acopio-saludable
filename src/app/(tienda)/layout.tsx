@@ -8,6 +8,7 @@ import { NICHOS } from "@/lib/taxonomia";
 import { leerConfig } from "@/lib/config";
 import { pesos } from "@/lib/precios";
 import { AVISO_SUPLEMENTOS, SITIO, urlSitio } from "@/lib/sitio";
+import { politicasNegocio } from "@/lib/politicas-schema";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export default async function TiendaLayout({ children }: { children: React.React
   return (
     <ProveedorCarrito>
       <div className="flex min-h-screen flex-col overflow-x-clip">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(NEGOCIO).replace(/</g, "\\u003c") }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ ...NEGOCIO, ...politicasNegocio(urlSitio(), cfg.corteHora) }).replace(/</g, "\\u003c") }} />
         <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-sol focus:px-4 focus:py-3 focus:font-bold focus:text-acopio-900">Saltar al contenido</a>
         {/* La compra mínima tiene que saberse antes de elegir, no al llegar al checkout. Va arriba de todo, en cada página. */}
         <p className="bg-acopio-700 px-4 py-2 text-center text-[13px] leading-snug text-white">
