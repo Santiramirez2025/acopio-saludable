@@ -344,6 +344,39 @@ export function textoPreciosPorKilo(
   ].join("\n");
 }
 
+/**
+ * EXPERIMENTO B (Martín, sáb 31/10, semana del 1 al 7/11): el primer mensaje de la charla que llega por un
+ * anuncio con «Quiero precios de frutos secos por kilo» (el texto precargado) recibe lo que pidió: la lista
+ * de los kilos que más piden, con los precios vigentes, y UNA pregunta que lleva al carrito (la zona, que
+ * además define el mínimo y el envío sin cargo). Sin combo en el primer mensaje: el combo va después.
+ * Antes (24-31/10): la IA daba 2 precios y «¿Para tu casa o para un negocio?»; 30% de las charlas de anuncio
+ * no volvía a escribir y 11 tuvieron que pedir otra vez «Sí, pasame precios».
+ */
+export const OPCIONES_ZONA_PRIMERA_LISTA = ["Carlos Paz y zona", "Córdoba Capital", "Otra ciudad"];
+
+export function esPrimerPedidoDePrecios(c: { texto: string; historial: { de: string }[]; deAnuncio: boolean; negocio: string }): boolean {
+  if (!c.deAnuncio || c.negocio) return false;
+  if (c.historial.some((h) => h.de === "acopio")) return false;
+  return pidePreciosPorKilo(c.texto);
+}
+
+export function textoPrimeraListaPorKilo(
+  productos: { producto: string; precio: number; contenido: number | null; unidad: string | null }[],
+  nombre: string | null,
+  pesos: (n: number) => string,
+): string | null {
+  const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+  const kilos = productos.filter((p) => esUnKilo(p) && p.precio > 0);
+  const renglones: string[] = [];
+  for (const l of LISTA_POR_KILO) {
+    const p = kilos.find((k) => l.si.test(norm(k.producto)) && !(l.no && l.no.test(norm(k.producto))));
+    if (p) renglones.push(`• ${l.etiqueta} ${pesos(p.precio)}`);
+  }
+  // Con menos de 3 precios no es «la lista»: sigue la IA.
+  if (renglones.length < 3) return null;
+  return [`¡Hola${nombre ? ` ${nombre}` : ""}! ${MARCA_PRECIOS_POR_KILO}:`, ...renglones, "", "Así te digo el envío: ¿de qué barrio o ciudad sos?"].join("\n");
+}
+
 const limpio = (texto: string) => texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
 
 /**

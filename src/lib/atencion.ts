@@ -14,7 +14,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
@@ -638,7 +638,12 @@ export async function pensar(c: {
     : "";
   // El carrito de la web llega armado: se carga exacto, sin IA y sin ofrecer otra cosa.
   const web = esPedidoWeb(c.texto) && !ordenId ? await armarPedidoWeb(c.texto, Boolean(c.historial.some((h) => h.de === "acopio"))) : null;
-  const r = web ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId }) : null);
+  // Experimento B (1-7/11): al «Quiero precios de frutos secos por kilo» del anuncio, la lista y la zona, sin IA.
+  const primeraLista =
+    !web && !ordenId && c.canal === "whatsapp" && esPrimerPedidoDePrecios({ texto: c.texto, historial: c.historial, deAnuncio: Boolean(textoAnuncio), negocio: c.negocio })
+      ? textoPrimeraListaPorKilo(await catalogo(), primerNombre(c.nombre), pesos)
+      : null;
+  const r = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId }) : null);
 
   let respuesta: Respuesta;
   if (r) respuesta = r;
@@ -734,7 +739,7 @@ export async function pensar(c: {
     const sinRepetir = salientes.filter((s) => !repetido(s));
     if (sinRepetir.length) salientes = sinRepetir;
   }
-  return { salientes, respuesta, derivar, conIA: Boolean(r), guardarPedido: pedido?.camino, aPersona: Boolean(r?.entregaGuardada) };
+  return { salientes, respuesta, derivar, conIA: Boolean(r) && !primeraLista, guardarPedido: pedido?.camino, aPersona: Boolean(r?.entregaGuardada) };
 }
 
 
