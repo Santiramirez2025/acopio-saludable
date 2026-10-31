@@ -1,13 +1,15 @@
 // Precio mayorista por producto: la escalera (−10% desde 5 kg, −15% desde 10 kg) sobre la lista de la tienda,
-// pero nunca por debajo del piso de ganancia (costo + 25%). Almendras, cajú, maní, banana chips y ciruelas
-// van con −10% fijo (regla de Leo y Santiago, por margen). Si el piso no deja llegar al escalón, el
+// pero nunca por debajo del piso de ganancia (costo + 25%). Almendras, cajú, maní, banana chips,
+// ciruelas y el Mix Clásico con cajú y girasol van con −10% fijo (regla de Leo y Santiago, por margen). Si el piso no deja llegar al escalón, el
 // descuento se recorta a lo que el piso permite (puede ser 0: va a precio de lista).
 
 /** Recargo mínimo sobre el costo para vender por mayor (25%). */
 export const PISO_MAYORISTA_SOBRE_COSTO = 0.25;
 
 // Por el comienzo del nombre: «Mix de cajú y banana» o «Harina de maní» siguen la escalera (mixes incluidos).
-const FIJO_10 = /^(almendr|casta[nñ]as? (de )?caj|caj[uú]|man[ií](\s|$)|banana|ciruel)/i;
+// Excepción: el Mix Clásico con cajú y girasol va a −10% fijo (Pablo y Leo 31/10: a −15% su margen real queda
+// en 23-24%, abajo del 25%; el costo cargado no refleja la receta).
+const FIJO_10 = /^(almendr|casta[nñ]as? (de )?caj|caj[uú]|man[ií](\s|$)|banana|ciruel|mix cl[aá]sico con caj[uú] y girasol)/i;
 
 /** Tope de descuento por tipo de producto: los de −10% fijo no entran en la escalera. */
 export function topeEscalon(producto: string, escalonPct: number): number {
