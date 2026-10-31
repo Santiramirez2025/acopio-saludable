@@ -302,6 +302,23 @@ export async function cambiarFotoPrincipalMl(itemId: string, url: string): Promi
   return { antes: it.pictures?.[0]?.secure_url ?? null, fotos: resto.length + 1 };
 }
 
+/** Las fotos de una publicación, en orden (posición 1 = la principal), con su URL en ML. */
+export async function fotosMl(itemId: string): Promise<{ posicion: number; id: string; url: string | null }[]> {
+  const it = await ml<{ pictures?: { id: string; secure_url?: string }[] }>(`/items/${mla(itemId)}?attributes=pictures`);
+  return (it.pictures ?? []).map((f, i) => ({ posicion: i + 1, id: f.id, url: f.secure_url ?? null }));
+}
+
+/** Reemplaza la foto de una posición (1 = principal) por una URL pública; las demás quedan igual y en el mismo orden. */
+export async function cambiarFotoMl(itemId: string, posicion: number, url: string): Promise<{ antes: string | null; fotos: number }> {
+  if (!/^https:\/\//.test(url)) throw new Error("La foto tiene que ser una URL https");
+  const it = await ml<{ pictures?: { id: string; secure_url?: string }[] }>(`/items/${mla(itemId)}?attributes=pictures`);
+  const fotos = it.pictures ?? [];
+  if (!Number.isInteger(posicion) || posicion < 1 || posicion > fotos.length) throw new Error(`Posición ${posicion} fuera de rango (la publicación tiene ${fotos.length} fotos)`);
+  const nuevas = fotos.map((f, i) => (i === posicion - 1 ? { source: url } : { id: f.id }));
+  await ml(`/items/${mla(itemId)}`, { method: "PUT", body: JSON.stringify({ pictures: nuevas }) });
+  return { antes: fotos[posicion - 1]?.secure_url ?? null, fotos: nuevas.length };
+}
+
 /** Estado real de una publicación (activa, pausada, en revisión) y por qué. */
 export async function estadoRealMl(itemId: string): Promise<{ estado: string; motivo: string[]; titulo: string; fotos: number }> {
   const it = await ml<{ status: string; sub_status?: string[]; title: string; pictures?: unknown[] }>(`/items/${mla(itemId)}?attributes=status,sub_status,title,pictures`);
