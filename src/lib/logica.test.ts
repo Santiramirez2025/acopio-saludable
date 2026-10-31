@@ -1678,3 +1678,9 @@ test("recordatorio: no se insiste a quien dijo «Más adelante» o «Lo pienso»
   for (const no of ["Más adelante", "Lo pienso", "Lo veo después", "No, gracias", "Por ahora no", "Lo veo tranquila y te escribo"]) assert.ok(clienteDijoQueNo(no), no);
   for (const si of ["Sí, agendalo", "¿Cuánto sale el envío?", "Quiero la despensa", "Busco nueces y pasas rubias", "", null]) assert.ok(!clienteDijoQueNo(si), String(si));
 });
+
+test("listaDeProductos: un audio transcripto con etiquetas delante no es una lista", async () => {
+  const { listaDeProductos } = await import("./whatsapp-interactivo");
+  const t = "<cliente>Vanesa</cliente>\n<anuncio>La ves antes de pagar</anuncio>\n[Mandó un audio que dice: «Hola, ¿cómo estás? Sí, yo lo estaba averiguando para los primeros días, ¿viste? para ver si podía invertir en algo. Pero ustedes, ¿de dónde son?»]";
+  assert.deepEqual(listaDeProductos(t), []);
+});
