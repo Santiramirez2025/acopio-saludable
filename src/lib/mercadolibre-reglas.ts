@@ -25,6 +25,7 @@ export const SKU_ML: Record<string, { combo?: string; codigo?: string; cantidad?
   "AS-MESA-NAVIDENA": { combo: "mesa-navidena" },
   "AS-MIXC-2KG": { codigo: "TG-MIXC", cantidad: 2 },
   "AS-MIXC-3KG": { codigo: "TG-MIXC", cantidad: 3 },
+  "AS-MIXC-5KG": { codigo: "TG-MIXC", cantidad: 5 },
 };
 
 /** Cargos de ML (Clásica, alimentos) y envío que paga el vendedor desde $33.000. Revisar cada tanto. */
