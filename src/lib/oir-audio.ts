@@ -34,9 +34,17 @@ export async function transcribirAudio(mediaId: string): Promise<{ texto: string
       form.append("prompt", "Pedido por WhatsApp a Acopio Saludable: frutos secos, nueces, almendras, castañas de cajú, mix, dátiles, pasas, semillas, sin TACC, Despensa de 4 kilos, Villa Carlos Paz, Córdoba, kilo, medio kilo, transferencia, comprobante.");
       return fetch("https://api.openai.com/v1/audio/transcriptions", { method: "POST", headers: { authorization: `Bearer ${clave}` }, body: form, signal: AbortSignal.timeout(40_000) });
     };
-    let res = await pedir(process.env.OPENAI_TRANSCRIBIR_MODELO || "gpt-transcribe");
-    if (!res.ok) res = await pedir("whisper-1");
-    if (!res.ok) return { texto: null, motivo: `transcripción ${res.status} ${(await res.text()).slice(0, 200)}` };
+    // Se prueban en orden hasta que uno conteste: el configurado, gpt-4o-transcribe (el mismo que usa el
+    // micrófono del panel, probado), gpt-transcribe y whisper-1. Se guarda el error de cada uno para el aviso.
+    const modelos = [...new Set([process.env.OPENAI_TRANSCRIBIR_MODELO, "gpt-4o-transcribe", "gpt-transcribe", "whisper-1"].filter(Boolean) as string[])];
+    const errores: string[] = [];
+    let res: Response | null = null;
+    for (const m of modelos) {
+      const r = await pedir(m).catch((x: unknown) => { errores.push(`${m}: ${String(x).slice(0, 80)}`); return null; });
+      if (r?.ok) { res = r; break; }
+      if (r) errores.push(`${m}: ${r.status} ${(await r.text().catch(() => "")).slice(0, 120)}`);
+    }
+    if (!res) return { texto: null, motivo: `transcripción: ${errores.join(" | ")}`.slice(0, 500) };
     const j = (await res.json()) as { text?: string };
     const t = (j.text ?? "").replace(/\s+/g, " ").trim();
     return t ? { texto: t.slice(0, 1500) } : { texto: null, motivo: "vacío" };

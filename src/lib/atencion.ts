@@ -342,9 +342,16 @@ export async function atender(e: Entrada): Promise<void> {
     }
   }
   // Un audio: se transcribe y entra a la charla como texto. Si no se pudo (sin clave, falló), se le pide que lo escriba, como antes.
+  let motivoAudio = "";
   if (e.texto === null && e.tipo === "audio") {
     const id = /^\[audio·([^\]\s]+)\]/.exec(e.guardar ?? "")?.[1];
-    const r = id ? await transcribirAudio(id) : { texto: null, motivo: "sin id" };
+    let r = id ? await transcribirAudio(id) : { texto: null, motivo: "sin id" };
+    // Un segundo intento: a veces Meta tarda en tener el archivo listo o la API corta una vez.
+    if (!r.texto && id) {
+      await new Promise((x) => setTimeout(x, 3000));
+      r = await transcribirAudio(id);
+    }
+    if (!r.texto) motivoAudio = r.motivo ?? "sin motivo";
     if (r.texto) {
       texto = `[Mandó un audio que dice: «${r.texto}»]`;
       console.log("chat: audio transcripto", cola(e.clave), r.texto.slice(0, 80));
@@ -379,7 +386,7 @@ export async function atender(e: Entrada): Promise<void> {
   if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:") && !texto.startsWith("[Mandó un audio que dice:") && !texto.startsWith("[Mandó un archivo") && !/^\[Mandó (el|un) comprobante/.test(texto)) {
     await responder(e.clave, respuestaMedio(e.tipo));
     const que = NOMBRE_MEDIO[e.tipo as keyof typeof NOMBRE_MEDIO] ?? e.tipo;
-    await avisarSantiago(`Mandó ${que}`, `📎 ${e.nombre ?? e.clave} mandó ${que === "foto" ? "una foto" : `un ${que}`}. Miralo en el panel:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
+    await avisarSantiago(`Mandó ${que}`, `📎 ${e.nombre ?? e.clave} mandó ${que === "foto" ? "una foto" : `un ${que}`}${motivoAudio ? ` y no se pudo transcribir (${motivoAudio.slice(0, 160)})` : ""}. Miralo en el panel:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
     return;
   }
   if (!texto) return;
