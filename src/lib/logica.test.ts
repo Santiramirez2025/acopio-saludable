@@ -1711,3 +1711,12 @@ test("tiktok-lab: el puntaje premia compartir y retener, y la ganadora tiene que
   assert.deepEqual(g.map((x) => x.id), [3]);
   assert.deepEqual(elegirGanadoras([v(1, 200), v(2, 250)], ahora), []);
 });
+
+import { pideDatosTransferencia } from "./whatsapp-interactivo";
+test("pide los datos para transferir (31/10, Gabriel esperó 87 min el alias)", () => {
+  for (const t of ["Por transferencia pasame tu alias", "pasame el alias", "Mandame los datos para transferir", "cuál es el CBU?", "prefiero transferencia, pasame los datos"]) assert.ok(pideDatosTransferencia(t), t);
+  const ofrecido = "Dale. Por transferencia te queda más barato, y los datos para pagar te los pasamos por WhatsApp con tu resumen. ¿Te los mandamos ahí?";
+  for (const t of ["Sí, mandámelos", "si", "Dale"]) assert.ok(pideDatosTransferencia(t, ofrecido), t);
+  for (const t of ["Sí, mandámelos", "si", "dale"]) assert.ok(!pideDatosTransferencia(t, "¿De qué barrio sos?"), `sin ofrecer: ${t}`);
+  for (const t of ["ya te transferí", "te mando el comprobante", "¿se puede pagar por transferencia?", "quiero 2 kilos de nuez", "transferencia"]) assert.ok(!pideDatosTransferencia(t), t);
+});

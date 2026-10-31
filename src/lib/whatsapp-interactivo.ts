@@ -389,6 +389,22 @@ export function pagaAlRecibir(texto: string): boolean {
   return /\b(pago|abono|te pago|lo pago|pagamos) (aqui|aca|ahi|al recibir|al recibirlo|contra ?entrega|en (mano|efectivo|casa)|cuando (llegue|lo reciba|me lo traigas|lo traigas|venga|vengas|me lo traes|lo traes))\b|\b(al recibir|contra ?entrega|contraentrega)\b|\bpago (en )?efectivo\b|^(efectivo|en efectivo|al recibir|pago al recibir)$/.test(t);
 }
 
+/**
+ * «Pasame el alias», «por transferencia, mandame los datos», «Sí, mandámelos» (cuando le ofrecimos los datos):
+ * ya eligió transferencia y quiere pagar. Se le mandan el total y los datos en el acto, como el botón
+ * «Transferencia». 31/10: a Gabriel la IA le repreguntó dos veces y lo derivó; esperó 87 minutos el alias.
+ * No cuenta si ya transfirió (eso es el comprobante) ni si pregunta si se puede transferir.
+ */
+export function pideDatosTransferencia(texto: string, ultimoNuestro = ""): boolean {
+  const t = limpio(texto);
+  if (/\b(ya )?(te )?(transferi|pague|deposite)\b|comprobante|se puede (pagar|transferir)|aceptan|puedo (pagar|transferir)|tenes mercado pago/.test(t)) return false;
+  if (/\b(alias|cbu|cvu)\b/.test(t)) return true;
+  if (/\b(pasame|pasa|mandame|manda|enviame|dame|pasan|mandan|necesito) (los |tus |sus )?datos( (para|de) (la )?(transferir|transferencia|pago|pagar))?\b/.test(t)) return true;
+  if (/\b(quiero|prefiero|voy a|lo|te) (pagar |pago |hago )?(por |con |una )?transferencia\b/.test(t) && /\b(pasame|mandame|dame|datos|cuenta|ya)\b/.test(t)) return true;
+  const ofrecimos = /datos (para|de) (transferir|la transferencia|pagar|pago)/.test(limpio(ultimoNuestro));
+  return ofrecimos && /^(si|sii+|dale|ok|okey|bueno|por favor|si,? (mandamelos|pasamelos|dale|por favor|porfa)|mandamelos|pasamelos)[.! ]*$/.test(t);
+}
+
 /** ¿Pasó una dirección? Una calle con número, o «esquina», «barrio», «casa», «depto». */
 export function tieneDireccion(texto: string): boolean {
   const t = limpio(texto);

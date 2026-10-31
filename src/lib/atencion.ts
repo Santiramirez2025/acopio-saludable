@@ -14,7 +14,7 @@ import { cotizarEnvioChat } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, pideDatosTransferencia, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
@@ -452,6 +452,18 @@ export async function atender(e: Entrada): Promise<void> {
     const direccion = tieneDireccion(texto) ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160) : undefined;
     console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
     return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: "Villa Carlos Paz" }, direccion || undefined);
+  }
+
+  // Pide el alias o los datos con el pedido armado: se cierra por transferencia en el acto (total con
+  // descuento + datos), igual que el botón «Transferencia». Sin esto la IA repreguntaba y derivaba.
+  if (canal === "whatsapp" && guardado?.startsWith("/carrito?p=")) {
+    const previo = [...(await historialDe(e.clave, 9))].slice(0, -1).reverse().find((h) => h.de === "acopio")?.texto ?? "";
+    if (pideDatosTransferencia(texto, previo)) {
+      const envioTxt = [...(await historialDe(e.clave, 9))].reverse().find((h) => h.de === "acopio" && /Envío a [^:]+:/.test(h.texto))?.texto.match(/Envío a ([^:]+): ([^\n]*)/);
+      const envio = envioTxt ? { lugar: envioTxt[1], costo: /sin cargo/i.test(envioTxt[2]) ? 0 : null } : null;
+      console.log("chat: pide los datos para transferir, se cierra por transferencia", cola(e.clave));
+      return cerrarVenta(e.clave, e.nombre, "TRANSFERENCIA", guardado, envio);
+    }
   }
 
   // El historial se lee sin el mensaje recién guardado: el vendedor lo recibe aparte.
