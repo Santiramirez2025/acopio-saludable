@@ -1551,6 +1551,14 @@ test("vendedor: detecta una lista de productos para contestar cada uno", async (
 });
 
 
+test("vendedor: una «lista» sin productos no reemplaza la respuesta (Graciela 31/10)", async () => {
+  const { listaDeVerdad } = await import("./whatsapp-interactivo");
+  assert.equal(listaDeVerdad(0, 3), false); // «Mandame tu ubicación, WhatsApp y nos hablamos»
+  assert.equal(listaDeVerdad(1, 4), false);
+  assert.equal(listaDeVerdad(2, 4), true);
+  assert.equal(listaDeVerdad(5, 5), true);
+});
+
 test("cobro anticipado: «lo pienso» no promete pagar al recibir", () => {
   const plan = planSinApuro("Ana", "Acopio Saludable", "https://x/foto.jpg");
   const texto = JSON.stringify(plan);
