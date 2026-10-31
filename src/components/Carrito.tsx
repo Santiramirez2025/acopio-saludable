@@ -104,32 +104,44 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
   const { cotizacion } = useCarrito();
   if (!cotizacion) return compacta ? null : <div className="h-12" />;
   const { progresoPct, falta, compraMinima, subtotal } = cotizacion;
+  // En Carlos Paz y la zona el mínimo es más bajo: mientras no se llega a ese, la barra mide contra él
+  // (es lo que le importa a la mayoría de los clientes) y el mínimo para otras localidades queda abajo.
+  const zona = cotizacion.compraMinimaPropia;
+  const haciaZona = zona > 0 && zona < compraMinima && subtotal < zona;
+  const meta = haciaZona ? zona : compraMinima;
+  const faltaMeta = haciaZona ? zona - subtotal : falta;
+  const pct = haciaZona ? Math.min(100, Math.round((subtotal / zona) * 100)) : progresoPct;
   return (
     <div aria-live="polite">
       {!compacta && (
-        <div className="mb-1 flex justify-between text-sm">
+        <div className="mb-1 flex justify-between gap-3 text-sm">
           <span className="font-medium">
-            {falta > 0
-              ? subtotal >= cotizacion.compraMinimaPropia && cotizacion.compraMinimaPropia < compraMinima
-                ? `Ya podés pedir si estás en Carlos Paz (mínimo ${pesosCliente(cotizacion.compraMinimaPropia)}) · faltan ${pesosCliente(falta)} para envíos`
-                : `Te faltan ${pesosCliente(falta)} para la compra mínima`
+            {faltaMeta > 0
+              ? haciaZona
+                ? `Te faltan ${pesosCliente(faltaMeta)} para pedir en Carlos Paz y la zona`
+                : subtotal >= zona && zona < compraMinima
+                  ? `Ya podés pedir si estás en Carlos Paz (mínimo ${pesosCliente(zona)}) · faltan ${pesosCliente(falta)} para envíos`
+                  : `Te faltan ${pesosCliente(falta)} para la compra mínima`
               : "Llegaste a la compra mínima"}
           </span>
-          <span className="tabular-nums text-stone-600">
-            {pesosCliente(subtotal)} / {pesosCliente(compraMinima)}
+          <span className="shrink-0 tabular-nums text-stone-600">
+            {pesosCliente(subtotal)} / {pesosCliente(meta)}
           </span>
         </div>
       )}
       <div
         className={`w-full overflow-hidden rounded-full bg-tierra-200 ${compacta ? "h-1" : "h-3"}`}
         role="progressbar"
-        aria-valuenow={progresoPct}
+        aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="Progreso hacia la compra mínima"
       >
-        <div className={`h-full rounded-full transition-all ${falta > 0 ? "bg-sol-oscuro" : "bg-acopio-500"}`} style={{ width: `${progresoPct}%` }} />
+        <div className={`h-full rounded-full transition-all ${faltaMeta > 0 ? "bg-sol-oscuro" : "bg-acopio-500"}`} style={{ width: `${pct}%` }} />
       </div>
+      {!compacta && haciaZona && (
+        <p className="mt-1.5 text-xs text-stone-600">Para envíos a otras localidades la compra mínima es {pesosCliente(compraMinima)}.</p>
+      )}
     </div>
   );
 }
