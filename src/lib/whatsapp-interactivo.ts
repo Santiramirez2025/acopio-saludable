@@ -601,3 +601,8 @@ export function listaDeProductos(texto: string): string[] {
     .filter((p) => p.length >= 3 && p.length <= 60 && !/^(hola|buen[oa]s?|gracias|sii?|pero|por ejemplo)\b/i.test(p));
   return partes.length >= 3 ? partes.slice(0, 15) : [];
 }
+
+/** La lista armada por el código reemplaza la respuesta solo si al menos la mitad de lo pedido son productos que existen. */
+export function listaDeVerdad(encontrados: number, pedidos: number): boolean {
+  return encontrados > 0 && encontrados * 2 >= pedidos;
+}
