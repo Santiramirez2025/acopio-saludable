@@ -16,6 +16,9 @@ import argparse, json, os, random, subprocess, sys, tempfile, urllib.request
 BASE = "https://www.acopiosaludable.com"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 FUENTE = os.path.join(AQUI, "fuentes", "Poppins-Bold.ttf")
+if not os.path.exists(FUENTE):  # bajado suelto desde el sitio: la fuente también está ahí
+    os.makedirs(os.path.dirname(FUENTE), exist_ok=True)
+    urllib.request.urlretrieve(f"{BASE}/herramientas/Poppins-Bold.ttf", FUENTE)
 
 
 def bajar(url, destino):
