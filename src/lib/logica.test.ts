@@ -1635,6 +1635,12 @@ test("mayorista: escalera con piso de costo + 25% y −10% fijo en almendras, ca
   assert.equal(topeEscalon("Maní con sal", 15), 10);
   assert.equal(topeEscalon("Mix de cajú y banana chips", 15), 15);
   assert.equal(topeEscalon("Harina de maní", 15), 15);
+  // Mix Clásico con cajú y girasol: −10% fijo (los demás Mix Clásico siguen la escalera).
+  assert.equal(topeEscalon("Mix Clásico con cajú y girasol", 15), 10);
+  assert.equal(topeEscalon("Mix Clasico con caju y girasol", 20), 10);
+  assert.equal(topeEscalon("Mix Clásico con cajú", 15), 15);
+  assert.deepEqual(precioMayorista(12500, 7400, "Mix Clásico con cajú y girasol", 15), { precio: 11300, pct: 10 });
+  assert.deepEqual(precioMayorista(6500, 3700, "Mix Clásico con cajú y girasol", 15), { precio: 5900, pct: 10 });
 });
 
 import { noPorAhora } from "./whatsapp-interactivo";
