@@ -10,11 +10,57 @@
       "sonido": "Música con ritmo marcado y efecto pop cuando aparece el precio",
       "nota": "El precio que se ve en la toma 3 es el de la web ese día ($35.000). Si la Despensa cambia de precio, no usar la toma 3.",
       "tomas": [
-        {"n": 1, "archivo": "despensa-1-gancho-4-kilos.mp4", "seg": 5.9, "plano": "Súper con carrito → bolsas en la mesa", "texto": "4 KILOS DE DESPENSA", "rol": "gancho"},
-        {"n": 2, "archivo": "despensa-2-bolsa-en-mano.mp4", "seg": 1.8, "plano": "Detalle, mano con la bolsa de mix", "texto": "4 KILOS DE DESPENSA", "rol": "producto"},
-        {"n": 3, "archivo": "despensa-3-precio-en-la-web.mp4", "seg": 3.9, "plano": "Celular con la ficha y el precio en acopiosaludable.com", "texto": "MIRÁ EL PRECIO", "rol": "precio"},
-        {"n": 4, "archivo": "despensa-4-descuento-transferencia.mp4", "seg": 2.9, "plano": "Recorrido lateral de las bolsas", "texto": "DESCUENTO POR TRANSFERENCIA", "rol": "oferta"},
-        {"n": 5, "archivo": "despensa-5-pedilo-ahora.mp4", "seg": 2.6, "plano": "Tarjeta de gracias con WhatsApp", "texto": "PEDILO AHORA", "rol": "cierre"}
+        {
+          "n": 1,
+          "archivo": "despensa-1-gancho-4-kilos.mp4",
+          "seg": 5.9,
+          "plano": "Súper con carrito → bolsas en la mesa",
+          "texto": "4 KILOS DE DESPENSA",
+          "rol": "gancho"
+        },
+        {
+          "n": 2,
+          "archivo": "despensa-2-bolsa-en-mano.mp4",
+          "seg": 1.8,
+          "plano": "Detalle, mano con la bolsa de mix",
+          "texto": "4 KILOS DE DESPENSA",
+          "rol": "producto"
+        },
+        {
+          "n": 3,
+          "archivo": "despensa-3-precio-en-la-web.mp4",
+          "seg": 3.9,
+          "plano": "Celular con la ficha y el precio en acopiosaludable.com",
+          "texto": "MIRÁ EL PRECIO",
+          "rol": "precio"
+        },
+        {
+          "n": 4,
+          "archivo": "despensa-4-descuento-transferencia.mp4",
+          "seg": 2.9,
+          "plano": "Recorrido lateral de las bolsas",
+          "texto": "DESCUENTO POR TRANSFERENCIA",
+          "rol": "oferta"
+        },
+        {
+          "n": 5,
+          "archivo": "despensa-5-pedilo-ahora.mp4",
+          "seg": 2.6,
+          "plano": "Tarjeta de gracias con WhatsApp",
+          "texto": "PEDILO AHORA",
+          "rol": "cierre"
+        }
+      ],
+      "ia": true,
+      "ganchos": [
+        "¿4 kilos por $35.000? 👀",
+        "Lo que trae la Despensa de 4 kg",
+        "Carlos Paz: esto te llega a tu casa",
+        "Dejá de comprar de a 100 gramos",
+        "Todo el mes resuelto con 4 kilos",
+        "¿Cuánto gastás en la dietética?",
+        "El combo que más se pide en Carlos Paz",
+        "Frutos secos por kilo, sin salir de casa"
       ]
     },
     {
@@ -23,16 +69,65 @@
       "objetivo": "Despertar ganas de comerlo y generar compras por impulso",
       "sonido": "Música alegre + sonido real de la granola cayendo (es lo que más engancha)",
       "tomas": [
-        {"n": 1, "archivo": "granola-1-tu-desayuno-mejor.mp4", "seg": 3.1, "plano": "Primerísimo primer plano de la granola", "texto": "TU DESAYUNO, PERO MEJOR", "rol": "gancho"},
-        {"n": 2, "archivo": "granola-2-sumale-semillas.mp4", "seg": 3.1, "plano": "Detalle del mix de semillas", "texto": "SUMALE SEMILLAS", "rol": "producto"},
-        {"n": 3, "archivo": "granola-3-combinacion-perfecta.mp4", "seg": 4.9, "plano": "Bowl con granola, banana y semillas cayendo", "texto": "LA COMBINACIÓN PERFECTA", "rol": "deseo"},
-        {"n": 4, "archivo": "granola-4-sumalos-al-carrito.mp4", "seg": 6.5, "plano": "Las dos bolsas con la etiqueta de Acopio", "texto": "SUMALOS AL CARRITO · ACOPIOSALUDABLE.COM", "rol": "cierre"}
+        {
+          "n": 1,
+          "archivo": "granola-1-tu-desayuno-mejor.mp4",
+          "seg": 3.1,
+          "plano": "Primerísimo primer plano de la granola",
+          "texto": "TU DESAYUNO, PERO MEJOR",
+          "rol": "gancho"
+        },
+        {
+          "n": 2,
+          "archivo": "granola-2-sumale-semillas.mp4",
+          "seg": 3.1,
+          "plano": "Detalle del mix de semillas",
+          "texto": "SUMALE SEMILLAS",
+          "rol": "producto"
+        },
+        {
+          "n": 3,
+          "archivo": "granola-3-combinacion-perfecta.mp4",
+          "seg": 4.9,
+          "plano": "Bowl con granola, banana y semillas cayendo",
+          "texto": "LA COMBINACIÓN PERFECTA",
+          "rol": "deseo"
+        },
+        {
+          "n": 4,
+          "archivo": "granola-4-sumalos-al-carrito.mp4",
+          "seg": 6.5,
+          "plano": "Las dos bolsas con la etiqueta de Acopio",
+          "texto": "SUMALOS AL CARRITO · ACOPIOSALUDABLE.COM",
+          "rol": "cierre"
+        }
+      ],
+      "ia": false,
+      "ganchos": [
+        "Tu desayuno, versión mejorada",
+        "El ruidito de la granola 🔊",
+        "Granola + semillas = desayuno resuelto",
+        "¿Desayunás siempre lo mismo?",
+        "Probá esta combinación",
+        "Lo que le sumo a mi bowl",
+        "Desayuno que llena de verdad",
+        "Así arranco el día"
       ]
     }
   ],
   "variantes_hechas": [
-    {"archivo": "/video/tiktok/despensa-precio-primero.mp4", "orden": "despensa 3-2-4-5", "seg": 11.2, "para": "TikTok / Shorts: abre con el precio"},
-    {"archivo": "/video/tiktok/granola-bowl-primero.mp4", "orden": "granola 3-2-4", "seg": 14.5, "para": "TikTok / Shorts: abre con el bowl"}
+    {
+      "archivo": "/video/tiktok/despensa-precio-primero.mp4",
+      "orden": "despensa 3-2-4-5",
+      "seg": 11.2,
+      "para": "TikTok / Shorts: abre con el precio"
+    },
+    {
+      "archivo": "/video/tiktok/granola-bowl-primero.mp4",
+      "orden": "granola 3-2-4",
+      "seg": 14.5,
+      "para": "TikTok / Shorts: abre con el bowl"
+    }
   ],
   "formatos": {
     "reel_instagram_facebook": "Video completo, 15-20 s, caption con precio y WhatsApp",
@@ -40,5 +135,6 @@
     "youtube_shorts": "Otra variante, 10-15 s, título con producto + Villa Carlos Paz",
     "historias_instagram": "Una toma suelta por historia (gancho, precio u oferta) con sticker de link a la ficha o a WhatsApp; ideal 2-3 historias seguidas",
     "anuncios_meta": "Video completo o la variante con precio primero; las tomas de precio solo si coincide con el precio vigente"
-  }
+  },
+  "nota_ia": "Si el video es ia:true, en TikTok se marca «Contenido generado por IA» y en YouTube «contenido alterado o sintético»."
 }

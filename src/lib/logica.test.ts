@@ -1684,3 +1684,16 @@ test("listaDeProductos: un audio transcripto con etiquetas delante no es una lis
   const t = "<cliente>Vanesa</cliente>\n<anuncio>La ves antes de pagar</anuncio>\n[Mandó un audio que dice: «Hola, ¿cómo estás? Sí, yo lo estaba averiguando para los primeros días, ¿viste? para ver si podía invertir en algo. Pero ustedes, ¿de dónde son?»]";
   assert.deepEqual(listaDeProductos(t), []);
 });
+
+test("tiktok-lab: el puntaje premia compartir y retener, y la ganadora tiene que superar 1,5 veces la mediana", async () => {
+  const { puntaje, elegirGanadoras } = await import("./tiktok-puntaje");
+  assert.ok(puntaje({ vistas: 1000, compartidos: 20, retencion: 0.5 }) > puntaje({ vistas: 1000, likes: 20, retencion: 0.5 }));
+  assert.equal(puntaje({ vistas: 0 }), 0);
+  const base = { video: "x", receta: "r", gancho: null, ia: false, programado: null, url: null, likes: 0, comentarios: 0, compartidos: 0, guardados: 0, retencion: null, videoUrl: null, promovido: null, nota: null };
+  const ahora = new Date("2026-11-02T12:00:00Z");
+  const hace = (h: number) => new Date(ahora.getTime() - h * 3600e3);
+  const v = (id: number, vistas: number) => ({ ...base, id, vistas, estado: "MEDIDO", puntaje: puntaje({ vistas }), medido: hace(2), creado: hace(26) });
+  const g = elegirGanadoras([v(1, 400), v(2, 500), v(3, 2000), v(4, 450)], ahora);
+  assert.deepEqual(g.map((x) => x.id), [3]);
+  assert.deepEqual(elegirGanadoras([v(1, 200), v(2, 250)], ahora), []);
+});
