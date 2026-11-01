@@ -8,7 +8,7 @@
 // que tiene guardado con su total, o propone uno concreto (la Alacena), y cierra con «¿Te la separamos?».
 // Sin zona confirmada no promete «sin cargo» ni «mañana»: ofrece decir la ciudad.
 
-import { primerNombre, ID, noPorAhora, postergaCompra, type Saliente } from "./whatsapp-interactivo";
+import { primerNombre, ID, noPorAhora, postergaCompra, soloAgradece, type Saliente } from "./whatsapp-interactivo";
 
 export const RECORDATORIO = { horasSinRespuesta: 3, ventanaHoras: 23, desde: 8, hasta: 21, porCorrida: 30 } as const;
 
@@ -39,6 +39,22 @@ export function clienteDijoQueNo(ultimoCliente: string | null | undefined): bool
 }
 
 type Charla = { nombre: string | null; anuncioTitulo: string | null; pedido: string | null };
+
+/**
+ * ¿Le toca el recordatorio? Solo a quien tiene un pedido o carrito guardado (y no lo cerró ni dijo que no).
+ * Sin carrito no sale: del 31/10 al 1/11 salieron 38 «Para arrancar te propongo la Alacena» / «¿Pudiste ver lo de…?»
+ * a charlas sin carrito y volvieron 0 compras y 4 respuestas («No», «Lo veo después» ×2, una automática). A Enrique
+ * (dátiles + mix sin maní) y a Gustavo («¿los mix tienen maní?») les llegó la Alacena con el Mix Clásico. Tampoco a quien
+ * contestó solo «ok» o «gracias» (regla de Laura del 30/10; a Iris le llegó después de «Ok»).
+ */
+export function tocaRecordatorio(p: { pedido: string | null; ultimoBot: string | null; ultimoCliente: string | null }): boolean {
+  if (!p.pedido || p.pedido.startsWith("orden:")) return false;
+  if (cerroLaCharla(p.ultimoBot ?? "")) return false;
+  if (clienteDijoQueNo(p.ultimoCliente)) return false;
+  if (p.ultimoCliente != null && soloAgradece(p.ultimoCliente.trim())) return false;
+  return true;
+}
+
 
 /** Un carrito con su precio real (lo cotiza quien corre el recordatorio). */
 export type CarritoCotizado = { total: number; transferencia: number | null; resumen?: string };
