@@ -21,6 +21,9 @@ test("experimento B: solo el primer mensaje de una charla de anuncio que pide pr
   assert.ok(!esPrimerPedidoDePrecios({ ...base, negocio: "<negocio>hotel</negocio>" }), "negocio: sigue su camino");
   assert.ok(!esPrimerPedidoDePrecios({ ...base, historial: [{ de: "acopio" }] }), "ya le contestamos: no se repite");
   assert.ok(!esPrimerPedidoDePrecios({ ...base, texto: "Hola, ¿hacen envíos a Córdoba?" }), "otra pregunta: la contesta la IA");
+  // Casos reales: lo que agregan al texto del anuncio lo contesta la IA.
+  for (const texto of ["¡Hola! Quiero precios de frutos secos por kilo y dirección", "¡Hola! Quiero precios de frutos secos por kilo de dónde son", "¡Hola! Necesito precios de frutos secos por kilo: almendras y nueces", "¡Hola! Quiero precios de frutos secos por kilo iruela seca x caja cerrada ?"]) assert.ok(!esPrimerPedidoDePrecios({ ...base, texto }), texto);
+  for (const texto of ["Quiero precios de frutos secos por kilo!", "¡Hola! Quiero precios de frutos secos por kilo, gracias", "precio x kg?"]) assert.ok(esPrimerPedidoDePrecios({ ...base, texto }), texto);
 });
 
 test("experimento B: la lista trae los kilos que más piden, sin combo, sin $60.000 y termina con la zona", () => {
