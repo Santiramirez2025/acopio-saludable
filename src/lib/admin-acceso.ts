@@ -35,6 +35,11 @@ export async function esAdmin(): Promise<boolean> {
   return !!h && h === hashClave(clave);
 }
 
+/** true solo si pide Santiago con su sesión (no alcanza la clave de agentes). */
+export async function esSesionAdmin(): Promise<boolean> {
+  return !!(await getServerSession(authOptions));
+}
+
 /** Para las rutas de la oficina (charlar, voz, órdenes): Santiago, un agente o una TV vinculada. */
 export async function esAdminOTv(): Promise<boolean> {
   if (await esAdmin()) return true;

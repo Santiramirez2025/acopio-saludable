@@ -1711,3 +1711,12 @@ test("tiktok-lab: el puntaje premia compartir y retener, y la ganadora tiene que
   assert.deepEqual(g.map((x) => x.id), [3]);
   assert.deepEqual(elegirGanadoras([v(1, 200), v(2, 250)], ahora), []);
 });
+
+import { cobroRequiereSesion } from "./cobro-permiso";
+test("seguridad: dejar un pedido como cobrado (Pagado o Entregado sin pago) es solo de Santiago con sesión", () => {
+  assert.ok(cobroRequiereSesion("PAGADO", false));
+  assert.ok(cobroRequiereSesion("ENTREGADO", false));
+  assert.ok(!cobroRequiereSesion("ENTREGADO", true), "ya pagado: entregarlo no cobra nada");
+  for (const e of ["EN_COMPRA", "PREPARADO", "ENVIADO", "CANCELADO"]) assert.ok(!cobroRequiereSesion(e, false), e);
+});
+
