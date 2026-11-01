@@ -397,7 +397,7 @@ export function pagaAlRecibir(texto: string): boolean {
  */
 export function pideDatosTransferencia(texto: string, ultimoNuestro = ""): boolean {
   const t = limpio(texto);
-  if (/\b(ya )?(te )?(transferi|pague|deposite)\b|comprobante|se puede (pagar|transferir)|aceptan|puedo (pagar|transferir)|tenes mercado pago/.test(t)) return false;
+  if (/\b(ya )?(te )?(transferi|pague|deposite)\b|\btransferid[oa]\b|\bhice (la |una )?transferencia\b|\b(esta|ya esta) (hecha|hecho|pagado|transferido)\b|\b(mande|envie|pase|deposite) (la plata|el dinero|el pago|la transferencia|lo)\b|comprobante|se puede (pagar|transferir)|aceptan|puedo (pagar|transferir)|tenes mercado pago/.test(t)) return false;
   if (/\b(alias|cbu|cvu)\b/.test(t)) return true;
   if (/\b(pasame|pasa|mandame|manda|enviame|dame|pasan|mandan|necesito) (los |tus |sus )?datos( (para|de) (la )?(transferir|transferencia|pago|pagar))?\b/.test(t)) return true;
   if (/\b(quiero|prefiero|voy a|lo|te) (pagar |pago |hago )?(por |con |una )?transferencia\b/.test(t) && /\b(pasame|mandame|dame|datos|cuenta|ya)\b/.test(t)) return true;

@@ -1720,3 +1720,8 @@ test("pide los datos para transferir (31/10, Gabriel esperó 87 min el alias)", 
   for (const t of ["Sí, mandámelos", "si", "dale"]) assert.ok(!pideDatosTransferencia(t, "¿De qué barrio sos?"), `sin ofrecer: ${t}`);
   for (const t of ["ya te transferí", "te mando el comprobante", "¿se puede pagar por transferencia?", "quiero 2 kilos de nuez", "transferencia"]) assert.ok(!pideDatosTransferencia(t), t);
 });
+
+test("pide los datos: si dice que ya pagó no se le crea otro pedido ni se le reenvían los datos (Rodri, revisión #423)", () => {
+  for (const t of ["Ya hice la transferencia al alias", "te mandé la plata al cbu", "listo, transferido al cvu", "Ya está hecha la transferencia, el cbu era el de siempre", "ya transferí al alias que me pasaste", "soy Santiago, ya está pagado, el alias era ese"]) assert.ok(!pideDatosTransferencia(t), t);
+  for (const t of ["¿me pasás el alias? ya transfiero", "alias?"]) assert.ok(pideDatosTransferencia(t), t);
+});
