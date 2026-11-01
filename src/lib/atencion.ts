@@ -457,10 +457,15 @@ export async function atender(e: Entrada): Promise<void> {
   // Pide el alias o los datos con el pedido armado: se cierra por transferencia en el acto (total con
   // descuento + datos), igual que el botón «Transferencia». Sin esto la IA repreguntaba y derivaba.
   if (canal === "whatsapp" && guardado?.startsWith("/carrito?p=")) {
-    const previo = [...(await historialDe(e.clave, 9))].slice(0, -1).reverse().find((h) => h.de === "acopio")?.texto ?? "";
+    const historialPrevio = (await historialDe(e.clave, 9)).slice(0, -1);
+    const previo = [...historialPrevio].reverse().find((h) => h.de === "acopio")?.texto ?? "";
     if (pideDatosTransferencia(texto, previo)) {
-      const envioTxt = [...(await historialDe(e.clave, 9))].reverse().find((h) => h.de === "acopio" && /Envío a [^:]+:/.test(h.texto))?.texto.match(/Envío a ([^:]+): ([^\n]*)/);
-      const envio = envioTxt ? { lugar: envioTxt[1], costo: /sin cargo/i.test(envioTxt[2]) ? 0 : null } : null;
+      // El envío se cotiza de nuevo con el lugar que ya le dijimos y el subtotal real, como el botón:
+      // así un envío pago (Capital, correo) entra en el total y no queda «a confirmar» (observación de Rodri).
+      const lugar = [...(await historialDe(e.clave, 9))].reverse().find((h) => h.de === "acopio" && /Envío a [^:]+:/.test(h.texto))?.texto.match(/Envío a ([^:]+):/)?.[1] ?? lugarDelHistorial(historialPrevio);
+      const subtotal = lugar ? (await cotizarCarrito(leerPedido(guardado.replace(/^\/carrito\?p=/, ""))).catch(() => null))?.subtotal ?? 0 : 0;
+      const cot = lugar ? await cotizarEnvioChat(lugar, null, subtotal).catch(() => null) : null;
+      const envio = cot ? { lugar: cot.lugar, costo: cot.costo } : lugar ? { lugar, costo: null } : null;
       console.log("chat: pide los datos para transferir, se cierra por transferencia", cola(e.clave));
       return cerrarVenta(e.clave, e.nombre, "TRANSFERENCIA", guardado, envio);
     }
