@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-10-30",
+  "actualizado": "2026-10-31",
   "uso": "Banco de tomas reales de Acopio en 9:16 (1080x1920, con texto ya quemado). Se reutilizan para armar variantes genuinas: otro orden, otro gancho, otro largo, otro audio y otro texto de publicación. Nunca subir el mismo archivo dos veces a la misma red.",
   "base": "https://www.acopiosaludable.com/video/tomas/",
   "videos": [
@@ -112,6 +112,82 @@
         "Lo que le sumo a mi bowl",
         "Desayuno que llena de verdad",
         "Así arranco el día"
+      ]
+    },
+    {
+      "id": "licuado-datiles",
+      "original": "/video/licuado-datiles-2026-11-01.mp4",
+      "ia": false,
+      "objetivo": "Antojo y desayuno: licuado rosa con frutillas, banana, dátiles y semillas (de Acopio)",
+      "sonido": "Sonido real de la licuadora y el líquido cayendo; música suave",
+      "nota": "Sin texto quemado salvo el cierre (DÁTILES Y SEMILLAS · acopiosaludable.com). Grabado en 3:4, recortado a 9:16.",
+      "tomas": [
+        {
+          "n": 1,
+          "archivo": "licuado-1-leche-al-bowl.mp4",
+          "seg": 3.1,
+          "plano": "Cenital, leche cayendo sobre dátiles, semillas y fruta",
+          "texto": "",
+          "rol": "gancho"
+        },
+        {
+          "n": 2,
+          "archivo": "licuado-2-vaso-rosa.mp4",
+          "seg": 1.8,
+          "plano": "Vaso de licuado rosa con sorbete",
+          "texto": "",
+          "rol": "deseo"
+        },
+        {
+          "n": 3,
+          "archivo": "licuado-3-se-sirve.mp4",
+          "seg": 2.6,
+          "plano": "Se sirve el licuado en el vaso",
+          "texto": "",
+          "rol": "deseo"
+        },
+        {
+          "n": 4,
+          "archivo": "licuado-4-banana-frutillas.mp4",
+          "seg": 5.8,
+          "plano": "Banana y frutillas cayendo en la licuadora",
+          "texto": "",
+          "rol": "producto"
+        },
+        {
+          "n": 5,
+          "archivo": "licuado-5-datiles-semillas.mp4",
+          "seg": 3.6,
+          "plano": "Mano con dátiles y semillas de zapallo",
+          "texto": "",
+          "rol": "producto"
+        },
+        {
+          "n": 6,
+          "archivo": "licuado-6-se-sirve-2.mp4",
+          "seg": 2.7,
+          "plano": "Segundo vaso que se llena",
+          "texto": "",
+          "rol": "deseo"
+        },
+        {
+          "n": 7,
+          "archivo": "licuado-7-bowl-final.mp4",
+          "seg": 4.4,
+          "plano": "Licuado terminado con fruta",
+          "texto": "DÁTILES Y SEMILLAS · acopiosaludable.com",
+          "rol": "cierre"
+        }
+      ],
+      "ganchos": [
+        "Licuado rosa endulzado con dátiles",
+        "El licuado que hago todas las mañanas",
+        "Dátiles + frutillas + banana",
+        "Mirá lo que le pongo a mi licuado",
+        "Desayuno rosa en 1 minuto",
+        "El truco: dátiles en vez de azúcar",
+        "¿Licuado o bowl? Yo, los dos",
+        "Probá sumarle semillas"
       ]
     }
   ],
