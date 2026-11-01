@@ -11,7 +11,8 @@
 //        ENVIADO avisa «ya está en el reparto de hoy, el repartidor te escribe» por WhatsApp; ENTREGADO = cobrado (registra el pago si faltaba) y manda gracias + referidos; silencioso = sin avisos)
 import { NextResponse } from "next/server";
 import type { EstadoPedido } from "@prisma/client";
-import { esAdmin } from "@/lib/admin-acceso";
+import { esAdmin, esSesionAdmin } from "@/lib/admin-acceso";
+import { cobroRequiereSesion } from "@/lib/cobro-permiso";
 import { prisma } from "@/lib/prisma";
 import { aplicarEstadoPedido } from "@/lib/pedido-estado";
 
@@ -157,6 +158,11 @@ export async function POST(req: Request) {
   if (b.accion !== "estado") return NextResponse.json({ error: "accion = estado | notas" }, { status: 400 });
   const id = Number(b.id);
   if (!id || !b.estado) return NextResponse.json({ error: "Faltan id y estado" }, { status: 400 });
+  const actual = await prisma.order.findUnique({ where: { id }, select: { pagadoAt: true } });
+  if (!actual) return NextResponse.json({ error: "No existe ese pedido" }, { status: 404 });
+  if (cobroRequiereSesion(b.estado, !!actual.pagadoAt) && !(await esSesionAdmin())) {
+    return NextResponse.json({ error: "Pasar a Pagado o Entregado un pedido sin pago registra el cobro: eso lo hace solo Santiago (panel o su WhatsApp, «marcá pagado AS-…»). Avisale con el número de pedido." }, { status: 403 });
+  }
   try {
     await aplicarEstadoPedido(id, b.estado as EstadoPedido, { nota: b.nota?.slice(0, 300) ?? null, silencioso: !!b.silencioso });
     return NextResponse.json({ ok: true });
