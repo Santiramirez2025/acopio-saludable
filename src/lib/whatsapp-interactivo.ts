@@ -357,7 +357,15 @@ export const OPCIONES_ZONA_PRIMERA_LISTA = ["Carlos Paz y zona", "Córdoba Capit
 export function esPrimerPedidoDePrecios(c: { texto: string; historial: { de: string }[]; deAnuncio: boolean; negocio: string }): boolean {
   if (!c.deAnuncio || c.negocio) return false;
   if (c.historial.some((h) => h.de === "acopio")) return false;
-  return pidePreciosPorKilo(c.texto);
+  return pidePreciosPorKilo(c.texto) && !agregoAlgoAlPedido(c.texto);
+}
+
+// La persona le sumó algo al texto del anuncio («… por kilo y dirección», «… de dónde son»): la lista fija
+// no le contestaría eso, así que sigue por la IA, que recibe el mensaje entero.
+function agregoAlgoAlPedido(texto: string): boolean {
+  const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const m = /\b(?:por|x|el|al) ?(?:kilos?|kg)\b/.exec(t);
+  return Boolean(m) && /[a-z]/.test(t.slice(m!.index + m![0].length).replace(/\b(gracias|porfa|por favor)\b/g, ""));
 }
 
 export function textoPrimeraListaPorKilo(

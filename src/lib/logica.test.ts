@@ -789,6 +789,9 @@ test("envío en el chat: la zona sale de lo que escribe", () => {
   assert.deepEqual(zonaDeLugar("Estancia Vieja, frente a Pekos"), { tipo: "propia" });
   assert.deepEqual(zonaDeLugar("Nueva Córdoba"), { tipo: "capital" });
   assert.deepEqual(zonaDeLugar("Córdoba"), { tipo: "capital" });
+  assert.deepEqual(zonaDeLugar("Frente Paseo Rivera...zona norte"), { tipo: "capital" });
+  assert.deepEqual(zonaDeLugar("Barrio Poeta Lugones"), { tipo: "capital" });
+  assert.equal(zonaDeLugar("zona norte"), null); // Puede ser el Gran Buenos Aires: se pregunta.
   assert.deepEqual(zonaDeLugar("Rosario", "Santa Fe"), { tipo: "correo", provincia: "Santa Fe" });
   assert.deepEqual(zonaDeLugar("Mendoza"), { tipo: "correo", provincia: "Mendoza" });
   assert.deepEqual(zonaDeLugar("CABA"), { tipo: "correo", provincia: "Ciudad Autónoma de Buenos Aires" });
