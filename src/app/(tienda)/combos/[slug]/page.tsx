@@ -46,18 +46,22 @@ export default async function ComboPagina({ params }: Props) {
     offers: { "@type": "Offer", price: c.precio.toFixed(2), priceCurrency: "ARS", availability: "https://schema.org/InStock", url: `${urlSitio()}/combos/${c.slug}` },
   };
   return (
+    <>
+    <Medir evento="ver_producto" ids={[`combo-${c.slug}`]} valor={c.precio} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+    {/* Medir y el JSON-LD van afuera del space-y: si no, el link «← Combos» hereda 24 px de margen arriba. */}
     <div className="space-y-6">
-      <Medir evento="ver_producto" ids={[`combo-${c.slug}`]} valor={c.precio} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Link href="/combos" className="-my-3 inline-flex min-h-[48px] items-center text-sm text-stone-600 underline underline-offset-4">← Combos</Link>
       <Titulo sobre="Combo">{c.nombre}</Titulo>
       <p className="-mt-3 text-[15px] leading-relaxed text-stone-700">
-        <b className="font-semibold text-acopio-900">Trae {unidades} productos{gramos ? `, ${medida(gramos, "g")} en total` : ""}:</b>{" "}
-        {c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)).join(" · ")}.
+        <b className="font-semibold text-acopio-900">Trae {unidades} productos{gramos ? `, ${medida(gramos, "g")} en total` : ""}</b>
+        {/* En el celular el detalle ya está en «Qué trae el combo», justo abajo del precio: así «Agregar combo» entra en la primera pantalla. */}
+        <span className="sm:hidden">.</span>
+        <span className="hidden sm:inline">: {c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)).join(" · ")}.</span>
       </p>
       {c.fotoUrl && (
         <div className={`grid gap-3 ${SEGUNDA_FOTO.has(c.slug) ? "sm:grid-cols-2" : ""}`}>
-          <Foto src={c.fotoUrl} alt={`Combo ${c.nombre}`} className={`w-full rounded-3xl ${SEGUNDA_FOTO.has(c.slug) || c.fotoUrl.includes("/v2/") ? "aspect-[4/3] sm:max-w-2xl" : "aspect-[16/10] sm:aspect-[21/9]"}`} prioridad sizes="(max-width: 640px) 100vw, 550px" />
+          <Foto src={c.fotoUrl} alt={`Combo ${c.nombre}`} className={`w-full rounded-3xl ${SEGUNDA_FOTO.has(c.slug) || c.fotoUrl.includes("/v2/") ? "aspect-[4/3] sm:max-w-2xl" : "aspect-[16/9] sm:aspect-[21/9]"}`} prioridad sizes="(max-width: 640px) 100vw, 550px" />
           {SEGUNDA_FOTO.has(c.slug) && <Foto src={`/img/combos/${c.slug}-2.webp`} alt="" className="aspect-[4/3] w-full rounded-3xl" sizes="(max-width: 640px) 100vw, 550px" />}
         </div>
       )}
@@ -82,9 +86,16 @@ export default async function ComboPagina({ params }: Props) {
         </div>
         {/* En el celular el precio y «Agregar combo» van antes de la lista: si no, quedan abajo del pliegue. */}
         <div className="order-first h-fit space-y-3 rounded-xl border border-tierra-200 bg-white p-5 lg:order-none">
-          {c.ahorro > 0 && <p className="text-sm tabular-nums text-stone-600 line-through">{pesos(c.precioLista)}</p>}
-          <p className="text-3xl font-semibold tabular-nums">{pesos(c.precio)}</p>
-          {c.ahorro > 0 && <p className="text-sm text-acopio-700">Ahorrás {pesos(c.ahorro)} ({c.descuentoPct}%)</p>}
+          {/* Precio, precio de lista y ahorro en una sola fila: en el celular «Agregar combo» queda arriba del botón flotante de WhatsApp. */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <p className="text-3xl font-semibold tabular-nums">{pesos(c.precio)}</p>
+            {c.ahorro > 0 && (
+              <div className="text-sm leading-tight">
+                <p className="tabular-nums text-stone-600 line-through">{pesos(c.precioLista)}</p>
+                <p className="text-acopio-700">Ahorrás {pesos(c.ahorro)} ({Math.round(c.descuentoPct)}%)</p>
+              </div>
+            )}
+          </div>
           <BotonAgregar tipo="combo" id={c.slug} etiqueta="Agregar combo" />
           {faltaParaMinimo > 0 && (
             <p className="text-xs text-stone-600">
@@ -96,5 +107,6 @@ export default async function ComboPagina({ params }: Props) {
         </div>
       </div>
     </div>
+    </>
   );
 }
