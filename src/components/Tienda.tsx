@@ -109,7 +109,7 @@ export function TarjetaCombo({ c, className = "", llegaAlMinimo = false }: { c: 
       <div className="mt-auto flex flex-wrap items-baseline gap-2 pb-3 pt-3">
         <span className="font-display text-2xl font-bold tabular-nums">{pesos(c.precio)}</span>
         {c.ahorro > 0 && <span className="text-sm tabular-nums text-white/70 line-through">{pesos(c.precioLista)}</span>}
-        {c.descuentoPct > 0 && <span className="chip bg-sol text-acopio-900">{c.descuentoPct}% menos</span>}
+        {c.descuentoPct > 0 && <span className="chip bg-sol text-acopio-900">{Math.round(c.descuentoPct)}% menos</span>}
         {/* El freno de la tienda es la compra mínima: 174 carritos y 10 checkouts el 11/10.
             Decirle al cliente cuál se puede pagar solo le ahorra la sorpresa en el checkout. */}
         {llegaAlMinimo && <span className="w-full text-sm font-semibold text-sol">Con este combo ya llegás a la compra mínima</span>}
