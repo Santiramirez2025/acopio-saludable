@@ -2,7 +2,7 @@ import { enviarSaliente, cloudActivo } from "./whatsapp-cloud";
 import { textoParaPanel } from "./whatsapp-interactivo";
 import { prisma } from "./prisma";
 import { AVISOS_WHATSAPP } from "./avisos";
-import { cerroLaCharla, clienteDijoQueNo, enHorario, planRecordatorio, RECORDATORIO, type CarritoCotizado, type OfertaConcreta } from "./whatsapp-recordatorio";
+import { enHorario, tocaRecordatorio, planRecordatorio, RECORDATORIO, type CarritoCotizado, type OfertaConcreta } from "./whatsapp-recordatorio";
 import { cotizarCarrito } from "./tienda";
 import { leerPedido } from "./pedido-enlace";
 
@@ -109,8 +109,8 @@ export async function pendientes(): Promise<Pendiente[]> {
     ORDER BY u.cliente DESC
     LIMIT ${RECORDATORIO.porCorrida}
   `;
-  // Si su último mensaje fue «Más adelante» o «Lo pienso», no se insiste (aunque la respuesta del bot no lo cerrara).
-  return filas.filter((f) => !cerroLaCharla(f.ultimoBot ?? "") && !clienteDijoQueNo(f.ultimoCliente));
+  // Solo con carrito guardado; si su último mensaje fue «Más adelante», «Lo pienso» u «ok», no se insiste.
+  return filas.filter((f) => tocaRecordatorio(f));
 }
 
 /** Se guarda con id «rec.<teléfono>.<último mensaje del cliente>»: uno solo por charla y respuesta. */

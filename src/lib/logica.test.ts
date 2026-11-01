@@ -1532,6 +1532,20 @@ test("recordatorio: carrito con total real o propuesta concreta, nunca la duda g
   assert.match((planRecordatorio({ nombre: null, anuncioTitulo: null, pedido: null }) as { cuerpo: string }).cuerpo, /duda/);
 });
 
+import { tocaRecordatorio } from "./whatsapp-recordatorio";
+test("recordatorio: solo a quien tiene carrito guardado, nunca tras «ok» o «Lo pienso» (1/11)", () => {
+  const conCarrito = { pedido: "/carrito?p=c-despensa-4-kilos*1", ultimoBot: "La Despensa sale $35.000. ¿Te la separo?", ultimoCliente: "Soy de Carlos Paz" };
+  assert.ok(tocaRecordatorio(conCarrito));
+  // Sin carrito: ni la Alacena ni «¿Pudiste ver…?» (Enrique, Gustavo, 1/11).
+  assert.ok(!tocaRecordatorio({ pedido: null, ultimoBot: "El mix clásico sin maní x 1 kg sale $22.500. ¿Cuál te sumo al pedido?", ultimoCliente: "Y un un kilo de mix sin maní ???" }));
+  assert.ok(!tocaRecordatorio({ ...conCarrito, pedido: "orden:39" }));
+  assert.ok(!tocaRecordatorio({ ...conCarrito, ultimoCliente: "Ok" }));
+  assert.ok(!tocaRecordatorio({ ...conCarrito, ultimoCliente: "Muchas gracias" }));
+  assert.ok(!tocaRecordatorio({ ...conCarrito, ultimoCliente: "Lo pienso" }));
+  assert.ok(!tocaRecordatorio({ ...conCarrito, ultimoBot: "¡De nada, Iris! Cualquier cosa nos escribís por acá 🙌" }));
+  assert.ok(tocaRecordatorio({ ...conCarrito, ultimoCliente: "¿Llega el martes?" }));
+});
+
 import { admiteLead, LEADS_MAX_15MIN, LEADS_MAX_TELEFONO_DIA } from "./oferta-sistema";
 test("formulario /agentes: freno general cada 15 min y por teléfono por día", () => {
   assert.ok(admiteLead(0, 0));
