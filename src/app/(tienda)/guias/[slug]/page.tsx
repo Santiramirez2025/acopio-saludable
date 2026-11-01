@@ -6,6 +6,7 @@ import { combosTienda, productosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
 import { SITIO, urlSitio } from "@/lib/sitio";
 import { Prosa } from "@/components/Prosa";
+import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { RielProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -50,6 +51,24 @@ export default async function GuiaPagina({ params }: Props) {
             <li key={r} className="flex gap-2.5"><span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-acopio-600" />{r}</li>
           ))}
         </ul>
+        {combo && g.combo && (
+          // Atajo arriba: quien llega desde Google con la compra en mente no tiene que leer toda la guía para encontrar el kit.
+          <div className="mt-4 flex max-w-2xl flex-col gap-3 rounded-2xl border border-tierra-200 bg-white p-4 shadow-ficha sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[15px] text-stone-800">
+              <span className="font-semibold">¿Lo querés resuelto?</span> {combo.nombre}: {pesos(combo.precio)}
+              {rinde > 0 ? `, alcanza para unos ${rinde} ${g.combo.unidad}` : ""}.
+            </p>
+            <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2">
+              <Link href={`/combos/${combo.slug}`} className="btn">Ver el kit</Link>
+              <EnlaceWhatsapp
+                mensaje={`Hola! Vengo de la guía «${g.titulo}». Quiero el ${combo.nombre}.`}
+                className="min-h-[48px] text-sm font-semibold text-acopio-900 underline underline-offset-4"
+              >
+                Pedirlo por WhatsApp
+              </EnlaceWhatsapp>
+            </div>
+          </div>
+        )}
       </div>
       <Prosa>
         {g.secciones.map((s) => (
@@ -72,7 +91,7 @@ export default async function GuiaPagina({ params }: Props) {
             <TituloSeccion href={`/combos/${combo.slug}`} enlace="Ver el combo">Todo junto: {combo.nombre}</TituloSeccion>
             <p className="max-w-xl text-[15px] text-stone-700">
               Trae {combo.items.map((i) => i.producto.producto).join(", ")}
-              {rinde > 0 ? `: con unos ${g.combo.gramosPorUnidad} g de relleno por pan, alcanza para unos ${rinde} ${g.combo.unidad} (cerca de ${pesos(combo.precio / rinde)} de relleno por pan).` : "."} Sale {pesos(combo.precio)} con los precios de hoy.
+              {rinde > 0 ? `: con unos ${g.combo.gramosPorUnidad} g de relleno por pan, alcanza para unos ${rinde} ${g.combo.unidad} (cerca de ${pesos(combo.precio / rinde)} por unidad).` : "."} Sale {pesos(combo.precio)} con los precios de hoy.
             </p>
           </div>
           <TarjetaCombo c={combo} />
