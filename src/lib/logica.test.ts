@@ -1712,6 +1712,19 @@ test("tiktok-lab: el puntaje premia compartir y retener, y la ganadora tiene que
   assert.deepEqual(elegirGanadoras([v(1, 200), v(2, 250)], ahora), []);
 });
 
+import { pideDatosTransferencia } from "./whatsapp-interactivo";
+test("pide los datos para transferir (31/10, Gabriel esperó 87 min el alias)", () => {
+  for (const t of ["Por transferencia pasame tu alias", "pasame el alias", "Mandame los datos para transferir", "cuál es el CBU?", "prefiero transferencia, pasame los datos"]) assert.ok(pideDatosTransferencia(t), t);
+  const ofrecido = "Dale. Por transferencia te queda más barato, y los datos para pagar te los pasamos por WhatsApp con tu resumen. ¿Te los mandamos ahí?";
+  for (const t of ["Sí, mandámelos", "si", "Dale"]) assert.ok(pideDatosTransferencia(t, ofrecido), t);
+  for (const t of ["Sí, mandámelos", "si", "dale"]) assert.ok(!pideDatosTransferencia(t, "¿De qué barrio sos?"), `sin ofrecer: ${t}`);
+  for (const t of ["ya te transferí", "te mando el comprobante", "¿se puede pagar por transferencia?", "quiero 2 kilos de nuez", "transferencia"]) assert.ok(!pideDatosTransferencia(t), t);
+});
+
+test("pide los datos: si dice que ya pagó no se le crea otro pedido ni se le reenvían los datos (Rodri, revisión #423)", () => {
+  for (const t of ["Ya hice la transferencia al alias", "te mandé la plata al cbu", "listo, transferido al cvu", "Ya está hecha la transferencia, el cbu era el de siempre", "ya transferí al alias que me pasaste", "soy Santiago, ya está pagado, el alias era ese"]) assert.ok(!pideDatosTransferencia(t), t);
+  for (const t of ["¿me pasás el alias? ya transfiero", "alias?"]) assert.ok(pideDatosTransferencia(t), t);
+});
 import { cobroRequiereSesion } from "./cobro-permiso";
 test("seguridad: dejar un pedido como cobrado (Pagado o Entregado sin pago) es solo de Santiago con sesión", () => {
   assert.ok(cobroRequiereSesion("PAGADO", false));
