@@ -82,6 +82,16 @@ async function responder(clave: string, texto0: string): Promise<boolean> {
   const enviado = await enviarPorCanal(clave, texto);
   console.log("chat: envío", { canal: canalDe(clave), de: cola(clave), enviado });
   if (enviado) await registrarSalida(clave, "bot", texto);
+  // Messenger o Instagram rechazó la respuesta (hoy: la app de Meta todavía no tiene pages_messaging aprobado).
+  // El cliente queda sin contestar: a Santiago le llega un aviso por charla y por día para que conteste a mano.
+  else if (canalDe(clave) !== "whatsapp" && (await primeraVezHoy(`meta-sin-envio-${clave}`).catch(() => false))) {
+    const donde = canalDe(clave) === "messenger" ? "Messenger" : "Instagram";
+    await avisarSantiago(
+      `${donde}: no se pudo contestar`,
+      `💬 Te escribieron por ${donde} y el bot no pudo responder (Meta bloquea el envío hasta que la app tenga el permiso de mensajes aprobado). Contestá a mano desde la bandeja: https://business.facebook.com/latest/inbox/all\nÚltimo mensaje que quería mandar: «${texto.slice(0, 200)}»`,
+      { mail: false },
+    ).catch(() => false);
+  }
   return enviado;
 }
 
