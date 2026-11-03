@@ -319,6 +319,16 @@ export async function cambiarFotoMl(itemId: string, posicion: number, url: strin
   return { antes: fotos[posicion - 1]?.secure_url ?? null, fotos: nuevas.length };
 }
 
+/** Agrega fotos al final de una publicación por URL pública; las que ya tiene quedan igual y en el mismo orden. */
+export async function agregarFotosMl(itemId: string, urls: string[]): Promise<{ antes: number; fotos: number }> {
+  if (!urls.length || urls.some((u) => !/^https:\/\//.test(u))) throw new Error("Las fotos tienen que ser URLs https");
+  const it = await ml<{ pictures?: { id: string }[] }>(`/items/${mla(itemId)}?attributes=pictures`);
+  const fotos = it.pictures ?? [];
+  const nuevas = [...fotos.map((f) => ({ id: f.id })), ...urls.map((source) => ({ source }))];
+  await ml(`/items/${mla(itemId)}`, { method: "PUT", body: JSON.stringify({ pictures: nuevas }) });
+  return { antes: fotos.length, fotos: nuevas.length };
+}
+
 /** Estado real de una publicación (activa, pausada, en revisión) y por qué. */
 export async function estadoRealMl(itemId: string): Promise<{ estado: string; motivo: string[]; titulo: string; fotos: number }> {
   const it = await ml<{ status: string; sub_status?: string[]; title: string; pictures?: unknown[] }>(`/items/${mla(itemId)}?attributes=status,sub_status,title,pictures`);

@@ -4,6 +4,7 @@
 // POST { accion: "precio", item: "MLA…", precio } → cambia el precio (nunca bajo el piso de ganancia).
 // POST { accion: "titulo", item, titulo } · { accion: "descripcion", item, texto } · { accion: "pausar" | "activar", item }
 // POST { accion: "foto_principal", item, url } (cambia solo la primera foto) · { accion: "fotos", item } (lista con posición y URL)
+// POST { accion: "agregar_fotos", item, urls: [url] } (suma fotos al final)
 // POST { accion: "cambiar_foto", item, posicion (1 = principal), url } (cambia solo esa foto) · { accion: "estado", item } (status y sub_status reales)
 // POST { accion: "promociones", item } · { accion: "quitar_promo", item, tipo, promocion? } · { accion: "categoria", titulo }
 // POST { accion: "publicar", titulo, categoria, precio, sku, fotos: [url], stock?, descripcion?, atributos?, tipo? }
@@ -13,7 +14,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { cambiarDescripcionMl, cambiarFotoMl, cambiarFotoPrincipalMl, cambiarPrecioMl, cambiarTituloMl, categoriaMl, conectado, estadoPublicacionMl, estadoRealMl, fotosMl, parteDiario, preciosMl, promocionesMl, publicarMl, quitarPromocionMl } from "@/lib/mercadolibre";
+import { cambiarDescripcionMl, cambiarFotoMl, agregarFotosMl, cambiarFotoPrincipalMl, cambiarPrecioMl, cambiarTituloMl, categoriaMl, conectado, estadoPublicacionMl, estadoRealMl, fotosMl, parteDiario, preciosMl, promocionesMl, publicarMl, quitarPromocionMl } from "@/lib/mercadolibre";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -68,6 +69,9 @@ export async function POST(req: Request) {
       case "cambiar_foto":
         if (!item || !t("url") || !Number(b.posicion)) break;
         return NextResponse.json({ ok: true, ...(await cambiarFotoMl(item, Number(b.posicion), t("url"))) });
+      case "agregar_fotos":
+        if (!item || !Array.isArray(b.urls) || !b.urls.length) break;
+        return NextResponse.json({ ok: true, ...(await agregarFotosMl(item, b.urls.map(String))) });
       case "estado":
         if (!item) break;
         return NextResponse.json({ ok: true, ...(await estadoRealMl(item)) });
@@ -94,5 +98,5 @@ export async function POST(req: Request) {
   } catch (e) {
     return NextResponse.json({ error: String(e instanceof Error ? e.message : e) }, { status: 400 });
   }
-  return NextResponse.json({ error: "accion = precio | titulo | descripcion | foto_principal | fotos | cambiar_foto | estado | pausar | activar | promociones | quitar_promo | categoria | publicar (con sus datos)" }, { status: 400 });
+  return NextResponse.json({ error: "accion = precio | titulo | descripcion | foto_principal | fotos | agregar_fotos | cambiar_foto | estado | pausar | activar | promociones | quitar_promo | categoria | publicar (con sus datos)" }, { status: 400 });
 }
