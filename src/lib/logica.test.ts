@@ -1784,3 +1784,11 @@ test("captación: alojamientos frenados por «sin TACC» y budines; el resto sig
   assert.doesNotMatch(contextoProspecto("cabañas / complejo", "X"), /budines sin TACC/);
   assert.match(contextoProspecto("cabañas / complejo", "X"), /Budines no tenemos/);
 });
+
+test("costos de la compra del 3/11: la lista no los pisa hasta la fecha, y después sí", async () => {
+  const { costoDeCompraVigente } = await import("./listas-presentacion");
+  assert.equal(costoDeCompraVigente("LG-DATIL", new Date("2026-11-04T10:40:00Z")), true);
+  assert.equal(costoDeCompraVigente("TG-PASAS-500", new Date("2026-11-16T10:40:00Z")), true);
+  assert.equal(costoDeCompraVigente("LG-AVENA", new Date("2026-11-04T10:40:00Z")), false);
+  assert.equal(costoDeCompraVigente("LG-DATIL", new Date("2026-11-18T10:40:00Z")), false);
+});

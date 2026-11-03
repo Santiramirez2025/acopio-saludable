@@ -27,6 +27,12 @@ export async function POST(req: Request) {
   const [{ n }] = await prisma.$queryRaw<{ n: number }[]>`
     SELECT count(*)::int AS n FROM "CronCorrida" WHERE "nombre" LIKE 'ev-%' AND "fecha" > now() - interval '1 minute'`.catch(() => [{ n: 0 }]);
   if (!admiteMedicion(n)) return new NextResponse(null, { status: 204 });
+  // Una compra por pedido: el link se reabre desde otro navegador (localStorage no alcanza) y contaba otra compra.
+  if (e === "compra" && typeof b?.r === "string") {
+    const [{ ya }] = await prisma.$queryRaw<{ ya: number }[]>`
+      SELECT count(*)::int AS ya FROM "CronCorrida" WHERE "nombre" = 'ev-compra' AND "detalle" LIKE ${`%"r":${JSON.stringify(b.r.slice(0, 120))}%`}`.catch(() => [{ ya: 0 }]);
+    if (ya > 0) return new NextResponse(null, { status: 204 });
+  }
   const detalle = JSON.stringify({
     r: typeof b?.r === "string" ? b.r.slice(0, 120) : null,
     v: typeof b?.v === "number" && Number.isFinite(b.v) ? Math.round(b.v) : null,
