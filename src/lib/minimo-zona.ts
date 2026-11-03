@@ -28,6 +28,13 @@ export function textoZonaSinMinimo(c: ReglaMinimo): string {
   return `En Villa Carlos Paz y el sur de Punilla no hay compra mínima: la entrega es sin cargo desde ${pesos(umbralZona(c))} y, si el pedido no llega, el envío cuesta ${pesos(c.envioBajoMinimo)}.`;
 }
 
+/** Una línea corta, para fichas y páginas de la tienda: el mínimo de $ X nunca aparece solo si la zona no lo tiene. */
+export function lineaCompraMinima(c: ReglaMinimo, combinando = "los productos"): string {
+  const general = `${pesos(c.compraMinima)} por pedido, combinando ${combinando} que quieras.`;
+  if (zonaSinMinimo(c)) return `En Villa Carlos Paz y la zona no hay compra mínima: sin cargo desde ${pesos(umbralZona(c))}. Al resto del país, compra mínima de ${general}`;
+  return `Compra mínima de ${general}`;
+}
+
 /** La compra mínima explicada entera: zona propia (si no tiene mínimo) + resto del país. */
 export function textoCompraMinima(c: ReglaMinimo): string {
   const general = `${pesos(c.compraMinima)} por pedido, combinando los productos y combos que quieras.`;

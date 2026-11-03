@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
+import { lineaCompraMinima } from "@/lib/minimo-zona";
 import { AVISO_SIN_TACC, WHERE_SIN_TACC, wherePublicado } from "@/lib/filtros-producto";
 import { aTienda } from "@/lib/tienda";
 import { NICHOS, NICHO_IDS, OBJETIVOS, OBJETIVO_IDS } from "@/lib/taxonomia";
@@ -175,7 +176,7 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
         <section className="mt-10 rounded-2xl bg-white p-5 shadow-ficha">
           <h2 className="font-display text-xl font-bold">{sp.categoria} por volumen, con envío</h2>
           <p className="mt-2 text-sm text-stone-700">{gondola.detalle}</p>
-          <p className="mt-2 text-sm text-stone-700">Entregamos sin cargo en Villa Carlos Paz y el sur de Punilla, y despachamos por correo al resto del país. Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando las góndolas que quieras.</p>
+          <p className="mt-2 text-sm text-stone-700">Entregamos sin cargo en Villa Carlos Paz y el sur de Punilla, y despachamos por correo al resto del país. {lineaCompraMinima(cfg, "las góndolas")}</p>
         </section>
       )}
     </div>
