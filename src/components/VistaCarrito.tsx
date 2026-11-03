@@ -27,6 +27,7 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
   // controla el mínimo de la zona elegida (y el servidor también).
   const puedeSeguir = puedePagar || cotizacion.puedePagarEnZona;
   const faltaZona = Math.max(0, cotizacion.compraMinimaPropia - subtotal);
+  const envioBajo = cotizacion.envioBajoMinimo;
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
@@ -111,7 +112,7 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
         )}
         {puedeSeguir && !puedePagar && (
           <p className="text-sm text-stone-700">
-            En Carlos Paz y la zona ya podés pedir. Para envíos a otras localidades la compra mínima es {pesosCliente(cotizacion.compraMinima)} (te faltan {pesosCliente(falta)}).
+            En Carlos Paz y la zona ya podés pedir{envioBajo > 0 && faltaZona > 0 ? <>: sumá {pesosCliente(faltaZona)} más y el envío va sin cargo (si no, envío {pesosCliente(envioBajo)})</> : null}. Para envíos a otras localidades la compra mínima es {pesosCliente(cotizacion.compraMinima)} (te faltan {pesosCliente(falta)}).
           </p>
         )}
       </aside>

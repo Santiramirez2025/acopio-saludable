@@ -4,6 +4,7 @@ import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { AVISO_SIN_TACC, WHERE_SIN_TACC } from "@/lib/filtros-producto";
 import { pesos } from "@/lib/precios";
+import { textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { GrillaProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
@@ -25,14 +26,16 @@ export default async function SinTaccCarlosPaz() {
   ]);
   // Solo combos en los que todos los productos vienen rotulados sin TACC.
   const combosSinTacc = combos.filter((c) => c.disponible && c.items.every((i) => i.producto.sinTacc)).slice(0, 4);
-  const minimo = pesos(cfg.compraMinimaPropia);
+  const minimo = pesos(umbralZona(cfg));
+  // Sin mínimo en la zona: lo que antes era el mínimo ahora es el umbral del envío sin cargo.
+  const sinMinimo = zonaSinMinimo(cfg);
 
   const preguntas: [string, string][] = [
     ["¿Dónde compro productos sin TACC en Villa Carlos Paz?", "Acá mismo: somos una dietética online de Villa Carlos Paz, Córdoba, Argentina. Elegís por la web o por WhatsApp y te llevamos el pedido a tu casa. No tenemos local a la calle."],
     ["¿Cómo sé que un producto es sin TACC?", `Marcamos como sin TACC solo lo que el fabricante rotula sin TACC o sin gluten. ${AVISO_SIN_TACC}`],
     ["¿Los frutos secos, la miel y los mixes sueltos son sin TACC?", "No los marcamos así. Las nueces, las almendras, las legumbres o la miel no tienen gluten como ingrediente, pero lo que se fracciona (por nosotros o por el mayorista) no está certificado y puede tener contaminación cruzada: no es apto para celíacos. Si sos celíaco, elegí solo los productos envasados con marca y el logo sin TACC, y verificalos en el Listado Integrado de Alimentos Libres de Gluten de ANMAT."],
     ["¿Cobran el envío en Carlos Paz?", `No. La entrega es sin cargo en Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
-    ["¿Hay compra mínima?", `Sí, ${minimo} por pedido en la zona de entrega, sumando productos sin TACC con cualquier otro producto de la tienda.`],
+    ["¿Hay compra mínima?", sinMinimo ? `No. ${textoZonaSinMinimo(cfg)} Sumás productos sin TACC con cualquier otro producto de la tienda.` : `Sí, ${minimo} por pedido en la zona de entrega, sumando productos sin TACC con cualquier otro producto de la tienda.`],
     ["¿Cómo pago?", "Por transferencia, con descuento, o con Mercado Pago. Si preferís, escribinos por WhatsApp y te armamos el pedido."],
   ];
 
@@ -64,7 +67,7 @@ export default async function SinTaccCarlosPaz() {
         {[
           ["Entrega sin cargo", `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}.`],
           ["Solo rotulados", "En esta sección van únicamente productos envasados con marca y rótulo sin TACC o sin gluten del fabricante. Nada fraccionado."],
-          ["Combinás con todo", `Compra mínima de ${minimo}, sumando sin TACC con frutos secos, semillas y el resto de la tienda.`],
+          ["Combinás con todo", sinMinimo ? `Sin compra mínima en la zona (entrega sin cargo desde ${minimo}), sumando sin TACC con frutos secos, semillas y el resto de la tienda.` : `Compra mínima de ${minimo}, sumando sin TACC con frutos secos, semillas y el resto de la tienda.`],
         ].map(([t, d]) => (
           <div key={t} className="rounded-2xl bg-white p-4 shadow-ficha">
             <h2 className="font-display text-lg font-bold">{t}</h2>

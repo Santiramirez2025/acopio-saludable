@@ -14,7 +14,7 @@ export const EN_STOCK: Item[] = [
   { id: "almendra", nombre: "Almendras", busca: /almendra/i, excluir: /mix|granola|leche|bebida|pasta|harina|alfajor|barra/i, gancho: "Non Pareil, las grandes" },
   { id: "caju", nombre: "Castañas de cajú", busca: /caj[uú]/i, excluir: /mix|granola|alfajor|barra|pasta/i, gancho: "enteras, recién llegadas" },
   { id: "pasas", nombre: "Pasas de uva", busca: /^pasas/i, gancho: "negras y rubias, sin semilla" },
-  { id: "datil", nombre: "Dátiles", busca: /d[aá]til/i, excluir: /mix|barra|alfajor/i, gancho: "Deglet Nour, los más dulces" },
+  { id: "datil", nombre: "Dátiles", busca: /d[aá]til/i, excluir: /mix|barra|alfajor/i, gancho: "con carozo, dulces y carnosos" },
   { id: "miel", nombre: "Miel", busca: /\bmiel\b/i, excluir: /granola|barra|alfajor|galle|mostaza/i, gancho: "pura, de Los Dos Zánganos" },
   { id: "granola", nombre: "Granola", busca: /granola/i, marca: /marcilli|olimar/i, gancho: "para el desayuno" },
   { id: "avena", nombre: "Avena", busca: /avena/i, excluir: /granola|barra|galle|bebida|leche/i, marca: /marcilli/i, gancho: "arrollada fina" },

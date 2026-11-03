@@ -8,6 +8,8 @@ import { cotizarCarrito, estaPublicado, comboVigente, sanearLineas, type Cotizac
 import { armarBultos, PESO_POR_DEFECTO_G } from "./envios/bultos";
 import { cotizarEnvio } from "./envios/cotizar";
 import { cpEnLista, normalizarCp, zonaDeProvincia } from "./envios/geo";
+import { zonaDeLugar } from "./envio-zona";
+import { envioPropioPara } from "./minimo-zona";
 import type { Bulto, OpcionEnvio } from "./envios/tipos";
 import { enviarEmail, escaparHtml } from "./email";
 import { SITIO, urlSitio } from "./sitio";
@@ -63,13 +65,23 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
   const cp = normalizarCp(cpCrudo);
   if (!cp) throw new ErrorPedido("Revisá el código postal (4 números)");
   if (!zonaDeProvincia(provincia)) throw new ErrorPedido("Elegí la provincia");
-  // En la zona de reparto propio (sin cargo) la compra mínima es más baja.
-  const minimo = c.entregaPropiaActiva && cpEnLista(cp, c.cpEntregaPropia) ? Math.min(c.compraMinimaPropia, c.compraMinima) : c.compraMinima;
+  // En la zona de reparto propio la compra mínima es más baja; y si hay envío fijo bajo mínimo, no hay mínimo: se compra con cualquier subtotal.
+  const enZona = c.entregaPropiaActiva && cpEnLista(cp, c.cpEntregaPropia);
+  const minimoZona = Math.min(c.compraMinimaPropia, c.compraMinima);
+  const minimo = enZona ? (c.envioBajoMinimo > 0 ? 0 : minimoZona) : c.compraMinima;
   const [cotizacion, renglones] = await Promise.all([cotizarCarrito(entrada, minimo), expandirCarrito(entrada, c)]);
   if (!renglones.length) throw new ErrorPedido("Tu carrito está vacío");
   const bultos = armarBultos(renglones.map((r) => ({ pesoG: r.pesoG ?? PESO_POR_DEFECTO_G, cantidad: r.cantidad })));
   const todas = await cotizarEnvio(
-    { cpOrigen: c.cpOrigen, entregaPropiaActiva: c.entregaPropiaActiva, cpEntregaPropia: c.cpEntregaPropia, plazoEntregaPropia: c.plazoEntregaPropia, envioGratisDesde: c.envioGratisDesde, tabla: c.tabla },
+    {
+      cpOrigen: c.cpOrigen,
+      entregaPropiaActiva: c.entregaPropiaActiva,
+      cpEntregaPropia: c.cpEntregaPropia,
+      plazoEntregaPropia: c.plazoEntregaPropia,
+      envioGratisDesde: c.envioGratisDesde,
+      tabla: c.tabla,
+      propiaBajoMinimo: c.envioBajoMinimo > 0 ? { precio: c.envioBajoMinimo, desde: minimoZona } : undefined,
+    },
     { cpDestino: cp, provincia, bultos, subtotal: cotizacion.subtotal },
   );
   // Los congelados necesitan cadena de frío: solo viajan en el reparto propio, nunca por correo.
@@ -317,11 +329,15 @@ export async function crearPedidoWhatsapp(a: {
     return igual;
   }
   const bultos = armarBultos(renglones.map((r) => ({ pesoG: r.pesoG ?? PESO_POR_DEFECTO_G, cantidad: r.cantidad })));
-  const envio = a.envio.costo ?? 0;
+  // En la zona de reparto propio el envío lo decide el subtotal real (sin cargo desde el umbral; abajo, el fijo),
+  // no lo que traía el botón: el pedido pudo cambiar entre que se cotizó el lugar y que tocó pagar.
+  const zonaPropia = cfg.entregaPropiaActiva && zonaDeLugar(a.envio.lugar, null)?.tipo === "propia";
+  const envio = zonaPropia ? envioPropioPara(cfg, cotizacion.subtotal) : (a.envio.costo ?? 0);
+  const propia = zonaPropia || (a.envio.costo !== null && (a.envio.costo === 0 || a.medioPago === "AL_RECIBIR"));
+  // El envío propio se cobra tal cual, sin recargo por comisión; y a nosotros nos cuesta $0 (lo llevamos nosotros).
   const { descuento, envioCobrado, total, comisionPago } = mayoristaPct
-    ? totales(cotizacion.subtotal, envio, a.medioPago, { ...cfg, descuentoTransferenciaPct: 0 }, mayoristaPct)
-    : totales(cotizacion.subtotal, envio, a.medioPago, cfg);
-  const propia = a.envio.costo !== null && (a.envio.costo === 0 || a.medioPago === "AL_RECIBIR");
+    ? totales(cotizacion.subtotal, envio, a.medioPago, { ...cfg, descuentoTransferenciaPct: 0 }, mayoristaPct, propia)
+    : totales(cotizacion.subtotal, envio, a.medioPago, cfg, 0, propia);
   const charla = await prisma.$queryRaw<{ anuncioTitulo: string | null; prospecto: string | null }[]>`SELECT "anuncioTitulo", "prospecto" FROM "WhatsappConversacion" WHERE "telefono" = ${a.telefono}`;
   const origen = charla[0]?.prospecto ? `whatsapp · prospección: ${charla[0].prospecto}` : charla[0]?.anuncioTitulo ? `whatsapp · anuncio: ${charla[0].anuncioTitulo}` : "whatsapp";
   const pedido = await prisma.order.create({
@@ -341,7 +357,7 @@ export async function crearPedidoWhatsapp(a: {
       envioCobrado,
       total,
       costoProductos: redondear2(renglones.reduce((s, r) => s + r.costoUnitario * r.cantidad, 0)),
-      costoEnvioReal: envio,
+      costoEnvioReal: propia ? 0 : envio,
       comisionPago,
       costoPackaging: redondear2(cfg.costoPackaging),
       envioOpcionId: propia ? "propia" : "whatsapp",

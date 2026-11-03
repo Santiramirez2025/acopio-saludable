@@ -5,6 +5,7 @@ import { detectar, palabrasClave } from "@/lib/asistente";
 import { buscarEnCatalogo, type Enlace, type Respuesta } from "@/lib/asistente-catalogo";
 import { linkWhatsapp } from "@/lib/pedidos";
 import { pesos } from "@/lib/precios";
+import { textoZonaSinMinimo, zonaSinMinimo } from "@/lib/minimo-zona";
 import { zonaPagaDe } from "@/lib/envios/tabla";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
 import { cotizarCarrito } from "@/lib/tienda";
@@ -27,6 +28,8 @@ async function carritoDe(valor: unknown): Promise<CarritoVisto | null> {
       subtotal: c.subtotal,
       falta: c.falta,
       compraMinima: c.compraMinima,
+      compraMinimaPropia: c.compraMinimaPropia,
+      envioBajoMinimo: c.envioBajoMinimo,
     };
   } catch {
     return null; // sin carrito el vendedor sigue atendiendo igual
@@ -109,7 +112,7 @@ export async function POST(req: Request) {
       };
       break;
     case "minimo":
-      r = { texto: `La compra mínima es de ${pesos(cfg.compraMinima)} por pedido. La armás combinando los productos y combos que quieras: no hace falta llevar varias unidades de lo mismo.`, enlaces: [{ href: "/combos", texto: "Ver combos" }, { href: "/armador", texto: "Armar mi pedido" }] };
+      r = { texto: zonaSinMinimo(cfg) ? `${textoZonaSinMinimo(cfg)} Para envíos al resto del país la compra mínima es de ${pesos(cfg.compraMinima)} por pedido. La armás combinando los productos y combos que quieras: no hace falta llevar varias unidades de lo mismo.` : `La compra mínima es de ${pesos(cfg.compraMinima)} por pedido. La armás combinando los productos y combos que quieras: no hace falta llevar varias unidades de lo mismo.`, enlaces: [{ href: "/combos", texto: "Ver combos" }, { href: "/armador", texto: "Armar mi pedido" }] };
       break;
     case "cambios":
       r = { texto: "Si algo llegó mal, roto o no es lo que pediste, lo resolvemos: escribinos con el número de pedido y una foto. También podés arrepentirte de la compra dentro de los 10 días corridos desde que lo recibiste.", enlaces: [{ href: "/cambios-y-devoluciones", texto: "Cambios y devoluciones" }, persona] };

@@ -45,7 +45,7 @@ const REALES_PRODUCTO: [RegExp, string, string][] = [
   [/almendra/i, "real-almendras", "Almendras Non Pareil 1 kg"],
   [/caj[uú]|casta[ñn]a/i, "real-caju", "Castañas de cajú 1 kg"],
   [/\bnuez|\bnueces/i, "real-nuez", "Nuez mariposa light 1 kg"],
-  [/d[aá]til/i, "real-datiles", "Dátiles Deglet Nour 1 kg"],
+  [/d[aá]til/i, "real-datiles", "Dátiles con carozo 1 kg"],
   [/\bpasas?\b/i, "real-pasas", "Pasas de uva"],
   [/banana/i, "real-banana", "Banana chips 1 kg"],
   [/girasol/i, "real-girasol", "Girasol pelado 1 kg"],
@@ -65,7 +65,7 @@ export function fotoRealDe(texto: string): { url: string; pie: string } | null {
 export const REALES = [
   { archivo: "real-asi-llega", pie: "Así llega tu pedido: en bolsa kraft, fraccionado y con una nota para vos" },
   { archivo: "real-armamos-tu-pedido", pie: "Así armamos tu despensa, el mismo día que sale" },
-  { archivo: "real-datiles", pie: "Dátiles Deglet Nour recién fraccionados" },
+  { archivo: "real-datiles", pie: "Dátiles con carozo recién fraccionados" },
 ];
 
 const url = (archivo: string) => `${BASE}/${archivo}.jpg`;
@@ -111,7 +111,7 @@ const PRODUCTOS_TEXTO: [RegExp, string, string][] = [
   [/\bnuez|\bnueces/i, "producto-nuez", "Nuez mariposa"],
   [/almendra/i, "producto-almendras", "Almendras"],
   [/caj[uú]/i, "producto-caju", "Castañas de cajú"],
-  [/d[aá]til/i, "producto-datiles", "Dátiles Deglet Nour"],
+  [/d[aá]til/i, "producto-datiles", "Dátiles con carozo"],
   [/\bpasas?\b/i, "producto-pasas", "Pasas de uva"],
   [/\bmix\b/i, "producto-mix-clasico", "Mix clásico con cajú"],
 ];

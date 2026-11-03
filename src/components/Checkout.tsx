@@ -153,7 +153,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
               <p className="text-sm text-stone-600">Calculando envío…</p>
             ) : !envio.puedePagar ? (
               <p className="text-sm text-red-700">
-                Para tu zona la compra mínima es {pesosCliente(envio.compraMinima)}: te faltan {pesosCliente(envio.falta)}. En Villa Carlos Paz y el sur de Punilla es {pesosCliente(cotizacion.compraMinimaPropia)}. <Link href="/carrito" className="underline">Volver al carrito</Link>
+                Para tu zona la compra mínima es {pesosCliente(envio.compraMinima)}: te faltan {pesosCliente(envio.falta)}. En Villa Carlos Paz y el sur de Punilla {cotizacion.envioBajoMinimo > 0 ? <>no hay mínimo (envío {pesosCliente(cotizacion.envioBajoMinimo)}, sin cargo desde {pesosCliente(cotizacion.compraMinimaPropia)})</> : <>es {pesosCliente(cotizacion.compraMinimaPropia)}</>}. <Link href="/carrito" className="underline">Volver al carrito</Link>
               </p>
             ) : (
               <div className={`space-y-2 ${cotizandoEnvio ? "opacity-60" : ""}`}>

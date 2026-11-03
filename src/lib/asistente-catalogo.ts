@@ -14,7 +14,17 @@ export type Accion = { tipo: "agregar"; clase: "producto" | "combo"; id: string;
 /** `opciones`: respuestas cortas para tocar (en WhatsApp son botones; en la web, chips). */
 /** Envío cotizado para la zona que dijo la persona. costo null: «se ve con el código postal». */
 /** alRecibir: solo Carlos Paz y alrededores (la zona sin cargo). En Córdoba capital y por correo se paga antes. */
-export type EnvioCotizado = { lugar: string; costo: number | null; detalle: string; propia?: boolean; alRecibir?: boolean };
+export type EnvioCotizado = {
+  lugar: string;
+  costo: number | null;
+  detalle: string;
+  propia?: boolean;
+  alRecibir?: boolean;
+  /** Zona de reparto propio sin cargo: ahí rige el mínimo de la zona (o ninguno, con envío fijo bajo mínimo). */
+  zonaPropia?: boolean;
+  /** Si el envío se cobra solo porque el pedido no llega: desde este subtotal va sin cargo. */
+  sinCargoDesde?: number;
+};
 /** `fotos`: imágenes de productos que se mandan antes del texto (cuando el cliente pide ver fotos). */
 export type Foto = { url: string; pie: string };
 export type Respuesta = { texto: string; enlaces?: Enlace[]; fichas?: Ficha[]; acciones?: Accion[]; aviso?: string; derivar?: boolean; opciones?: string[]; envio?: EnvioCotizado; entregaGuardada?: boolean; fotos?: Foto[]; /** agregar_al_pedido con reemplazar: true: el pedido se arma de nuevo en vez de sumarse al guardado. */ reemplazaPedido?: boolean };
