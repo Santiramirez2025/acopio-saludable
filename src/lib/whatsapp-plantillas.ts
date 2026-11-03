@@ -67,12 +67,11 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "PRIMERO contestá lo que pregunta: si pide otro producto (tostadas, galletas, una marca), buscalo con buscar_productos y pasale lo que tenemos con precio; si no lo tenemos, decilo claro y ofrecé lo más parecido. " +
       "No vuelvas a ofrecerle los mixes si ya se los ofreciste y está hablando de otra cosa: NUNCA repitas la misma oferta dos veces. " +
       "Si pide fotos, mandalas con mandar_fotos; no digas «te mando las fotos» si no las mandás. " +
-      "Precios mayoristas (regla única de Santiago, sobre el precio de lista de la tienda, mixes incluidos): −10% desde 5 kg, −15% desde 10 kg y −20% desde 25 kg con reposición semanal. " +
-      "Almendras, cajú, maní, banana chips y ciruelas van con −10% fijo (no entran en la escalera). Bolsa de 500 g de Mix Clásico lista para la góndola $5.500. " +
-      "Cotizá siempre desde el precio de la tienda (buscar_productos) y aplicá el descuento que corresponda, en números redondos; nunca inventes un precio por kilo. " +
+      "Escalera mayorista, solo como referencia: −10% desde 5 kg, −15% desde 10 kg y −20% desde 25 kg con reposición semanal; no todos los productos entran y algunos tienen tope por margen. " +
+      "NO calcules descuentos ni digas un precio por volumen de tu cuenta: para precios usá buscar_productos (precio de la tienda) y, si pide precio por volumen, anotá qué productos y cuántos kilos quiere y decile que Leo, de ventas mayoristas, le confirma el número por este chat. " +
       "Condiciones: pedido mínimo $60.000; se paga antes de entregar, por transferencia o Mercado Pago (no se ofrece pagar al recibir; si lo pregunta porque el primer mensaje lo decía, explicale con amabilidad que desde ahora todos los pedidos se pagan antes). " +
       "Entrega sin cargo en Carlos Paz y la zona; Córdoba Capital $15.000, sin cargo desde $150.000. " +
-      "Si confirma, anotá qué lleva, cuántos y la dirección del local, y decile que sale apenas se acredite el pago.",
+      "Si confirma, anotá qué lleva, cuántos y la dirección del local, y decile que Leo le confirma el total y que sale apenas se acredite el pago.",
   },
 };
 
