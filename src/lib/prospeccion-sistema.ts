@@ -6,6 +6,7 @@
 // Por qué por mail y no por WhatsApp: escribirle en frío por WhatsApp desde el número de Acopio va contra
 // las reglas de Meta y puede hacer que bloqueen el número del bot. El mail 1 a 1, con quién somos y la
 // baja, es el canal correcto para B2B.
+import { AGENTES } from "./agentes";
 import { createHmac } from "node:crypto";
 import { igualesSeguro } from "./freno";
 import { prisma } from "./prisma";
@@ -227,7 +228,7 @@ export async function probarEnvio(): Promise<{ ok: boolean; para: string | null;
   const para = cfg.emailContacto ?? null;
   const remitente = process.env.EMAIL_FROM_PROSPECCION || process.env.EMAIL_FROM || null;
   if (!para) return { ok: false, para, remitente };
-  const r: Registro = { empresa: "Prueba", email: para, senal: "prueba", asunto: "Prueba: así le llega el mail de Marcos a una empresa", cuerpo: "Vi que tienen 3 sucursales y que están buscando vendedor para WhatsApp.\n\nA Acopio Saludable la manejan 23 agentes de IA: el de WhatsApp vende y cobra solo las 24 horas.\n\nLo implementamos a medida desde $4.900.000 + IVA, para empresas que ya facturan más de $10 M por mes.\n\n¿Te muestro en 20 minutos cómo quedaría en tu empresa?", estado: "pendiente", creado: new Date().toISOString() };
+  const r: Registro = { empresa: "Prueba", email: para, senal: "prueba", asunto: "Prueba: así le llega el mail de Marcos a una empresa", cuerpo: `Vi que tienen 3 sucursales y que están buscando vendedor para WhatsApp.\n\nA Acopio Saludable la manejan ${AGENTES.length} agentes de IA: el de WhatsApp vende y cobra solo las 24 horas.\n\nLo implementamos a medida desde $4.900.000 + IVA, para empresas que ya facturan más de $10 M por mes.\n\n¿Te muestro en 20 minutos cómo quedaría en tu empresa?`, estado: "pendiente", creado: new Date().toISOString() };
   const ok = await mandar(r, r.cuerpo, r.asunto);
   return { ok, para, remitente, ...(ok ? {} : { error: ultimoError || "falta RESEND_API_KEY o remitente" }) };
 }

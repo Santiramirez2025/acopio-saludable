@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { proveedorDe } from "@/lib/proveedores";
 import { filasDePdf } from "@/lib/listas-pdf-leer";
-import { parsearLista } from "@/lib/listas-pdf";
+import { detectarProveedor, parsearLista } from "@/lib/listas-pdf";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -95,9 +95,11 @@ async function lagranja() {
   if (!m) return { error: "sin link" };
   const url = new URL(m[1].replace(/&amp;/g, "&"), "https://lagranjadelcentro.com.ar/").toString();
   const buf = await fetch(url, { signal: AbortSignal.timeout(60_000) }).then((r) => r.arrayBuffer());
-  const { filas } = await filasDePdf(new Uint8Array(buf));
+  const { filas, texto } = await filasDePdf(new Uint8Array(buf));
   const lista = parsearLista(filas);
-  return { archivo: decodeURIComponent(url.split("/").pop() ?? ""), renglones: lista.length, lista: lista.map((r) => [r.codigo, r.nombre.slice(0, 48), r.precio]) };
+  // Encabezado sin los renglones de precios y qué detecta el robot: para ver por qué rechaza una lista.
+  const encabezado = filas.filter((f) => !parsearLista([f]).length).slice(0, 12).map((f) => f.slice(0, 120));
+  return { archivo: decodeURIComponent(url.split("/").pop() ?? ""), proveedorDetectado: detectarProveedor(texto), encabezado, filasDeTexto: filas.length, renglones: lista.length, lista: lista.map((r) => [r.codigo, r.nombre.slice(0, 48), r.precio]) };
 }
 
 /** Tráfico propio de la tienda (ver /api/medicion): por día, embudo, páginas y carritos abandonados. */
