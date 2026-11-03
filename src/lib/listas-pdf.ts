@@ -5,7 +5,7 @@ export type Proveedor = "TG" | "LG";
 export type RenglonLista = { codigo: string; nombre: string; precio: number };
 
 export function detectarProveedor(texto: string): Proveedor | null {
-  if (/PRECIOS MAYORISTAS REFERENCIAL|Granja del Centro/i.test(texto)) return "LG";
+  if (/PRECIOS MAYORISTAS? REFERENCIAL|Granja del Centro/i.test(texto)) return "LG";
   if (/TODO GRANOLAS|LISTA DISTRIBUIDORES/i.test(texto)) return "TG";
   return null;
 }
