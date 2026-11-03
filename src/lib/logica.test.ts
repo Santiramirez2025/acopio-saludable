@@ -1029,6 +1029,9 @@ test("listas de precios: lee renglones de Todo Granolas y La Granja", async () =
   assert.deepEqual(l.map((x) => [x.codigo, x.precio]), [["981-007", 15993.45], ["095-016", 7364.63], ["980-047", 9068.53]]);
   assert.equal(l[2].nombre, "DATILES DEGLET NOUR C/CAROZO X 5KG - ARGELIA");
   assert.equal(detectarProveedor("PRECIOS MAYORISTAS REFERENCIAL"), "LG");
+  // Encabezado real de la lista del 03 NOV, en singular. Un texto cualquiera sigue sin pasar.
+  assert.equal(detectarProveedor("PRECIOS MAYORISTA REFERENCIAL\nCODIGO PRODUCTOS PRECIO UNITARIO PRECIO X PACK"), "LG");
+  assert.equal(detectarProveedor("LISTA DE PRECIOS MAYORISTAS"), null);
   assert.equal(detectarProveedor("LISTA DISTRIBUIDORES ... TODO GRANOLAS"), "TG");
   assert.equal(leerPrecio("1.234,50"), 1234.5);
 });
