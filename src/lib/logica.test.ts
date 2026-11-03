@@ -1750,3 +1750,37 @@ test("seguridad: dejar un pedido como cobrado (Pagado o Entregado sin pago) es s
   for (const e of ["EN_COMPRA", "PREPARADO", "ENVIADO", "CANCELADO"]) assert.ok(!cobroRequiereSesion(e, false), e);
 });
 
+
+import { hoyEnArgentina, llegaAlVendedor, notaPedidoSinPagar } from "./atencion-reglas";
+import { contextoProspecto, rubroHabilitado } from "./whatsapp-plantillas";
+
+test("foto de comprobante sin monto: llega al vendedor con su instrucción, no el saludo genérico", () => {
+  assert.equal(llegaAlVendedor("[Mandó una foto que parece el comprobante de la transferencia. Agradecé]"), true);
+  assert.equal(llegaAlVendedor("[Mandó un comprobante por $ 32.200.]"), true);
+  assert.equal(llegaAlVendedor("[Mandó el comprobante de pago por $ 32.200]"), true);
+  assert.equal(llegaAlVendedor("[Mandó una foto: un frasco]"), true);
+  assert.equal(llegaAlVendedor("[Mandó un sticker]"), false);
+  assert.equal(llegaAlVendedor("[Mandó un video]"), false);
+});
+
+test("pedido sin pagar: no va en el reparto; el viejo al recibir se respeta", () => {
+  const t = notaPedidoSinPagar("TRANSFERENCIA");
+  assert.match(t, /TODAVÍA NO PAGÓ/);
+  assert.match(t, /No digas que va en el reparto/);
+  assert.equal(notaPedidoSinPagar("MERCADOPAGO"), t);
+  assert.match(notaPedidoSinPagar("AL_RECIBIR"), /se respeta/);
+  assert.doesNotMatch(notaPedidoSinPagar("AL_RECIBIR"), /NO PAGÓ/);
+});
+
+test("el vendedor sabe qué día es, en hora de Argentina", () => {
+  // Lunes 2/11 a las 22 h de Argentina: en UTC ya es martes.
+  assert.match(hoyEnArgentina(new Date("2026-11-03T01:00:00Z")), /lunes.*\b2\b/);
+  assert.match(hoyEnArgentina(new Date("2026-11-03T13:00:00Z")), /martes.*\b3\b/);
+});
+
+test("captación: alojamientos frenados por «sin TACC» y budines; el resto sigue", () => {
+  for (const r of ["hotel", "hostel", "cabañas / complejo", "departamentos / alquiler temporario"]) assert.equal(rubroHabilitado(r), false, r);
+  for (const r of ["dietética", "cafetería", "gimnasio", "panadería"]) assert.equal(rubroHabilitado(r), true, r);
+  assert.doesNotMatch(contextoProspecto("cabañas / complejo", "X"), /budines sin TACC/);
+  assert.match(contextoProspecto("cabañas / complejo", "X"), /Budines no tenemos/);
+});

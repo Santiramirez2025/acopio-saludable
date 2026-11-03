@@ -13,6 +13,7 @@ import { avisarSantiago } from "./avisos";
 import { analizarCharlas } from "./aprendizaje";
 import { estadoTexto } from "./salud";
 import { enviarProspecto } from "./whatsapp-prospectos";
+import { rubroHabilitado } from "./whatsapp-plantillas";
 import { demanda, diasHasta, proximaTemporada, temporadaActual } from "./temporada";
 import { bloqueLecciones, celular, elegirHoy, parecidas, POR_DIA, type Candidato, type Resultado } from "./organico-reglas";
 
@@ -112,7 +113,7 @@ export async function contactar(cantidad = POR_DIA): Promise<{ enviados: { negoc
     WHERE p."estado" = 'nuevo'
       AND NOT EXISTS (SELECT 1 FROM "WhatsappConversacion" c WHERE c."telefono" = p."telefono" AND (c."contactado" IS NOT NULL OR c."baja"))
     LIMIT 400`;
-  const elegidos = elegirHoy(candidatos, await resultadosPorRubro(), cantidad);
+  const elegidos = elegirHoy(candidatos.filter((c: Candidato) => rubroHabilitado(c.rubro)), await resultadosPorRubro(), cantidad);
   const enviados: { negocio: string; rubro: string }[] = [];
   let fallidos = 0;
   for (const c of elegidos) {

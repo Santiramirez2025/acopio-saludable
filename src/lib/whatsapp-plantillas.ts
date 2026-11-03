@@ -19,7 +19,7 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "¿Le puedo pasar precios a quien se ocupa de las compras?",
     botones: ["Sí, pasame precios", "No, gracias"],
     contexto:
-      "le escribimos nosotros ofreciendo abastecer el desayuno (granola, frutos secos, mermeladas, sin TACC). Atendelo como cliente de negocio: " +
+      "le escribimos nosotros ofreciendo abastecer el desayuno (granola, frutos secos, mermeladas). Sobre sin TACC ofrecé solo envasados de marca que veas en stock y nunca garantices lo fraccionado. Atendelo como cliente de negocio: " +
       "usá pedido_para_negocio con «hotel», nombrá dos o tres productos concretos con su precio real y preguntá cuántos desayunos sirven por semana para armarle el pedido.",
   },
   kit: {
@@ -30,7 +30,7 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "¿Le paso precios para armar el kit?",
     botones: ["Sí, pasame precios", "No, gracias"],
     contexto:
-      "le escribimos nosotros ofreciendo kits de bienvenida para el huésped (alfajores y budines sin TACC, frutos secos, snacks). Atendelo como cliente de negocio: " +
+      "le escribimos nosotros ofreciendo kits de bienvenida para el huésped (frutos secos, snacks y alfajores envasados de marca). Budines no tenemos: si los pide, decilo. Atendelo como cliente de negocio: " +
       "usá pedido_para_negocio con «cabañas», proponé un kit concreto con precios reales y preguntá cuántas unidades tiene para calcular el costo por kit.",
   },
   gastronomia: {
@@ -75,6 +75,16 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "Si confirma, anotá qué lleva, cuántos y la dirección del local, y decile que sale apenas se acredite el pago.",
   },
 };
+
+/**
+ * Plantillas frenadas: el texto aprobado en Meta promete «sin TACC» y la de kit, budines que no vendemos.
+ * Los alojamientos quedan en la lista sin escribirles hasta que haya un texto nuevo aprobado.
+ */
+const FRENADAS: ReadonlySet<keyof typeof PLANTILLAS> = new Set(["desayuno", "kit"] as const);
+
+export function rubroHabilitado(rubro: string): boolean {
+  return !FRENADAS.has(plantillaDe(rubro));
+}
 
 export function plantillaDe(rubro: string): keyof typeof PLANTILLAS {
   if (rubro === "hotel" || rubro === "hostel") return "desayuno";
