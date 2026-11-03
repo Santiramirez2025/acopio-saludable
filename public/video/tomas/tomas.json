@@ -1,216 +1,316 @@
 {
-  "actualizado": "2026-10-31",
-  "uso": "Banco de tomas reales de Acopio en 9:16 (1080x1920, con texto ya quemado). Se reutilizan para armar variantes genuinas: otro orden, otro gancho, otro largo, otro audio y otro texto de publicación. Nunca subir el mismo archivo dos veces a la misma red.",
-  "base": "https://www.acopiosaludable.com/video/tomas/",
-  "videos": [
+ "actualizado": "2026-11-03",
+ "uso": "Banco de tomas reales de Acopio en 9:16 (1080x1920, con texto ya quemado). Se reutilizan para armar variantes genuinas: otro orden, otro gancho, otro largo, otro audio y otro texto de publicación. Nunca subir el mismo archivo dos veces a la misma red.",
+ "base": "https://www.acopiosaludable.com/video/tomas/",
+ "videos": [
+  {
+   "id": "despensa-4-kilos",
+   "original": "/video/despensa-4-kilos-2026-10-30.mp4",
+   "objetivo": "Mostrar cantidad, valor y motivar la compra",
+   "sonido": "Música con ritmo marcado y efecto pop cuando aparece el precio",
+   "nota": "El precio que se ve en la toma 3 es el de la web ese día ($35.000). Si la Despensa cambia de precio, no usar la toma 3.",
+   "tomas": [
     {
-      "id": "despensa-4-kilos",
-      "original": "/video/despensa-4-kilos-2026-10-30.mp4",
-      "objetivo": "Mostrar cantidad, valor y motivar la compra",
-      "sonido": "Música con ritmo marcado y efecto pop cuando aparece el precio",
-      "nota": "El precio que se ve en la toma 3 es el de la web ese día ($35.000). Si la Despensa cambia de precio, no usar la toma 3.",
-      "tomas": [
-        {
-          "n": 1,
-          "archivo": "despensa-1-gancho-4-kilos.mp4",
-          "seg": 5.9,
-          "plano": "Súper con carrito → bolsas en la mesa",
-          "texto": "4 KILOS DE DESPENSA",
-          "rol": "gancho"
-        },
-        {
-          "n": 2,
-          "archivo": "despensa-2-bolsa-en-mano.mp4",
-          "seg": 1.8,
-          "plano": "Detalle, mano con la bolsa de mix",
-          "texto": "4 KILOS DE DESPENSA",
-          "rol": "producto"
-        },
-        {
-          "n": 3,
-          "archivo": "despensa-3-precio-en-la-web.mp4",
-          "seg": 3.9,
-          "plano": "Celular con la ficha y el precio en acopiosaludable.com",
-          "texto": "MIRÁ EL PRECIO",
-          "rol": "precio"
-        },
-        {
-          "n": 4,
-          "archivo": "despensa-4-descuento-transferencia.mp4",
-          "seg": 2.9,
-          "plano": "Recorrido lateral de las bolsas",
-          "texto": "DESCUENTO POR TRANSFERENCIA",
-          "rol": "oferta"
-        },
-        {
-          "n": 5,
-          "archivo": "despensa-5-pedilo-ahora.mp4",
-          "seg": 2.6,
-          "plano": "Tarjeta de gracias con WhatsApp",
-          "texto": "PEDILO AHORA",
-          "rol": "cierre"
-        }
-      ],
-      "ia": true,
-      "ganchos": [
-        "¿4 kilos por $35.000? 👀",
-        "Lo que trae la Despensa de 4 kg",
-        "Carlos Paz: esto te llega a tu casa",
-        "Dejá de comprar de a 100 gramos",
-        "Todo el mes resuelto con 4 kilos",
-        "¿Cuánto gastás en la dietética?",
-        "El combo que más se pide en Carlos Paz",
-        "Frutos secos por kilo, sin salir de casa"
-      ]
+     "n": 1,
+     "archivo": "despensa-1-gancho-4-kilos.mp4",
+     "seg": 5.9,
+     "plano": "Súper con carrito → bolsas en la mesa",
+     "texto": "4 KILOS DE DESPENSA",
+     "rol": "gancho"
     },
     {
-      "id": "granola-semillas",
-      "original": "/video/granola-semillas-2026-10-31.mp4",
-      "objetivo": "Despertar ganas de comerlo y generar compras por impulso",
-      "sonido": "Música alegre + sonido real de la granola cayendo (es lo que más engancha)",
-      "tomas": [
-        {
-          "n": 1,
-          "archivo": "granola-1-tu-desayuno-mejor.mp4",
-          "seg": 3.1,
-          "plano": "Primerísimo primer plano de la granola",
-          "texto": "TU DESAYUNO, PERO MEJOR",
-          "rol": "gancho"
-        },
-        {
-          "n": 2,
-          "archivo": "granola-2-sumale-semillas.mp4",
-          "seg": 3.1,
-          "plano": "Detalle del mix de semillas",
-          "texto": "SUMALE SEMILLAS",
-          "rol": "producto"
-        },
-        {
-          "n": 3,
-          "archivo": "granola-3-combinacion-perfecta.mp4",
-          "seg": 4.9,
-          "plano": "Bowl con granola, banana y semillas cayendo",
-          "texto": "LA COMBINACIÓN PERFECTA",
-          "rol": "deseo"
-        },
-        {
-          "n": 4,
-          "archivo": "granola-4-sumalos-al-carrito.mp4",
-          "seg": 6.5,
-          "plano": "Las dos bolsas con la etiqueta de Acopio",
-          "texto": "SUMALOS AL CARRITO · ACOPIOSALUDABLE.COM",
-          "rol": "cierre"
-        }
-      ],
-      "ia": false,
-      "ganchos": [
-        "Tu desayuno, versión mejorada",
-        "El ruidito de la granola 🔊",
-        "Granola + semillas = desayuno resuelto",
-        "¿Desayunás siempre lo mismo?",
-        "Probá esta combinación",
-        "Lo que le sumo a mi bowl",
-        "Desayuno que llena de verdad",
-        "Así arranco el día"
-      ]
+     "n": 2,
+     "archivo": "despensa-2-bolsa-en-mano.mp4",
+     "seg": 1.8,
+     "plano": "Detalle, mano con la bolsa de mix",
+     "texto": "4 KILOS DE DESPENSA",
+     "rol": "producto"
     },
     {
-      "id": "licuado-datiles",
-      "original": "/video/licuado-datiles-2026-11-01.mp4",
-      "ia": false,
-      "objetivo": "Antojo y desayuno: licuado rosa con frutillas, banana, dátiles y semillas (de Acopio)",
-      "sonido": "Sonido real de la licuadora y el líquido cayendo; música suave",
-      "nota": "Sin texto quemado salvo el cierre (DÁTILES Y SEMILLAS · acopiosaludable.com). Grabado en 3:4, recortado a 9:16.",
-      "tomas": [
-        {
-          "n": 1,
-          "archivo": "licuado-1-leche-al-bowl.mp4",
-          "seg": 3.1,
-          "plano": "Cenital, leche cayendo sobre dátiles, semillas y fruta",
-          "texto": "",
-          "rol": "gancho"
-        },
-        {
-          "n": 2,
-          "archivo": "licuado-2-vaso-rosa.mp4",
-          "seg": 1.8,
-          "plano": "Vaso de licuado rosa con sorbete",
-          "texto": "",
-          "rol": "deseo"
-        },
-        {
-          "n": 3,
-          "archivo": "licuado-3-se-sirve.mp4",
-          "seg": 2.6,
-          "plano": "Se sirve el licuado en el vaso",
-          "texto": "",
-          "rol": "deseo"
-        },
-        {
-          "n": 4,
-          "archivo": "licuado-4-banana-frutillas.mp4",
-          "seg": 5.8,
-          "plano": "Banana y frutillas cayendo en la licuadora",
-          "texto": "",
-          "rol": "producto"
-        },
-        {
-          "n": 5,
-          "archivo": "licuado-5-datiles-semillas.mp4",
-          "seg": 3.6,
-          "plano": "Mano con dátiles y semillas de zapallo",
-          "texto": "",
-          "rol": "producto"
-        },
-        {
-          "n": 6,
-          "archivo": "licuado-6-se-sirve-2.mp4",
-          "seg": 2.7,
-          "plano": "Segundo vaso que se llena",
-          "texto": "",
-          "rol": "deseo"
-        },
-        {
-          "n": 7,
-          "archivo": "licuado-7-bowl-final.mp4",
-          "seg": 4.4,
-          "plano": "Licuado terminado con fruta",
-          "texto": "DÁTILES Y SEMILLAS · acopiosaludable.com",
-          "rol": "cierre"
-        }
-      ],
-      "ganchos": [
-        "Licuado rosa endulzado con dátiles",
-        "El licuado que hago todas las mañanas",
-        "Dátiles + frutillas + banana",
-        "Mirá lo que le pongo a mi licuado",
-        "Desayuno rosa en 1 minuto",
-        "El truco: dátiles en vez de azúcar",
-        "¿Licuado o bowl? Yo, los dos",
-        "Probá sumarle semillas"
-      ]
+     "n": 3,
+     "archivo": "despensa-3-precio-en-la-web.mp4",
+     "seg": 3.9,
+     "plano": "Celular con la ficha y el precio en acopiosaludable.com",
+     "texto": "MIRÁ EL PRECIO",
+     "rol": "precio"
+    },
+    {
+     "n": 4,
+     "archivo": "despensa-4-descuento-transferencia.mp4",
+     "seg": 2.9,
+     "plano": "Recorrido lateral de las bolsas",
+     "texto": "DESCUENTO POR TRANSFERENCIA",
+     "rol": "oferta"
+    },
+    {
+     "n": 5,
+     "archivo": "despensa-5-pedilo-ahora.mp4",
+     "seg": 2.6,
+     "plano": "Tarjeta de gracias con WhatsApp",
+     "texto": "PEDILO AHORA",
+     "rol": "cierre"
     }
-  ],
-  "variantes_hechas": [
-    {
-      "archivo": "/video/tiktok/despensa-precio-primero.mp4",
-      "orden": "despensa 3-2-4-5",
-      "seg": 11.2,
-      "para": "TikTok / Shorts: abre con el precio"
-    },
-    {
-      "archivo": "/video/tiktok/granola-bowl-primero.mp4",
-      "orden": "granola 3-2-4",
-      "seg": 14.5,
-      "para": "TikTok / Shorts: abre con el bowl"
-    }
-  ],
-  "formatos": {
-    "reel_instagram_facebook": "Video completo, 15-20 s, caption con precio y WhatsApp",
-    "tiktok": "Variante distinta a la del reel (otro orden u otro gancho), 8-15 s, título corto, audio en tendencia desde la app",
-    "youtube_shorts": "Otra variante, 10-15 s, título con producto + Villa Carlos Paz",
-    "historias_instagram": "Una toma suelta por historia (gancho, precio u oferta) con sticker de link a la ficha o a WhatsApp; ideal 2-3 historias seguidas",
-    "anuncios_meta": "Video completo o la variante con precio primero; las tomas de precio solo si coincide con el precio vigente"
+   ],
+   "ia": true,
+   "ganchos": [
+    "¿4 kilos por $35.000? 👀",
+    "Lo que trae la Despensa de 4 kg",
+    "Carlos Paz: esto te llega a tu casa",
+    "Dejá de comprar de a 100 gramos",
+    "Todo el mes resuelto con 4 kilos",
+    "¿Cuánto gastás en la dietética?",
+    "El combo que más se pide en Carlos Paz",
+    "Frutos secos por kilo, sin salir de casa"
+   ]
   },
-  "nota_ia": "Si el video es ia:true, en TikTok se marca «Contenido generado por IA» y en YouTube «contenido alterado o sintético»."
+  {
+   "id": "granola-semillas",
+   "original": "/video/granola-semillas-2026-10-31.mp4",
+   "objetivo": "Despertar ganas de comerlo y generar compras por impulso",
+   "sonido": "Música alegre + sonido real de la granola cayendo (es lo que más engancha)",
+   "tomas": [
+    {
+     "n": 1,
+     "archivo": "granola-1-tu-desayuno-mejor.mp4",
+     "seg": 3.1,
+     "plano": "Primerísimo primer plano de la granola",
+     "texto": "TU DESAYUNO, PERO MEJOR",
+     "rol": "gancho"
+    },
+    {
+     "n": 2,
+     "archivo": "granola-2-sumale-semillas.mp4",
+     "seg": 3.1,
+     "plano": "Detalle del mix de semillas",
+     "texto": "SUMALE SEMILLAS",
+     "rol": "producto"
+    },
+    {
+     "n": 3,
+     "archivo": "granola-3-combinacion-perfecta.mp4",
+     "seg": 4.9,
+     "plano": "Bowl con granola, banana y semillas cayendo",
+     "texto": "LA COMBINACIÓN PERFECTA",
+     "rol": "deseo"
+    },
+    {
+     "n": 4,
+     "archivo": "granola-4-sumalos-al-carrito.mp4",
+     "seg": 6.5,
+     "plano": "Las dos bolsas con la etiqueta de Acopio",
+     "texto": "SUMALOS AL CARRITO · ACOPIOSALUDABLE.COM",
+     "rol": "cierre"
+    }
+   ],
+   "ia": false,
+   "ganchos": [
+    "Tu desayuno, versión mejorada",
+    "El ruidito de la granola 🔊",
+    "Granola + semillas = desayuno resuelto",
+    "¿Desayunás siempre lo mismo?",
+    "Probá esta combinación",
+    "Lo que le sumo a mi bowl",
+    "Desayuno que llena de verdad",
+    "Así arranco el día"
+   ]
+  },
+  {
+   "id": "licuado-datiles",
+   "original": "/video/licuado-datiles-2026-11-01.mp4",
+   "ia": false,
+   "objetivo": "Antojo y desayuno: licuado rosa con frutillas, banana, dátiles y semillas (de Acopio)",
+   "sonido": "Sonido real de la licuadora y el líquido cayendo; música suave",
+   "nota": "Sin texto quemado salvo el cierre (DÁTILES Y SEMILLAS · acopiosaludable.com). Grabado en 3:4, recortado a 9:16.",
+   "tomas": [
+    {
+     "n": 1,
+     "archivo": "licuado-1-leche-al-bowl.mp4",
+     "seg": 3.1,
+     "plano": "Cenital, leche cayendo sobre dátiles, semillas y fruta",
+     "texto": "",
+     "rol": "gancho"
+    },
+    {
+     "n": 2,
+     "archivo": "licuado-2-vaso-rosa.mp4",
+     "seg": 1.8,
+     "plano": "Vaso de licuado rosa con sorbete",
+     "texto": "",
+     "rol": "deseo"
+    },
+    {
+     "n": 3,
+     "archivo": "licuado-3-se-sirve.mp4",
+     "seg": 2.6,
+     "plano": "Se sirve el licuado en el vaso",
+     "texto": "",
+     "rol": "deseo"
+    },
+    {
+     "n": 4,
+     "archivo": "licuado-4-banana-frutillas.mp4",
+     "seg": 5.8,
+     "plano": "Banana y frutillas cayendo en la licuadora",
+     "texto": "",
+     "rol": "producto"
+    },
+    {
+     "n": 5,
+     "archivo": "licuado-5-datiles-semillas.mp4",
+     "seg": 3.6,
+     "plano": "Mano con dátiles y semillas de zapallo",
+     "texto": "",
+     "rol": "producto"
+    },
+    {
+     "n": 6,
+     "archivo": "licuado-6-se-sirve-2.mp4",
+     "seg": 2.7,
+     "plano": "Segundo vaso que se llena",
+     "texto": "",
+     "rol": "deseo"
+    },
+    {
+     "n": 7,
+     "archivo": "licuado-7-bowl-final.mp4",
+     "seg": 4.4,
+     "plano": "Licuado terminado con fruta",
+     "texto": "DÁTILES Y SEMILLAS · acopiosaludable.com",
+     "rol": "cierre"
+    }
+   ],
+   "ganchos": [
+    "Licuado rosa endulzado con dátiles",
+    "El licuado que hago todas las mañanas",
+    "Dátiles + frutillas + banana",
+    "Mirá lo que le pongo a mi licuado",
+    "Desayuno rosa en 1 minuto",
+    "El truco: dátiles en vez de azúcar",
+    "¿Licuado o bowl? Yo, los dos",
+    "Probá sumarle semillas"
+   ]
+  },
+  {
+   "id": "datiles-origen",
+   "original": "/video/datiles-origen-2026-11-03.mp4",
+   "ia": false,
+   "objetivo": "Educativo: de dónde vienen los dátiles (historia y origen) y cierre con el producto nuestro",
+   "sonido": "Voz/música del original; texto quemado en cada toma",
+   "nota": "Sin beneficios de salud. Dice Egipto, Argelia y Túnez como orígenes del dátil en general; hoy vendemos el de Egipto. Grabado el 3/11 con guantes, dátiles en plato y en bolsa Acopio.",
+   "tomas": [
+    {
+     "n": 1,
+     "archivo": "datiles-origen-1-frutos-antiguos.mp4",
+     "seg": 6.0,
+     "plano": "Cenital, dátiles sobre plato blanco",
+     "texto": "«ESTE ES DE LOS FRUTOS MÁS ANTIGUOS DEL MUNDO»",
+     "rol": "gancho"
+    },
+    {
+     "n": 2,
+     "archivo": "datiles-origen-2-5000-anios.mp4",
+     "seg": 6.2,
+     "plano": "Detalle de dátiles brillantes en bandeja",
+     "texto": "«HACE MÁS DE 5.000 AÑOS YA SE CULTIVABAN EN MEDIO ORIENTE»",
+     "rol": "historia"
+    },
+    {
+     "n": 3,
+     "archivo": "datiles-origen-3-egipto-argelia-tunez.mp4",
+     "seg": 5.6,
+     "plano": "Caja del proveedor con dátiles impresos",
+     "texto": "«HOY NOS LLEGAN DE EGIPTO, ARGELIA Y TÚNEZ»",
+     "rol": "origen"
+    },
+    {
+     "n": 4,
+     "archivo": "datiles-origen-4-carnoso-caramelo.mp4",
+     "seg": 4.5,
+     "plano": "Mano con guante abre un dátil",
+     "texto": "«CARNOSO, DULCE Y CON GUSTO A CARAMELO»",
+     "rol": "producto"
+    },
+    {
+     "n": 5,
+     "archivo": "datiles-origen-5-pedi-por-whatsapp.mp4",
+     "seg": 8.9,
+     "plano": "Bolsa Acopio de dátiles con etiqueta, sobre mesada",
+     "texto": "«DÁTILES CON CAROZO · VILLA CARLOS PAZ · PEDÍ POR WHATSAPP»",
+     "rol": "cierre"
+    }
+   ]
+  },
+  {
+   "id": "datiles-moda",
+   "original": "/video/datiles-de-moda-2026-11-03.mp4",
+   "ia": false,
+   "objetivo": "Por qué los dátiles están de moda: usos en recetas, endulzante natural, se comen solos o rellenos; cierre con las bolsas armadas",
+   "sonido": "Voz/música del original; texto quemado",
+   "nota": "Sin beneficios de salud: solo usos culinarios. Última toma muestra bolsas kraft al sol (armado del día).",
+   "tomas": [
+    {
+     "n": 1,
+     "archivo": "datiles-moda-1-dulce-en-todas-las-recetas.mp4",
+     "seg": 5.7,
+     "plano": "Mano con guante abre un dátil relleno",
+     "texto": "«EL DULCE QUE ESTÁ EN TODAS LAS RECETAS»",
+     "rol": "gancho"
+    },
+    {
+     "n": 2,
+     "archivo": "datiles-moda-2-endulzar-licuados.mp4",
+     "seg": 4.5,
+     "plano": "Cenital, dátiles en plato",
+     "texto": "«SE USAN PARA ENDULZAR LICUADOS, AVENA Y POSTRES»",
+     "rol": "uso"
+    },
+    {
+     "n": 3,
+     "archivo": "datiles-moda-3-solos-o-rellenos.mp4",
+     "seg": 4.5,
+     "plano": "Detalle de dátiles grandes",
+     "texto": "«SE COMEN SOLOS O RELLENOS»",
+     "rol": "uso"
+    },
+    {
+     "n": 4,
+     "archivo": "datiles-moda-4-reemplazan-azucar.mp4",
+     "seg": 4.5,
+     "plano": "Mano con guante sostiene un dátil",
+     "texto": "«REEMPLAZAN AZÚCAR Y MIEL EN MUCHAS PREPARACIONES»",
+     "rol": "uso"
+    },
+    {
+     "n": 5,
+     "archivo": "datiles-moda-5-los-armamos-en-el-dia.mp4",
+     "seg": 2.6,
+     "plano": "Bolsas kraft de pedidos, exterior con cielo",
+     "texto": "«LOS ARMAMOS EN EL DÍA Y TE LOS LLEVAMOS»",
+     "rol": "cierre"
+    }
+   ]
+  }
+ ],
+ "variantes_hechas": [
+  {
+   "archivo": "/video/tiktok/despensa-precio-primero.mp4",
+   "orden": "despensa 3-2-4-5",
+   "seg": 11.2,
+   "para": "TikTok / Shorts: abre con el precio"
+  },
+  {
+   "archivo": "/video/tiktok/granola-bowl-primero.mp4",
+   "orden": "granola 3-2-4",
+   "seg": 14.5,
+   "para": "TikTok / Shorts: abre con el bowl"
+  }
+ ],
+ "formatos": {
+  "reel_instagram_facebook": "Video completo, 15-20 s, caption con precio y WhatsApp",
+  "tiktok": "Variante distinta a la del reel (otro orden u otro gancho), 8-15 s, título corto, audio en tendencia desde la app",
+  "youtube_shorts": "Otra variante, 10-15 s, título con producto + Villa Carlos Paz",
+  "historias_instagram": "Una toma suelta por historia (gancho, precio u oferta) con sticker de link a la ficha o a WhatsApp; ideal 2-3 historias seguidas",
+  "anuncios_meta": "Video completo o la variante con precio primero; las tomas de precio solo si coincide con el precio vigente"
+ },
+ "nota_ia": "Si el video es ia:true, en TikTok se marca «Contenido generado por IA» y en YouTube «contenido alterado o sintético»."
 }
