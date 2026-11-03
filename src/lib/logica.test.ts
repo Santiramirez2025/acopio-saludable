@@ -1336,6 +1336,18 @@ test("Plantilla dietética: regla mayorista única y cobro anticipado", async ()
   assert.match(c, /−10% desde 5 kg, −15% desde 10 kg y −20% desde 25 kg/);
   assert.match(c, /mínimo \$60\.000/);
   assert.doesNotMatch(c, /\$10\.000 el kilo|\$50\.000|pagando al recibir|martes Punilla/);
+  // Tras #439 el bot no calcula el volumen: sin costos no puede respetar el piso (el precio lo confirma Leo).
+  assert.match(c, /NO calcules descuentos/);
+  assert.match(c, /Leo/);
+  assert.doesNotMatch(c, /aplicá el descuento|Bolsa de 500 g de Mix Clásico|\$5\.500/);
+});
+
+test("Audio: la pista devuelta por el modelo no cuenta como lo que dijo la persona", async () => {
+  const { esEcoDeLaPista, PISTA_AUDIO } = await import("./oir-audio");
+  assert.equal(esEcoDeLaPista(PISTA_AUDIO), true);
+  assert.equal(esEcoDeLaPista(PISTA_AUDIO.toUpperCase().replace(/,/g, "")), true);
+  assert.equal(esEcoDeLaPista("Hola, quiero un pedido por WhatsApp de frutos secos y nueces para Carlos Paz"), false);
+  assert.equal(esEcoDeLaPista("Quiero la Despensa de 4 kilos, te transfiero hoy"), false);
 });
 
 test("ML: fila de precios marca la promoción y el precio final bajo el piso", async () => {

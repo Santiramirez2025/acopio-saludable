@@ -4,6 +4,19 @@
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 
+/** Vocabulario que se le da al modelo para que entienda los nombres de los productos. */
+export const PISTA_AUDIO = "Pedido por WhatsApp a Acopio Saludable: frutos secos, nueces, almendras, castañas de cajú, mix, dátiles, pasas, semillas, sin TACC, Despensa de 4 kilos, Villa Carlos Paz, Córdoba, kilo, medio kilo, transferencia, comprobante.";
+
+const sinMarcas = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+
+/**
+ * Con un audio mudo o muy corto el modelo a veces devuelve la pista en vez de lo que se dijo. Eso no lo dijo
+ * la persona: si se le pasa al vendedor, le ofrece la Despensa porque la pista la nombra (Adriana, 3/11).
+ */
+export function esEcoDeLaPista(texto: string): boolean {
+  return sinMarcas(texto).includes(sinMarcas(PISTA_AUDIO).slice(0, 60));
+}
+
 export function hayOido(): boolean {
   return Boolean(process.env.OPENAI_API_KEY);
 }
@@ -31,7 +44,7 @@ export async function transcribirAudio(mediaId: string): Promise<{ texto: string
       form.append("file", new Blob([bytes], { type: tipo }), `audio.${ext}`);
       form.append("model", model);
       form.append("language", "es");
-      form.append("prompt", "Pedido por WhatsApp a Acopio Saludable: frutos secos, nueces, almendras, castañas de cajú, mix, dátiles, pasas, semillas, sin TACC, Despensa de 4 kilos, Villa Carlos Paz, Córdoba, kilo, medio kilo, transferencia, comprobante.");
+      form.append("prompt", PISTA_AUDIO);
       return fetch("https://api.openai.com/v1/audio/transcriptions", { method: "POST", headers: { authorization: `Bearer ${clave}` }, body: form, signal: AbortSignal.timeout(40_000) });
     };
     // Se prueban en orden hasta que uno conteste: el configurado, gpt-4o-transcribe (el mismo que usa el
@@ -47,6 +60,7 @@ export async function transcribirAudio(mediaId: string): Promise<{ texto: string
     if (!res) return { texto: null, motivo: `transcripción: ${errores.join(" | ")}`.slice(0, 500) };
     const j = (await res.json()) as { text?: string };
     const t = (j.text ?? "").replace(/\s+/g, " ").trim();
+    if (esEcoDeLaPista(t)) return { texto: null, motivo: "audio sin voz: el modelo devolvió la pista" };
     return t ? { texto: t.slice(0, 1500) } : { texto: null, motivo: "vacío" };
   } catch (e) {
     return { texto: null, motivo: String(e).slice(0, 200) };
