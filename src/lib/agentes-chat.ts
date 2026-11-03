@@ -2,6 +2,7 @@
 // los números del negocio y las órdenes pendientes. Si Santiago le pide algo para hacer, la respuesta
 // termina con «ORDEN: …» y esa orden queda guardada para su próxima corrida.
 
+import { leerOrden, rotuloOrden, textoConEmisor, type EmisorOrden } from "./orden-emisor";
 import { POLITICA_COMERCIAL } from "./politica";
 import { prisma } from "./prisma";
 import { ESTILO_VOZ } from "./voz-estilo";
@@ -12,8 +13,9 @@ import { temporadaActual } from "./temporada";
 
 const MODELO = process.env.AGENTES_MODELO || "claude-sonnet-5-5";
 
-export async function guardarOrden(agente: string, texto: string): Promise<void> {
-  await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${`orden-${agente}`}, true, ${texto.slice(0, 1000)})`;
+/** `emisor` = "santiago" solo si el que llama ya lo verificó (ver orden-emisor.ts); si no, queda como orden interna. */
+export async function guardarOrden(agente: string, texto: string, emisor: EmisorOrden = null): Promise<void> {
+  await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${`orden-${agente}`}, true, ${textoConEmisor(texto, emisor)})`;
 }
 
 type Fila = { nombre: string; detalle: string | null; fecha: Date };
@@ -63,7 +65,7 @@ async function contexto(agente: string, corto = false): Promise<string> {
     t ? `TEMPORADA: ${t.nombre}.` : "",
     `TUS ÚLTIMOS INFORMES:\n${propios.slice(0, corto ? 2 : 8).map((p) => `[${f(p.fecha)}] ${(p.detalle ?? "").slice(0, corto ? 600 : 1800)}`).join("\n\n") || "(todavía no trabajaste: es tu primera semana)"}`,
     `NOTAS RECIENTES DE DIRECCIÓN:\n${direccion.slice(0, corto ? 1 : 3).map((p) => `[${f(p.fecha)} · ${p.nombre.slice(7)}] ${(p.detalle ?? "").slice(0, corto ? 500 : 1200)}`).join("\n\n") || "(sin notas)"}`,
-    `ÓRDENES DE SANTIAGO PARA VOS (últimos 7 días):\n${ordenes.map((o) => `[${f(o.fecha)}] ${(o.detalle ?? "").slice(0, corto ? 220 : 800)}`).join("\n") || "(ninguna)"}`,
+    `ÓRDENES PARA VOS (últimos 7 días):\n${ordenes.map((o) => { const { emisor, texto } = leerOrden(o.detalle); return `[${f(o.fecha)}] ${rotuloOrden(emisor)}: ${texto.slice(0, corto ? 220 : 800)}`; }).join("\n") || "(ninguna)"}`,
     `LO ÚLTIMO QUE HABLASTE CON SANTIAGO (para no repetirle cosas y retomar donde quedaron):\n${charla.map((m) => `${m.role === "user" ? "Santiago" : "Vos"}: ${m.content.slice(0, corto ? 200 : 300)}`).join("\n") || "(es la primera charla)"}`,
   ]
     .filter(Boolean)
