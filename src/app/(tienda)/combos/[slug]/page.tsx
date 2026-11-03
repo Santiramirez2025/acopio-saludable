@@ -5,6 +5,7 @@ import { combosTienda } from "@/lib/tienda";
 import { leerConfig } from "@/lib/config";
 import { medida, pesos, renglonCombo } from "@/lib/precios";
 import { urlSitio } from "@/lib/sitio";
+import { altCombo, pesoCombo, seoCombo } from "@/lib/combo-seo";
 import { BotonAgregar } from "@/components/Carrito";
 import { BotonCompartir } from "@/components/Compartir";
 import { Foto } from "@/components/Foto";
@@ -23,7 +24,9 @@ const SEGUNDA_FOTO = new Set<string>([]);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const c = await cargar((await params).slug);
-  return c ? { title: `Combo ${c.nombre}`, description: `Combo ${c.nombre}: ${c.items.map((i) => i.producto.producto).join(", ")}. Envíos a todo el país.`.slice(0, 155), alternates: { canonical: `/combos/${c.slug}` } } : { title: "Combo no disponible" };
+  if (!c) return { title: "Combo no disponible" };
+  const cfg = await leerConfig();
+  return { ...seoCombo(c, cfg.compraMinimaPropia), alternates: { canonical: `/combos/${c.slug}` } };
 }
 
 export default async function ComboPagina({ params }: Props) {
@@ -32,10 +35,7 @@ export default async function ComboPagina({ params }: Props) {
   const cfg = await leerConfig();
   const faltaParaMinimo = Math.max(0, cfg.compraMinima - c.precio);
   const unidades = c.items.reduce((s, i) => s + i.cantidad, 0);
-  // Peso total: solo si todos los productos se venden por peso, para no mezclar gramos con mililitros.
-  const gramos = c.items.every((i) => i.producto.unidad === "g" && i.producto.contenido)
-    ? c.items.reduce((s, i) => s + (i.producto.contenido ?? 0) * i.cantidad, 0)
-    : 0;
+  const gramos = pesoCombo(c.items);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -45,10 +45,19 @@ export default async function ComboPagina({ params }: Props) {
     description: c.items.map((i) => `${i.cantidad} × ${i.producto.producto}`).join(", "),
     offers: { "@type": "Offer", price: c.precio.toFixed(2), priceCurrency: "ARS", availability: "https://schema.org/InStock", url: `${urlSitio()}/combos/${c.slug}` },
   };
+  const migas = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: urlSitio() },
+      { "@type": "ListItem", position: 2, name: "Combos", item: `${urlSitio()}/combos` },
+      { "@type": "ListItem", position: 3, name: c.nombre },
+    ],
+  };
   return (
     <>
     <Medir evento="ver_producto" ids={[`combo-${c.slug}`]} valor={c.precio} />
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, migas]).replace(/</g, "\\u003c") }} />
     {/* Medir y el JSON-LD van afuera del space-y: si no, el link «← Combos» hereda 24 px de margen arriba. */}
     <div className="space-y-6">
       <Link href="/combos" className="-my-3 inline-flex min-h-[48px] items-center text-sm text-stone-600 underline underline-offset-4">← Combos</Link>
@@ -61,7 +70,7 @@ export default async function ComboPagina({ params }: Props) {
       </p>
       {c.fotoUrl && (
         <div className={`grid gap-3 ${SEGUNDA_FOTO.has(c.slug) ? "sm:grid-cols-2" : ""}`}>
-          <Foto src={c.fotoUrl} alt={`Combo ${c.nombre}`} className={`w-full rounded-3xl ${SEGUNDA_FOTO.has(c.slug) || c.fotoUrl.includes("/v2/") ? "aspect-[4/3] sm:max-w-2xl" : "aspect-[16/9] sm:aspect-[21/9]"}`} prioridad sizes="(max-width: 640px) 100vw, 550px" />
+          <Foto src={c.fotoUrl} alt={altCombo(c)} className={`w-full rounded-3xl ${SEGUNDA_FOTO.has(c.slug) || c.fotoUrl.includes("/v2/") ? "aspect-[4/3] sm:max-w-2xl" : "aspect-[16/9] sm:aspect-[21/9]"}`} prioridad sizes="(max-width: 640px) 100vw, 550px" />
           {SEGUNDA_FOTO.has(c.slug) && <Foto src={`/img/combos/${c.slug}-2.webp`} alt="" className="aspect-[4/3] w-full rounded-3xl" sizes="(max-width: 640px) 100vw, 550px" />}
         </div>
       )}

@@ -4,7 +4,7 @@ import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
 import { proximoCorte } from "./corte";
-import { calcularCombo, renglonCombo, precioRedondo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
+import { calcularCombo, contenidoNeto, renglonCombo, precioRedondo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
 import { wherePublicado, esSinTacc, textosSeguros } from "./filtros-producto";
 import { prolijo } from "./nombres";
 
@@ -42,7 +42,7 @@ export function aTienda(p: Product, reglas: ReglasPrecio = {}): ProductoTienda {
     categoria: p.categoria,
     formato: p.formato,
     precio,
-    contenido: p.contenido,
+    contenido: contenidoNeto(p.contenido, p.unidad, p.presentacion),
     unidad: p.unidad,
     fotoUrl: p.fotoUrl,
     gancho: p.gancho,
