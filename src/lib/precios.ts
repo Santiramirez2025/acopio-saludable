@@ -75,6 +75,11 @@ export function unidadesPorEnvase(presentacion: string): number | null {
   return n > 1 ? n : null;
 }
 
+/** Gramos reales del envase. Algunos productos se cargaron con las unidades como si fueran gramos ("x 6 unidades", contenido 6, "g"): ahí no hay dato de peso. */
+export function contenidoNeto(contenido: number | null, unidad: string | null, presentacion: string): number | null {
+  return unidad === "g" && contenido != null && unidadesPorEnvase(presentacion) === contenido ? null : contenido;
+}
+
 /** Cuánto sale cada unidad dentro del envase; null si el envase trae una sola. */
 export function precioPorUnidadSuelta(precio: number, presentacion: string): number | null {
   const unidades = unidadesPorEnvase(presentacion);
