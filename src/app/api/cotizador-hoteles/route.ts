@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { minimoParaArmar } from "@/lib/minimo-zona";
 import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda, type ProductoTienda } from "@/lib/tienda";
 import { cotizarDesayunos, desayunosDe, INSUMO_IDS, INSUMOS, type Insumo } from "@/lib/cotizador-hotel";
@@ -33,5 +34,5 @@ export async function POST(req: Request) {
   const filas = cotizarDesayunos(desayunos, insumos, [...catalogo.values()]);
   const lineas = filas.map((f) => ({ producto: catalogo.get(f.codigo)!, cantidad: f.cantidad, insumo: INSUMOS[f.insumo].nombre, necesario: f.necesario }));
   const total = lineas.reduce((s, l) => s + l.producto.precio * l.cantidad, 0);
-  return NextResponse.json({ desayunos, lineas, total, porDesayuno: desayunos ? total / desayunos : 0, compraMinima: cfg.compraMinima });
+  return NextResponse.json({ desayunos, lineas, total, porDesayuno: desayunos ? total / desayunos : 0, compraMinima: minimoParaArmar(cfg) });
 }

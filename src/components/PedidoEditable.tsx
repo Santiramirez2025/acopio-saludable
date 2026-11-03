@@ -7,7 +7,7 @@ import { Foto } from "./Foto";
 import { BotonCompartir, enlacePedido } from "./Compartir";
 
 /** Pedido tipo con cantidades editables y botón para cargarlo entero al carrito. */
-export function PedidoEditable({ items, compraMinima, etiqueta = "Cargar este pedido al carrito" }: { items: { producto: ProductoTienda; cantidad: number }[]; compraMinima: number; etiqueta?: string }) {
+export function PedidoEditable({ items, compraMinima, etiqueta = "Cargar este pedido al carrito", sinMinimo = false }: { items: { producto: ProductoTienda; cantidad: number }[]; compraMinima: number; etiqueta?: string; sinMinimo?: boolean }) {
   const [cantidades, setCantidades] = useState<Record<string, number>>(() => Object.fromEntries(items.map((i) => [i.producto.codigo, i.cantidad])));
   const total = items.reduce((s, i) => s + i.producto.precio * (cantidades[i.producto.codigo] ?? 0), 0);
   const fijar = (codigo: string, n: number) => setCantidades((c) => ({ ...c, [codigo]: Math.max(0, Math.min(999, n)) }));
@@ -42,7 +42,7 @@ export function PedidoEditable({ items, compraMinima, etiqueta = "Cargar este pe
         <div>
           <p className="text-lg font-semibold tabular-nums">{pesosCliente(total)}</p>
           <p className="text-xs text-stone-600">
-            {total >= compraMinima ? "Llega a la compra mínima" : `Faltan ${pesosCliente(compraMinima - total)} para la compra mínima de ${pesosCliente(compraMinima)}`}
+            {sinMinimo ? (total >= compraMinima ? "Envío sin cargo en Carlos Paz" : `Faltan ${pesosCliente(compraMinima - total)} para el envío sin cargo en Carlos Paz`) : total >= compraMinima ? "Llega a la compra mínima" : `Faltan ${pesosCliente(compraMinima - total)} para la compra mínima de ${pesosCliente(compraMinima)}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

@@ -20,7 +20,7 @@ const OBJETIVOS = [
   { id: "despensa", texto: "Despensa completa" },
 ];
 
-export function MiLista({ compraMinima, sitio }: { compraMinima: number; sitio: string }) {
+export function MiLista({ compraMinima, sitio, sinMinimo = false }: { compraMinima: number; sitio: string; sinMinimo?: boolean }) {
   const PRESUPUESTOS = [compraMinima, 50000, 80000].filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b);
   const [personas, setPersonas] = useState(0);
   const [objetivo, setObjetivo] = useState("");
@@ -95,7 +95,7 @@ export function MiLista({ compraMinima, sitio }: { compraMinima: number; sitio: 
         <section aria-live="polite" className="space-y-3">
           <h2 className="font-display text-2xl font-semibold text-acopio-900">Tu lista del mes</h2>
           <p className="text-sm text-stone-600">Productos reales con el precio de hoy. Cambiá cantidades con + y −, y cargala al carrito.</p>
-          <PedidoEditable key={JSON.stringify(resultado.lineas.map((l) => [l.producto.codigo, l.cantidad]))} items={resultado.lineas} compraMinima={resultado.compraMinima} etiqueta="Cargar al carrito" />
+          <PedidoEditable key={JSON.stringify(resultado.lineas.map((l) => [l.producto.codigo, l.cantidad]))} items={resultado.lineas} compraMinima={resultado.compraMinima} sinMinimo={sinMinimo} etiqueta="Cargar al carrito" />
           <div className="flex flex-wrap gap-2">
             <a className="btn-sec" href={`https://wa.me/?text=${encodeURIComponent(textoCompartir)}`} target="_blank" rel="noopener noreferrer">Compartir por WhatsApp</a>
             <button type="button" className="btn-sec" onClick={copiar}>{copiado ? "¡Link copiado!" : "Guardar el link de mi lista"}</button>

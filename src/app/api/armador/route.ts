@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { minimoParaArmar } from "@/lib/minimo-zona";
 import { leerConfig } from "@/lib/config";
 import { NICHO_IDS } from "@/lib/taxonomia";
 import { combosTienda, productosTienda } from "@/lib/tienda";
@@ -37,13 +38,13 @@ export async function POST(req: Request) {
     candidatos: candidatos.map((c) => ({ codigo: c.codigo, precio: c.precio })),
     personas,
     presupuesto,
-    compraMinima: cfg.compraMinima,
+    compraMinima: minimoParaArmar(cfg),
   });
   const lineas = items.map((i) => ({ producto: disponibles.get(i.codigo)!, cantidad: i.cantidad }));
   return NextResponse.json({
     lineas,
     total: lineas.reduce((s, l) => s + l.producto.precio * l.cantidad, 0),
-    compraMinima: cfg.compraMinima,
-    presupuestoAjustado: presupuesto < cfg.compraMinima,
+    compraMinima: minimoParaArmar(cfg),
+    presupuestoAjustado: presupuesto < minimoParaArmar(cfg),
   });
 }

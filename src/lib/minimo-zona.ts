@@ -13,6 +13,11 @@ export function umbralZona(c: ReglaMinimo): number {
   return Math.min(c.compraMinimaPropia, c.compraMinima);
 }
 
+/** Con qué piso se arman los pedidos sugeridos (armador, lista del mes, cotizador): el umbral de la zona si no hay mínimo, si no el general. */
+export function minimoParaArmar(c: ReglaMinimo): number {
+  return zonaSinMinimo(c) ? umbralZona(c) : c.compraMinima;
+}
+
 /** La zona propia compra sin mínimo: hay envío fijo por debajo del umbral. */
 export function zonaSinMinimo(c: ReglaMinimo): boolean {
   return c.entregaPropiaActiva && c.envioBajoMinimo > 0;

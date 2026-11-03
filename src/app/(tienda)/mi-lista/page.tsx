@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { minimoParaArmar, zonaSinMinimo } from "@/lib/minimo-zona";
 import { leerConfig } from "@/lib/config";
 import { urlSitio } from "@/lib/sitio";
 import { Titulo } from "@/components/Tienda";
@@ -17,7 +18,7 @@ export default async function MiListaPagina() {
       <Titulo sobre="Lista del mes" bajada="Contestá 3 preguntas y te armamos la compra saludable del mes con productos reales y precios de hoy. La ajustás, la compartís o la cargás al carrito.">
         Tu compra del mes, en 60 segundos
       </Titulo>
-      <MiLista compraMinima={cfg.compraMinima} sitio={urlSitio()} />
+      <MiLista compraMinima={minimoParaArmar(cfg)} sinMinimo={zonaSinMinimo(cfg)} sitio={urlSitio()} />
     </div>
   );
 }

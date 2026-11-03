@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { minimoParaArmar, zonaSinMinimo } from "@/lib/minimo-zona";
 import { leerConfig } from "@/lib/config";
 import { NICHOS, NICHO_IDS } from "@/lib/taxonomia";
 import { Titulo } from "@/components/Tienda";
@@ -13,7 +14,7 @@ export default async function ArmadorPagina({ searchParams }: { searchParams: Pr
       <Titulo sobre="Armador de pedido" bajada="Contestá 3 preguntas y te sugerimos un pedido que llega a la compra mínima. Después lo ajustás como quieras.">
         Armá tu pedido
       </Titulo>
-      <Armador nichos={NICHOS.map((n) => ({ ...n }))} compraMinima={cfg.compraMinima} nichoInicial={NICHO_IDS.includes(nicho ?? "") ? nicho! : ""} />
+      <Armador nichos={NICHOS.map((n) => ({ ...n }))} compraMinima={minimoParaArmar(cfg)} sinMinimo={zonaSinMinimo(cfg)} nichoInicial={NICHO_IDS.includes(nicho ?? "") ? nicho! : ""} />
     </div>
   );
 }

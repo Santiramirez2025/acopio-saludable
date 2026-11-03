@@ -2,6 +2,7 @@
 // con precio de hoy, armados sobre los combos del tema. Pura de leer: no guarda nada.
 
 import { NextResponse } from "next/server";
+import { minimoParaArmar } from "@/lib/minimo-zona";
 import { leerConfig } from "@/lib/config";
 import { combosTienda } from "@/lib/tienda";
 import { armarPedido, factorHogar, OBJETIVOS_LISTA, type ObjetivoLista } from "@/lib/armador";
@@ -34,14 +35,14 @@ export async function POST(req: Request) {
     candidatos: resto.flatMap((c) => c.items.map((i) => ({ codigo: i.producto.codigo, precio: i.producto.precio }))),
     personas,
     presupuesto,
-    compraMinima: cfg.compraMinima,
+    compraMinima: minimoParaArmar(cfg),
     factor: factorHogar(personas),
   });
   const lineas = items.map((i) => ({ producto: productos.get(i.codigo)!, cantidad: i.cantidad })).filter((l) => l.producto);
   return NextResponse.json({
     lineas,
     total: lineas.reduce((s, l) => s + l.producto.precio * l.cantidad, 0),
-    compraMinima: cfg.compraMinima,
-    presupuestoAjustado: presupuesto < cfg.compraMinima,
+    compraMinima: minimoParaArmar(cfg),
+    presupuestoAjustado: presupuesto < minimoParaArmar(cfg),
   });
 }

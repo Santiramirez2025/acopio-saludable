@@ -14,7 +14,7 @@ const PERSONAS = [
   { valor: 100, texto: "Más de 60" },
 ];
 
-export function Armador({ nichos, compraMinima, nichoInicial }: { nichos: { id: string; nombre: string }[]; compraMinima: number; nichoInicial: string }) {
+export function Armador({ nichos, compraMinima, nichoInicial, sinMinimo = false }: { nichos: { id: string; nombre: string }[]; compraMinima: number; nichoInicial: string; sinMinimo?: boolean }) {
   const [nicho, setNicho] = useState(nichoInicial);
   const [personas, setPersonas] = useState(0);
   const [presupuesto, setPresupuesto] = useState(String(compraMinima));
@@ -65,7 +65,7 @@ export function Armador({ nichos, compraMinima, nichoInicial }: { nichos: { id: 
           <span className="text-stone-600">$</span>
           <input id="presupuesto" className="campo" inputMode="numeric" value={presupuesto} onChange={(e) => setPresupuesto(e.target.value.replace(/[^\d]/g, ""))} />
         </div>
-        <p className="mt-1 text-xs text-stone-600">La compra mínima es de {pesosCliente(compraMinima)}.</p>
+        <p className="mt-1 text-xs text-stone-600">{sinMinimo ? `Desde ${pesosCliente(compraMinima)} te lo llevamos sin cargo en Carlos Paz y la zona.` : `La compra mínima es de ${pesosCliente(compraMinima)}.`}</p>
       </div>
       <button type="button" className="btn" disabled={!nicho || !personas || !presupuesto || cargando} onClick={armar}>
         {cargando ? "Armando…" : "Ver pedido sugerido"}
@@ -75,9 +75,9 @@ export function Armador({ nichos, compraMinima, nichoInicial }: { nichos: { id: 
         <section aria-live="polite">
           <h2 className="mb-1 font-display text-2xl font-semibold text-acopio-900">Tu pedido sugerido</h2>
           {resultado.presupuestoAjustado && (
-            <p className="mb-2 text-sm text-tierra-700">Tu presupuesto está por debajo de la compra mínima, así que lo armamos para llegar a {pesosCliente(resultado.compraMinima)}.</p>
+            <p className="mb-2 text-sm text-tierra-700">{sinMinimo ? `Lo armamos para llegar a ${pesosCliente(resultado.compraMinima)}, así el envío va sin cargo.` : `Tu presupuesto está por debajo de la compra mínima, así que lo armamos para llegar a ${pesosCliente(resultado.compraMinima)}.`}</p>
           )}
-          <PedidoEditable key={JSON.stringify(resultado.lineas.map((l) => [l.producto.codigo, l.cantidad]))} items={resultado.lineas} compraMinima={resultado.compraMinima} etiqueta="Cargar al carrito" />
+          <PedidoEditable key={JSON.stringify(resultado.lineas.map((l) => [l.producto.codigo, l.cantidad]))} items={resultado.lineas} compraMinima={resultado.compraMinima} sinMinimo={sinMinimo} etiqueta="Cargar al carrito" />
         </section>
       )}
     </div>
