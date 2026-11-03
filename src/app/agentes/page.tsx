@@ -1,12 +1,13 @@
 // Landing del Equipo de Agentes: lo que Acopio vende a otras empresas. El precio va primero (filtra),
 // después el video y el formulario. Todo lleva al WhatsApp de Marcos con el texto #agentes.
+import { AGENTES } from "@/lib/agentes";
 import type { Metadata } from "next";
 import { PRECIO_IMPLEMENTACION, PRECIO_MENSUAL } from "@/lib/oferta-sistema";
 import { Formulario } from "./formulario";
 
 export const metadata: Metadata = {
   title: "Tu empresa manejada por agentes de IA · Acopio Saludable",
-  description: "Acopio Saludable es una empresa manejada por 23 agentes de inteligencia artificial. Implementamos el mismo equipo en tu empresa: bot de WhatsApp que vende, pizarra de pedidos y agentes que trabajan todos los días.",
+  description: `Acopio Saludable es una empresa manejada por ${AGENTES.length} agentes de inteligencia artificial. Implementamos el mismo equipo en tu empresa: bot de WhatsApp que vende, pizarra de pedidos y agentes que trabajan todos los días.`,
   robots: { index: true, follow: true },
 };
 
@@ -19,7 +20,7 @@ export default function Agentes() {
       <section className="mx-auto max-w-5xl px-6 pb-10 pt-14 md:pt-20">
         <div className="text-sm font-semibold uppercase tracking-widest text-amber-300">Acopio Saludable · Equipo de Agentes</div>
         <h1 className="mt-3 text-4xl font-black leading-tight md:text-6xl">
-          Mi empresa la manejan 23 agentes de IA.
+          Mi empresa la manejan {AGENTES.length} agentes de IA.
           <br />
           <span className="text-amber-300">Yo solo reparto.</span>
         </h1>

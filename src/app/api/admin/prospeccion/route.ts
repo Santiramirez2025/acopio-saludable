@@ -7,6 +7,7 @@
 //   POST { accion: "leccion", texto }           → Marcos guarda lo que aprendió (entra en su prompt)
 import { NextResponse } from "next/server";
 import { esAdmin } from "@/lib/admin-acceso";
+import { leerConfig } from "@/lib/config";
 import { ETAPAS, enviarPendientes, enviarSeguimientos, marcar, pipeline, proponer, resumen, type Etapa, type Prospecto } from "@/lib/prospeccion-sistema";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,9 @@ export const maxDuration = 120;
 export async function GET() {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const lista = (await pipeline()).sort((a, b) => b.creado.localeCompare(a.creado)).slice(0, 80);
-  return NextResponse.json({ resumen: await resumen(), lista: lista.map(({ cuerpo, seguimiento, ...r }) => ({ ...r, cuerpo: cuerpo.slice(0, 300), conSeguimiento: Boolean(seguimiento) })) });
+  // respuestasA: el reply_to de los mails (cfg.emailContacto); Marcos busca las respuestas en esa casilla.
+  const cfg = await leerConfig();
+  return NextResponse.json({ resumen: await resumen(), respuestasA: cfg.emailContacto ?? null, lista: lista.map(({ cuerpo, seguimiento, ...r }) => ({ ...r, cuerpo: cuerpo.slice(0, 300), conSeguimiento: Boolean(seguimiento) })) });
 }
 
 export async function POST(req: Request) {
