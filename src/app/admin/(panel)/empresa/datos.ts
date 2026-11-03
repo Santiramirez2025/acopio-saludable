@@ -1,6 +1,7 @@
 // Datos de la oficina (los usa la vista normal y la oficina 3D). La empresa por dentro: el equipo de agentes como personas, qué hace cada uno, si trabajó hoy, qué
 // informó, y la posibilidad de hablarle o dejarle una orden. Con ?tv=1 se ve a pantalla completa para
 // tenerla en un televisor (se maneja con las flechas del control remoto).
+import { leerOrden } from "@/lib/orden-emisor";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
 import { AGENTES, AREAS, ROBOTS, estadoAgente, type Area } from "@/lib/agentes";
@@ -77,7 +78,7 @@ export async function cargarOficina(): Promise<DatosOficina> {
       estado: e.estado,
       estadoTexto: e.texto,
       informes: informes.slice(0, 6).map((i) => ({ cuando: cuando(new Date(i.fecha), hoy.fecha), ok: i.ok, texto: (i.detalle ?? "").slice(0, 5000) })),
-      ordenes: filas.filter((f) => f.nombre === `orden-${a.id}`).slice(0, 10).map((o) => ({ cuando: cuando(new Date(o.fecha), hoy.fecha), texto: o.detalle ?? "" })),
+      ordenes: filas.filter((f) => f.nombre === `orden-${a.id}`).slice(0, 10).map((o) => ({ cuando: cuando(new Date(o.fecha), hoy.fecha), texto: leerOrden(o.detalle).texto })),
     };
   });
 

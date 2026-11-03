@@ -143,7 +143,7 @@ async function ejecutar(nombre: string, a: Record<string, unknown>): Promise<str
       const agente = String(a.agente ?? "");
       if (!IDS_AGENTES.includes(agente)) return "Agente desconocido.";
       const { guardarOrden } = await import("./agentes-chat");
-      await guardarOrden(agente, `${String(a.texto ?? "").slice(0, 800)} (Santiago por WhatsApp)`);
+      await guardarOrden(agente, `${String(a.texto ?? "").slice(0, 800)} (Santiago por WhatsApp)`, "santiago");
       return `Orden guardada para ${AGENTES.find((x) => x.id === agente)?.persona ?? agente}.`;
     }
     case "mandar_reparto": {

@@ -1,8 +1,9 @@
 // Bitácora de los agentes de la empresa (ver lib/agentes.ts). Solo administrador.
 //   POST { agente, ok?, informe }  → guarda el informe del agente (hasta 6000 caracteres)
 //   GET  ?dias=1                    → informes de los últimos N días, del más nuevo al más viejo.
-//     Las órdenes que Santiago deja desde /admin/empresa viajan acá como notas del Gerente con una
-//     línea «PRIORIDAD: <agente> — ORDEN DE SANTIAGO …», que es lo que cada agente lee al empezar.
+//     Las órdenes viajan acá como notas del Gerente con una línea «PRIORIDAD: <agente> — <rótulo> …», que es
+//     lo que cada agente lee al empezar. El rótulo dice ORDEN DE SANTIAGO solo si se verificó que la dejó él
+//     (sesión del panel o su WhatsApp); las demás, ORDEN INTERNA (ver lib/orden-emisor.ts).
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -10,6 +11,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AGENTES, IDS_AGENTES } from "@/lib/agentes";
 import { POLITICA_COMERCIAL } from "@/lib/politica";
+import { leerOrden, rotuloOrden } from "@/lib/orden-emisor";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +35,7 @@ export async function GET(req: Request) {
     WHERE ("nombre" LIKE 'agente-%' OR "nombre" LIKE 'orden-%') AND "fecha" >= ${desde} ORDER BY "fecha" DESC LIMIT 300`;
   const limite = Date.now() - dias * 86_400_000;
   const informes = filas
-    // Las órdenes de Santiago se muestran siempre (últimos 7 días); los informes, según ?dias.
+    // Las órdenes se muestran siempre (últimos 7 días); los informes, según ?dias.
     .filter((f) => f.nombre.startsWith("orden-") || new Date(f.fecha).getTime() >= limite)
     .map((f) =>
       f.nombre.startsWith("orden-")
@@ -41,7 +43,7 @@ export async function GET(req: Request) {
             agente: "gerente",
             ok: true,
             fecha: f.fecha,
-            informe: `PRIORIDAD: ${f.nombre.slice(6)} — ORDEN DE SANTIAGO (${new Date(f.fecha).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Cordoba" })}): ${f.detalle}`,
+            informe: (({ emisor, texto }) => `PRIORIDAD: ${f.nombre.slice(6)} — ${rotuloOrden(emisor)} (${new Date(f.fecha).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Cordoba" })}): ${texto}`)(leerOrden(f.detalle)),
           }
         : { agente: f.nombre.slice(7), ok: f.ok, fecha: f.fecha, informe: f.detalle },
     );
