@@ -39,6 +39,7 @@ import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
 import { transcribirAudio } from "./oir-audio";
 import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
+import { hoyEnArgentina, llegaAlVendedor, notaPedidoSinPagar } from "./atencion-reglas";
 import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from "./direccion-cliente";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
@@ -393,7 +394,7 @@ export async function atender(e: Entrada): Promise<void> {
       return;
     }
   }
-  if (e.texto === null && texto.startsWith("[") && !texto.startsWith("[Mandó una foto:") && !texto.startsWith("[Mandó un audio que dice:") && !texto.startsWith("[Mandó un archivo") && !/^\[Mandó (el|un) comprobante/.test(texto)) {
+  if (e.texto === null && !llegaAlVendedor(texto)) {
     await responder(e.clave, respuestaMedio(e.tipo));
     const que = NOMBRE_MEDIO[e.tipo as keyof typeof NOMBRE_MEDIO] ?? e.tipo;
     await avisarSantiago(`Mandó ${que}`, `📎 ${e.nombre ?? e.clave} mandó ${que === "foto" ? "una foto" : `un ${que}`}${motivoAudio ? ` y no se pudo transcribir (${motivoAudio.slice(0, 160)})` : ""}. Miralo en el panel:\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
@@ -644,7 +645,7 @@ export async function pensar(c: {
   // Venta ya cerrada: lo que mande ahora (dirección, horario) va al pedido.
   const ordenId = c.pedidoGuardado?.startsWith("orden:") ? Number(c.pedidoGuardado.slice(6)) || undefined : undefined;
   // En qué anda el pedido: si ya salió o ya lo recibió, no se le habla de agendar ni de «te avisamos cuando salga».
-  const orden = ordenId ? await prisma.order.findUnique({ where: { id: ordenId }, select: { estado: true, nombre: true, calle: true, ciudad: true, notas: true } }).catch(() => null) : null;
+  const orden = ordenId ? await prisma.order.findUnique({ where: { id: ordenId }, select: { estado: true, nombre: true, calle: true, ciudad: true, notas: true, medioPago: true } }).catch(() => null) : null;
   const estadoOrden = orden?.estado ?? null;
   // Lo que ya nos dio: no se le vuelve a pedir (a Nancy se le pidió el nombre dos veces el 26/10).
   const tieneCalle = Boolean(orden?.calle && orden.calle.trim().length > 4 && !/a confirmar/i.test(orden.calle));
@@ -659,9 +660,11 @@ export async function pensar(c: {
         ? " Ya está en el reparto de hoy: el chico del reparto le escribe para coordinar. No digas que está agendado ni ofrezcas avisar cuando salga."
         : estadoOrden === "CANCELADO"
           ? " Ese pedido se canceló."
-          : "";
+          : estadoOrden === "PENDIENTE_PAGO"
+            ? notaPedidoSinPagar(orden?.medioPago)
+            : "";
   const cerrado = ordenId
-    ? `<pedido_cerrado>Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
+    ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";
   // El carrito de la web llega armado: se carga exacto, sin IA y sin ofrecer otra cosa.
   const web = esPedidoWeb(c.texto) && !ordenId ? await armarPedidoWeb(c.texto, Boolean(c.historial.some((h) => h.de === "acopio"))) : null;
