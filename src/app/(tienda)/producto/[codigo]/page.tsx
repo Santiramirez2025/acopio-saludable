@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
+import { lineaCompraMinima } from "@/lib/minimo-zona";
 import { aTienda, combosTienda, estaPublicado, productosTienda } from "@/lib/tienda";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadBase, precioSugerido } from "@/lib/precios";
@@ -126,7 +127,7 @@ export default async function Producto({ params }: Props) {
             <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
             <BotonCompartir etiqueta="Compartir" texto={`Mirá ${p.producto} ${p.presentacion} en Acopio Saludable:`} ruta={`/producto/${encodeURIComponent(p.codigo)}`} className="btn-sec mt-2 w-full" />
             <CuentaRegresiva corte={proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null} className="mt-3" />
-            <p className="mt-3 text-xs text-stone-600">Compra mínima de {pesos(cfg.compraMinima)} por pedido, combinando los productos que quieras.</p>
+            <p className="mt-3 text-xs text-stone-600">{lineaCompraMinima(cfg)}</p>
             {/* La consulta llega con el producto adentro: así no hay que preguntar «¿cuál?» y se contesta de una. */}
             <EnlaceWhatsapp
               mensaje={`Hola! Quiero ${p.producto} ${p.presentacion}. ¿Me ayudás con el pedido?`}

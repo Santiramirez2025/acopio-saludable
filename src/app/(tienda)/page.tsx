@@ -51,7 +51,9 @@ export default async function Home() {
   const categorias = conteos.filter((c) => c.categoria !== "Sin categoría");
   const pasos = [
     ["Elegí", "Por rubro, por objetivo o buscando lo que necesitás."],
-    [`Llegá a ${pesos(cfg.compraMinima)}`, "Es la compra mínima. El medidor te va diciendo cuánto falta."],
+    zonaSinMinimo(cfg)
+      ? ["Sumá lo que quieras", `En Carlos Paz y la zona no hay compra mínima: sin cargo desde ${pesos(umbralZona(cfg))}. Al resto del país, compra mínima de ${pesos(cfg.compraMinima)}.`]
+      : [`Llegá a ${pesos(cfg.compraMinima)}`, "Es la compra mínima. El medidor te va diciendo cuánto falta."],
     ["Recibilo", cfg.entregaPropiaActiva ? `En Carlos Paz y el sur de Punilla te lo llevamos en ${cfg.plazoEntregaPropia}. Al resto del país, por correo en 3 a 9 días hábiles.` : "Lo compramos para vos y te lo enviamos por correo a todo el país en 3 a 9 días hábiles."],
   ];
 
@@ -189,7 +191,9 @@ export default async function Home() {
                   <h3 className="mt-3 font-display text-xl font-bold leading-tight"><Link href={`/nichos/${p.nicho}`} className="hover:underline">{p.nombre.replace(/^Pedido /, "")}</Link></h3>
                   <ListaCombo items={items} />
                   <p className="mt-3 font-display text-2xl font-bold tabular-nums">{pesos(total)}</p>
-                  <p className="mb-3 text-xs text-stone-600">{total >= cfg.compraMinima ? "Ya llega a la compra mínima" : `Te quedan ${pesos(cfg.compraMinima - total)} para completar el mínimo`}</p>
+                  <p className="mb-3 text-xs text-stone-600">{zonaSinMinimo(cfg)
+                      ? total >= umbralZona(cfg) ? "Entrega sin cargo en Carlos Paz y la zona" : `Te quedan ${pesos(umbralZona(cfg) - total)} para la entrega sin cargo en la zona`
+                      : total >= cfg.compraMinima ? "Ya llega a la compra mínima" : `Te quedan ${pesos(cfg.compraMinima - total)} para completar el mínimo`}</p>
                   <div className="mt-auto flex gap-2">
                     <BotonCargarPedido etiqueta="Cargar pedido" className="btn-comprar flex-1" lineas={items.map((i) => ({ tipo: "producto" as const, id: i.producto.codigo, cantidad: i.cantidad }))} />
                     <Link href={`/nichos/${p.nicho}`} className="btn-sec px-4">Ajustar</Link>
