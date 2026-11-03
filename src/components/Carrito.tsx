@@ -107,6 +107,8 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
   // En Carlos Paz y la zona el mínimo es más bajo: mientras no se llega a ese, la barra mide contra él
   // (es lo que le importa a la mayoría de los clientes) y el mínimo para otras localidades queda abajo.
   const zona = cotizacion.compraMinimaPropia;
+  // Con envío fijo bajo mínimo, en la zona ya se puede pedir con cualquier subtotal: la barra mide hacia el envío sin cargo.
+  const envioBajo = cotizacion.envioBajoMinimo;
   const haciaZona = zona > 0 && zona < compraMinima && subtotal < zona;
   const meta = haciaZona ? zona : compraMinima;
   const faltaMeta = haciaZona ? zona - subtotal : falta;
@@ -118,9 +120,11 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
           <span className="font-medium">
             {faltaMeta > 0
               ? haciaZona
-                ? `Te faltan ${pesosCliente(faltaMeta)} para pedir en Carlos Paz y la zona`
+                ? envioBajo > 0
+                  ? `En Carlos Paz y la zona ya podés pedir: sumá ${pesosCliente(faltaMeta)} más y el envío va sin cargo (si no, envío ${pesosCliente(envioBajo)})`
+                  : `Te faltan ${pesosCliente(faltaMeta)} para pedir en Carlos Paz y la zona`
                 : subtotal >= zona && zona < compraMinima
-                  ? `Ya podés pedir si estás en Carlos Paz (mínimo ${pesosCliente(zona)}) · faltan ${pesosCliente(falta)} para envíos`
+                  ? `Ya podés pedir si estás en Carlos Paz (${envioBajo > 0 ? "envío sin cargo" : `mínimo ${pesosCliente(zona)}`}) · faltan ${pesosCliente(falta)} para envíos`
                   : `Te faltan ${pesosCliente(falta)} para la compra mínima`
               : "Llegaste a la compra mínima"}
           </span>
@@ -137,7 +141,7 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
         aria-valuemax={100}
         aria-label="Progreso hacia la compra mínima"
       >
-        <div className={`h-full rounded-full transition-all ${faltaMeta > 0 ? "bg-sol-oscuro" : "bg-acopio-500"}`} style={{ width: `${pct}%` }} />
+        <div className={`h-full rounded-full transition-all ${faltaMeta > 0 && !(haciaZona && envioBajo > 0) ? "bg-sol-oscuro" : "bg-acopio-500"}`} style={{ width: `${pct}%` }} />
       </div>
       {!compacta && haciaZona && (
         <p className="mt-1.5 text-xs text-stone-600">Para envíos a otras localidades la compra mínima es {pesosCliente(compraMinima)}.</p>

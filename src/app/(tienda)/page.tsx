@@ -9,6 +9,7 @@ import { AVISO_SIN_TACC, WHERE_SIN_TACC, wherePublicado } from "@/lib/filtros-pr
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadSuelta } from "@/lib/precios";
+import { umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
 import { ListaCombo, RielOfertas, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
@@ -65,7 +66,7 @@ export default async function Home() {
               Llená tu despensa de una sola vez.
             </h1>
             <p className="mt-3 max-w-md text-[15px] text-white/80 sm:text-[17px]">
-              Frutos secos, cereales, suplementos, snacks y especias por volumen, para tu casa o tu negocio. Desde {pesos(cfg.compraMinima)} por pedido con envíos a todo el país{cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? <>, y desde {pesos(cfg.compraMinimaPropia)} en Villa Carlos Paz</> : null}.
+              Frutos secos, cereales, suplementos, snacks y especias por volumen, para tu casa o tu negocio. {zonaSinMinimo(cfg) ? <>En Villa Carlos Paz y la zona sin compra mínima, con entrega sin cargo desde {pesos(umbralZona(cfg))}. Envíos a todo el país desde {pesos(cfg.compraMinima)} por pedido.</> : <>Desde {pesos(cfg.compraMinima)} por pedido con envíos a todo el país{cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? <>, y desde {pesos(cfg.compraMinimaPropia)} en Villa Carlos Paz</> : null}.</>}
             </p>
             <p className="mt-5 text-sm font-semibold text-sol">¿Para quién comprás?</p>
             <div className="riel mt-2 md:mx-0 md:flex-wrap md:px-0">

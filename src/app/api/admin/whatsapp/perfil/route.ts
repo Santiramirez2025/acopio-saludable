@@ -25,7 +25,7 @@ const CAMPOS = "about,address,description,email,profile_picture_url,websites,ver
 const PERFIL = {
   about: "Productos saludables a granel y sin TACC · Villa Carlos Paz",
   description:
-    "Tienda online de productos saludables a granel y sin TACC. Entrega sin cargo en Villa Carlos Paz y sur de Punilla, envíos a todo el país. Compra mínima $35.000. Atendemos de lunes a sábado de 8 a 20.",
+    "Tienda online de productos saludables a granel y sin TACC. Entrega sin cargo en Villa Carlos Paz y sur de Punilla, envíos a todo el país. Sin compra mínima en Carlos Paz. Atendemos de lunes a sábado de 8 a 20.",
   address: "Villa Carlos Paz, Córdoba",
   websites: ["https://www.acopiosaludable.com"],
   vertical: "GROCERY",

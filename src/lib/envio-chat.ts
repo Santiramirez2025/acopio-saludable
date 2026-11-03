@@ -8,15 +8,35 @@ import { cotizarConTabla, zonaPagaDe } from "./envios/tabla";
 import { aplicarReglas } from "./envios/cotizar";
 import type { EnvioCotizado } from "./asistente-catalogo";
 import { zonaDeLugar } from "./envio-zona";
+import { envioPropioPara, umbralZona, type ReglaMinimo } from "./minimo-zona";
 export { zonaDeLugar } from "./envio-zona";
+
+/**
+ * El envío en la zona de reparto propio, según el subtotal: sin cargo desde el umbral de la zona; abajo,
+ * el fijo configurado (si hay). Se recalcula cada vez que cambia el pedido, por eso vive aparte.
+ */
+export function envioZonaPropia(cfg: ReglaMinimo & { plazoEntregaPropia: string }, lugar: string, subtotal: number): EnvioCotizado {
+  const fijo = envioPropioPara(cfg, subtotal);
+  const umbral = umbralZona(cfg);
+  if (fijo > 0) {
+    return {
+      lugar,
+      costo: fijo,
+      propia: true,
+      zonaPropia: true,
+      alRecibir: true,
+      sinCargoDesde: umbral,
+      detalle: `Envío a ${lugar}: ${pesos(fijo)} porque el pedido no llega a ${pesos(umbral)}; desde ${pesos(umbral)} va sin cargo. Te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.`,
+    };
+  }
+  return { lugar, costo: 0, propia: true, zonaPropia: true, alRecibir: true, detalle: `Envío a ${lugar}: sin cargo, te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.` };
+}
 
 export async function cotizarEnvioChat(lugar: string, provincia: string | null, subtotal: number, kilos = 4): Promise<EnvioCotizado | null> {
   const cfg = await leerConfig();
   const zona = zonaDeLugar(lugar, provincia);
   if (!zona) return null;
-  if (zona.tipo === "propia" && cfg.entregaPropiaActiva) {
-    return { lugar, costo: 0, propia: true, alRecibir: true, detalle: `Envío a ${lugar}: sin cargo, te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.` };
-  }
+  if (zona.tipo === "propia" && cfg.entregaPropiaActiva) return envioZonaPropia(cfg, lugar, subtotal);
   const zp = zonaPagaDe(cfg.tabla);
   if (zona.tipo === "capital" && cfg.entregaPropiaActiva && zp) {
     return { lugar, costo: zp.precio, propia: true, detalle: `Envío a ${lugar}: ${pesos(zp.precio)}, te lo llevamos nosotros${zp.plazo ? ` en ${zp.plazo}` : ""}.` };

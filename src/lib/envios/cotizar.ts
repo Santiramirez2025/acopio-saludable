@@ -1,7 +1,7 @@
 // Orquestador de envíos: entrega propia + correos con credenciales; la tabla entra como respaldo.
 
 import { cpEnLista, zonaDeProvincia } from "./geo";
-import { precioRedondo } from "../precios";
+import { pesos, precioRedondo } from "../precios";
 import { proveedorAndreani } from "./andreani";
 import { proveedorMiCorreo } from "./micorreo";
 import { proveedorTabla, type TablaEnvios } from "./tabla";
@@ -16,6 +16,8 @@ export type ConfigEnvio = {
   plazoEntregaPropia?: string;
   envioGratisDesde: number | null;
   tabla: TablaEnvios;
+  /** Zona propia por debajo del mínimo: se cobra `precio` fijo si el subtotal no llega a `desde`. Ausente = el mínimo es obligatorio. */
+  propiaBajoMinimo?: { precio: number; desde: number };
 };
 
 /** Reglas comerciales sobre las tarifas: envío gratis desde $X y marca de la más barata. */
@@ -47,7 +49,14 @@ export async function cotizarEnvio(
   const plazoPropia = cfg.plazoEntregaPropia || "24 a 48 hs hábiles";
   const sinCargo = cfg.entregaPropiaActiva && cpEnLista(pedido.cpDestino, cfg.cpEntregaPropia);
   if (sinCargo) {
-    tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Entrega propia sin cargo", costo: 0, plazo: `Te lo llevamos en ${plazoPropia}. Coordinamos el horario por WhatsApp.` });
+    const bajo = cfg.propiaBajoMinimo;
+    const plazo = `Te lo llevamos en ${plazoPropia}. Coordinamos el horario por WhatsApp.`;
+    // Debajo del mínimo de la zona se cobra un envío fijo: nos sigue costando $0 (lo llevamos nosotros), pero el cliente paga `precio`.
+    if (bajo && bajo.precio > 0 && pedido.subtotal < bajo.desde) {
+      tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Te lo llevamos nosotros", costo: 0, precioFijo: bajo.precio, plazo: `${plazo} Pedidos desde ${pesos(bajo.desde)} van sin cargo.` });
+    } else {
+      tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Entrega propia sin cargo", costo: 0, plazo });
+    }
   }
   // La zona paga solo si no entró en la gratuita: nadie tiene que pagar por algo que le damos sin cargo.
   const paga = cfg.tabla.propiaPaga;

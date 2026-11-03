@@ -3,6 +3,7 @@ import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda, type ComboTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
+import { textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { GrillaProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
@@ -34,7 +35,8 @@ export default async function RegalosNavidenosCordoba() {
   ]);
   const combos = todos.filter((c) => c.disponible).sort((a, b) => COMBOS_NAVIDAD.indexOf(a.slug) - COMBOS_NAVIDAD.indexOf(b.slug));
   const ordenados = [...productos].sort((a, b) => PRODUCTOS_NAVIDAD.indexOf(a.codigo) - PRODUCTOS_NAVIDAD.indexOf(b.codigo));
-  const minimo = pesos(cfg.compraMinimaPropia);
+  const minimo = pesos(umbralZona(cfg));
+  const sinMinimo = zonaSinMinimo(cfg);
   const bolsa = combos.find((c) => c.slug === "regalo-navideno");
   const kit = combos.find((c) => c.slug === "pan-dulce-casero");
 
@@ -49,7 +51,7 @@ export default async function RegalosNavidenosCordoba() {
       "¿Cobran el envío?",
       `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca la entrega es sin cargo, en ${cfg.plazoEntregaPropia}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`,
     ],
-    ["¿Hay compra mínima?", `Sí, ${minimo} por pedido en la zona de entrega, sumando combos y cualquier otro producto de la tienda.`],
+    ["¿Hay compra mínima?", sinMinimo ? `No. ${textoZonaSinMinimo(cfg)} Sumás combos y cualquier otro producto de la tienda.` : `Sí, ${minimo} por pedido en la zona de entrega, sumando combos y cualquier otro producto de la tienda.`],
     ["¿Puedo armar mi propio regalo?", "Sí. Elegí los frutos secos y las frutas desecadas que quieras en el catálogo, o usá el armador de pedidos. Si es para regalar, avisanos por WhatsApp y lo separamos por persona."],
     ["¿Cómo pago?", "Por transferencia, con descuento, o con Mercado Pago."],
   ];

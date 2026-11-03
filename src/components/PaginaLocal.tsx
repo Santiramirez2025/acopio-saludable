@@ -4,6 +4,7 @@ import { leerConfig } from "@/lib/config";
 import { wherePublicado } from "@/lib/filtros-producto";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
+import { textoCompraMinima, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { RielProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
 
@@ -23,7 +24,7 @@ export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
     ["¿Tienen local a la calle en Villa Carlos Paz?", "No. Somos una dietética online con base en Villa Carlos Paz: pedís por la web y te lo llevamos a tu casa o a tu negocio."],
     ["¿A qué zonas llevan el pedido sin cargo?", `A Villa Carlos Paz y al sur de Punilla: San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca. La entrega es en ${cfg.plazoEntregaPropia}.`],
     ["¿Hacen envíos al resto de Córdoba y del país?", "Sí. Fuera de la zona de entrega propia despachamos por correo a todo el país. El costo se calcula en el carrito con tu código postal."],
-    ["¿Cuál es la compra mínima?", `${pesos(cfg.compraMinima)} por pedido, combinando los productos y combos que quieras.`],
+    ["¿Cuál es la compra mínima?", textoCompraMinima(cfg)],
     ["¿Cómo se paga?", "Por transferencia bancaria, con descuento, o con tarjeta y dinero en cuenta a través de Mercado Pago."],
     ["¿Tienen productos sin TACC?", "Sí, hay una góndola completa de productos rotulados sin TACC por sus fabricantes. Verificá siempre el logo oficial en el envase."],
   ];
@@ -42,7 +43,7 @@ export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
       <section className="grid gap-3 sm:grid-cols-3">
         {[
           propia ? ["Entrega sin cargo", `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}.`] : ["Envío por correo", `Despachamos a ${nombre} en 24 a 48 hs hábiles. El costo se calcula en el carrito con tu código postal.`],
-          ["Precio por volumen", `Comprás en cantidad y pagás menos por kilo. Compra mínima de ${pesos(cfg.compraMinima)}, combinando lo que quieras.`],
+          ["Precio por volumen", zonaSinMinimo(cfg) ? `Comprás en cantidad y pagás menos por kilo. Sin compra mínima en la zona; entrega sin cargo desde ${pesos(umbralZona(cfg))}.` : `Comprás en cantidad y pagás menos por kilo. Compra mínima de ${pesos(cfg.compraMinima)}, combinando lo que quieras.`],
           ["Para casa o para tu negocio", "Familias, hoteles y cabañas, cafeterías, gimnasios, kioscos y dietéticas."],
         ].map(([t, d]) => (
           <div key={t} className="rounded-2xl bg-white p-4 shadow-ficha">

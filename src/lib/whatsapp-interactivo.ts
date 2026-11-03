@@ -137,7 +137,13 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     // Con el envío ya cotizado, el «por transferencia» de arriba se reemplaza por el que lo incluye.
     const iTransf = lineas.findIndex((l) => l.startsWith("Por transferencia"));
     if (iTransf >= 0) lineas.splice(iTransf, 1);
-    lineas.push(pedido.envio.costo === 0 ? `Envío: sin cargo` : pedido.envio.costo === null ? "Envío: se calcula con tu código postal" : `Envío: ${pesos(pedido.envio.costo)}`);
+    lineas.push(
+      pedido.envio.costo === 0
+        ? `Envío: sin cargo`
+        : pedido.envio.costo === null
+          ? "Envío: se calcula con tu código postal"
+          : `Envío: ${pesos(pedido.envio.costo)}${pedido.envio.sinCargoDesde ? ` (sin cargo desde ${pesos(pedido.envio.sinCargoDesde)})` : ""}`,
+    );
     if (pedido.envio.totalConEnvio) lineas.push(`Total con envío: ${pedido.envio.totalConEnvio}`);
     if (pedido.envio.transferenciaConEnvio) lineas.push(`Por transferencia: ${pedido.envio.transferenciaConEnvio}`);
     lineas.push("", "¿Cómo preferís pagar?");

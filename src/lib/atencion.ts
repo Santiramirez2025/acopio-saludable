@@ -10,7 +10,7 @@ import { conPresentacion } from "./whatsapp-saludo";
 import { zonaDeLugar } from "./envio-zona";
 import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
 import { buscarEnCatalogo, comboDelAnuncio, type Accion, type EnvioCotizado, type Respuesta } from "./asistente-catalogo";
-import { cotizarEnvioChat } from "./envio-chat";
+import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
@@ -26,6 +26,7 @@ import { esPedidoWeb, leerPedidoWeb, resolverPedidoWeb } from "./pedido-web";
 import { catalogo } from "./asistente-catalogo";
 import { leerConfig } from "./config";
 import { pesos, renglonCombo } from "./precios";
+import { zonaSinMinimo } from "./minimo-zona";
 
 /** Transferencia de la Despensa redondeada a $100, la misma que ya cotizan el bot y el equipo ($35.500 → $32.700). */
 const transferenciaAlCien = (precio: number, pct: number) => (pct > 0 ? Math.round((precio * (1 - pct / 100)) / 100) * 100 : null);
@@ -115,8 +116,12 @@ async function pedidoDe(lineas: { tipo: "producto" | "combo"; id: string; cantid
   // Si ya se sabe que entrega en Carlos Paz, rige el mínimo de la zona propia. Si todavía no se sabe la zona,
   // también: la mayoría es de Carlos Paz y decirle «te faltan $10.000» cuando ya llega le corta la compra
   // (pasó con Vilma). Si después resulta de otra zona, al cotizar el envío rige el mínimo general.
-  const cot = await cotizarCarrito(lineas, !envio || (envio.propia && envio.costo === 0) ? cfg.compraMinimaPropia : undefined);
+  // Con envío fijo bajo mínimo, en la zona no hay mínimo: se cotiza con 0 y el envío sale según el subtotal.
+  const enZonaPropia = !envio || envio.zonaPropia === true || (envio.propia && envio.costo === 0);
+  const cot = await cotizarCarrito(lineas, enZonaPropia ? (zonaSinMinimo(cfg) ? 0 : cfg.compraMinimaPropia) : undefined);
   if (!cot.lineas.length) return null;
+  // El envío propio depende del subtotal real del pedido, no del que se sabía cuando se cotizó el lugar.
+  if (envio?.zonaPropia) envio = envioZonaPropia(cfg, envio.lugar, cot.subtotal);
   return {
     camino: enlacePedido(lineas),
     renglones: cot.lineas.filter((l) => l.disponible).map((l) => `${l.cantidad > 1 ? `${l.cantidad} x ` : ""}${l.nombre} — ${pesos(l.subtotal)}`),

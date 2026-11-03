@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 const RAPIDAS = [
   ["Saludo", "¡Hola! Gracias por escribir a Acopio. ¿En qué te puedo ayudar?"],
   ["Envío", "Te lo llevamos sin cargo en Villa Carlos Paz y el sur de Punilla. Al resto del país va por correo y el costo se ve en el carrito con tu código postal."],
-  ["Mínimo", "La compra mínima es de $35.000 por pedido, combinando los productos que quieras."],
+  ["Mínimo", "En Villa Carlos Paz y la zona no hay compra mínima: desde $20.000 la entrega es sin cargo, y si el pedido es más chico el envío cuesta $3.000. Para otras localidades el mínimo es $60.000."],
   ["Pago", "Podés pagar con Mercado Pago (tarjeta, débito o dinero en cuenta) o por transferencia, que tiene descuento."],
   ["Link", "Te paso el link con el pedido armado, así lo pagás directo: "],
   ["Gracias", "¡Gracias por tu compra! Cualquier cosa escribime por acá."],

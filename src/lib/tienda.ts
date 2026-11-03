@@ -158,8 +158,10 @@ export type Cotizacion = {
   falta: number;
   progresoPct: number;
   puedePagar: boolean;
-  /** Llega al mínimo de la zona propia (sirve para no frenar antes de conocer el CP). */
+  /** Se puede pagar en la zona propia: llega al mínimo, o hay envío fijo bajo mínimo (sirve para no frenar antes de conocer el CP). */
   puedePagarEnZona: boolean;
+  /** Envío fijo en la zona propia cuando el subtotal no llega a `compraMinimaPropia`; 0 = ahí el mínimo es obligatorio. */
+  envioBajoMinimo: number;
   /** Total con el descuento por transferencia; null si no hay descuento. */
   conTransferencia: number | null;
   /** Lo que ganaría revendiendo todo al precio sugerido; 0 si el sugerido está apagado. */
@@ -233,7 +235,9 @@ export async function cotizarCarrito(entrada: unknown, minimo?: number): Promise
     falta,
     progresoPct: compraMinima > 0 ? Math.min(100, Math.round((subtotal / compraMinima) * 100)) : 100,
     puedePagar: subtotal > 0 && falta === 0,
-    puedePagarEnZona: subtotal > 0 && subtotal >= minimoPropia,
+    // Con envío fijo bajo mínimo, en la zona se compra con cualquier subtotal: el umbral pasa a ser el del envío sin cargo.
+    puedePagarEnZona: subtotal > 0 && (subtotal >= minimoPropia || cfg.envioBajoMinimo > 0),
+    envioBajoMinimo: cfg.envioBajoMinimo,
     // Igual que el total del pedido: a $100 para abajo (lo que se dice en el chat es lo que se cobra).
     conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? Math.floor((subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) / 100) * 100 : null,
     gananciaReventa: redondear2(gananciaReventa),
