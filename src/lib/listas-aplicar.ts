@@ -7,7 +7,7 @@ import { prisma } from "./prisma";
 import { registrarSync } from "./sync";
 import { avisarSantiago } from "./avisos";
 import { POR_CODIGO_PROVEEDOR } from "./catalogo-proveedores";
-import { costoDePresentacion } from "./listas-presentacion";
+import { costoDeCompraVigente, costoDePresentacion } from "./listas-presentacion";
 import { detectarProveedor, fechaDeLista, parsearLista, type Proveedor } from "./listas-pdf";
 import { filasDePdf } from "./listas-pdf-leer";
 import { pesos } from "./precios";
@@ -31,6 +31,7 @@ export async function aplicarListaPdf(bytes: Uint8Array, nombreArchivo = "", ori
     const r = lista.find((x) => x.codigo === codProv);
     const p = porCodigo.get(codigo);
     if (!p) continue;
+    if (costoDeCompraVigente(codigo)) continue;
     if (!r) { faltantes.push(`${p.producto} (${codProv})`); continue; }
     const costoAntes = Number(p.costo);
     const costo = costoDePresentacion(r.precio, costoAntes, p.contenido === null ? null : Number(p.contenido));
