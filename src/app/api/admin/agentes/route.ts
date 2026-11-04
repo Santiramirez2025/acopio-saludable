@@ -34,9 +34,19 @@ export async function GET(req: Request) {
     SELECT "nombre", "ok", "detalle", "fecha" FROM "CronCorrida"
     WHERE ("nombre" LIKE 'agente-%' OR "nombre" LIKE 'orden-%') AND "fecha" >= ${desde} ORDER BY "fecha" DESC LIMIT 300`;
   const limite = Date.now() - dias * 86_400_000;
+  // Tope de órdenes por destinatario: el 3/11 había 203 órdenes vivas y cada agente las leía todas al arrancar.
+  // Eso quema el límite de uso, entierra la orden nueva abajo de las viejas y hace que dos órdenes se contradigan.
+  // Se quedan las más nuevas de cada destinatario (las filas ya vienen de la más nueva a la más vieja).
+  const TOPE_ORDENES = 12;
+  const vistas = new Map<string, number>();
+  const ordenVigente = (nombre: string) => {
+    const n = (vistas.get(nombre) ?? 0) + 1;
+    vistas.set(nombre, n);
+    return n <= TOPE_ORDENES;
+  };
   const informes = filas
-    // Las órdenes se muestran siempre (últimos 7 días); los informes, según ?dias.
-    .filter((f) => f.nombre.startsWith("orden-") || new Date(f.fecha).getTime() >= limite)
+    // Las órdenes se muestran siempre (últimos 7 días, las más nuevas); los informes, según ?dias.
+    .filter((f) => (f.nombre.startsWith("orden-") ? ordenVigente(f.nombre) : new Date(f.fecha).getTime() >= limite))
     .map((f) =>
       f.nombre.startsWith("orden-")
         ? {
