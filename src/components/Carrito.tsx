@@ -4,6 +4,7 @@ import { medir } from "@/lib/medicion";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Cotizacion } from "@/lib/tienda";
 import type { LineaEntrada } from "@/lib/tienda-saneo";
+import { barraZona } from "@/lib/barra-zona";
 
 const CLAVE = "acopio-carrito-v1";
 const MAX = 999;
@@ -113,6 +114,27 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
   const meta = haciaZona ? zona : compraMinima;
   const faltaMeta = haciaZona ? zona - subtotal : falta;
   const pct = haciaZona ? Math.min(100, Math.round((subtotal / zona) * 100)) : progresoPct;
+  if (envioBajo > 0 && zona > 0 && zona < compraMinima) {
+    const b = barraZona(subtotal, zona, compraMinima);
+    return (
+      <div aria-live="polite">
+        {!compacta && (
+          <div className="mb-1 flex justify-between gap-3 text-sm">
+            <span className="font-medium">
+              {b.llego ? "Envío sin cargo en Carlos Paz y la zona" : `En Carlos Paz y la zona ya podés pedir: sumá ${pesosCliente(b.falta)} más y el envío va sin cargo (si no, envío ${pesosCliente(envioBajo)})`}
+            </span>
+            {!b.llego && <span className="shrink-0 tabular-nums text-stone-600">{pesosCliente(subtotal)} / {pesosCliente(b.meta)}</span>}
+          </div>
+        )}
+        <div className={`w-full overflow-hidden rounded-full bg-tierra-200 ${compacta ? "h-1" : "h-3"}`} role="progressbar" aria-valuenow={b.pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progreso hacia el envío sin cargo">
+          <div className="h-full rounded-full bg-acopio-500 transition-all" style={{ width: `${b.pct}%` }} />
+        </div>
+        {!compacta && b.faltaOtras > 0 && (
+          <p className="mt-1.5 text-xs text-stone-600">A otras localidades, por correo, la compra mínima es {pesosCliente(compraMinima)} (te faltan {pesosCliente(b.faltaOtras)}).</p>
+        )}
+      </div>
+    );
+  }
   return (
     <div aria-live="polite">
       {!compacta && (

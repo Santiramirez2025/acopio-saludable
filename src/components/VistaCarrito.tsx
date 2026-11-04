@@ -110,7 +110,7 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
             Te faltan {pesosCliente(faltaZona || falta)} para llegar a la compra mínima. <Link href="/catalogo" className="underline">Seguir sumando</Link>
           </p>
         )}
-        {puedeSeguir && !puedePagar && (
+        {puedeSeguir && !puedePagar && !(envioBajo > 0) && (
           <p className="text-sm text-stone-700">
             En Carlos Paz y la zona ya podés pedir{envioBajo > 0 && faltaZona > 0 ? <>: sumá {pesosCliente(faltaZona)} más y el envío va sin cargo (si no, envío {pesosCliente(envioBajo)})</> : null}. Para envíos a otras localidades la compra mínima es {pesosCliente(cotizacion.compraMinima)} (te faltan {pesosCliente(falta)}).
           </p>

@@ -12,6 +12,7 @@ import { cortarEnPalabra, marcaVisible } from "@/lib/texto";
 import { proximoCorte } from "@/lib/corte";
 import { CuentaRegresiva } from "@/components/CuentaRegresiva";
 import { Plazos } from "@/components/Plazos";
+import { costoEntregaZona } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { Medir } from "@/components/Medicion";
 import { BotonCompartir } from "@/components/Compartir";
@@ -136,7 +137,7 @@ export default async function Producto({ params }: Props) {
               Preguntar por este producto
             </EnlaceWhatsapp>
             {p.categoria === "Congelados" && <p className="mt-3 rounded-xl bg-tierra-100 px-3.5 py-2.5 text-sm text-stone-700"><b>Producto congelado:</b> solo se entrega en Villa Carlos Paz y el sur de Punilla. No se envía por correo.</p>}
-            <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} zonaPaga={zonaPagaDe(cfg.tabla)} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />
+            <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} costoZona={costoEntregaZona(cfg)} zonaPaga={zonaPagaDe(cfg.tabla)} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />
           </div>
           {porQue && (
             <div className="rounded-2xl bg-acopio-100 p-4">
