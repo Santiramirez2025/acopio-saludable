@@ -1,5 +1,6 @@
 // Radiografía del negocio para replantear el catálogo: qué se vendió, qué preguntó la gente y qué
 // tiene La Granja hoy. Solo administrador. GET ?parte=pedidos|whatsapp|catalogo|lagranja|harinar|trafico|ventas (&dias=N)
+import { esPedidoWeb } from "@/lib/ventas-resumen";
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -117,6 +118,12 @@ async function lagranja() {
 async function trafico(dias: number) {
   const filas = await prisma.$queryRaw<{ nombre: string; detalle: string | null; fecha: Date }[]>`
     SELECT "nombre", "detalle", "fecha" FROM "CronCorrida" WHERE "nombre" LIKE 'ev-%' AND "fecha" >= ${new Date(Date.now() - dias * 86_400_000)}`;
+  // «compraron» son pedidos de la web: abrir /pedido/[token] de un pedido de WhatsApp también dispara el evento y no es una compra web.
+  const pedidos = await prisma.$queryRaw<{ token: string; origen: string | null; estado: string; createdAt: Date }[]>`
+    SELECT "token", "origen", "estado"::text AS "estado", "createdAt" FROM "Order" WHERE "origen" IS NOT NULL`;
+  const tokensWeb = pedidos.filter((p) => esPedidoWeb(p.origen)).map((p) => p.token);
+  const desdeFecha = new Date(Date.now() - dias * 86_400_000);
+  const pedidosWeb = pedidos.filter((p) => esPedidoWeb(p.origen) && p.estado !== "CANCELADO" && p.createdAt >= desdeFecha).length;
   const dia = (f: Date) => f.toLocaleDateString("en-CA", { timeZone: "America/Argentina/Cordoba" });
   const porDia: Record<string, Record<string, number> & { sesiones?: number }> = {};
   const sesionesDia: Record<string, Set<string>> = {};
@@ -128,6 +135,7 @@ async function trafico(dias: number) {
     const e = f.nombre.slice(3);
     let d: { r?: string | null; s?: string | null; o?: string | null } = {};
     try { d = JSON.parse(f.detalle ?? "{}"); } catch {}
+    if (e === "compra" && !tokensWeb.some((t) => d.r?.includes(t))) continue;
     const k = dia(f.fecha);
     porDia[k] ??= {};
     porDia[k][e] = (porDia[k][e] ?? 0) + 1;
@@ -147,7 +155,7 @@ async function trafico(dias: number) {
     agregaron: ses.filter((x) => x.has("agregar")).length,
     iniciaronCompra: ses.filter((x) => x.has("iniciar_compra")).length,
     tocaronWhatsapp: ses.filter((x) => x.has("contacto")).length,
-    compraron: ses.filter((x) => x.has("compra")).length,
+    compraron: pedidosWeb,
     carritosAbandonados: ses.filter((x) => x.has("agregar") && !x.has("iniciar_compra") && !x.has("compra") && !x.has("contacto")).length,
   };
   const top = (o: Record<string, number>) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 12);
@@ -162,7 +170,7 @@ async function trafico(dias: number) {
     if (ev.has("compra")) x.compraron++;
   }
   const campanas = Object.entries(porOrigen).sort((a, b) => b[1].sesiones - a[1].sesiones).slice(0, 20);
-  return { dias, desde: "registro propio desde el 28/10/2026", porDia, embudo, paginas: top(paginas), origenes: top(origenes), campanas, nota: "campanas: sesiones por origen; los links con ?utm_source=…&utm_campaign=… aparecen como utm:fuente/campaña" };
+  return { dias, desde: "registro propio desde el 28/10/2026", porDia, embudo, paginas: top(paginas), origenes: top(origenes), campanas, nota: "compraron: pedidos no cancelados con origen web en el período (mismo origen que parte=ventas); los de WhatsApp no suman. campanas: sesiones por origen; los links con ?utm_source=…&utm_campaign=… aparecen como utm:fuente/campaña" };
 }
 
 /** Harinar vs La Granja por kilo, y qué se compra en cada uno (ver lib/harinar.ts). */

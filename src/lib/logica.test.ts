@@ -849,6 +849,8 @@ test("combos: el argumento es el precio por kilo o por transferencia, no «ahorr
   const mixto = { precio: 65000, items: [{ cantidad: 1, producto: { contenido: null, unidad: null } }] };
   assert.equal(argumentoCombo(mixto, 8, p).porKilo, null);
   assert.equal(argumentoCombo(mixto, 8, p).corto, "$59800 por transferencia");
+  // Lo mismo que cobra totales(): Despensa $28.500 → $26.200, no $26.220.
+  assert.equal(argumentoCombo({ precio: 28500, items: [] }, 8, p).transferencia, "$26200 por transferencia");
 });
 
 import { postergaCompra, planSinApuro } from "./whatsapp-interactivo";
