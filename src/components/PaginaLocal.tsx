@@ -4,16 +4,19 @@ import { leerConfig } from "@/lib/config";
 import { wherePublicado } from "@/lib/filtros-producto";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
-import { textoCompraMinima, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { costoEntregaZona, textoCompraMinima, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { RielProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
 
 import { LOCALIDADES, type Localidad } from "@/lib/localidades";
+import { zonaPagaDe } from "@/lib/envios/tabla";
 
 export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
   const nombre = lugar?.nombre ?? "Villa Carlos Paz";
   const propia = lugar?.propia ?? true;
   const cfg = await leerConfig();
+  // Córdoba Capital: llega nuestro reparto con costo fijo, igual que dice /envios.
+  const zonaPaga = propia ? null : zonaPagaDe(cfg.tabla);
   const [destacados, combos, conteos] = await Promise.all([
     productosTienda({ orderBy: [{ gancho: "desc" }, { vendidos: "desc" }], take: 8 }),
     combosTienda({ tipo: "COMBO", activo: true }),
@@ -22,8 +25,8 @@ export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
   const categorias = conteos.filter((c) => c.categoria !== "Sin categoría");
   const preguntas: [string, string][] = [
     ["¿Tienen local a la calle en Villa Carlos Paz?", "No. Somos una dietética online con base en Villa Carlos Paz: pedís por la web y te lo llevamos a tu casa o a tu negocio."],
-    ["¿A qué zonas llevan el pedido sin cargo?", `A Villa Carlos Paz y al sur de Punilla: San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca. La entrega es en ${cfg.plazoEntregaPropia}.`],
-    ["¿Hacen envíos al resto de Córdoba y del país?", "Sí. Fuera de la zona de entrega propia despachamos por correo a todo el país. El costo se calcula en el carrito con tu código postal."],
+    ["¿A qué zonas llevan el pedido?", `A Villa Carlos Paz y al sur de Punilla: San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca. La entrega es en ${cfg.plazoEntregaPropia}: ${costoEntregaZona(cfg)}.`],
+    ["¿Hacen envíos al resto de Córdoba y del país?", `Sí. ${zonaPaga ? `Hasta ${zonaPaga.nombre} llegamos nosotros: ${pesos(zonaPaga.precio)} por pedido. ` : ""}Al resto del país despachamos por correo. El costo se calcula en el carrito con tu código postal.`],
     ["¿Cuál es la compra mínima?", textoCompraMinima(cfg)],
     ["¿Cómo se paga?", "Por transferencia bancaria, con descuento, o con tarjeta y dinero en cuenta a través de Mercado Pago."],
     ["¿Tienen productos sin TACC?", "Sí, hay una góndola completa de productos rotulados sin TACC por sus fabricantes. Verificá siempre el logo oficial en el envase."],
@@ -34,7 +37,7 @@ export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
     <div className="space-y-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faq, migas]).replace(/</g, "\\u003c") }} />
       <div>
-        <Titulo sobre={propia ? "Villa Carlos Paz y Punilla" : "Envíos desde Villa Carlos Paz"} bajada={`Frutos secos, cereales, harinas, especias, productos sin TACC y suplementos por volumen. ${lugar ? lugar.detalle : "Pedís online y te lo llevamos sin cargo a tu casa o a tu negocio."}`}>Dietética en {nombre}, {propia ? "con entrega a domicilio" : "con envío a domicilio"}</Titulo>
+        <Titulo sobre={propia ? "Villa Carlos Paz y Punilla" : "Envíos desde Villa Carlos Paz"} bajada={`Frutos secos, cereales, harinas, especias, productos sin TACC y suplementos por volumen. ${lugar ? lugar.detalle : "Pedís online y te lo llevamos a tu casa o a tu negocio."}`}>Dietética en {nombre}, {propia ? "con entrega a domicilio" : "con envío a domicilio"}</Titulo>
         <div className="flex flex-wrap gap-3">
           <Link href="/catalogo" className="btn-comprar">Ver el catálogo</Link>
           <Link href="/combos" className="btn-sec">Ver combos</Link>
@@ -42,7 +45,7 @@ export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
       </div>
       <section className="grid gap-3 sm:grid-cols-3">
         {[
-          propia ? ["Entrega sin cargo", `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}.`] : ["Envío por correo", `Despachamos a ${nombre} en 24 a 48 hs hábiles. El costo se calcula en el carrito con tu código postal.`],
+          propia ? ["Entrega en la zona", `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}: ${costoEntregaZona(cfg)}.`] : zonaPaga ? [`Entrega en ${nombre}`, `Llegamos nosotros: ${pesos(zonaPaga.precio)} por pedido, en ${zonaPaga.plazo || cfg.plazoEntregaPropia}, y coordinamos el horario por WhatsApp.`] : ["Envío por correo", `Despachamos a ${nombre} en 24 a 48 hs hábiles. El costo se calcula en el carrito con tu código postal.`],
           ["Precio por volumen", zonaSinMinimo(cfg) ? `Comprás en cantidad y pagás menos por kilo. Sin compra mínima en la zona; entrega sin cargo desde ${pesos(umbralZona(cfg))}.` : `Comprás en cantidad y pagás menos por kilo. Compra mínima de ${pesos(cfg.compraMinima)}, combinando lo que quieras.`],
           ["Para casa o para tu negocio", "Familias, hoteles y cabañas, cafeterías, gimnasios, kioscos y dietéticas."],
         ].map(([t, d]) => (

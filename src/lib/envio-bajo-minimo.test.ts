@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { aplicarReglas, cotizarEnvio, type ConfigEnvio } from "./envios/cotizar";
 import { TABLA_EJEMPLO } from "./envios/tabla";
 import type { Tarifa } from "./envios/tipos";
-import { envioPropioPara, lineaCompraMinima, textoCompraMinima, zonaSinMinimo } from "./minimo-zona";
+import { costoEntregaZona, envioPropioPara, lineaCompraMinima, textoCompraMinima, zonaSinMinimo } from "./minimo-zona";
 
 // Regla del 11/11: en la zona propia no hay compra mínima; abajo del umbral se cobra un envío fijo.
 const cfg: ConfigEnvio = {
@@ -67,4 +67,10 @@ test("lineaCompraMinima: con zona sin mínimo el $ 60.000 no aparece solo; sin e
   const sinMin = lineaCompraMinima(regla).replace(/\s/g, " ");
   assert.match(sinMin, /^En Villa Carlos Paz y la zona no hay compra mínima: sin cargo desde \$ 20\.000\. Al resto del país, compra mínima de \$ 60\.000/);
   assert.match(lineaCompraMinima({ ...regla, envioBajoMinimo: 0 }).replace(/\s/g, " "), /^Compra mínima de \$ 60\.000 por pedido/);
+});
+
+test("la entrega de la zona nunca se anuncia sin cargo si abajo del umbral se cobra", () => {
+  const regla = { compraMinima: 60000, compraMinimaPropia: 20000, envioBajoMinimo: 3000, entregaPropiaActiva: true };
+  assert.match(costoEntregaZona(regla), /sin cargo desde \$\s?20\.000; abajo de eso, \$\s?3\.000/);
+  assert.equal(costoEntregaZona({ ...regla, envioBajoMinimo: 0 }), "sin cargo");
 });

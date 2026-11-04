@@ -3,7 +3,7 @@ import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda, type ComboTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
-import { textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { costoEntregaZona, textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { GrillaProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
@@ -83,7 +83,7 @@ export default async function RegalosNavidenosCordoba() {
         {[
           ["Para regalar", "Frutos secos, dátiles y nuestros mixes armados en casa, en bolsas de 500 g y 1 kg. Un regalo rico que se usa."],
           ["Para empresas", "Decinos cuántos regalos, presupuesto por persona y fecha. Te pasamos una propuesta por WhatsApp."],
-          ["Entrega en la zona", `Sin cargo en Carlos Paz y el sur de Punilla, en ${cfg.plazoEntregaPropia}. A Córdoba Capital, con envío pago.`],
+          ["Entrega en la zona", `En Carlos Paz y el sur de Punilla, ${costoEntregaZona(cfg)}, en ${cfg.plazoEntregaPropia}. A Córdoba Capital, con envío pago.`],
         ].map(([t, d]) => (
           <div key={t} className="rounded-2xl bg-white p-4 shadow-ficha">
             <h2 className="font-display text-lg font-bold">{t}</h2>

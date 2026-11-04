@@ -22,7 +22,7 @@ export async function GET() {
     const p = aTienda(f, cfg);
     const foto = p.fotoUrl!.startsWith("/") ? `${base}${p.fotoUrl}` : p.fotoUrl!;
     const titulo = `${p.producto} ${p.presentacion}`.slice(0, 150);
-    return `<item><g:id>${x(p.codigo)}</g:id><g:title>${x(titulo)}</g:title><g:description>${x(`${titulo}${/sin marca/i.test(p.marca) ? "" : ` de ${p.marca}`}. ${p.categoria}. Entrega sin cargo en Villa Carlos Paz y envíos a todo el país.`)}</g:description><g:link>${base}/producto/${encodeURIComponent(p.codigo)}</g:link><g:image_link>${x(foto)}</g:image_link><g:price>${p.precio.toFixed(2)} ARS</g:price><g:availability>in_stock</g:availability><g:condition>new</g:condition>${/sin marca/i.test(p.marca) ? "" : `<g:brand>${x(p.marca)}</g:brand>`}<g:product_type>${x(p.categoria)}</g:product_type><g:identifier_exists>no</g:identifier_exists></item>`;
+    return `<item><g:id>${x(p.codigo)}</g:id><g:title>${x(titulo)}</g:title><g:description>${x(`${titulo}${/sin marca/i.test(p.marca) ? "" : ` de ${p.marca}`}. ${p.categoria}. Entrega a domicilio en Villa Carlos Paz y el sur de Punilla, y envíos a todo el país.`)}</g:description><g:link>${base}/producto/${encodeURIComponent(p.codigo)}</g:link><g:image_link>${x(foto)}</g:image_link><g:price>${p.precio.toFixed(2)} ARS</g:price><g:availability>in_stock</g:availability><g:condition>new</g:condition>${/sin marca/i.test(p.marca) ? "" : `<g:brand>${x(p.marca)}</g:brand>`}<g:product_type>${x(p.categoria)}</g:product_type><g:identifier_exists>no</g:identifier_exists></item>`;
   });
   // Los combos también van: Despensa 4 kg es lo más vendido. Se marcan como paquete armado por nosotros (is_bundle).
   const combos = (await combosTienda({ tipo: "COMBO", activo: true }))

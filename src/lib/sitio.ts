@@ -2,7 +2,7 @@ export const SITIO = {
   nombre: "Acopio Saludable",
   base: "Villa Carlos Paz, Córdoba",
   descripcion:
-    "Dietética online por volumen para familias y negocios: frutos secos, cereales, harinas, productos sin TACC, suplementos y especias. Entrega sin cargo en Villa Carlos Paz y envíos a todo el país.",
+    "Dietética online por volumen para familias y negocios: frutos secos, cereales, harinas, productos sin TACC, suplementos y especias. Entrega a domicilio en Villa Carlos Paz y el sur de Punilla, y envíos a todo el país.",
 };
 
 export function urlSitio(): string {

@@ -43,7 +43,7 @@ export default async function MesaDulceNavidad() {
     ...(p8 ? [["¿Cuánto sale armar una mesa dulce para 8 personas?", `Con nuestros precios de hoy, unos ${pesos(p8.total)} (${pesos(p8.porPersona)} por persona), contando envases enteros. El precio exacto lo ves en el carrito.`] as [string, string]] : []),
     ...(mesa ? [["¿Qué trae el combo Mesa navideña?", `${mesa.items.map((i) => i.producto.producto).join(", ")}. Sale ${pesos(mesa.precio)}.`] as [string, string]] : []),
     ["¿Cuánto antes conviene comprar?", "Los frutos secos y las garrapiñadas en frasco hermético se mantienen bien varias semanas, así que podés comprar a principios de diciembre y evitar las corridas de la última semana."],
-    ["¿Hacen entrega en Carlos Paz?", `Sí. La entrega es sin cargo en Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}, ${sinMinimo ? `sin compra mínima (sin cargo desde ${minimo}; si no, el envío cuesta ${pesos(cfg.envioBajoMinimo)})` : `con compra mínima de ${minimo}`}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
+    ["¿Hacen entrega en Carlos Paz?", `Sí. Entregamos en Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}, ${sinMinimo ? `sin compra mínima (sin cargo desde ${minimo}; si no, el envío cuesta ${pesos(cfg.envioBajoMinimo)})` : `con compra mínima de ${minimo}`}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
     ["¿Cómo pago?", "Por transferencia, con descuento, o con Mercado Pago. El pedido sale cuando el pago está acreditado."],
   ];
 

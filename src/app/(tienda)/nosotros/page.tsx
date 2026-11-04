@@ -25,7 +25,7 @@ export default async function Nosotros() {
         <h2>Cómo trabajamos</h2>
         <ul>
           <li>Tienda online, sin local de atención al público. Pedís en la web o por WhatsApp.</li>
-          <li>Entrega propia sin cargo en Villa Carlos Paz y alrededores, y envíos por Correo Argentino a todo el país.</li>
+          <li>Entrega propia en Villa Carlos Paz y alrededores, y envíos por Correo Argentino a todo el país.</li>
           <li>{lineaCompraMinima(cfg)} Pagás con Mercado Pago o por transferencia.</li>
           <li>Precios a la vista en cada producto, con el precio por kilo y el precio por transferencia.</li>
         </ul>
