@@ -4,7 +4,7 @@ import { leerConfig } from "@/lib/config";
 import { wherePublicado } from "@/lib/filtros-producto";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { combosTienda } from "@/lib/tienda";
-import { LOCALIDADES } from "@/lib/localidades";
+import { LOCALIDADES, seIndexa } from "@/lib/localidades";
 import { GUIAS } from "@/lib/guias";
 import { urlSitio } from "@/lib/sitio";
 
@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...["", "/catalogo", "/sin-tacc", "/nichos", "/objetivos", "/combos", "/mi-lista", "/armador", "/cotizador-hoteles", "/nosotros", "/dietetica-villa-carlos-paz", "/frutos-secos-carlos-paz", "/regalos-navidenos-cordoba", "/mesa-dulce-navidad", "/sin-tacc-carlos-paz", "/guias", "/novedades", "/envios", "/cambios-y-devoluciones", "/contacto", "/app", "/terminos", "/privacidad"].map((r) => ({ url: `${base}${r}` })),
     ...categorias.filter((c) => c.categoria !== "Sin categoría").map((c) => ({ url: `${base}/catalogo?categoria=${encodeURIComponent(c.categoria)}` })),
-    ...LOCALIDADES.map((l) => ({ url: `${base}/dietetica/${l.slug}` })),
+    ...LOCALIDADES.filter(seIndexa).map((l) => ({ url: `${base}/dietetica/${l.slug}` })),
     ...GUIAS.map((g) => ({ url: `${base}/guias/${g.slug}`, lastModified: new Date(g.actualizada) })),
     ...NICHOS.map((n) => ({ url: `${base}/nichos/${n.id}` })),
     ...OBJETIVOS.map((o) => ({ url: `${base}/objetivos/${o.id}` })),

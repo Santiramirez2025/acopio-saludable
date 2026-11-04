@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const titulo = `${t.producto} ${t.presentacion}`;
   return {
     title: `${titulo}: precio y envío`,
-    description: cortarEnPalabra(`${titulo}${marcaVisible(p.marca) ? ` de ${p.marca}` : ""}, en ${p.categoria.toLowerCase()}. Precio actualizado, entrega sin cargo en Villa Carlos Paz y envíos a todo el país.`, 158),
+    description: cortarEnPalabra(`${titulo}${marcaVisible(p.marca) ? ` de ${p.marca}` : ""}, en ${p.categoria.toLowerCase()}. Precio actualizado, entrega en Villa Carlos Paz y envíos a todo el país.`, 158),
     alternates: { canonical: `/producto/${encodeURIComponent(p.codigo)}` },
     openGraph: { title: titulo, url: `/producto/${encodeURIComponent(p.codigo)}`, images: p.fotoUrl ? [p.fotoUrl] : undefined },
   };

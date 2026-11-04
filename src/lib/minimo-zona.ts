@@ -28,6 +28,11 @@ export function envioPropioPara(c: ReglaMinimo, subtotal: number): number {
   return zonaSinMinimo(c) && subtotal < umbralZona(c) ? c.envioBajoMinimo : 0;
 }
 
+/** Cuánto sale la entrega propia, sin nombrar la zona: «sin cargo desde $ X; abajo de eso, $ Y». Para páginas y FAQ. */
+export function costoEntregaZona(c: ReglaMinimo): string {
+  return zonaSinMinimo(c) ? `sin cargo desde ${pesos(umbralZona(c))}; abajo de eso, ${pesos(c.envioBajoMinimo)}` : "sin cargo";
+}
+
 /** Una frase, para FAQ y bot: la regla completa de la zona propia cuando no hay mínimo. */
 export function textoZonaSinMinimo(c: ReglaMinimo): string {
   return `En Villa Carlos Paz y el sur de Punilla no hay compra mínima: la entrega es sin cargo desde ${pesos(umbralZona(c))} y, si el pedido no llega, el envío cuesta ${pesos(c.envioBajoMinimo)}.`;

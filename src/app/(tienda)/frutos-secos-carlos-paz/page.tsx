@@ -3,7 +3,7 @@ import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
-import { textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { costoEntregaZona, textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { GrillaProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
@@ -13,7 +13,7 @@ const CATEGORIA = "Frutos secos y mix";
 export const metadata: Metadata = {
   title: "Frutos secos en Villa Carlos Paz por kilo, con entrega a domicilio",
   description:
-    "Frutos secos y mixes por kilo en Villa Carlos Paz: nueces, almendras, castañas de cajú, pasas y mix clásico armado en casa. Entrega sin cargo en Carlos Paz y el sur de Punilla.",
+    "Frutos secos y mixes por kilo en Villa Carlos Paz: nueces, almendras, castañas de cajú, pasas y mix clásico armado en casa. Entrega a domicilio en Carlos Paz y el sur de Punilla, sin compra mínima.",
   alternates: { canonical: "/frutos-secos-carlos-paz" },
 };
 
@@ -32,7 +32,7 @@ export default async function FrutosSecosCarlosPaz() {
   const preguntas: [string, string][] = [
     ["¿Dónde compro frutos secos por kilo en Villa Carlos Paz?", "Acá mismo: somos una dietética online de Villa Carlos Paz. Elegís por la web o por WhatsApp y te llevamos el pedido a tu casa o a tu negocio. No tenemos local a la calle."],
     ["¿Los mixes los arman ustedes?", "Sí. El Mix Clásico y sus variantes (con cajú, con girasol, sin maní, tropical) los armamos en casa con frutos secos que compramos por bolsa grande, y te los mandamos en bolsas de 1 kg, 500 g o 250 g según el producto."],
-    ["¿Cobran el envío en Carlos Paz?", `No. La entrega es sin cargo en Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
+    ["¿Cobran el envío en Carlos Paz?", `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca la entrega es ${costoEntregaZona(cfg)}, en ${cfg.plazoEntregaPropia}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
     ["¿Hay compra mínima?", sinMinimo ? `No. ${textoZonaSinMinimo(cfg)} Sumás frutos secos, combos y cualquier otro producto de la tienda.` : `Sí, ${minimo} por pedido en la zona de entrega, sumando frutos secos, combos y cualquier otro producto de la tienda.`],
     ["¿Cómo pago?", "Por transferencia, con descuento, o con Mercado Pago. Si preferís, consultanos por WhatsApp y te armamos el pedido."],
     ["¿Sirven para regalar en las fiestas?", "Sí. Los combos de frutos secos y los mixes en bolsa de 1 kg se usan mucho para regalos de fin de año y para la mesa navideña. Si necesitás varias unidades para una empresa, escribinos por WhatsApp."],
@@ -52,7 +52,7 @@ export default async function FrutosSecosCarlosPaz() {
     <div className="space-y-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faq, migas, lista]).replace(/</g, "\\u003c") }} />
       <div>
-        <Titulo sobre="Villa Carlos Paz y Punilla" bajada="Nueces, almendras, castañas de cajú, pasas y mixes armados en casa, en bolsas de 1 kg, 500 g y 250 g. Pedís online o por WhatsApp y te lo llevamos sin cargo dentro de la zona.">
+        <Titulo sobre="Villa Carlos Paz y Punilla" bajada="Nueces, almendras, castañas de cajú, pasas y mixes armados en casa, en bolsas de 1 kg, 500 g y 250 g. Pedís online o por WhatsApp y te lo llevamos a domicilio dentro de la zona.">
           Frutos secos por kilo en Villa Carlos Paz
         </Titulo>
         <div className="flex flex-wrap items-center gap-3">
@@ -63,7 +63,7 @@ export default async function FrutosSecosCarlosPaz() {
 
       <section className="grid gap-3 sm:grid-cols-3">
         {[
-          ["Entrega sin cargo", `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}.`],
+          ["Entrega en la zona", `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}: ${costoEntregaZona(cfg)}.`],
           ["Mixes armados en casa", "Mix Clásico con cajú, con girasol, sin maní y tropical. Sabés lo que lleva cada uno antes de comprar."],
           ["Por kilo, mejor precio", sinMinimo ? `Comprás en bolsa grande y pagás menos por kilo. Sin compra mínima; entrega sin cargo desde ${minimo}.` : `Comprás en bolsa grande y pagás menos por kilo. Compra mínima de ${minimo}, combinando lo que quieras.`],
         ].map(([t, d]) => (
