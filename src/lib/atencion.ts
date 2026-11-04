@@ -14,7 +14,7 @@ import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, pideDatosTransferencia, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, pideDatosTransferencia, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito } from "./tienda";
@@ -674,8 +674,9 @@ export async function pensar(c: {
   // El carrito de la web llega armado: se carga exacto, sin IA y sin ofrecer otra cosa.
   const web = esPedidoWeb(c.texto) && !ordenId ? await armarPedidoWeb(c.texto, Boolean(c.historial.some((h) => h.de === "acopio"))) : null;
   // Experimento B (1-7/11): al «Quiero precios de frutos secos por kilo» del anuncio, la lista y la zona, sin IA.
+  // Lo mismo al botón «Sí, pasame precios» de la reactivación, que promete esos precios.
   const primeraLista =
-    !web && !ordenId && c.canal === "whatsapp" && esPrimerPedidoDePrecios({ texto: c.texto, historial: c.historial, deAnuncio: Boolean(textoAnuncio), negocio: c.negocio })
+    !web && !ordenId && c.canal === "whatsapp" && (esPrimerPedidoDePrecios({ texto: c.texto, historial: c.historial, deAnuncio: Boolean(textoAnuncio), negocio: c.negocio }) || esToqueReactivacion({ texto: c.texto, historial: c.historial, negocio: c.negocio }))
       ? textoPrimeraListaPorKilo(await catalogo(), primerNombre(c.nombre), pesos)
       : null;
   const r = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId }) : null);

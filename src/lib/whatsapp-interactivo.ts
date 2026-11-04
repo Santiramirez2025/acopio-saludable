@@ -366,6 +366,18 @@ export function esPrimerPedidoDePrecios(c: { texto: string; historial: { de: str
   return pidePreciosPorKilo(c.texto) && !agregoAlgoAlPedido(c.texto);
 }
 
+/**
+ * Tocó «Sí, pasame precios» en la plantilla de reactivación: le prometimos «los precios por kilo de hoy» y
+ * van por código. Con la IA, Eduardo (4/11) y Moni (3/11) recibieron solo la Alacena; la oferta del combo
+ * viene después, cuando contesta la zona. Mismo botón en las plantillas de negocios: esos siguen su camino.
+ */
+export function esToqueReactivacion(c: { texto: string; historial: { de: string; texto: string }[]; negocio: string }): boolean {
+  if (c.negocio) return false;
+  if (!/^s[ií],? pasame (los )?precios[.!]*$/i.test(c.texto.trim())) return false;
+  const ultimo = [...c.historial].reverse().find((h) => h.de === "acopio");
+  return Boolean(ultimo?.texto.startsWith("[Reactivación]"));
+}
+
 // La persona le sumó algo al texto del anuncio («… por kilo y dirección», «… de dónde son»): la lista fija
 // no le contestaría eso, así que sigue por la IA, que recibe el mensaje entero.
 function agregoAlgoAlPedido(texto: string): boolean {
