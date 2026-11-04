@@ -65,7 +65,7 @@ export function Armador({ nichos, compraMinima, nichoInicial, sinMinimo = false 
           <span className="text-stone-600">$</span>
           <input id="presupuesto" className="campo" inputMode="numeric" value={presupuesto} onChange={(e) => setPresupuesto(e.target.value.replace(/[^\d]/g, ""))} />
         </div>
-        <p className="mt-1 text-xs text-stone-600">{sinMinimo ? `Desde ${pesosCliente(compraMinima)} te lo llevamos sin cargo en Carlos Paz y la zona.` : `La compra mínima es de ${pesosCliente(compraMinima)}.`}</p>
+        <p className="mt-1 text-xs text-stone-600">{sinMinimo ? `Desde ${pesosCliente(compraMinima)} te lo llevamos sin cargo en Carlos Paz y la zona. A otras localidades, por correo, la compra mínima es mayor: la ves en el carrito.` : `La compra mínima es de ${pesosCliente(compraMinima)}.`}</p>
       </div>
       <button type="button" className="btn" disabled={!nicho || !personas || !presupuesto || cargando} onClick={armar}>
         {cargando ? "Armando…" : "Ver pedido sugerido"}

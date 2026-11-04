@@ -1,12 +1,12 @@
 /** Tiempos de entrega, siempre con el mismo texto en toda la tienda. */
 import { pesos } from "@/lib/precios";
-export function Plazos({ propia, plazoPropia, zonaPaga, className = "" }: { propia: boolean; plazoPropia: string; zonaPaga?: { nombre: string; precio: number; plazo?: string } | null; className?: string }) {
+export function Plazos({ propia, plazoPropia, costoZona = "sin cargo", zonaPaga, className = "" }: { propia: boolean; plazoPropia: string; costoZona?: string; zonaPaga?: { nombre: string; precio: number; plazo?: string } | null; className?: string }) {
   return (
     <ul className={`space-y-1 text-sm ${className}`}>
       {propia && (
         <li className="flex gap-2">
           <Icono d="M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 100-4 2 2 0 000 4zM17 19a2 2 0 100-4 2 2 0 000 4z" />
-          <span><b>Villa Carlos Paz y sur de Punilla</b> (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca): te lo llevamos en {plazoPropia}, sin cargo. Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.</span>
+          <span><b>Villa Carlos Paz y sur de Punilla</b> (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca): te lo llevamos en {plazoPropia}, {costoZona}. Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.</span>
         </li>
       )}
       {propia && zonaPaga && (
