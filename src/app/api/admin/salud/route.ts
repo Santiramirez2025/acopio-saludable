@@ -9,5 +9,6 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  return NextResponse.json({ texto: await estadoTexto(), corridas: await ultimasCorridas() });
+  // node: versión real del runtime en producción, para comprobar parches (ej. CVE-2026-111497). Solo admin.
+  return NextResponse.json({ node: process.version, texto: await estadoTexto(), corridas: await ultimasCorridas() });
 }
