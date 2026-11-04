@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { grupoOrigen, resumirVentas, type FilaVenta } from "./ventas-resumen";
+import { esPedidoWeb, grupoOrigen, resumirVentas, type FilaVenta } from "./ventas-resumen";
 
 const fila = (o: Partial<FilaVenta> & { id: number }): FilaVenta => ({ estado: "PENDIENTE_PAGO", total: 1000, costoProductos: 500, costoEnvioReal: 100, comisionPago: 0, costoPackaging: 100, origen: null, telefono: "5493541000001", createdAt: new Date("2026-11-03T15:00:00Z"), pagadoAt: null, ...o });
 const desde = new Date("2026-11-01T00:00:00Z");
@@ -35,4 +35,12 @@ test("ventas: día en hora argentina y origen desconocido explícito", () => {
   assert.equal(r.porOrigen[0].origen, "desconocido");
   assert.equal(grupoOrigen("whatsapp · anuncio: Pedilo hoy"), "anuncio: Pedilo hoy");
   assert.equal(grupoOrigen("google (orgánico) · 2026-10-25"), "google (orgánico)");
+});
+
+test("embudo: solo el checkout de la web cuenta como compra web", () => {
+  assert.equal(esPedidoWeb("web · directo"), true);
+  assert.equal(esPedidoWeb("google (orgánico) · 2026-10-25"), true);
+  assert.equal(esPedidoWeb("whatsapp"), false);
+  assert.equal(esPedidoWeb("whatsapp · anuncio: Pedilo hoy"), false);
+  assert.equal(esPedidoWeb(null), false);
 });

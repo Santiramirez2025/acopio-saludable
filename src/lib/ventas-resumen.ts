@@ -19,6 +19,12 @@ const clave = (tel: string) => tel.replace(/\D/g, "").slice(-10);
 const dia = (d: Date) => new Date(d.getTime() - 3 * 3_600_000).toISOString().slice(0, 10); // hora argentina
 const redondo = (n: number) => Math.round(n);
 
+/** Pedido hecho en el checkout de la web. Los del bot guardan «whatsapp…»; sin origen no se puede afirmar que sea web. */
+export function esPedidoWeb(origen: string | null): boolean {
+  const o = (origen ?? "").trim();
+  return !!o && !/^whatsapp\b/i.test(o);
+}
+
 export function grupoOrigen(origen: string | null): string {
   const o = (origen ?? "").trim();
   if (!o) return "desconocido";
