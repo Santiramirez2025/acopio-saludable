@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { esPrimerPedidoDePrecios, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, MARCA_PRECIOS_POR_KILO, planWhatsapp } from "./whatsapp-interactivo";
+import { esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, MARCA_PRECIOS_POR_KILO, planWhatsapp } from "./whatsapp-interactivo";
 
 const pesos = (n: number) => `$${n.toLocaleString("es-AR")}`;
 const kilo = (producto: string, precio: number) => ({ producto, precio, contenido: 1, unidad: "kg" });
@@ -40,4 +40,16 @@ test("experimento B: la lista trae los kilos que más piden, sin combo, sin $60.
 test("experimento B: sin nombre saluda sin nombre, y con menos de 3 precios vuelve a la IA", () => {
   assert.ok(textoPrimeraListaPorKilo(catalogo, null, pesos)!.startsWith("¡Hola! "));
   assert.equal(textoPrimeraListaPorKilo(catalogo.slice(0, 2), null, pesos), null);
+});
+
+test("reactivación: el botón «Sí, pasame precios» trae la lista por código, solo después de esa plantilla", () => {
+  const plantilla = { de: "acopio", texto: "[Reactivación] Hola Eduardo, soy Santiago. ¿Te paso los precios por kilo de hoy? [Botones: Sí, pasame precios · No, gracias]" };
+  const base = { texto: "Sí, pasame precios", historial: [{ de: "yo", texto: "hola" }, plantilla], negocio: "" };
+  assert.ok(esToqueReactivacion(base));
+  assert.ok(esToqueReactivacion({ ...base, texto: " si pasame precios " }));
+  assert.ok(!esToqueReactivacion({ ...base, negocio: "<negocio>dietética</negocio>" }), "negocio: sigue pedido_para_negocio");
+  assert.ok(!esToqueReactivacion({ ...base, texto: "No, gracias" }));
+  assert.ok(!esToqueReactivacion({ ...base, texto: "Sí, pasame precios de la nuez" }), "pidió algo más: la IA");
+  assert.ok(!esToqueReactivacion({ ...base, historial: [plantilla, { de: "acopio", texto: "Te paso precios por kilo de hoy:" }] }), "ya le contestamos: no se repite");
+  assert.ok(!esToqueReactivacion({ ...base, historial: [] }));
 });
