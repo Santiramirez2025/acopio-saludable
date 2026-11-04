@@ -38,7 +38,7 @@ p.s{font-size:3.6mm;line-height:1.3;margin:2.5mm 2mm 0}
  <p class="s">Frutos secos, mixes y snacks sanos. Escaneá, pedí por WhatsApp y te lo llevamos a la cabaña.</p>
  <div class="qr">${qr}</div>
  <div class="cod">Tu código de huésped <b>${codigo}</b></div>
- <div class="pie"><strong>WhatsApp 3541 51-9630</strong> · acopiosaludable.com<br>Pagás al recibir · Envío sin cargo en Carlos Paz y la zona</div>
+ <div class="pie"><strong>WhatsApp 3541 51-9630</strong> · acopiosaludable.com<br>Pagás antes por transferencia o Mercado Pago · En Carlos Paz y la zona, entrega sin cargo desde $20.000</div>
 </div>
 </body></html>`;
 
