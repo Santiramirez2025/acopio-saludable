@@ -1,5 +1,5 @@
 // Radiografía del negocio para replantear el catálogo: qué se vendió, qué preguntó la gente y qué
-// tiene La Granja hoy. Solo administrador. GET ?parte=pedidos|whatsapp|catalogo|lagranja|harinar|trafico (&dias=N)
+// tiene La Granja hoy. Solo administrador. GET ?parte=pedidos|whatsapp|catalogo|lagranja|harinar|trafico|ventas (&dias=N)
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { proveedorDe } from "@/lib/proveedores";
 import { filasDePdf } from "@/lib/listas-pdf-leer";
 import { detectarProveedor, parsearLista } from "@/lib/listas-pdf";
+import { resumirVentas, type FilaVenta } from "@/lib/ventas-resumen";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -55,6 +56,16 @@ async function pedidos() {
     combos: [...combos.entries()],
     productos: [...productos.entries()].sort((a, b) => b[1].veces - a[1].veces).slice(0, 40).map(([k, v]) => [k, v.veces, v.unidades, v.ventas, v.margen, v.proveedor]),
   };
+}
+
+// El número único de ventas: por período, con cada denominador separado (creados ≠ pagados ≠ entregados ≠ cobrado).
+async function ventas(dias: number) {
+  const desde = new Date(Date.now() - dias * 86_400_000);
+  const todos = await prisma.order.findMany({ select: { id: true, telefono: true, createdAt: true }, orderBy: { id: "asc" } });
+  const filas = await prisma.$queryRaw<FilaVenta[]>`
+    SELECT "id", "estado"::text AS "estado", "total", "costoProductos", "costoEnvioReal", "comisionPago", "costoPackaging", "origen", "telefono", "createdAt", "pagadoAt"
+    FROM "Order" WHERE "createdAt" >= ${desde} OR "pagadoAt" >= ${desde}`;
+  return resumirVentas(filas.map((f) => ({ ...f, total: Number(f.total), costoProductos: Number(f.costoProductos), costoEnvioReal: Number(f.costoEnvioReal), comisionPago: Number(f.comisionPago), costoPackaging: Number(f.costoPackaging) })), todos, desde, dias);
 }
 
 async function whatsapp() {
@@ -170,7 +181,7 @@ export async function GET(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const parte = new URL(req.url).searchParams.get("parte");
   const dias = Math.min(60, Math.max(1, Number(new URL(req.url).searchParams.get("dias")) || 7));
-  const f = { pedidos, whatsapp, catalogo, lagranja, harinar, trafico: () => trafico(dias) }[parte ?? ""];
-  if (!f) return NextResponse.json({ error: "parte = pedidos | whatsapp | catalogo | lagranja | harinar | trafico" }, { status: 400 });
+  const f = { pedidos, whatsapp, catalogo, lagranja, harinar, trafico: () => trafico(dias), ventas: () => ventas(dias) }[parte ?? ""];
+  if (!f) return NextResponse.json({ error: "parte = pedidos | whatsapp | catalogo | lagranja | harinar | trafico | ventas" }, { status: 400 });
   return NextResponse.json(await f());
 }
