@@ -13,7 +13,11 @@ export function PaginaVista() {
     if (location.pathname.startsWith("/admin")) return;
     const alTocar = (e: MouseEvent) => {
       const a = (e.target as HTMLElement | null)?.closest?.("a");
-      if (a && /wa\.me|api\.whatsapp|whatsapp\.com\/send/.test(a.href)) medir("contacto");
+      if (a && /wa\.me|api\.whatsapp|whatsapp\.com\/send/.test(a.href)) {
+        medir("contacto");
+        // De qué botón salió (ficha, carrito): el contacto solo no dice si vino con el pedido escrito.
+        if (a.dataset.medir) registrar(a.dataset.medir);
+      }
     };
     document.addEventListener("click", alTocar, true);
     return () => document.removeEventListener("click", alTocar, true);

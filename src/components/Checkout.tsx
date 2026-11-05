@@ -6,11 +6,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { pesosCliente, useCarrito } from "./Carrito";
 import { envioQueSeCobra } from "@/lib/pedido-calculos";
+import { PedirWhatsapp } from "./PedirWhatsapp";
 
 type Opcion = { id: string; nombre: string; modalidad: string; precio: number; plazo: string; masBarata: boolean };
 type Envio = { opciones: Opcion[]; pesoTotalKg: number; bultos: number; puedePagar: boolean; compraMinima: number; falta: number };
 
-export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, comisionPagoPct }: { provincias: string[]; mpDisponible: boolean; descuentoTransferenciaPct: number; comisionPagoPct: number }) {
+export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, comisionPagoPct, whatsapp }: { provincias: string[]; mpDisponible: boolean; descuentoTransferenciaPct: number; comisionPagoPct: number; whatsapp?: string | null }) {
   const { lineas, listo, cotizacion } = useCarrito();
   const [provincia, setProvincia] = useState("");
   const [cp, setCp] = useState("");
@@ -210,6 +211,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
         </dl>
         {error && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         <button className="btn w-full" disabled={enviando || !opcion || cotizandoEnvio}>{enviando ? "Confirmando…" : medio === "MERCADOPAGO" ? "Confirmar y pagar" : "Confirmar pedido"}</button>
+        <PedirWhatsapp numero={whatsapp} lineas={cotizacion.lineas} subtotal={subtotal} />
         <Link href="/carrito" className="block text-center text-sm text-stone-600 underline">Volver al carrito</Link>
       </aside>
     </form>

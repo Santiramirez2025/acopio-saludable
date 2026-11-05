@@ -19,6 +19,8 @@
   .btn-sec { @apply inline-flex min-h-[48px] items-center justify-center rounded-full border border-tierra-200 bg-white px-5 py-2.5 text-sm font-semibold text-acopio-900 transition active:scale-[.98] hover:border-acopio-600 disabled:cursor-not-allowed disabled:opacity-50; }
   /* El amarillo es solo para comprar: agregar al carrito y avanzar con el pedido. */
   .btn-comprar { @apply inline-flex min-h-[48px] items-center justify-center rounded-full bg-sol px-5 py-2.5 text-sm font-bold text-acopio-900 transition active:scale-[.98] hover:bg-sol-oscuro disabled:cursor-not-allowed disabled:opacity-50; }
+  /* A la par de comprar: casi todas las ventas entran por WhatsApp. */
+  .btn-whatsapp { @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-bold text-acopio-900 transition active:scale-[.98] hover:brightness-105; }
   .campo { @apply w-full rounded-xl border border-tierra-200 bg-white px-3.5 py-2.5 text-[15px] text-acopio-900 placeholder:text-stone-400 min-h-[48px] focus:border-acopio-600 focus:outline-none focus:ring-2 focus:ring-acopio-600/40; }
   .etiqueta { @apply mb-1 block text-xs font-semibold text-stone-600; }
   .tarjeta { @apply rounded-2xl border border-tierra-200 bg-white p-4; }
