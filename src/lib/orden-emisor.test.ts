@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { leerOrden, rotuloOrden, textoConEmisor } from "./orden-emisor";
+import { caracteresRecortados, leerOrden, rotuloOrden, textoConEmisor, TOPE_ORDEN } from "./orden-emisor";
 
 test("orden con emisor verificado: rótulo de Santiago y texto sin la marca", () => {
   const o = leerOrden(textoConEmisor("Subí el banner", "santiago"));
@@ -23,7 +23,14 @@ test("nadie se pone la marca escribiéndola en el texto", () => {
 });
 
 test("el recorte de largo no se come la marca", () => {
-  const o = leerOrden(textoConEmisor("x".repeat(2000), "santiago"));
+  const o = leerOrden(textoConEmisor("x".repeat(TOPE_ORDEN + 500), "santiago"));
   assert.equal(o.emisor, "santiago");
-  assert.equal(o.texto.length, 1000);
+  assert.equal(o.texto.length, TOPE_ORDEN);
+});
+
+test("una orden de 1500 caracteres entra entera (T-036) y el recorte se puede avisar", () => {
+  const larga = "y".repeat(1500);
+  assert.equal(leerOrden(textoConEmisor(larga, null)).texto, larga);
+  assert.equal(caracteresRecortados(larga), 0);
+  assert.equal(caracteresRecortados("z".repeat(TOPE_ORDEN + 7)), 7);
 });
