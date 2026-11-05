@@ -1293,6 +1293,13 @@ test("recompra: resumen corto para la plantilla y códigos exactos para el vende
   assert.ok(textoRecompra({ numero: "AS-1", id: 1, nombre: "Ana", items: despensa, direccion: "x", total: "$1" }).includes("combo slug despensa-4-kilos x 1"));
 });
 
+test("recompra: nunca nombra los dátiles viejos, ni en la plantilla ni en la nota del vendedor", () => {
+  const items = [{ codigo: "LG-DATIL", producto: "Dátiles Deglet Nour con carozo (Argelia)", presentacion: "x 1 kg", cantidad: 1, comboSlug: null }];
+  assert.equal(resumenPedido(items), "tu pedido (dátiles con carozo)");
+  const t = textoRecompra({ numero: "AS-00024", id: 24, nombre: "Ana", items, direccion: "x", total: "$1" });
+  assert.ok(!/deglet|argelia/i.test(t) && t.includes("codigo LG-DATIL · Dátiles con carozo x 1 kg x 1"));
+});
+
 import { netoCanal, precioCanal } from "./canales";
 test("canales: el precio de Mercado Libre y PedidosYa deja al menos lo mismo que la web", () => {
   for (const web of [6500, 15400, 25000, 35000, 38500, 83000]) {
