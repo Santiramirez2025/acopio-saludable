@@ -46,6 +46,21 @@ export function admiteMedicion(eventosUltimoMinuto: number): boolean {
   return eventosUltimoMinuto < MEDICION_MAX_MINUTO;
 }
 
+/**
+ * Freno del login con contraseña, sobre los fallos de los últimos 15 minutos (contados en la base).
+ * Por IP corta a quien prueba desde una máquina sin afectar a Santiago; el tope global acota un ataque
+ * desde muchas IPs. Hace falta más de una IP para llegar al aviso, así un error de tipeo propio no avisa.
+ */
+export const LOGIN_MAX_POR_IP = 5;
+export const LOGIN_AVISO_TOTAL = 10;
+export const LOGIN_MAX_TOTAL = 30;
+export function decidirLogin(fallos: { total: number; ip: number }): { admite: boolean; avisar: boolean } {
+  return {
+    admite: fallos.ip < LOGIN_MAX_POR_IP && fallos.total < LOGIN_MAX_TOTAL,
+    avisar: fallos.total + 1 === LOGIN_AVISO_TOTAL, // este fallo es el que llega al umbral: avisa una sola vez
+  };
+}
+
 /** Compara una firma o clave que llega de afuera con la esperada sin que el tiempo de respuesta delate cuántos caracteres acertó. */
 export function igualesSeguro(recibida: string, esperada: string): boolean {
   const a = Buffer.from(String(recibida));

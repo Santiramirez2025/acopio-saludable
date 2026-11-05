@@ -1,6 +1,6 @@
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { _reiniciarFreno, admiteFreno, admiteMedicion, igualesSeguro, ipDe, MEDICION_MAX_MINUTO } from "./freno";
+import { _reiniciarFreno, admiteFreno, admiteMedicion, decidirLogin, igualesSeguro, ipDe, LOGIN_AVISO_TOTAL, LOGIN_MAX_POR_IP, LOGIN_MAX_TOTAL, MEDICION_MAX_MINUTO } from "./freno";
 
 test("medición: tope global por minuto contado en la base", () => {
   assert.equal(admiteMedicion(0), true);
@@ -48,4 +48,18 @@ test("igualesSeguro: solo vale la firma exacta, no una parcial, de otro largo ni
   assert.equal(igualesSeguro(f.slice(0, 15) + "9", f), false);
   assert.equal(igualesSeguro("", ""), false);
   assert.equal(igualesSeguro("", f), false);
+});
+
+test("login: frena por IP sin afectar a otra IP, y frena todo al llegar al tope global", () => {
+  assert.equal(decidirLogin({ total: 0, ip: 0 }).admite, true);
+  assert.equal(decidirLogin({ total: LOGIN_MAX_POR_IP - 1, ip: LOGIN_MAX_POR_IP - 1 }).admite, true);
+  assert.equal(decidirLogin({ total: LOGIN_MAX_POR_IP, ip: LOGIN_MAX_POR_IP }).admite, false);
+  assert.equal(decidirLogin({ total: LOGIN_MAX_POR_IP, ip: 0 }).admite, true); // otra máquina sigue entrando
+  assert.equal(decidirLogin({ total: LOGIN_MAX_TOTAL, ip: 0 }).admite, false);
+});
+
+test("login: avisa una sola vez, con el fallo que llega al umbral", () => {
+  const avisos = Array.from({ length: LOGIN_MAX_TOTAL }, (_, total) => decidirLogin({ total, ip: 0 }).avisar).filter(Boolean);
+  assert.equal(avisos.length, 1);
+  assert.equal(decidirLogin({ total: LOGIN_AVISO_TOTAL - 1, ip: 0 }).avisar, true);
 });

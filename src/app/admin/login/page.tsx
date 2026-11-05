@@ -53,7 +53,7 @@ export default function Login() {
           <label className="etiqueta" htmlFor="password">Contraseña</label>
           <input className="campo" id="password" name="password" type="password" autoComplete="current-password" required />
         </div>
-        {error && <p className="text-sm text-red-600">Email o contraseña incorrectos.</p>}
+        {error && <p className="text-sm text-red-600">Email o contraseña incorrectos. Después de varios intentos se frena 15 minutos; podés pedir acceso por WhatsApp.</p>}
         <button className="btn w-full" disabled={cargando}>{cargando ? "Ingresando…" : "Ingresar"}</button>
       </form>
       <button type="button" onClick={pedirPorWhatsapp} disabled={Boolean(espera && espera.startsWith("Esperando"))} className="mt-4 w-full rounded-md border border-acopio-700 px-3 py-2 text-sm font-medium text-acopio-700">
