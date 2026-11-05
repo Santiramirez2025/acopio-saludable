@@ -649,6 +649,8 @@ export async function pensar(c: {
       : "";
   // Venta ya cerrada: lo que mande ahora (dirección, horario) va al pedido.
   const ordenId = c.pedidoGuardado?.startsWith("orden:") ? Number(c.pedidoGuardado.slice(6)) || undefined : undefined;
+  // Lo que lleva el pedido guardado: con eso el envío de la zona se cotiza con el subtotal real, no con 0.
+  const subtotalPedido = c.pedidoGuardado && !ordenId ? (await cotizarCarrito(lineasDeCamino(c.pedidoGuardado)).catch(() => null))?.subtotal : undefined;
   // En qué anda el pedido: si ya salió o ya lo recibió, no se le habla de agendar ni de «te avisamos cuando salga».
   const orden = ordenId ? await prisma.order.findUnique({ where: { id: ordenId }, select: { estado: true, nombre: true, calle: true, ciudad: true, notas: true, medioPago: true } }).catch(() => null) : null;
   const estadoOrden = orden?.estado ?? null;
@@ -679,7 +681,7 @@ export async function pensar(c: {
     !web && !ordenId && c.canal === "whatsapp" && (esPrimerPedidoDePrecios({ texto: c.texto, historial: c.historial, deAnuncio: Boolean(textoAnuncio), negocio: c.negocio }) || esToqueReactivacion({ texto: c.texto, historial: c.historial, negocio: c.negocio }))
       ? textoPrimeraListaPorKilo(await catalogo(), primerNombre(c.nombre), pesos)
       : null;
-  const r = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId }) : null);
+  const r = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId, subtotalPedido }) : null);
 
   let respuesta: Respuesta;
   if (r) respuesta = r;
