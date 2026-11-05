@@ -1,5 +1,6 @@
 // Capa de lectura de la tienda pública. Nada de lo que sale de acá incluye el costo.
 
+import { queTraeMix } from "./mix-composicion";
 import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
@@ -26,6 +27,8 @@ export type ProductoTienda = {
   sugerido: number | null;
   /** Precio pagando por transferencia; null si no hay descuento. */
   transferencia: number | null;
+  /** Solo en mixes: lo que trae, de la ficha. Es lo que el vendedor contesta a «qué tiene el mix». */
+  queTrae: string | null;
 };
 
 /** Porcentajes de la configuración que forman los precios que ve el cliente. */
@@ -50,6 +53,7 @@ export function aTienda(p: Product, reglas: ReglasPrecio = {}): ProductoTienda {
     sinTacc: esSinTacc(p),
     sugerido: precioSugerido(precio, reglas.recargoSugeridoPct ?? 0)?.sugerido ?? null,
     transferencia: precioTransferencia(precio, reglas.descuentoTransferenciaPct ?? 0),
+    queTrae: queTraeMix(prolijo(textos.producto), p.porQueLoElegimos),
   };
 }
 
