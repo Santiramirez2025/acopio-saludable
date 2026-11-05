@@ -45,15 +45,18 @@ export async function EnlaceWhatsapp({
   mensaje,
   children,
   className = "",
+  medirComo,
 }: {
   mensaje: string;
   children: React.ReactNode;
   className?: string;
+  /** Evento propio al tocarlo (lo registra PaginaVista), además de «contacto». */
+  medirComo?: string;
 }) {
   const href = await whatsappTienda(mensaje);
   if (!href) return null;
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center gap-1.5 ${className}`}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center gap-1.5 ${className}`} data-medir={medirComo}>
       <Icono className="h-4 w-4 shrink-0" />
       {children}
     </a>

@@ -155,6 +155,8 @@ async function trafico(dias: number) {
     agregaron: ses.filter((x) => x.has("agregar")).length,
     iniciaronCompra: ses.filter((x) => x.has("iniciar_compra")).length,
     tocaronWhatsapp: ses.filter((x) => x.has("contacto")).length,
+    whatsappDesdeCarrito: ses.filter((x) => x.has("whatsapp_desde_carrito")).length,
+    whatsappDesdeFicha: ses.filter((x) => x.has("whatsapp_desde_ficha")).length,
     compraron: pedidosWeb,
     carritosAbandonados: ses.filter((x) => x.has("agregar") && !x.has("iniciar_compra") && !x.has("compra") && !x.has("contacto")).length,
   };

@@ -7,7 +7,7 @@ import { admiteFreno, admiteMedicion, ipDe } from "@/lib/freno";
 
 export const dynamic = "force-dynamic";
 
-const EVENTOS = new Set(["pagina", "contacto", "ver_producto", "agregar", "iniciar_compra", "compra", "lead_sistema"]);
+const EVENTOS = new Set(["pagina", "contacto", "ver_producto", "agregar", "iniciar_compra", "compra", "lead_sistema", "whatsapp_desde_carrito", "whatsapp_desde_ficha"]);
 const ROBOTS = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|vercel/i;
 // Dos frenos, los dos contestan 204 sin guardar (nada que adivinar ni reintentar):
 // 1) por IP en memoria de la instancia (60 por minuto: una persona genera unos pocos; para un script que

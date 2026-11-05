@@ -126,16 +126,17 @@ export default async function Producto({ params }: Props) {
               </div>
             )}
             <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
+            {/* A la par de agregar: el mensaje llega con producto, cantidad y precio, y se contesta de una. */}
+            <EnlaceWhatsapp
+              mensaje={`Hola! Quiero pedir:\n• 1 × ${p.producto} ${p.presentacion}: ${pesos(p.precio)}\n¿Me ayudás con el pedido?`}
+              className="btn-whatsapp mt-2 w-full"
+              medirComo="whatsapp_desde_ficha"
+            >
+              Pedir por WhatsApp
+            </EnlaceWhatsapp>
             <BotonCompartir etiqueta="Compartir" texto={`Mirá ${p.producto} ${p.presentacion} en Acopio Saludable:`} ruta={`/producto/${encodeURIComponent(p.codigo)}`} className="btn-sec mt-2 w-full" />
             <CuentaRegresiva corte={proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null} className="mt-3" />
             <p className="mt-3 text-xs text-stone-600">{lineaCompraMinima(cfg)}</p>
-            {/* La consulta llega con el producto adentro: así no hay que preguntar «¿cuál?» y se contesta de una. */}
-            <EnlaceWhatsapp
-              mensaje={`Hola! Quiero ${p.producto} ${p.presentacion}. ¿Me ayudás con el pedido?`}
-              className="mt-2 text-sm font-semibold text-acopio-700 underline underline-offset-4"
-            >
-              Preguntar por este producto
-            </EnlaceWhatsapp>
             {p.categoria === "Congelados" && <p className="mt-3 rounded-xl bg-tierra-100 px-3.5 py-2.5 text-sm text-stone-700"><b>Producto congelado:</b> solo se entrega en Villa Carlos Paz y el sur de Punilla. No se envía por correo.</p>}
             <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} costoZona={costoEntregaZona(cfg)} zonaPaga={zonaPagaDe(cfg.tabla)} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />
           </div>

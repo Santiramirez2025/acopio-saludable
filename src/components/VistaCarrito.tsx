@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { BarraMinimo, pesosCliente, useCarrito } from "./Carrito";
-import { medir } from "@/lib/medicion";
-import { linkWhatsapp } from "@/lib/pedido-calculos";
+import { PedirWhatsapp } from "./PedirWhatsapp";
 import { Foto } from "./Foto";
 import { CuentaRegresiva } from "./CuentaRegresiva";
 
@@ -93,17 +92,7 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
         ) : (
           <button type="button" className="btn-comprar w-full" disabled aria-describedby="motivo-bloqueo">Continuar con la compra</button>
         )}
-        {whatsapp && (
-          <a
-            href={pedidoPorWhatsapp(whatsapp, cotizacion.lineas.filter((l) => l.disponible), subtotal)}
-            target="_blank"
-            rel="noopener"
-            className="btn-sec w-full"
-            onClick={() => medir("iniciar_compra", { valor: subtotal })}
-          >
-            Pedir por WhatsApp sin llenar datos
-          </a>
-        )}
+        <PedirWhatsapp numero={whatsapp} lineas={cotizacion.lineas} subtotal={subtotal} />
         <p className="text-xs text-stone-600">Al confirmar el pedido quedan fijos los precios de hoy. El envío se calcula en el paso siguiente.</p>
         {!puedeSeguir && (
           <p id="motivo-bloqueo" className="text-sm text-tierra-700">
@@ -118,11 +107,4 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
       </aside>
     </div>
   );
-}
-
-/** El carrito armado como mensaje: el vendedor lo recibe y cierra el pedido (dirección y pago) en la charla. */
-function pedidoPorWhatsapp(numero: string, lineas: { nombre: string; cantidad: number; subtotal: number }[], subtotal: number): string {
-  const detalle = lineas.map((l) => `• ${l.cantidad} × ${l.nombre}: ${pesosCliente(l.subtotal)}`).join("\n");
-  const texto = `Hola! Quiero hacer este pedido de la web:\n${detalle}\nTotal: ${pesosCliente(subtotal)}`;
-  return linkWhatsapp(numero, texto) ?? `https://wa.me/?text=${encodeURIComponent(texto)}`;
 }
