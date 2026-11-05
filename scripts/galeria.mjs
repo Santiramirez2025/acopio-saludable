@@ -54,7 +54,7 @@ h1.largo{font-size:70px}
 .full .sub{color:rgba(246,241,231,.9)}
 `;
 
-const pie = `<div class="pie"><span>Villa Carlos Paz · Entrega sin cargo en la zona</span><span class="url">${isotipo}acopiosaludable.com</span></div>`;
+const pie = `<div class="pie"><span>Villa Carlos Paz · Sin cargo desde $20.000</span><span class="url">${isotipo}acopiosaludable.com</span></div>`;
 const marca = `<div class="marca">${isotipo}Acopio Saludable</div>`;
 const agua = `<div class="agua">${isotipo}acopiosaludable.com</div>`;
 
@@ -77,23 +77,23 @@ const real = ({ foto, posicion = "center", ceja, titulo, sub }) => `
 
 export const PIEZAS = [
   // ——— Combos ———
-  { id: "combo-despensa-4-kilos", html: ficha({ foto: C("despensa-4-kilos.webp"), tag: "Te dura todo el mes", ceja: "Combo · 4 kilos", titulo: "Despensa de 4 kilos", items: [["1 kg", "Mix clásico con cajú"], ["1 kg", "Dátiles Deglet Nour"], ["1 kg", "Pasas de uva"], ["1 kg", "Mix de semillas"]] }) },
-  { id: "combo-despensa-chica", html: ficha({ foto: C("despensa-chica.webp"), tag: "Ideal para probar", ceja: "Combo · 2 kilos", titulo: "Despensa chica", items: [["500 g", "Mix clásico con cajú"], ["500 g", "Dátiles Deglet Nour"], ["500 g", "Pasas de uva"], ["500 g", "Mix de semillas"]] }) },
+  { id: "combo-despensa-4-kilos", html: ficha({ foto: C("despensa-4-kilos.webp"), tag: "Te dura todo el mes", ceja: "Combo · 4 kilos", titulo: "Despensa de 4 kilos", items: [["1 kg", "Mix con cajú y girasol"], ["1 kg", "Dátiles con carozo"], ["1 kg", "Pasas de uva"], ["1 kg", "Mix de semillas"]] }) },
+  { id: "combo-despensa-chica", html: ficha({ foto: C("despensa-chica.webp"), tag: "Ideal para probar", ceja: "Combo · 2 kilos", titulo: "Despensa chica", items: [["500 g", "Mix con cajú y girasol"], ["500 g", "Dátiles con carozo"], ["500 g", "Pasas de uva"], ["500 g", "Mix de semillas"]] }) },
   { id: "combo-alacena-de-frutos-secos", html: ficha({ foto: C("alacena-de-frutos-secos.webp"), tag: "3 kilos", ceja: "Combo · frutos secos", titulo: "Alacena de frutos secos", items: [["1 kg", "Nuez mariposa"], ["1 kg", "Mix clásico con cajú"], ["1 kg", "Pasas de uva"]] }) },
   { id: "combo-desayuno-30-dias", html: ficha({ foto: C("desayuno-30-dias.webp"), tag: "Un mes de desayunos", ceja: "Combo · desayuno", titulo: "Desayuno 30 días", items: [["1 kg", "Granola tradicional"], ["1 kg", "Granola con pasta de maní"], ["370 g", "Pasta de maní"], ["500 g", "Miel pura"]] }) },
-  { id: "combo-mixes-del-mes", html: ficha({ foto: C("mixes-del-mes.webp"), tag: "3 kilos", ceja: "Combo · mixes", titulo: "Mixes del mes", items: [["1 kg", "Mix clásico con girasol"], ["1 kg", "Mix tropical sin maní"], ["1 kg", "Pasas de uva"]] }) },
+  { id: "combo-mixes-del-mes", html: ficha({ foto: C("mixes-del-mes.webp"), tag: "3 kilos", ceja: "Combo · mixes", titulo: "Mixes del mes", items: [["1 kg", "Mix con cajú y girasol"], ["1 kg", "Mix tropical sin maní"], ["1 kg", "Pasas de uva"]] }) },
   { id: "combo-arranque-gym", html: ficha({ foto: C("arranque-gym.webp"), tag: "Para entrenar", ceja: "Combo · gym", titulo: "Pack gym del mes", items: [["1 kg", "Granola proteica"], ["1 kg", "Avena arrollada"], ["250 g", "Cacao amargo"], ["500 g", "Almendras"], ["370 g", "Pasta de maní proteica"]] }) },
   // ——— Productos más pedidos ———
   { id: "producto-nuez", html: ficha({ foto: P("nuez-mariposa.webp"), tag: "Cosecha nueva", ceja: "Frutos secos", titulo: "Nuez mariposa", sub: "Entera, clara y crocante. La fraccionamos en el día: 500 g o 1 kg." }) },
   { id: "producto-almendras", html: ficha({ foto: P("almendras.webp"), tag: "Non Pareil", ceja: "Frutos secos", titulo: "Almendras", sub: "La almendra grande, pareja y crocante. En 500 g o 1 kg." }) },
   { id: "producto-caju", html: ficha({ foto: P("castanas-caju.webp"), tag: "Enteras", ceja: "Frutos secos", titulo: "Castañas de cajú", sub: "Enteras y suaves, para picar o para la cocina. En 500 g o 1 kg." }) },
   { id: "producto-mix-clasico", html: ficha({ foto: P("mix-frutos-secos.webp"), tag: "El más pedido", ceja: "Mix propio", titulo: "Mix clásico con cajú", sub: "Maní, pasas, girasol, nuez, cajú y almendra. Lo armamos nosotros, en el día." }) },
-  { id: "producto-datiles", html: ficha({ foto: P("datiles.webp"), tag: "Deglet Nour", ceja: "Frutas desecadas", titulo: "Dátiles", sub: "Carnosos y bien dulces, con carozo. En 500 g o 1 kg." }) },
+  { id: "producto-datiles", html: ficha({ foto: P("datiles.webp"), tag: "Con carozo", ceja: "Frutas desecadas", titulo: "Dátiles", sub: "Carnosos y bien dulces, con carozo. En 500 g o 1 kg." }) },
   { id: "producto-pasas", html: ficha({ foto: P("pasas-de-uva.webp"), tag: "Sin semilla", ceja: "Frutas desecadas", titulo: "Pasas de uva", sub: "Negras y rubias, para la avena, la ensalada o el mix." }) },
   // ——— Fotos reales: así trabajamos y así llega ———
   { id: "real-asi-llega", html: real({ foto: f(path.join(FR, "g21.jpg")), posicion: "center 30%", ceja: "Así llega tu pedido", titulo: "Armado a mano, con una nota para vos", sub: "Cada pedido sale en bolsa kraft, con todo fraccionado y rotulado." }) },
   { id: "real-armamos-tu-pedido", html: real({ foto: f(path.join(FR, "f20.jpg")), posicion: "center 40%", ceja: "Detrás de escena", titulo: "Así armamos tu despensa", sub: "Pesamos, cerramos y rotulamos cada bolsa el mismo día que sale." }) },
-  { id: "real-datiles", html: real({ foto: f(path.join(FR, "f9.5.jpg")), ceja: "Recién fraccionados", titulo: "Dátiles Deglet Nour", sub: "Así de carnosos llegan a tu casa." }) },
+  { id: "real-datiles", html: real({ foto: f(path.join(FR, "f9.5.jpg")), ceja: "Recién fraccionados", titulo: "Dátiles con carozo", sub: "Así de carnosos llegan a tu casa." }) },
 ];
 
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" }).catch(() => chromium.launch());
