@@ -3,8 +3,11 @@
 // Puro a propósito (sin base ni red): arma lo que se manda y se prueba sin gastar nada.
 //
 // Por qué botones y no links: la gente desconfía de un link suelto que le manda un número
-// que no conoce, y escribir cansa. Un botón se toca, se ve oficial y la charla avanza sola.
-// El link aparece recién cuando la persona eligió pagar, y va dentro de un botón «Pagar».
+// que no conoce. El link aparece recién cuando la persona eligió pagar, y va dentro de un botón «Pagar».
+//
+// REGLA DE SANTIAGO (5/11): el vendedor conversa como una persona; los botones aparecen SOLO para cerrar la
+// venta (lo quiero, la zona del envío, cómo paga). Una pregunta para conocer al cliente («¿para tu casa o
+// para un negocio?») va en texto, sin botones: con botones en cada mensaje la charla parecía un menú.
 
 import { PAGO_AL_RECIBIR } from "./politica";
 import { pesos } from "./precios";
@@ -80,6 +83,20 @@ export function conEnvio(resto: string): { camino: string; envio: { costo: numbe
   return { camino, envio: { costo: costo === "" || !Number.isFinite(n) ? null : n, lugar: lugar.join("~") } };
 }
 
+/** «Sí, separala», «Lo quiero», «Sí, dejalo listo», «Transferencia»: una respuesta que cierra la venta. */
+export const esOpcionDeCierre = (o: string) =>
+  /^s[ií]\b|^s[ií],|\bsepar|\bquiero\b|\bllev|\bdejalo\b|\bdale\b|\bconfirm|\bpag|\btransfer|\bmercado pago\b|\bagend|\blisto\b/i.test(o.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+
+/** La pregunta con que termina el mensaje pide cerrar (separar, llevar, pagar, agendar), no conocer al cliente. */
+export function esPreguntaDeCierre(texto: string, opciones: string[]): boolean {
+  const ultima = texto.trim().split(/(?<=[.!?])\s+/).at(-1) ?? "";
+  const t = ultima.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (/\b(te (la|lo|los|las) (separ|dej|arm|llev|mand)|lo (quer|llev)|la (quer|llev)|lo confirm|la confirm|te lo (dej|arm|llev|mand)|lo agend|la agend|lo cerr|como (prefer[ií]s|quer[ée]s) pagar|te paso (los datos|el link)|lo pag|la pag|te (la|lo) mando|te lo reservo|la reservo|lo reservo)/.test(t)) return true;
+  // La zona es un dato que hace falta para cotizar el envío y cerrar: esos botones se quedan (experimento B).
+  if (opciones.length >= 2 && opciones.every((o) => /carlos paz|c[oó]rdoba|otra ciudad|otra localidad/i.test(o))) return true;
+  return opciones.some(esOpcionDeCierre) && !/\b(para tu casa|para un negocio|que (busc|cons|prefer)|cual te|de que (barrio|ciudad|zona)|donde)/.test(t);
+}
+
 const botonesDeOpciones = (opciones: string[]): Boton[] =>
   opciones.slice(0, 3).map((o) => ({ id: corte(`${ID.opcion}${o}`, TOPE.id), titulo: corte(o, TOPE.boton) }));
 
@@ -97,10 +114,9 @@ export type PedidoArmado = {
 /**
  * Traduce la respuesta del vendedor a lo que se manda por WhatsApp.
  *
- * - Pedido armado → resumen y tres botones: Mercado Pago, Transferencia, Sumar algo más.
- * - Productos o combos → la respuesta con una lista para tocar el que quiere (con precio), y
- *   la foto del combo antes si es uno solo.
- * - Solo opciones → la respuesta con hasta tres botones.
+ * - Pedido armado → resumen y los botones de pago: Mercado Pago y Transferencia.
+ * - Un combo → la foto y el texto con un solo botón: «Lo quiero».
+ * - Pregunta de cierre con opciones → hasta tres botones. Cualquier otra pregunta → texto.
  * - Nada de eso → texto.
  */
 export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Saliente[] {
@@ -117,7 +133,7 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     if (pedido.conTransferencia) lineas.push(`Por transferencia: ${pedido.conTransferencia}`);
     if (pedido.falta) {
       lineas.push(`Te faltan ${pedido.falta} para la compra mínima.`);
-      return [{ tipo: "botones", cuerpo: corte(lineas.join("\n"), TOPE.cuerpo), botones: botonesDeOpciones(["Sumar algo más", "Ver combos"]) }];
+      return [{ tipo: "texto", texto: corte(lineas.join("\n"), 4000) }];
     }
     // Primero la zona: sin saber cuánto sale el envío, la gente no paga (pasó: dijeron «lo quiero» y se frenaron).
     if (!pedido.envio) {
@@ -156,9 +172,9 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
           { id: corte(`${ID.pagar}${pedido.camino}`, 256), titulo: "Mercado Pago" },
           { id: corte(`${ID.transferencia}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Transferencia" },
           // Pagar al recibir solo en Carlos Paz y alrededores: en Córdoba capital hay zonas donde no conviene ir a cobrar.
-          PAGO_AL_RECIBIR && pedido.envio.alRecibir
-            ? { id: corte(`${ID.recibir}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Pago al recibir" }
-            : { id: `${ID.opcion}Sumar algo más`, titulo: "Sumar algo más" },
+          ...(PAGO_AL_RECIBIR && pedido.envio.alRecibir
+            ? [{ id: corte(`${ID.recibir}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Pago al recibir" }]
+            : []),
         ],
       },
     ];
@@ -178,16 +194,11 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     // así «Lo quiero» nunca agrega algo distinto de lo que dice el texto.
     if (primero.c?.clase === "c" && fichas.length === 1) {
       if (primero.f.foto?.startsWith("http")) salida.push({ tipo: "imagen", url: primero.f.foto, pie: `${primero.f.nombre} · ${primero.f.precio}` });
-      const tercera =
-        (r.opciones ?? []).find((o) => !/quiero|trae|separ|agreg|dej|list|llev|compr|ped[ií]|^s[ií]\b|^s[ií]\W|dale/i.test(o)) ?? (fichas.length > 1 ? "Ver otro combo" : "Ver otros combos");
+      // Un solo botón, el que cierra. Qué trae y las dudas se charlan en texto.
       salida.push({
         tipo: "botones",
         cuerpo: corte(texto + aviso, TOPE.cuerpo),
-        botones: [
-          { id: corte(`${ID.quiero}c|${primero.c.id}`, TOPE.id), titulo: "Lo quiero 🛒" },
-          { id: corte(`${ID.trae}${primero.c.id}`, TOPE.id), titulo: "¿Qué trae?" },
-          { id: corte(`${ID.opcion}${tercera}`, TOPE.id), titulo: corte(tercera, TOPE.boton) },
-        ],
+        botones: [{ id: corte(`${ID.quiero}c|${primero.c.id}`, TOPE.id), titulo: "Lo quiero 🛒" }],
       });
       return salida;
     }
@@ -196,9 +207,9 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     // El texto ya nombra los precios; abajo van solo las respuestas a su pregunta.
   }
 
-  // Botones solo cuando el mensaje termina en una pregunta: son las respuestas a esa pregunta.
-  // Botones genéricos en cada mensaje («Ver combos», «Sumar algo más») son ruido y nadie los toca.
-  if (r.opciones?.length && /\?\s*$/.test(texto)) {
+  // Botones solo cuando el mensaje termina en una pregunta DE CIERRE (¿te la separo?, ¿lo llevás?, ¿cómo pagás?).
+  // Las preguntas para conocer al cliente («¿para tu casa o para un negocio?») van en texto: se contestan charlando.
+  if (r.opciones?.length && /\?\s*$/.test(texto) && esPreguntaDeCierre(texto, r.opciones)) {
     return [{ tipo: "botones", cuerpo: corte(texto + aviso, TOPE.cuerpo), botones: botonesDeOpciones(r.opciones) }];
   }
   return [{ tipo: "texto", texto: texto + aviso }];
@@ -469,17 +480,13 @@ export function planSinApuro(nombre: string | null, tienda: string, fotoReal?: s
   const quien = n ? `, ${n}` : "";
   // «Lo pienso» es donde más se corta la venta. En vez de soltar, una foto real y una sola pregunta de cierre blando.
   const foto: Saliente[] = fotoReal ? [{ tipo: "imagen", url: fotoReal, pie: "Así llega tu pedido: en bolsa kraft, fraccionado y con una nota para vos" }] : [];
+  // Sin botones: a quien pide tiempo no se le pone un menú adelante. Una frase cálida y una puerta abierta.
+  void tienda;
   return [
     ...foto,
     {
-      tipo: "botones",
-      cuerpo: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. Cuando quieras, lo pagás por transferencia (te sale más barato) o Mercado Pago y en Carlos Paz y la zona te lo llevamos sin cargo en el próximo reparto.`,
-      botones: [
-        { id: `${ID.opcion}Sí, dejalo listo`, titulo: "Sí, dejalo listo" },
-        { id: `${ID.opcion}Tengo una duda`, titulo: "Tengo una duda" },
-        { id: `${ID.opcion}Más adelante`, titulo: "Más adelante" },
-      ],
-      pie: tienda.replace(/^https?:\/\//, ""),
+      tipo: "texto",
+      texto: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. Cuando quieras lo pagás por transferencia (te sale más barato) o Mercado Pago, y en Carlos Paz y la zona te lo llevamos sin cargo. Si te queda alguna duda, preguntame por acá nomás.`,
     },
   ];
 }
@@ -500,14 +507,8 @@ export function ordenarParaVer<T extends { slug: string; precio: number }>(combo
 export function planVer(combos: { slug: string; nombre: string; precio: string; argumento: string }[], _tienda?: string): Saliente[] {
   // Los combos a la vista, no escondidos en una lista: la lista se abría poco y la charla moría ahí.
   const renglones = combos.slice(0, 6).map((c) => `• ${c.nombre}: ${c.precio}`);
-  const cuerpo = ["Estos son los combos del mes 👇", ...renglones, "", "¿Cuál te interesa? Tocalo y te cuento qué trae."].join("\n");
-  return [
-    {
-      tipo: "botones",
-      cuerpo: corte(cuerpo, TOPE.cuerpo),
-      botones: combos.slice(0, 3).map((c) => ({ id: corte(`${ID.trae}${c.slug}`, TOPE.id), titulo: corte(c.nombre, TOPE.boton) })),
-    },
-  ];
+  const cuerpo = ["Estos son los combos del mes 👇", ...renglones, "", "¿Cuál te interesa? Contame y te digo qué trae."].join("\n");
+  return [{ tipo: "texto", texto: corte(cuerpo, 4000) }];
 }
 
 /** «¿Qué trae?» de un combo: la lista completa y el botón para llevarlo. Fijo, sin modelo. */
@@ -517,11 +518,7 @@ export function planTrae(c: { slug: string; nombre: string; precio: string; argu
     {
       tipo: "botones",
       cuerpo: corte(cuerpo, TOPE.cuerpo),
-      botones: [
-        { id: corte(`${ID.quiero}c|${c.slug}`, TOPE.id), titulo: "Lo quiero 🛒" },
-        { id: `${ID.opcion}Quiero armar mi propio combo`, titulo: "Armar el mío ✏️" },
-        { id: `${ID.opcion}Ver otros combos`, titulo: "Ver otros combos" },
-      ],
+      botones: [{ id: corte(`${ID.quiero}c|${c.slug}`, TOPE.id), titulo: "Lo quiero 🛒" }],
     },
   ];
 }

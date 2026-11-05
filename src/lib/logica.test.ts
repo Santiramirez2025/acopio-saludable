@@ -688,14 +688,18 @@ test("whatsapp: productos van en lista para tocar, pedido con botones de pago, s
   assert.equal(plan[0].tipo, "imagen");
   assert.equal(plan[1].tipo, "botones");
   const tarjeta = plan[1] as Extract<(typeof plan)[number], { tipo: "botones" }>;
-  assert.deepEqual(tarjeta.botones.map((b) => b.id), ["quiero|c|despensa", "trae|despensa", "op|Para un negocio"]);
+  // 5/11: un solo botón, el que cierra. Lo demás se charla.
+  assert.deepEqual(tarjeta.botones.map((b) => b.id), ["quiero|c|despensa"]);
   assert.ok(!tarjeta.cuerpo.includes("http"));
 
-  // Productos sueltos: sin lista. Si termina en pregunta, botones con las respuestas; si no, texto.
+  // Productos sueltos: sin lista. Botones solo si la pregunta final es de cierre; una pregunta para conocer al cliente va en texto.
   const nuez = [{ href: "/producto/9", nombre: "Nuez Mariposa Extra Light", detalle: "x 1 kg", precio: "$ 22.937", foto: null }];
   assert.equal(planWhatsapp({ texto: "La nuez sale $ 22.937 el kilo.", fichas: nuez, opciones: ["Para mi casa"] }, null)[0].tipo, "texto");
   const conPregunta = planWhatsapp({ texto: "La nuez sale $ 22.937. ¿Para tu casa o un negocio?", fichas: nuez, opciones: ["Para mi casa", "Para un negocio"] }, null);
-  assert.equal(conPregunta[0].tipo, "botones");
+  assert.equal(conPregunta[0].tipo, "texto");
+  const deCierre = planWhatsapp({ texto: "La nuez sale $ 22.937 el kilo. ¿Te la separo?", fichas: nuez, opciones: ["Sí, separala", "Tengo una duda"] }, null);
+  assert.equal(deCierre[0].tipo, "botones");
+  assert.deepEqual((deCierre[0] as { botones: { titulo: string }[] }).botones.map((b) => b.titulo), ["Sí, separala", "Tengo una duda"]);
   assert.ok(conPregunta.every((x) => x.tipo !== "lista"));
 
   // Sin zona todavía: primero se pregunta dónde vive, con botones de zona.
@@ -704,19 +708,19 @@ test("whatsapp: productos van en lista para tocar, pedido con botones de pago, s
   assert.match((sinZona[0] as { cuerpo: string }).cuerpo, /barrio o ciudad/);
   const pedido = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Córdoba Capital", costo: 15000, detalle: "x", propia: true, totalConEnvio: "$ 50.268", transferenciaConEnvio: "$ 47.447" } });
   // Córdoba capital: se paga antes, no hay «Pago al recibir».
-  assert.deepEqual((pedido[0] as { botones: { id: string; titulo: string }[] }).botones.map((b) => b.titulo), ["Mercado Pago", "Transferencia", "Sumar algo más"]);
+  assert.deepEqual((pedido[0] as { botones: { id: string; titulo: string }[] }).botones.map((b) => b.titulo), ["Mercado Pago", "Transferencia"]);
   assert.match((pedido[0] as { cuerpo: string }).cuerpo, /Envío: \$\s15\.000\nTotal con envío: \$ 50\.268\nPor transferencia: \$ 47\.447/);
   assert.equal(pedido[0].tipo, "botones");
   const cp = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Carlos Paz", costo: 0, detalle: "x", propia: true, alRecibir: true, totalConEnvio: "$ 35.268", transferenciaConEnvio: "$ 32.447" } });
   const b = cp[0] as Extract<(typeof cp)[number], { tipo: "botones" }>;
-  // Desde el 28/10 no hay pago al recibir: el tercer botón es «Sumar algo más» también en Carlos Paz.
-  assert.deepEqual(b.botones.map((x) => x.titulo), ["Mercado Pago", "Transferencia", "Sumar algo más"]);
-  assert.equal(b.botones[2].id, "op|Sumar algo más");
+  // Desde el 28/10 no hay pago al recibir; desde el 5/11 solo los dos botones de pago.
+  assert.deepEqual(b.botones.map((x) => x.titulo), ["Mercado Pago", "Transferencia"]);
   assert.equal(b.botones[0].id, "pagar|/carrito?p=c-despensa*1");
-  assert.match(textoParaPanel(b), /\[Botones: Mercado Pago · Transferencia · Sumar algo más\]/);
+  assert.match(textoParaPanel(b), /\[Botones: Mercado Pago · Transferencia\]/);
 
   const corto = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=1*1", renglones: ["Algo — $ 5.000"], total: "$ 5.000", conTransferencia: null, falta: "$ 30.000" });
-  assert.match((corto[0] as { cuerpo: string }).cuerpo, /Te faltan \$ 30\.000/);
+  assert.equal(corto[0].tipo, "texto");
+  assert.match((corto[0] as { texto: string }).texto, /Te faltan \$ 30\.000/);
 
   assert.deepEqual(planWhatsapp({ texto: "Hola" }, null), [{ tipo: "texto", texto: "Hola" }]);
 });
@@ -768,6 +772,7 @@ test("combos: cada búsqueda va a su combo, y sin TACC gana", () => {
   assert.equal(temaDe("hola"), null);
   const t = planTrae({ slug: "x", nombre: "X", precio: "$ 1", argumento: "", renglones: ["a", "b"] });
   assert.equal(t[0].tipo, "botones");
+  assert.deepEqual((t[0] as { botones: { id: string }[] }).botones.map((x) => x.id), ["quiero|c|x"]);
   assert.match((t[0] as { cuerpo: string }).cuerpo, /• a\n• b/);
 });
 
@@ -814,10 +819,9 @@ test("whatsapp: «ver los productos» muestra, no pregunta", () => {
   for (const t of ["Ver los productos", "Ver combos", "Ver otros combos", "Ver otro combo", "ver otras opciones", "¿Qué tienen?", "catálogo", "pasame la lista"]) assert.ok(quiereVer(t), t);
   for (const t of ["Busco frutos secos", "quiero la despensa", "hola"]) assert.ok(!quiereVer(t), t);
   const p = planVer([{ slug: "despensa", nombre: "Despensa de 4 kilos", precio: "$ 35.268", argumento: "$ 8.817 el kilo" }]);
-  const b = p[0] as Extract<(typeof p)[number], { tipo: "botones" }>;
-  assert.equal(b.tipo, "botones");
-  assert.equal(b.botones[0].id, "trae|despensa");
-  assert.match(b.cuerpo, /Despensa de 4 kilos: \$ 35\.268/);
+  const b = p[0] as Extract<(typeof p)[number], { tipo: "texto" }>;
+  assert.equal(b.tipo, "texto");
+  assert.match(b.texto, /Despensa de 4 kilos: \$ 35\.268/);
   assert.equal(p.length, 1);
 });
 
@@ -858,11 +862,11 @@ test("postergar la compra: se le da tiempo, sin pedido ni zonas", () => {
   for (const t of ["Gracias por pasarme veo traquila y te escribo para encargarte", "Lo veo tranquila y te aviso", "lo voy a pensar", "después te escribo", "Bueno gracias, mañana te confirmo", "lo consulto con mi marido y te aviso", "cualquier cosa te escribo", "voy a mirarlo con calma"]) assert.ok(postergaCompra(t), t);
   for (const t of ["dale, lo quiero", "hola", "lo veo tranquila, ¿hacen envío a Tanti?", "gracias", "Sí, dejámelo listo", "quiero la despensa", "Carlos Paz"]) assert.ok(!postergaCompra(t), t);
   const [s] = planSinApuro("Gloria Pérez", "https://x.com");
-  assert.equal(s.tipo, "botones");
-  assert.ok(s.tipo === "botones" && s.cuerpo.startsWith("¡Dale, Gloria!") && s.botones[0].titulo === "Sí, dejalo listo");
+  assert.equal(s.tipo, "texto");
+  assert.ok(s.tipo === "texto" && s.texto.startsWith("¡Dale, Gloria!"));
   const [foto, b] = planSinApuro("Ana", "https://x.com", "https://x.com/img/galeria/real-asi-llega.jpg");
   assert.equal(foto.tipo, "imagen");
-  assert.equal(b.tipo, "botones");
+  assert.equal(b.tipo, "texto");
 });
 
 import { leerEntrante, partirMarca, sinIds } from "./whatsapp-media";
