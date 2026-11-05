@@ -1339,6 +1339,12 @@ test("ML: el precio mínimo deja la ganancia mínima y no sube si ya alcanza", a
   assert.equal(precioMinimoMl(25800) % 500, 0);
 });
 
+test("Plantilla dietética v3: sin tropical ni góndola (T-037)", async () => {
+  const { PLANTILLAS } = await import("./whatsapp-plantillas");
+  assert.equal(PLANTILLAS.dietetica.nombre, "acopio_negocios_dietetica_v3");
+  assert.doesNotMatch(PLANTILLAS.dietetica.cuerpo, /tropical|g[oó]ndola/i);
+});
+
 test("Plantilla dietética: regla mayorista única y cobro anticipado", async () => {
   const { contextoProspecto } = await import("./whatsapp-plantillas");
   const c = contextoProspecto("dietética", "Dietética Sol");
@@ -1804,7 +1810,9 @@ test("el vendedor sabe qué día es, en hora de Argentina", () => {
 
 test("captación: alojamientos frenados por «sin TACC» y budines; el resto sigue", () => {
   for (const r of ["hotel", "hostel", "cabañas / complejo", "departamentos / alquiler temporario"]) assert.equal(rubroHabilitado(r), false, r);
-  for (const r of ["dietética", "cafetería", "gimnasio", "panadería"]) assert.equal(rubroHabilitado(r), true, r);
+  for (const r of ["cafetería", "gimnasio", "panadería"]) assert.equal(rubroHabilitado(r), true, r);
+  // T-037: dietética frenada hasta que Meta apruebe la v3.
+  assert.equal(rubroHabilitado("dietética"), false);
   assert.doesNotMatch(contextoProspecto("cabañas / complejo", "X"), /budines sin TACC/);
   assert.match(contextoProspecto("cabañas / complejo", "X"), /Budines no tenemos/);
 });

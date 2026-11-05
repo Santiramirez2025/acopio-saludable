@@ -1,7 +1,7 @@
 // Prospección por WhatsApp, solo para el administrador.
 //
 // GET                              → estado de las plantillas en Meta (pendiente, aprobada, rechazada).
-// POST { accion: "plantillas" }    → da de alta las plantillas para que Meta las revise.
+// POST { accion: "plantillas", solo? } → da de alta las plantillas (o solo esa) para que Meta las revise.
 // POST { accion: "borrar", nombres } → borra plantillas de alojamientos por nombre.
 // POST { accion: "enviar", lista } → manda la plantilla a cada número de la lista, de a uno.
 //
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
-  if (cuerpo.accion === "plantillas") return NextResponse.json(await crearPlantillas());
+  if (cuerpo.accion === "plantillas") return NextResponse.json(await crearPlantillas(typeof (cuerpo as { solo?: unknown }).solo === "string" ? (cuerpo as { solo: string }).solo : undefined));
   if (cuerpo.accion === "plantilla-proveedor") return NextResponse.json(await crearPlantillaProveedor());
   if (cuerpo.accion === "proveedor") {
     const o = cuerpo as { telefono?: unknown; negocio?: unknown };

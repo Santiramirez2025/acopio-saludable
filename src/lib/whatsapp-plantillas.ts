@@ -56,14 +56,15 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "usá pedido_para_negocio con «gimnasio», hablale de reventa (precio sugerido y cuánto gana por unidad) y preguntá cuántos socios tiene para armarle el pedido.",
   },
   dietetica: {
-    nombre: "acopio_negocios_dietetica_v2",
+    nombre: "acopio_negocios_dietetica_v3",
     cuerpo:
       "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
-      "Armamos mixes de frutos secos propios en el día (clásico, con cajú y tropical sin maní) y se los vendemos a las dietéticas de Punilla a granel o fraccionados, listos para la góndola. Entrega sin cargo en nuestra ruta semanal por Carlos Paz y la zona.\n\n" +
+      "Armamos mixes de frutos secos propios en el día (clásico con cajú, con o sin girasol) y se los vendemos a las dietéticas de Punilla a granel o fraccionados. Entrega sin cargo en nuestra ruta semanal por Carlos Paz y la zona.\n\n" +
       "¿Le paso precios a quien hace las compras?",
     botones: ["Sí, pasame precios", "No, gracias"],
     contexto:
       "le escribimos nosotros ofreciendo nuestros mixes propios para revender. Es una dietética. " +
+      "Hay dos mixes: clásico con cajú y girasol, y clásico con cajú. Si pregunta por el tropical (un mensaje viejo lo nombraba), decile que ya no lo armamos. No prometas que está listo para la góndola: los rótulos y registros los confirma Leo. " +
       "PRIMERO contestá lo que pregunta: si pide otro producto (tostadas, galletas, una marca), buscalo con buscar_productos y pasale lo que tenemos con precio; si no lo tenemos, decilo claro y ofrecé lo más parecido. " +
       "No vuelvas a ofrecerle los mixes si ya se los ofreciste y está hablando de otra cosa: NUNCA repitas la misma oferta dos veces. " +
       "Si pide fotos, mandalas con mandar_fotos; no digas «te mando las fotos» si no las mandás. " +
@@ -78,8 +79,9 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
 /**
  * Plantillas frenadas: el texto aprobado en Meta promete «sin TACC» y la de kit, budines que no vendemos.
  * Los alojamientos quedan en la lista sin escribirles hasta que haya un texto nuevo aprobado.
+ * Dietética (T-037): la v2 ofrecía el tropical y «listos para la góndola». Queda frenada hasta que Meta apruebe la v3.
  */
-const FRENADAS: ReadonlySet<keyof typeof PLANTILLAS> = new Set(["desayuno", "kit"] as const);
+const FRENADAS: ReadonlySet<keyof typeof PLANTILLAS> = new Set(["desayuno", "kit", "dietetica"] as const);
 
 export function rubroHabilitado(rubro: string): boolean {
   return !FRENADAS.has(plantillaDe(rubro));
