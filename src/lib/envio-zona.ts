@@ -1,6 +1,9 @@
 // De qué zona de envío es lo que escribió la persona. Puro: se prueba sin base.
 
 import { PROVINCIAS } from "./envios/geo";
+import type { EnvioCotizado } from "./asistente-catalogo";
+import { envioPropioPara, umbralZona, type ReglaMinimo } from "./minimo-zona";
+import { pesos } from "./precios";
 
 const sinTildes = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 
@@ -25,3 +28,36 @@ export function zonaDeLugar(lugar: string, provincia?: string | null): Zona {
   return null;
 }
 
+/**
+ * El envío en la zona de reparto propio, según el subtotal: sin cargo desde el umbral de la zona; abajo,
+ * el fijo configurado (si hay). Se recalcula cada vez que cambia el pedido, por eso vive aparte.
+ */
+export function envioZonaPropia(cfg: ReglaMinimo & { plazoEntregaPropia: string }, lugar: string, subtotal: number): EnvioCotizado {
+  const fijo = envioPropioPara(cfg, subtotal);
+  const umbral = umbralZona(cfg);
+  // Sin subtotal (todavía no eligió nada) no se puede decir «no llega»: se da la regla entera.
+  // El 5/11 a Deolinda, con una Despensa de $28.500, el bot le dijo $3.000 porque la herramienta recibía 0.
+  if (fijo > 0 && subtotal <= 0) {
+    return {
+      lugar,
+      costo: fijo,
+      propia: true,
+      zonaPropia: true,
+      alRecibir: true,
+      sinCargoDesde: umbral,
+      detalle: `Envío a ${lugar}: sin cargo desde ${pesos(umbral)}; abajo de eso, ${pesos(fijo)}. Te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.`,
+    };
+  }
+  if (fijo > 0) {
+    return {
+      lugar,
+      costo: fijo,
+      propia: true,
+      zonaPropia: true,
+      alRecibir: true,
+      sinCargoDesde: umbral,
+      detalle: `Envío a ${lugar}: ${pesos(fijo)} porque el pedido no llega a ${pesos(umbral)}; desde ${pesos(umbral)} va sin cargo. Te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.`,
+    };
+  }
+  return { lugar, costo: 0, propia: true, zonaPropia: true, alRecibir: true, detalle: `Envío a ${lugar}: sin cargo, te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.` };
+}

@@ -267,7 +267,7 @@ type Salida = { texto: string; fichas?: Ficha[]; acciones?: Accion[]; enlaces?: 
 
 /** Exportada para poder probar cada herramienta sin pegarle a la API ni gastar tokens. */
 /** Lo que el vendedor sabe de la charla además del texto: por ahora, el pedido ya cerrado. */
-export type Contexto = { ordenId?: number };
+export type Contexto = { ordenId?: number; subtotalPedido?: number };
 
 export async function correrHerramienta(nombre: string, entrada: Record<string, unknown>, canal: Canal = "web", ctx: Contexto = {}): Promise<Salida> {
   if (nombre === "datos_de_entrega") {
@@ -352,10 +352,10 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
 
   if (nombre === "costo_envio") {
     const lugar = String(entrada.lugar ?? "").trim().slice(0, 60);
-    const envio = lugar ? await cotizarEnvioChat(lugar, entrada.provincia ? String(entrada.provincia) : null, Number(entrada.subtotal) || 0, Number(entrada.kilos) || 4) : null;
+    const envio = lugar ? await cotizarEnvioChat(lugar, entrada.provincia ? String(entrada.provincia) : null, ctx.subtotalPedido ?? 0, Number(entrada.kilos) || 4) : null;
     if (!envio) return { texto: `No reconozco «${lugar}». Preguntale en qué provincia queda, en una frase.` };
     return {
-      texto: `${envio.detalle} Decíselo en una frase y, si ya eligió algo, decile que abajo le quedan los botones para pagar. No vuelvas a agregar el pedido: ya está guardado.`,
+      texto: `${envio.detalle}${envio.zonaPropia ? " Es zona de reparto propio: no hay compra mínima, no le hables de mínimo, de correo ni de sumar productos para llegar." : ""} Decíselo en una frase y, si ya eligió algo, decile que abajo le quedan los botones para pagar. No vuelvas a agregar el pedido: ya está guardado.`,
       envio,
     };
   }

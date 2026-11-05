@@ -1828,3 +1828,18 @@ test("costos de la compra del 3/11: la lista no los pisa hasta la fecha, y despu
   assert.equal(costoDeCompraVigente("LG-AVENA", new Date("2026-11-04T10:40:00Z")), false);
   assert.equal(costoDeCompraVigente("LG-DATIL", new Date("2026-11-18T10:40:00Z")), false);
 });
+
+import { envioZonaPropia } from "./envio-zona";
+test("envío de la zona: sale del subtotal real y sin subtotal da la regla, no «no llega»", () => {
+  const cfg = { compraMinima: 60000, compraMinimaPropia: 20000, envioBajoMinimo: 3000, entregaPropiaActiva: true, plazoEntregaPropia: "24 a 48 hs" };
+  const despensa = envioZonaPropia(cfg, "Vertientes de Arredondo", 28500);
+  assert.equal(despensa.costo, 0);
+  assert.match(despensa.detalle, /sin cargo/);
+  const chico = envioZonaPropia(cfg, "Tanti", 15000);
+  assert.equal(chico.costo, 3000);
+  assert.match(chico.detalle, /no llega/);
+  const sinElegir = envioZonaPropia(cfg, "Tanti", 0);
+  assert.doesNotMatch(sinElegir.detalle, /no llega/);
+  assert.match(sinElegir.detalle, /sin cargo desde/);
+  assert.deepEqual(zonaDeLugar("vertiente de arredondo, un barrio de san antonio"), { tipo: "propia" });
+});
