@@ -4,14 +4,22 @@
 
 export type EmisorOrden = "santiago" | null;
 
+/** Tope de una orden: el mismo que un informe. Antes era 1000 y cortaba a mitad de frase sin avisar. */
+export const TOPE_ORDEN = 6000;
+
 const MARCA = "[[emisor:santiago]]";
 // Cualquier marca que venga escrita dentro del texto se borra: nadie se la pone escribiéndola en una orden.
 const CUALQUIER_MARCA = /\[\[\s*emisor\s*:[^\]]*\]\]/gi;
 
 /** El texto a guardar: limpio de marcas ajenas y, solo si el servidor verificó a Santiago, con la suya. */
-export function textoConEmisor(texto: string, emisor: EmisorOrden, largo = 1000): string {
+export function textoConEmisor(texto: string, emisor: EmisorOrden, largo = TOPE_ORDEN): string {
   const limpio = texto.replace(CUALQUIER_MARCA, "").trim().slice(0, largo);
   return emisor === "santiago" ? `${MARCA} ${limpio}` : limpio;
+}
+
+/** Cuántos caracteres se pierden al guardar (0 si entra entera): el que manda la orden tiene que enterarse. */
+export function caracteresRecortados(texto: string, largo = TOPE_ORDEN): number {
+  return Math.max(0, texto.replace(CUALQUIER_MARCA, "").trim().length - largo);
 }
 
 /** Separa lo guardado en emisor y texto, para mostrarlo sin la marca. */
