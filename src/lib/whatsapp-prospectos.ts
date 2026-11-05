@@ -40,12 +40,13 @@ export async function graph(camino: string, metodo: "GET" | "POST" | "DELETE", c
   }
 }
 
-/** Da de alta las plantillas en Meta. Si ya existen, Meta lo dice y no pasa nada. */
-export async function crearPlantillas(): Promise<Record<string, Graph>> {
+/** Da de alta las plantillas en Meta. Si ya existen, Meta lo dice y no pasa nada. Con `solo`, únicamente esa. */
+export async function crearPlantillas(solo?: string): Promise<Record<string, Graph>> {
   const waba = process.env.WHATSAPP_WABA_ID;
   if (!waba) throw new Error("Falta WHATSAPP_WABA_ID");
   const salida: Record<string, Graph> = {};
   for (const p of Object.values(PLANTILLAS)) {
+    if (solo && p.nombre !== solo) continue;
     salida[p.nombre] = await graph(`${waba}/message_templates`, "POST", {
       name: p.nombre,
       language: IDIOMA,
