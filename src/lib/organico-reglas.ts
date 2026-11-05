@@ -9,10 +9,16 @@ export type EstadoProspecto = "nuevo" | "enviado" | "fallo" | "respondio" | "int
 export type Candidato = { telefono: string; negocio: string; rubro: string; localidad: string | null; rating: number | null; resenas: number | null };
 export type Resultado = { rubro: string; enviados: number; respondieron: number };
 
-/** Cuántos negocios se contactan por día: pocos, para que Meta no vea una ráfaga y para poder atender a los que contestan. */
-export const POR_DIA = 8;
+/**
+ * Cuántos negocios se contactan por día. Santiago lo subió de 8 a 24 el 4/11 («aumentar los mensajes
+ * en frío para conseguir más ventas»): con 8 por día y ~10% de respuesta, el embudo no alcanzaba para
+ * una venta por semana. 24 sigue muy abajo del tope de Meta para una cuenta con plantillas aprobadas
+ * (cientos de conversaciones iniciadas por día) y deja atender bien a los que contestan.
+ * Si Meta marca la calidad de las plantillas como media o baja, hay que volver a bajarlo.
+ */
+export const POR_DIA = 24;
 /** Como mucho por rubro en un día, para no apostar todo a uno. */
-export const TOPE_RUBRO = 4;
+export const TOPE_RUBRO = 10;
 
 /** Celular argentino en el formato de WhatsApp (549 + 10 dígitos) a partir de lo que viene de Google o de una lista. */
 export function celular(telefono: string | null | undefined): string | null {
