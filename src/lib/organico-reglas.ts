@@ -15,8 +15,10 @@ export type Resultado = { rubro: string; enviados: number; respondieron: number 
  * una venta por semana. 24 sigue muy abajo del tope de Meta para una cuenta con plantillas aprobadas
  * (cientos de conversaciones iniciadas por día) y deja atender bien a los que contestan.
  * Si Meta marca la calidad de las plantillas como media o baja, hay que volver a bajarlo.
+ * 6/11: baja a 10 por orden de Laura (48 enviados del 2 al 6/11, 0 respuestas): el esfuerzo va a
+ * llamadas y visitas hasta que haya una plantilla que dé un precio en vez de pedir un favor.
  */
-export const POR_DIA = 24;
+export const POR_DIA = 10;
 /** Como mucho por rubro en un día, para no apostar todo a uno. */
 export const TOPE_RUBRO = 10;
 

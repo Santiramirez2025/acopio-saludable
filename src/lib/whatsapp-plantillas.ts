@@ -83,8 +83,18 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
  */
 const FRENADAS: ReadonlySet<keyof typeof PLANTILLAS> = new Set(["desayuno", "kit", "dietetica"] as const);
 
+/**
+ * Rubros que el robot no contacta por decisión, no por plantilla (orden de Laura, 6/11): dietéticas,
+ * almacenes naturales, herboristerías y casas a granel venden lo mismo que nosotros; son competencia,
+ * y a esos se llega hablando con el dueño, no con una plantilla. Aunque Meta apruebe la dietética v3,
+ * siguen afuera hasta que alguien saque esta regla.
+ */
+export function rubroExcluido(rubro: string): boolean {
+  return /diet|almac[eé]n natural|naturista|granel|herbor/i.test(rubro);
+}
+
 export function rubroHabilitado(rubro: string): boolean {
-  return !FRENADAS.has(plantillaDe(rubro));
+  return !rubroExcluido(rubro) && !FRENADAS.has(plantillaDe(rubro));
 }
 
 export function plantillaDe(rubro: string): keyof typeof PLANTILLAS {

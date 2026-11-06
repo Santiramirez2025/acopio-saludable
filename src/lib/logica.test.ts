@@ -1836,6 +1836,17 @@ test("captación: alojamientos frenados por «sin TACC» y budines; el resto sig
   assert.match(contextoProspecto("cabañas / complejo", "X"), /Budines no tenemos/);
 });
 
+test("captación 6/11: dietéticas y afines afuera por decisión (aunque se apruebe la v3) y 10 por día", async () => {
+  const { rubroExcluido } = await import("./whatsapp-plantillas");
+  const { POR_DIA } = await import("./organico-reglas");
+  for (const r of ["dietética", "Dietetica", "almacén natural", "almacen natural", "naturista", "venta a granel", "herboristería"]) {
+    assert.equal(rubroExcluido(r), true, r);
+    assert.equal(rubroHabilitado(r), false, r);
+  }
+  for (const r of ["heladería", "panadería", "pastelería", "cafetería", "restaurante", "almacén"]) assert.equal(rubroExcluido(r), false, r);
+  assert.equal(POR_DIA, 10);
+});
+
 test("costos de la compra del 3/11: la lista no los pisa hasta la fecha, y después sí", async () => {
   const { costoDeCompraVigente } = await import("./listas-presentacion");
   assert.equal(costoDeCompraVigente("LG-DATIL", new Date("2026-11-04T10:40:00Z")), true);
