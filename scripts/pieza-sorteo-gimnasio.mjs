@@ -12,7 +12,7 @@ if (!gimnasio || !codigoCrudo) { console.error('Uso: node scripts/pieza-sorteo-g
 const codigo = codigoCrudo.toUpperCase();
 const slug = slugArg || gimnasio.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-");
 const hoy = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
-const ALCANCE = "10% en nuez, cajú, dátiles, granola y semillas";
+const ALCANCE = process.env.ALCANCE || "10% en nuez, cajú, dátiles, granola y semillas"; // gimnasios nuevos. GIMNASIO 653: ALCANCE="10% en frutos secos, mixes y combos" (lo prometido a Nahuel; Flor 5/11)
 const LETRA = "Pagando por transferencia. No se suma a otros descuentos.";
 const DIR = new URL("../public/img/marketing/", import.meta.url).pathname;
 const logo = readFileSync(DIR + "fuentes/2026-11-04-anuncio-datiles-1920.html", "utf8").match(/<svg.*?<\/svg>/s)[0].replace(/#10251C/g, "#FFC83D").replace(/fill="#fff"/, 'fill="#10251C"');
