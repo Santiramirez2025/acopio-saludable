@@ -30,3 +30,13 @@ export function notaPedidoSinPagar(medioPago: string | null | undefined): string
   if (medioPago === "AL_RECIBIR") return " Es un pedido viejo acordado para pagar al recibir: se respeta, no le pidas que pague antes ni se lo ofrezcas a nadie más.";
   return " TODAVÍA NO PAGÓ: el pedido sale recién con el pago acreditado. No digas que va en el reparto ni que Santiago le confirma el horario; si pregunta cuándo llega, decile que se coordina apenas se acredite el pago. Si dice que paga más tarde, no insistas.";
 }
+
+/**
+ * Nota del historial cuando Santiago marca Entregado sin pago registrado (regla del 29/10: Entregado = cobrado).
+ * AS-00043 pagó por transferencia y el evento decía «Cobrado al entregar», que confunde el control de cobro.
+ */
+export function notaCobroAlMarcarEntregado(medioPago: string | null | undefined): string {
+  if (medioPago === "TRANSFERENCIA") return "Marcado Entregado = cobrado, por transferencia (la acreditación no se verifica en este paso)";
+  if (medioPago === "MERCADOPAGO") return "Marcado Entregado = cobrado, por Mercado Pago (la acreditación no se verifica en este paso)";
+  return "Cobrado al entregar";
+}
