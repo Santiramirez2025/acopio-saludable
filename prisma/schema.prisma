@@ -185,6 +185,9 @@ model Order {
   provincia String
   cp        String
   notas     String?
+  // «lat,lng» exacto del domicilio, guardado una vez desde el panel: el botón «Cómo llegar» va ahí
+  // en vez de hacer que Google adivine la dirección escrita a mano (Santiago, 6/11).
+  ubicacion String?
 
   subtotal      Decimal @db.Decimal(12, 2)
   descuento     Decimal @default(0) @db.Decimal(12, 2)

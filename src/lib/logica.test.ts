@@ -1465,9 +1465,24 @@ test("vendedor: ningún texto modelo le hace decir al bot que se paga al recibir
 test("mapa: link de navegación con la dirección completa y sin repetir", async () => {
   const { linkMapa, direccionCompleta, linkRuta } = await import("./mapa");
   assert.equal(direccionCompleta("Virgen de Lourdes 4480", "Cordoba", "Córdoba"), "Virgen de Lourdes 4480, Cordoba, Argentina");
+  // 6/11: la aclaración que escribe el cliente marea a Google; se tira, y el CP fija la localidad.
+  const { limpiarCalle, leerCoordenadas, linkVerEnMapa } = await import("./mapa");
+  assert.equal(limpiarCalle("Belgrano 123 (timbre 2), al lado del kiosco"), "Belgrano 123");
+  assert.equal(limpiarCalle("Av. San Martín 540 - depto B"), "Av. San Martín 540");
+  assert.equal(limpiarCalle("Tupungato 245 entre Alberdi y Sarmiento"), "Tupungato 245");
+  assert.equal(limpiarCalle("Golf Club Carlos Paz (lo pidió el cliente)"), null, "sin altura no se navega");
+  assert.equal(limpiarCalle("A confirmar por WhatsApp"), null);
+  assert.equal(direccionCompleta("Belgrano 123 (timbre 2)", "Villa Carlos Paz", "Córdoba", "5152"), "Belgrano 123, Villa Carlos Paz, Córdoba, 5152, Argentina");
+  // Un punto exacto guardado manda sobre la dirección escrita.
+  assert.equal(leerCoordenadas("-31.4201, -64.4932"), "-31.4201,-64.4932");
+  assert.equal(leerCoordenadas("https://www.google.com/maps/place/x/@-31.4201,-64.4932,17z"), "-31.4201,-64.4932");
+  assert.equal(leerCoordenadas("Belgrano 123"), null);
+  assert.match(linkMapa("Cualquier cosa sin altura", "Carlos Paz", "Córdoba", "5152", "-31.4201,-64.4932") ?? "", /destination=-31\.4201%2C-64\.4932/);
+  assert.match(linkVerEnMapa("Belgrano 123", "Carlos Paz", "Córdoba", "5152") ?? "", /maps\/search\/\?api=1&query=Belgrano/);
   assert.equal(direccionCompleta("San Martín 100", "Villa Carlos Paz", null), "San Martín 100, Villa Carlos Paz, Córdoba, Argentina");
   assert.match(linkMapa("Virgen de Lourdes 4480", "Cordoba", "Córdoba") ?? "", /^https:\/\/www\.google\.com\/maps\/dir\/\?api=1&destination=Virgen/);
   assert.equal(linkMapa("", "Carlos Paz"), null);
+  assert.equal(linkMapa("Golf Club Carlos Paz (lo pidió el cliente)", "Carlos Paz"), null, "mejor sin botón que un botón que lleva mal");
   assert.match(linkRuta(["A 1, X", "B 2, Y"]) ?? "", /destination=B.*waypoints=A/);
 });
 

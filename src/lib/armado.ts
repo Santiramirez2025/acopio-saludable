@@ -107,10 +107,10 @@ export async function pizarraArmado(): Promise<Pizarra> {
     items: o.items.map((i) => ({ producto: i.producto, presentacion: i.presentacion, cantidad: i.cantidad, combo: i.comboSlug })),
     estado: o.estado,
     hace: haceCuanto(o.createdAt),
-    mapa: linkMapa(o.calle, o.ciudad, o.provincia),
+    mapa: linkMapa(o.calle, o.ciudad, o.provincia, o.cp, o.ubicacion),
     telefono: o.telefono,
     total: n(o.total),
-    direccion: linkMapa(o.calle, o.ciudad, o.provincia) ? direccionCompleta(o.calle, o.ciudad, o.provincia) : "",
+    direccion: linkMapa(o.calle, o.ciudad, o.provincia, o.cp, o.ubicacion) ? direccionCompleta(o.calle, o.ciudad, o.provincia, o.cp) : "",
   });
   const todos = os.map(vista);
   // Ya se armó si pasó por «Preparado» o se tildó «Listo» en la pizarra. Gonza a veces pasa el pedido a

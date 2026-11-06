@@ -1,11 +1,11 @@
-import { linkMapa } from "@/lib/mapa";
+import { leerCoordenadas, limpiarCalle, linkMapa, linkVerEnMapa } from "@/lib/mapa";
 import Link from "next/link";
 import { NOMBRE_MEDIO } from "@/lib/pedido-calculos";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
 import { ESTADOS, MARGEN_FLACO_PCT, linkWhatsapp, margenNeto, nombreEstado, numeroPedido } from "@/lib/pedidos";
-import { borrarPedido, cambiarEstadoPedido, reemplazarEnPedido, reenviarComprobante, registrarPagoPedido } from "@/lib/acciones";
+import { borrarPedido, cambiarEstadoPedido, guardarUbicacionPedido, reemplazarEnPedido, reenviarComprobante, registrarPagoPedido } from "@/lib/acciones";
 import { leerConfig } from "@/lib/config";
 import { linkSeguimiento } from "@/lib/envios/seguimiento";
 
@@ -96,7 +96,28 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
             <h2 className="mb-2 text-sm font-semibold">Cliente y entrega</h2>
             <p className="font-medium">{pedido.nombre}</p>
             <p>{pedido.email} · {pedido.telefono} {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="text-acopio-700 underline">WhatsApp</a>}</p>
-            <p className="mt-1">{pedido.calle}, {pedido.ciudad}, {pedido.provincia} ({pedido.cp}){(() => { const m = linkMapa(pedido.calle, pedido.ciudad, pedido.provincia); return m ? <a href={m} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center rounded-full bg-acopio-700 px-3 py-1 text-xs font-semibold text-white">📍 Cómo llegar</a> : null; })()}</p>
+            <p className="mt-1">{pedido.calle}, {pedido.ciudad}, {pedido.provincia} ({pedido.cp})</p>
+            {(() => {
+              // El botón navega a las coordenadas guardadas si las hay; si no, a la dirección limpia (sin timbres ni aclaraciones).
+              const coord = leerCoordenadas(pedido.ubicacion);
+              const ir = linkMapa(pedido.calle, pedido.ciudad, pedido.provincia, pedido.cp, pedido.ubicacion);
+              const ver = linkVerEnMapa(pedido.calle, pedido.ciudad, pedido.provincia, pedido.cp, pedido.ubicacion);
+              return (
+                <div className="mt-2 rounded-lg bg-stone-50 p-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {ir ? <a href={ir} target="_blank" rel="noopener noreferrer" className="inline-flex items-center rounded-full bg-acopio-700 px-3 py-1 text-xs font-semibold text-white">📍 Cómo llegar</a> : <span className="text-xs text-red-700">Sin calle y altura: pediles la dirección o pegá la ubicación acá abajo.</span>}
+                    {ver && <a href={ver} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-acopio-700 underline">Ver en el mapa</a>}
+                    <span className="text-xs text-stone-600">{coord ? `punto exacto guardado (${coord})` : `va por dirección: ${limpiarCalle(pedido.calle) ?? "—"}`}</span>
+                  </div>
+                  <form action={guardarUbicacionPedido} className="mt-2 flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="id" value={pedido.id} />
+                    <input name="ubicacion" defaultValue={coord ?? ""} placeholder="Pegá el link de Maps o -31.4201,-64.4932" className="min-w-[16rem] flex-1 rounded border border-stone-300 px-2 py-1 text-xs" />
+                    <button className="rounded-full bg-stone-800 px-3 py-1 text-xs font-semibold text-white">Guardar punto exacto</button>
+                  </form>
+                  <p className="mt-1 text-[11px] text-stone-500">En Google Maps mantené apretado sobre la casa del cliente, copiá el «lat, lng» y pegalo acá. Queda guardado para siempre en este pedido.</p>
+                </div>
+              );
+            })()}
             <p className="text-stone-600">{pedido.envioNombre} · {pedido.bultos} {pedido.bultos === 1 ? "bulto" : "bultos"} · {(pedido.pesoTotalG / 1000).toFixed(1)} kg · cotizado por {pedido.envioOrigen}{pedido.tracking && (
               <>
                 {" · seguimiento "}
