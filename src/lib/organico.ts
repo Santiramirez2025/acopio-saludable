@@ -67,10 +67,12 @@ export async function reabastecer(): Promise<number> {
   if (!clave) return 0;
   const [{ n }] = await prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM "Prospecto" WHERE "estado" = 'nuevo'`;
   if (Number(n) >= POR_DIA * 5) return 0; // todavía hay lista para una semana
+  // Solo rubros que usan lo que vendemos (orden de Laura, 6/11). Sin dietéticas (competencia) ni
+  // gimnasios (van por alianza con Flor, no por robot).
   const busquedas = [
-    ["dietética", "dietética Villa Carlos Paz"], ["dietética", "dietética Córdoba capital"], ["gimnasio", "gimnasio Villa Carlos Paz"],
-    ["cafetería", "cafetería Villa Carlos Paz"], ["cafetería", "cafetería de especialidad Córdoba"], ["hotel", "hotel Villa Carlos Paz"],
-    ["cabañas / complejo", "cabañas Villa Carlos Paz"], ["dietética", "dietética Cosquín La Falda"], ["dietética", "dietética Alta Gracia"],
+    ["heladería", "heladería Villa Carlos Paz"], ["panadería", "panadería Villa Carlos Paz"], ["pastelería", "pastelería Villa Carlos Paz"],
+    ["cafetería", "cafetería Villa Carlos Paz"], ["restaurante", "restaurante Villa Carlos Paz"], ["cafetería", "cafetería Cosquín La Falda"],
+    ["panadería", "panadería Cosquín La Falda"], ["heladería", "heladería Alta Gracia"],
   ];
   const semilla: Semilla[] = [];
   for (const [rubro, q] of busquedas) {
