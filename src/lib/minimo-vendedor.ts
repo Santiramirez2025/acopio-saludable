@@ -12,6 +12,7 @@ export function reglaMinimo(general: string, propia: string | null, envioBajoMin
     envioBajoMinimo
       ? `- La compra mínima depende de la zona: en Villa Carlos Paz y el sur de Punilla (reparto propio) NO hay compra mínima: se puede pedir cualquier monto; desde ${propia} la entrega va sin cargo y, si el pedido no llega a ${propia}, el envío cuesta ${envioBajoMinimo}. En el resto del país la compra mínima es ${general}. Nunca le digas a alguien de la zona que «le falta» para poder comprar: ofrecé sumar hasta ${propia} para que el envío salga sin cargo.`
       : `- La compra mínima depende de la zona: en Villa Carlos Paz y el sur de Punilla (reparto propio, sin cargo) es ${propia}; en el resto del país, ${general}.`,
+    "  Antes de nombrar un mínimo por una localidad, mirá lo que dice costo_envio: si dice reparto propio, no hay mínimo aunque no sea Carlos Paz (San Antonio de Arredondo, Vertientes de Arredondo, Mayu Sumaj, Tanti, Bialet Massé). Nunca digas que un lugar «está fuera de Carlos Paz» para justificar un mínimo o el correo.",
     "  No digas ningún mínimo en el saludo ni antes de saber su ciudad: si hace falta, preguntá primero «¿de qué ciudad sos?». Si el anuncio por el que llegó nombra Carlos Paz, tomalo como de la zona hasta que diga otra cosa.",
     `  Nunca le digas ${general} a alguien de Carlos Paz o el sur de Punilla. Nunca la digas como un problema («te falta plata»): es la razón por la que el combo le conviene.`,
   ].join("\n");

@@ -21,13 +21,14 @@ import { zonaPagaDe } from "./envios/tabla";
 import { linkWhatsapp } from "./pedidos";
 import { NICHOS } from "./taxonomia";
 import { cortada, fichasNombradas, presentacionDe, separarOpciones, listaDeProductos, listaDeVerdad } from "./whatsapp-interactivo";
-import { argumentoCombo, COMBO_ENTRADA, temaDe } from "./combos-tema";
+import { totalTransferencia, argumentoCombo, COMBO_ENTRADA, temaDe } from "./combos-tema";
 import type { Accion, Enlace, EnvioCotizado, Ficha, Foto, Respuesta } from "./asistente-catalogo";
 import { urlSitio } from "./sitio";
 
 /** Meta necesita una URL pública absoluta para la foto. */
 const absoluta = (u: string) => (u.startsWith("http") ? u : `${urlSitio()}${u.startsWith("/") ? "" : "/"}${u}`);
 import { cotizarEnvioChat } from "./envio-chat";
+import { instruccionPedidoNegocio, pieFotoCombo, rubroRevende } from "./atencion-reglas";
 import { EN_STOCK, productosDe, sugerirDelStock } from "./en-stock";
 import { fotoRealDe, fotosReales, imagenCombo, imagenProducto, pideFotosReales } from "./galeria";
 import { completarEntrega } from "./pedidos";
@@ -394,7 +395,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     }));
     // Por WhatsApp, el combo recomendado va con su imagen: la foto vende más que el texto.
     const imagen = canal === "whatsapp" && elegidos[0] ? imagenCombo(elegidos[0].slug) : null;
-    if (imagen) return { texto: `${texto}\nLa imagen del ${elegidos[0].nombre} sale sola antes de tu texto: no la anuncies.`, fichas, fotos: [{ url: absoluta(imagen), pie: elegidos[0].nombre }] };
+    if (imagen) return { texto: `${texto}\nLa imagen del ${elegidos[0].nombre} sale sola antes de tu texto: no la anuncies.`, fichas, fotos: [{ url: absoluta(imagen), pie: pieFotoCombo(elegidos[0].nombre, pesos(Math.round(elegidos[0].precio)), cfg.descuentoTransferenciaPct > 0 ? pesos(totalTransferencia(elegidos[0].precio, cfg.descuentoTransferenciaPct)) : null) }] };
     return { texto, fichas };
   }
 
@@ -543,7 +544,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       [/hotel|cabaña|cabana|hoster|hostel|departament|alquiler|apart/, "hoteleria"],
       [/gim|gym|crossfit|entrenam/, "gimnasios"],
       [/diet[eé]t|almac[eé]n saludable|herbor/, "dieteticas"],
-      [/caf[eé]|panader|pasteler|brunch/, "cafeterias"],
+      [/caf[eé]|panader|pasteler|brunch|helader/, "cafeterias"],
       [/rotiser|pizzer|vianda|catering|restaur/, "rotiserias"],
       [/kiosco|kiosko|maxikiosco|despensa|almac[eé]n/, "kioscos"],
       [/oficina|empresa|coworking/, "oficinas"],
@@ -560,16 +561,16 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       items.push(...sueltos.map((producto) => ({ producto, cantidad: 1 })));
     }
     const lineas = items.map(({ producto: p, cantidad }) => {
-      const gana = p.sugerido ? ` · lo vende a ${pesos(p.sugerido)} y gana ${pesos(p.sugerido - p.precio)}` : "";
+      const gana = rubroRevende(id) && p.sugerido ? ` · lo vende a ${pesos(p.sugerido)} y gana ${pesos(p.sugerido - p.precio)}` : "";
       return `- [${p.codigo}] ${cantidad} × ${p.producto} ${p.presentacion}: ${pesos(p.precio)}${gana}`;
     });
     const total = items.reduce((t, i) => t + i.producto.precio * i.cantidad, 0);
     return {
       texto: [
-        `Pedido típico para ${nicho.nombre} (precios de hoy, con el precio de reventa sugerido):`,
+        `Pedido típico para ${nicho.nombre} (precios de hoy${rubroRevende(id) ? ", con el precio de reventa sugerido" : ""}):`,
         ...lineas,
         `Total de este pedido: ${pesos(total)}.`,
-        "Mostrale 3 o 4 de estos productos EN EL MENSAJE, cada uno en su renglón con precio y cuánto gana revendiéndolo, y cerrá con UNA pregunta («¿Te armo este pedido?» o «¿Qué le sumarías?»). No mandes links ni la página del rubro. Si dice que sí, usá agregar_al_pedido con esos códigos.",
+        instruccionPedidoNegocio(id),
       ].join("\n"),
     };
   }
@@ -649,6 +650,7 @@ function instrucciones(compraMinima: string, lecciones = "", compraMinimaPropia:
     "  · MIX O PEDIDO A MEDIDA («sin maní, solo almendras, nueces y cajú») → armalo vos con los productos sueltos: buscalos con buscar_productos, proponé medio kilo de cada uno, decí el total y preguntá «¿te lo armamos así?». Nosotros fraccionamos: cualquier producto se puede pedir por medio kilo.",
     "  · RESERVAR HASTA QUE COBRE → «Sí, te lo dejamos reservado a este precio por 7 días». Agregalo al pedido si no estaba y decile que cuando cobre nos escriba «listo» y se lo mandamos.",
     "  · PRECIO ESPECIAL: si duda por el precio, pide descuento, pide «hablar con alguien» para negociar o está por irse, ofrecé UNA vez el precio especial: el de transferencia (8% menos, sale de las herramientas). Decilo como un beneficio: «Te podemos hacer un precio especial: pagando por transferencia te queda en $X». No inventes otros descuentos.",
+    "- PRECIO SIN DECIR DE QUÉ («q precio», «precio?»): si lo último que mandaste fue la foto de un combo, ese precio va seguro: nombrá el combo con su precio y el de transferencia, y si en el medio preguntó por otra cosa, nombrá las dos («La Despensa de la foto sale $X, o $Y por transferencia. El coco rallado, $Z el kilo. ¿Cuál buscabas?»). Nunca contestes solo lo otro.",
     "- PREGUNTA PENDIENTE: si te repregunta («?», «¿con quién confirmo?») es porque no le contestaste algo: contestalo vos. Nunca cierres con «de nada» si tiene una duda abierta.",
     "- DUDAS DE PRODUCTO (si un mix tiene maní, qué trae, si es apto): NUNCA las derives ni digas «lo confirmamos en un rato». Si pregunta qué trae o qué tiene un mix, buscalo con buscar_productos y contestá primero los ingredientes, tal como vienen en «lleva:», sin frases de venta; recién después el precio. Si no hay «lleva:», contestá con lo que dice el nombre del producto o el detalle del combo. Si pide un mix SIN algo («sin pasas», «sin maní»), mirá el «lleva:» y nunca ofrezcas uno que traiga eso; si ninguno sirve, decí «hoy no tengo un mix sin pasas» y armáselo con productos sueltos. Decir lo que lleva no es decir que es apto para alérgicos: eso no lo prometas. Si no se aclara, no adivines: ofrecé en el mismo mensaje la alternativa segura armada con productos sueltos (ej. «para ir a lo seguro te lo cambio por almendras, nueces y cajú sueltos, que no llevan maní: $X») y preguntá si lo cambiás.",
     "- CAMBIOS AL PEDIDO («sí, cambiala», «sacá esto», «sumá aquello»): hacelo vos con agregar_al_pedido pasando el pedido completo ya cambiado, decí el total nuevo y preguntá la zona o si lo confirmamos. Un pedido que todavía no pagó no es un «pedido ya hecho»: nunca lo derives.",
@@ -661,7 +663,7 @@ function instrucciones(compraMinima: string, lecciones = "", compraMinimaPropia:
     "- SIN APURO: «gracias», «lo veo tranquila», «lo pienso», «después te escribo» NO son un sí. No agregues nada al pedido ni preguntes la zona: decile que se tome su tiempo, que cuando quiera le armás el pedido, y dejá la puerta abierta en una frase. Se vende acompañando, no apurando.",
     "- Si vino de un anuncio y no pregunta nada concreto, arrancá por lo que prometía el anuncio, con su precio real. Si pregunta algo (dirección, envío, pago), primero contestá eso.",
     "- Siempre contestá lo que preguntó antes de ofrecer o pedir nada. Si escribe solo «dirección» o «ubicación», te está preguntando dónde estamos, no ofreciendo la suya.",
-    "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, rotisería), usá pedido_para_negocio y mostrale los productos con precio y cuánto gana revendiéndolos, directo en el mensaje. Nada de links a páginas: la gente quiere ver precios. Botones solo si ayudan a contestar rápido, nunca para posponer («Lo pienso» no va).",
+    "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, heladería, restaurante, rotisería), usá pedido_para_negocio y mostrale los productos directo en el mensaje. Solo a dietéticas y kioscos les hablás de reventa y ganancia; los demás usan la mercadería: precio por kilo y seguí lo que indica la herramienta. Si contesta un mensaje automático de bienvenida, no cotices. Nada de links a páginas: la gente quiere ver precios. Botones solo si ayudan a contestar rápido, nunca para posponer («Lo pienso» no va).",
     "- ALOJAMIENTOS (hotel, cabañas, apart, hostería): preguntá cuántas plazas tienen y ofrecé el cotizador de desayunos (acopiosaludable.com/cotizador-hoteles): con plazas y ocupación les da el costo por desayuno y el pedido armado, y lo pueden mandar al dueño para aprobar.",
     `${reglaMinimo(compraMinima, compraMinimaPropia, envioBajoMinimo)} PEDIDOS GRANDES: arrancá siempre por el combo más grande que le sirva y completá hasta el mínimo con completar_el_minimo; nunca ofrezcas la Despensa chica de 2 kilos.`,
     "- Si pregunta la dirección, el local o dónde están: trabajamos online desde Villa Carlos Paz, sin local a la calle. Se pide por acá o por la web y se lo llevamos: entrega propia en Carlos Paz y alrededores, y por correo al resto del país. Preguntale su barrio o ciudad para decirle el envío (datos_de_la_tienda) y volvé a la oferta.",

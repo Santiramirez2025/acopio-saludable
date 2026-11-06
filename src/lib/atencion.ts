@@ -40,7 +40,7 @@ import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
 import { transcribirAudio } from "./oir-audio";
 import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
-import { hoyEnArgentina, llegaAlVendedor, notaPedidoSinPagar } from "./atencion-reglas";
+import { hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, yaMandoComprobante } from "./atencion-reglas";
 import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from "./direccion-cliente";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
@@ -658,18 +658,17 @@ export async function pensar(c: {
   const tieneCalle = Boolean(orden?.calle && orden.calle.trim().length > 4 && !/a confirmar/i.test(orden.calle));
   const horario = orden?.notas?.match(/Horario:\s*([^·]+)/i)?.[1]?.trim();
   const yaTenemos = orden
-    ? ` Datos que YA tenemos: nombre ${orden.nombre}${tieneCalle ? `, dirección ${orden.calle}, ${orden.ciudad}` : ", FALTA la dirección"}${horario ? `, horario ${horario}` : ""}. No vuelvas a pedir lo que ya está; si falta algo, pedí solo eso y una sola vez. Si pregunta cuándo se lo llevan: entregamos en 24 a 48 h hábiles (domingos no hay reparto); el día del reparto le avisamos a la mañana y el chico del reparto le escribe para coordinar el horario. No prometas un día ni una hora exactos.`
+    ? ` Datos que YA tenemos: nombre ${orden.nombre}${tieneCalle ? `, dirección ${orden.calle}, ${orden.ciudad}` : ", FALTA la dirección"}${horario ? `, horario ${horario}` : ""}. No vuelvas a pedir lo que ya está; si falta algo, pedí solo eso y una sola vez.${notaPlazoEntrega(estadoOrden)}`
     : "";
+  const eventosComprobante = ordenId && estadoOrden === "PENDIENTE_PAGO" ? await prisma.orderEvent.findMany({ where: { orderId: ordenId }, select: { nota: true } }).catch(() => []) : [];
   const enQueAnda =
-    estadoOrden === "ENTREGADO"
-      ? " YA LO RECIBIÓ: si agradece o comenta, agradecé corto y cálido y nada más. No digas que está agendado, no ofrezcas avisar cuando salga y no mandes fotos de cómo llega."
-      : estadoOrden === "ENVIADO"
-        ? " Ya está en el reparto de hoy: el chico del reparto le escribe para coordinar. No digas que está agendado ni ofrezcas avisar cuando salga."
-        : estadoOrden === "CANCELADO"
-          ? " Ese pedido se canceló."
-          : estadoOrden === "PENDIENTE_PAGO"
-            ? notaPedidoSinPagar(orden?.medioPago)
-            : "";
+    estadoOrden === "ENTREGADO" || estadoOrden === "ENVIADO"
+      ? notaPedidoQueSalio(estadoOrden)
+      : estadoOrden === "CANCELADO"
+        ? " Ese pedido se canceló."
+        : estadoOrden === "PENDIENTE_PAGO"
+          ? notaPedidoSinPagar(orden?.medioPago, yaMandoComprobante(eventosComprobante.map((x) => x.nota)))
+          : "";
   const cerrado = ordenId
     ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";
