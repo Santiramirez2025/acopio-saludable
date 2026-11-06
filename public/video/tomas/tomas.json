@@ -1,5 +1,5 @@
 {
- "actualizado": "2026-11-03",
+ "actualizado": "2026-11-05",
  "uso": "Banco de tomas reales de Acopio en 9:16 (1080x1920, con texto ya quemado). Se reutilizan para armar variantes genuinas: otro orden, otro gancho, otro largo, otro audio y otro texto de publicación. Nunca subir el mismo archivo dos veces a la misma red.",
  "base": "https://www.acopiosaludable.com/video/tomas/",
  "videos": [
@@ -287,6 +287,39 @@
      "plano": "Bolsas kraft de pedidos, exterior con cielo",
      "texto": "«LOS ARMAMOS EN EL DÍA Y TE LOS LLEVAMOS»",
      "rol": "cierre"
+    }
+   ]
+  },
+  {
+   "id": "crudo-2026-11-05",
+   "original": null,
+   "objetivo": "Material en crudo de Santiago (5/11), SIN texto quemado y SIN precio a la vista: sirve para cualquier publicación, no caduca cuando cambia un precio. El texto se pone en la edición.",
+   "sonido": "Audio ambiente, se puede reemplazar",
+   "nota": "Son tomas reales, verticales 1080x1920. Úsenlas mezcladas con el banco viejo para armar reels nuevos; nunca subir el mismo archivo dos veces a la misma red. La Despensa vale $28.500 ($26.200 por transferencia): el precio va en texto, nunca se da por sabido.",
+   "tomas": [
+    {
+     "n": 1,
+     "archivo": "crudo-despensa-4-paquetes-armada.mp4",
+     "seg": 6.3,
+     "plano": "Cenital: los 4 paquetes de la Despensa armados sobre el mantel, con el sticker de Acopio en el medio; la cámara se acerca al de dátiles",
+     "texto": null,
+     "rol": "producto · gancho para la Despensa de 4 kilos"
+    },
+    {
+     "n": 2,
+     "archivo": "crudo-datiles-pesando-balanza.mp4",
+     "seg": 2.1,
+     "plano": "Bolsa de dátiles sobre la balanza, luz de ventana",
+     "texto": null,
+     "rol": "prueba · fraccionado en el día, peso exacto"
+    },
+    {
+     "n": 3,
+     "archivo": "crudo-datiles-cajon-egipto.mp4",
+     "seg": 5.7,
+     "plano": "Mano con guante negro eligiendo dátiles del cajón de madera original",
+     "texto": null,
+     "rol": "calidad · manipulación segura y producto a granel"
     }
    ]
   }
