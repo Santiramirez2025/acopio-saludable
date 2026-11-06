@@ -1843,3 +1843,10 @@ test("envÃ­o de la zona: sale del subtotal real y sin subtotal da la regla, no Â
   assert.match(sinElegir.detalle, /sin cargo desde/);
   assert.deepEqual(zonaDeLugar("vertiente de arredondo, un barrio de san antonio"), { tipo: "propia" });
 });
+
+test("la nota de cobro al marcar Entregado dice el medio real", async () => {
+  const { notaCobroAlMarcarEntregado } = await import("./atencion-reglas");
+  assert.match(notaCobroAlMarcarEntregado("TRANSFERENCIA"), /por transferencia/);
+  assert.match(notaCobroAlMarcarEntregado("MERCADOPAGO"), /Mercado Pago/);
+  assert.equal(notaCobroAlMarcarEntregado("AL_RECIBIR"), "Cobrado al entregar");
+});
