@@ -88,7 +88,8 @@ export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   { codigo: "TG-MANIPIZZA", codigoProveedor: "095-048", producto: "Maní saborizado pizza", marca: SUELTO, presentacion: "x 1 kg", categoria: "Frutos secos y mix", contenido: 1000, unidad: "g", margen: mTg(), costo: tg(4080), pesoBrutoG: 1020 },
   { codigo: "TG-GIRASOL", codigoProveedor: "001-221", producto: "Semillas de girasol peladas", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", margen: 0.372, costo: 4503, pesoBrutoG: 1020 },
   { codigo: "TG-ZAPALLO", codigoProveedor: "095-055", producto: "Semillas de zapallo", marca: SUELTO, presentacion: "x 1 kg", categoria: "Semillas y granos", contenido: 1000, unidad: "g", costo: tg(10184), margen: mTg(0.6), pesoBrutoG: 1020 },
-  { codigo: "TG-QUINOAPOP", codigoProveedor: "095-056", producto: "Quinoa pop", marca: SUELTO, presentacion: "x 500 g", categoria: "Cereales y granolas", contenido: 500, unidad: "g", costo: tg(4658), margen: mTg(0.6), pesoBrutoG: 520 },
+  // 5/11: Santiago compró 6 kg en La Granja (Yari, $16.534,56 x 3 kg = $5.511/kg, sin descuento). Sale a $4.900 el medio kilo.
+  { codigo: "TG-QUINOAPOP", codigoProveedor: "926-001", producto: "Quinoa pop", marca: SUELTO, presentacion: "x 500 g", categoria: "Cereales y granolas", contenido: 500, unidad: "g", costo: 2756, margen: 0.646, pesoBrutoG: 520, porQueLoElegimos: "Quinoa inflada, crocante y liviana: para el yogur, la ensalada o la granola casera. Sin gluten." },
   // ——— Todo Granolas: granolas (fabricante cordobés) ———
   { codigo: "TG-GTRAD", codigoProveedor: "095-001", producto: "Granola Tradicional", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6460), margen: mTg(0.55), pesoBrutoG: 1020, porQueLoElegimos: "Hecha en Córdoba, con avena, miel y frutos secos." },
   { codigo: "TG-GPMANI", codigoProveedor: "095-002", producto: "Granola con pasta de maní", marca: "Todo Granolas", presentacion: "x 1 kg", categoria: "Cereales y granolas", contenido: 1000, unidad: "g", costo: tg(6996), margen: mTg(0.55), pesoBrutoG: 1020 },
@@ -203,7 +204,7 @@ export const OCULTOS_PROPIOS = [
   // Todo Granolas ya no es proveedor: sus granolas, barras y alfajores se reemplazan por La Granja (LG-…).
   "TG-ALFAJORFS", "TG-BARRA", "TG-GTRAD", "TG-GPMANI", "TG-GCACAO", "TG-GPROTE", "TG-GALMENDRA", "TG-GSTEVIA",
   // Mixes y snacks que todavía no armamos ni compramos: vuelven cuando haya receta o proveedor.
-  "TG-MIXT", "TG-MIXTG", "TG-MIXP", "TG-MIXXP", "TG-MIXCERV", "TG-MANIQUESO", "TG-MANIJAMON", "TG-MANIPIZZA", "TG-QUINOAPOP", "TG-ZAPALLO",
+  "TG-MIXT", "TG-MIXTG", "TG-MIXP", "TG-MIXXP", "TG-MIXCERV", "TG-MANIQUESO", "TG-MANIJAMON", "TG-MANIPIZZA", "TG-ZAPALLO",
   // Mix Clásico con girasol (sin cajú): confundía al lado de los otros dos y vendió 1. Quedan dos mixes claros: con cajú y girasol ($10.500) y con cajú ($12.500).
   "TG-MIXGIR",
 ];
