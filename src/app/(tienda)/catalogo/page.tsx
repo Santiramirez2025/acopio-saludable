@@ -124,11 +124,11 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
         ))}
       </nav>
       <h2 className="sr-only">Buscar y filtrar productos</h2>
-      <form action="/catalogo" className="mb-5 rounded-2xl bg-white p-3 shadow-ficha">
+      {/* En el celular el buscador ya está fijo en el encabezado: acá va solo si hay una búsqueda hecha, para que los productos (con su «Agregar») entren en la primera pantalla. */}
+      <form action="/catalogo" className="mb-3 rounded-2xl bg-white p-2 shadow-ficha sm:mb-5 sm:p-3">
         {sinTacc && <input type="hidden" name="sintacc" value="1" />}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {/* También en el celular: con el catálogo paginado, buscar acá es la salida rápida y no obliga a subir hasta el encabezado. */}
-          <input name="q" type="search" enterKeyHint="search" defaultValue={q} placeholder="Buscar en el catálogo" aria-label="Buscar en el catálogo" className="campo col-span-2 sm:col-span-2" />
+          <input name="q" type="search" enterKeyHint="search" defaultValue={q} placeholder="Buscar en el catálogo" aria-label="Buscar en el catálogo" className={`campo col-span-2 sm:col-span-2 ${q ? "" : "max-sm:hidden"}`} />
           <select name="orden" defaultValue={orden} className="campo" aria-label="Ordenar por">
             {Object.entries(ORDENES).map(([id, o]) => (
               <option key={id} value={id}>{o.nombre}</option>
@@ -139,9 +139,10 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
             {(filtrosActivos > 0 || q) && <Link href="/catalogo" className="btn-sec px-3" aria-label="Limpiar filtros">Limpiar</Link>}
           </div>
         </div>
-        <details className="mt-2" open={filtrosActivos > 0}>
-          <summary className="flex min-h-[48px] cursor-pointer items-center text-sm font-medium text-acopio-700">
-            Más filtros{filtrosActivos > 0 ? ` (${filtrosActivos} activos)` : ""}
+        <details className="mt-1 sm:mt-2" open={filtrosActivos > 0}>
+          <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-2 text-sm font-medium text-acopio-700">
+            <span>Más filtros{filtrosActivos > 0 ? ` (${filtrosActivos} activos)` : ""}</span>
+            <span className="font-normal text-stone-600">{total} productos</span>
           </summary>
           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Select name="categoria" vacio="Categoría" opciones={categorias.map((c) => ({ v: c.categoria, t: c.categoria }))} />
@@ -155,7 +156,6 @@ export default async function Catalogo({ searchParams }: { searchParams: Promise
         </details>
       </form>
 
-      <p className="mb-3 text-sm text-stone-600">{total} productos</p>
       {filas.length ? (
         <GrillaProductos productos={filas.map((f) => aTienda(f, cfg))} />
       ) : (
