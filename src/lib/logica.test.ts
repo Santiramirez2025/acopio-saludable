@@ -1462,6 +1462,16 @@ test("vendedor: ningún texto modelo le hace decir al bot que se paga al recibir
   assert.deepEqual(malas, []);
 });
 
+test("vendedor: lo que no hay se dice sin empujar un reemplazo ni pedir la dirección (7/11)", async () => {
+  // Valentina preguntó por semillas de zapallo y el vendedor le contestó «la más parecida es girasol a
+  // $6.700, ¿me pasás tu dirección?». Las dos cosas están prohibidas ahora.
+  const { readFileSync } = await import("node:fs");
+  const fuente = readFileSync(new URL("vendedor.ts", import.meta.url), "utf8");
+  assert.ok(!/Ofrecé lo más parecido que sí haya/.test(fuente), "ya no se le pide ofrecer un reemplazo");
+  assert.match(fuente, /SIN ofrecer un reemplazo en ese mismo mensaje/);
+  assert.match(fuente, /NO PIDAS LA DIRECCIÓN NI EL ENVÍO HASTA QUE HAYA UN PEDIDO/);
+});
+
 test("mapa: link de navegación con la dirección completa y sin repetir", async () => {
   const { linkMapa, direccionCompleta, linkRuta } = await import("./mapa");
   assert.equal(direccionCompleta("Virgen de Lourdes 4480", "Cordoba", "Córdoba"), "Virgen de Lourdes 4480, Cordoba, Argentina");

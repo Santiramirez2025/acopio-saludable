@@ -328,7 +328,13 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       hallarProductos(consulta, soloSinTacc).then((x) => x.slice(0, 6)),
       soloSinTacc ? Promise.resolve([]) : hallarCombos(consulta).then((x) => x.slice(0, 2)),
     ]);
-    if (!productos.length && !combos.length) return { texto: `Sin resultados para «${consulta}». No ofrezcas este producto: no lo tenemos. Ofrecé lo más parecido que sí haya.` };
+    // 7/11 (Santiago): antes esto decía «ofrecé lo más parecido» y el vendedor respondía a «¿tenés semillas de
+    // zapallo?» con «no, pero tengo girasol a $6.700, ¿me pasás tu dirección?». Pedir una cosa y que te
+    // empujen otra con el precio por delante espanta. Primero se dice que no, y se pregunta.
+    if (!productos.length && !combos.length)
+      return {
+        texto: `Sin resultados para «${consulta}»: no lo tenemos. Decilo derecho y corto («${consulta} no tengo»), SIN ofrecer un reemplazo en ese mismo mensaje y SIN precio. Terminá preguntando para qué lo buscaba o qué más necesita («¿para qué lo usás?», «¿qué más estabas buscando?»). Recién si contesta algo que otro producto nuestro resuelve de verdad, se lo ofrecés. Nunca pidas la dirección ni empujes el envío acá: todavía no hay pedido.`,
+      };
     const fichasCombo: Ficha[] = combos.map((c) => ({
       href: `/combos/${c.slug}`,
       nombre: `Combo ${c.nombre}`,
@@ -662,6 +668,8 @@ function instrucciones(compraMinima: string, lecciones = "", compraMinimaPropia:
     "- RECOMENDACIONES (si pregunta por el 5%, el link para recomendar o dice que lo recomendó alguien): quien compra por primera vez con el link de un amigo tiene 5% de descuento, y quien recomendó tiene 5% en su próxima compra por cada amigo que compre. El link para recomendar está en la página de seguimiento de su pedido (botón «Recomendar por WhatsApp»). Si nunca compró, el primer paso es su primer pedido: ofrecéselo como siempre.",
     "- SIN APURO: «gracias», «lo veo tranquila», «lo pienso», «después te escribo» NO son un sí. No agregues nada al pedido ni preguntes la zona: decile que se tome su tiempo, que cuando quiera le armás el pedido, y dejá la puerta abierta en una frase. Se vende acompañando, no apurando.",
     "- Si vino de un anuncio y no pregunta nada concreto, arrancá por lo que prometía el anuncio, con su precio real. Si pregunta algo (dirección, envío, pago), primero contestá eso.",
+    "- CUANDO NO TENEMOS LO QUE PIDE (orden de Santiago, 7/11): decí que no, derecho y en una frase corta, y NO ofrezcas otra cosa en ese mismo mensaje. Nada de «no tengo X, pero tengo Y a $Z»: pedir una cosa y que le empujen otra con el precio por delante hace que la persona se vaya. Lo que va al final es UNA pregunta para entender qué necesita: «¿para qué lo usabas?», «¿qué más estabas buscando?», «¿querés que te avise cuando entre?». Si en la respuesta aparece algo que otro producto nuestro resuelve de verdad (quiere semillas para el yogur, pedía algo sin TACC), recién ahí lo ofrecés, atado a lo que contó. Un reemplazo que no sirve para lo mismo no se ofrece nunca.",
+    "- NO PIDAS LA DIRECCIÓN NI EL ENVÍO HASTA QUE HAYA UN PEDIDO. Mientras la persona pregunta precios, disponibilidad o qué trae algo, no hay nada que enviar: preguntar «¿me pasás tu dirección?» ahí suena a que le querés vender a la fuerza. La zona se pregunta recién cuando aceptó algo concreto y el pedido está armado (regla 4). Lo mismo con el link de pago.",
     "- Siempre contestá lo que preguntó antes de ofrecer o pedir nada. Si escribe solo «dirección» o «ubicación», te está preguntando dónde estamos, no ofreciendo la suya.",
     "- Si es un negocio (kiosco, hotel, cabañas, dietética, gimnasio, cafetería, heladería, restaurante, rotisería), usá pedido_para_negocio y mostrale los productos directo en el mensaje. Solo a dietéticas y kioscos les hablás de reventa y ganancia; los demás usan la mercadería: precio por kilo y seguí lo que indica la herramienta. Si contesta un mensaje automático de bienvenida, no cotices. Nada de links a páginas: la gente quiere ver precios. Botones solo si ayudan a contestar rápido, nunca para posponer («Lo pienso» no va).",
     "- ALOJAMIENTOS (hotel, cabañas, apart, hostería): preguntá cuántas plazas tienen y ofrecé el cotizador de desayunos (acopiosaludable.com/cotizador-hoteles): con plazas y ocupación les da el costo por desayuno y el pedido armado, y lo pueden mandar al dueño para aprobar.",
