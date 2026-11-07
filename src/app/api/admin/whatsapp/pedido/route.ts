@@ -3,6 +3,8 @@
 //
 // POST { telefono, nombre, camino, medio: "TRANSFERENCIA" | "AL_RECIBIR", lugar, costoEnvio, direccion?, horario?, mayoristaPct? }
 // mayoristaPct (10, 15 o 20): precio por volumen sobre la lista web; reemplaza el descuento por transferencia.
+// Devuelve link: la página del pedido (total, datos para transferir y estado), para mandarla en la charla.
+// Sin el link, el agente que arma el pedido no tenía cómo pasarle al cliente dónde pagarlo.
 
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
@@ -11,6 +13,7 @@ import { authOptions } from "@/lib/auth";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "@/lib/pedidos";
 import { leerPedido } from "@/lib/pedido-enlace";
 import { guardarPedido } from "@/lib/whatsapp-memoria";
+import { urlSitio } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
 
@@ -32,5 +35,5 @@ export async function POST(req: Request) {
   });
   if (s("direccion") || s("horario")) await completarEntrega(pedido.id, { direccion: s("direccion"), horario: s("horario") });
   await guardarPedido(telefono, `orden:${pedido.id}`);
-  return NextResponse.json({ ok: true, pedido: numeroPedido(pedido.id), id: pedido.id, total: Number(pedido.total) });
+  return NextResponse.json({ ok: true, pedido: numeroPedido(pedido.id), id: pedido.id, total: Number(pedido.total), link: `${urlSitio()}/pedido/${pedido.token}` });
 }
