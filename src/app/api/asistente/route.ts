@@ -9,6 +9,7 @@ import { textoZonaSinMinimo, zonaSinMinimo } from "@/lib/minimo-zona";
 import { zonaPagaDe } from "@/lib/envios/tabla";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
 import { cotizarCarrito } from "@/lib/tienda";
+import { admiteFreno, ASISTENTE_IA_MAX_POR_IP, ipDe, VENTANA_PUBLICA_MS } from "@/lib/freno";
 import { responderComoVendedor, vendedorActivo, type CarritoVisto, type Turno } from "@/lib/vendedor";
 
 export const dynamic = "force-dynamic";
@@ -74,7 +75,8 @@ export async function POST(req: Request) {
 
   // El vendedor con IA atiende todo lo demás. Si no hay clave cargada, falla o tarda,
   // sigue contestando el asistente de reglas de abajo: la tienda nunca queda muda.
-  if (vendedorActivo()) {
+  // Pasado el tope por IP no se llama a la IA (se paga por mensaje): sigue el asistente de reglas.
+  if (vendedorActivo() && admiteFreno(`asistente:${ipDe(req)}`, ASISTENTE_IA_MAX_POR_IP, VENTANA_PUBLICA_MS)) {
     const r = await responderComoVendedor(mensaje, historialDe(cuerpo.historial), await carritoDe(cuerpo.carrito));
     if (r) {
       // Los atajos de abajo solo si la respuesta quedó sin nada para tocar: con tarjetas
