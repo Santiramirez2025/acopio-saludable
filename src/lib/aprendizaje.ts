@@ -5,6 +5,7 @@
 // WhatsApp y paga en la web carga su teléfono en el checkout.
 
 import { prisma } from "@/lib/prisma";
+import { contarNoTenemos, type NoTenemos } from "@/lib/no-tenemos";
 
 export type CharlaAnalizada = {
   quien: string;
@@ -20,6 +21,8 @@ export type Analisis = {
   dias: number;
   embudo: { charlas: number; conAnuncio: number; soloUnMensaje: number; respondidas: number; oferta: number; pedidoArmado: number; fueAPagar: number; compraron: number; derivadas: number };
   charlas: CharlaAnalizada[];
+  /** Lo que nos pidieron y dijimos que no hay, por producto: cuántas charlas distintas. */
+  noTenemos: NoTenemos[];
 };
 
 type Fila = { telefono: string; nombre: string | null; anuncio: string | null; estado: string; prospecto: string | null; de: string; texto: string; fecha: Date };
@@ -82,5 +85,6 @@ export async function analizarCharlas(dias: number): Promise<Analisis> {
       derivadas: resultado.filter((r) => r.enManosDePersona).length,
     },
     charlas: resultado,
+    noTenemos: contarNoTenemos([...charlas.values()].map((c) => c.mensajes)),
   };
 }
