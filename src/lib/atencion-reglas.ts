@@ -73,3 +73,13 @@ export function instruccionPedidoNegocio(nicho: string): string {
 export function pieFotoCombo(nombre: string, precio: string, transferencia: string | null): string {
   return transferencia ? `${nombre}: ${precio}, o ${transferencia} por transferencia` : `${nombre}: ${precio}`;
 }
+
+/**
+ * Nota del historial cuando Santiago marca Entregado sin pago registrado (regla del 29/10: Entregado = cobrado).
+ * AS-00043 pagó por transferencia y el evento decía «Cobrado al entregar», que confunde el control de cobro.
+ */
+export function notaCobroAlMarcarEntregado(medioPago: string | null | undefined): string {
+  if (medioPago === "TRANSFERENCIA") return "Marcado Entregado = cobrado, por transferencia (la acreditación no se verifica en este paso)";
+  if (medioPago === "MERCADOPAGO") return "Marcado Entregado = cobrado, por Mercado Pago (la acreditación no se verifica en este paso)";
+  return "Cobrado al entregar";
+}

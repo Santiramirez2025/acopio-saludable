@@ -228,7 +228,8 @@ export async function registrarCobroAlRecibir(orderId: number, nota: string): Pr
   });
   if (hecho) {
     const pedido = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
-    await avisarVenta(pedido, "Cobrado al entregar").catch((e) => console.error("aviso de cobro falló", e));
+    // Mismo medio que la nota del evento (Rodri 7/11, #470): sin la aclaración de acreditación, que es para el historial.
+    await avisarVenta(pedido, nota.startsWith("Marcado Entregado") ? nota.split(" (")[0] : "Cobrado al entregar").catch((e) => console.error("aviso de cobro falló", e));
   }
   return hecho;
 }

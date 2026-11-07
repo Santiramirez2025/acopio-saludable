@@ -1870,6 +1870,12 @@ test("envío de la zona: sale del subtotal real y sin subtotal da la regla, no �
   assert.deepEqual(zonaDeLugar("vertiente de arredondo, un barrio de san antonio"), { tipo: "propia" });
 });
 
+test("la nota de cobro al marcar Entregado dice el medio real", async () => {
+  const { notaCobroAlMarcarEntregado } = await import("./atencion-reglas");
+  assert.match(notaCobroAlMarcarEntregado("TRANSFERENCIA"), /por transferencia/);
+  assert.match(notaCobroAlMarcarEntregado("MERCADOPAGO"), /Mercado Pago/);
+  assert.equal(notaCobroAlMarcarEntregado("AL_RECIBIR"), "Cobrado al entregar");
+});
 test("recompra: sin almendra asegurada, espera quien llevó mixes con cajú, Despensa o Alacena; lo demás sale", () => {
   const it = (producto: string, comboSlug: string | null = null) => ({ codigo: "X", producto, presentacion: "x 1 kg", cantidad: 1, comboSlug });
   assert.equal(recompraEnEspera([it("Pasas de uva negras sin semilla", "despensa-4-kilos")]), true);

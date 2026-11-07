@@ -3,6 +3,7 @@
 import type { EstadoPedido } from "@prisma/client";
 import { prisma } from "./prisma";
 import { agradecerConReferidos, avisarDespachoWhatsapp } from "./aviso-despacho";
+import { notaCobroAlMarcarEntregado } from "./atencion-reglas";
 import { ESTADOS, avisarDespachado, confirmarPago, registrarCobroAlRecibir, registrarPago } from "./pedidos";
 
 export async function aplicarEstadoPedido(
@@ -19,7 +20,7 @@ export async function aplicarEstadoPedido(
   // cuando ya cobró, sea cual sea el medio de pago; entonces Entregado = cobrado, sin avisarle nada.
   // (El 21/10 pasar a Julieta a Enviado le mandó el comprobante de pago sin haber pagado.)
   if (estado === "ENTREGADO" && !pedido.pagadoAt) {
-    await registrarCobroAlRecibir(id, nota ?? "Cobrado al entregar");
+    await registrarCobroAlRecibir(id, nota ?? notaCobroAlMarcarEntregado(pedido.medioPago));
   } else if (estado === "PAGADO" && !pedido.pagadoAt) {
     if (pedido.estado === "PENDIENTE_PAGO" && !silencioso) await confirmarPago(id, nota ?? (pedido.medioPago === "TRANSFERENCIA" ? "Transferencia verificada" : "Pago confirmado a mano"));
     else {
