@@ -398,6 +398,33 @@ export async function registrarPagoPedido(fd: FormData) {
   redirect(destino);
 }
 
+/**
+ * Fija el punto exacto de entrega de un pedido (Santiago, 6/11): se pega un link de Google Maps o un
+ * «lat,lng» y desde ahí el botón «Cómo llegar» navega a esas coordenadas en vez de a la dirección
+ * escrita a mano, que Google interpreta mal. Vacío lo borra y vuelve a usarse la dirección.
+ */
+export async function guardarUbicacionPedido(fd: FormData) {
+  await requireAdmin();
+  const id = Number.parseInt(String(fd.get("id")), 10);
+  let destino = `/admin/pedidos/${id}?ok=1`;
+  try {
+    const crudo = String(fd.get("ubicacion") ?? "").trim();
+    const { leerCoordenadas } = await import("./mapa");
+    const coord = crudo ? leerCoordenadas(crudo) : null;
+    if (crudo && !coord) throw new Error("No encontré coordenadas ahí. Abrí Google Maps, mantené apretado sobre la casa, copiá el «lat, lng» que aparece y pegalo.");
+    const pedido = await prisma.order.findUniqueOrThrow({ where: { id } });
+    if (pedido.ubicacion === coord) throw new Error("Ya estaba guardada esa ubicación");
+    await prisma.$transaction([
+      prisma.order.update({ where: { id }, data: { ubicacion: coord } }),
+      prisma.orderEvent.create({ data: { orderId: id, estado: pedido.estado, nota: coord ? `Ubicación exacta guardada: ${coord}` : "Ubicación exacta borrada" } }),
+    ]);
+  } catch (e) {
+    destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
+  }
+  revalidatePath("/", "layout");
+  redirect(destino);
+}
+
 /** Botón del panel: reenvía el comprobante de pago por el WhatsApp del negocio. */
 export async function reenviarComprobante(fd: FormData) {
   await requireAdmin();

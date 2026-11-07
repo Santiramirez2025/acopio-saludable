@@ -52,7 +52,7 @@ export async function completarDireccion(clave: string, direccion: string): Prom
   const { numeroPedido } = await import("./pedido-calculos");
   const fin = telefonoFin(clave);
   const abiertos = (await prisma.order.findMany({ where: { estado: { notIn: ["ENTREGADO", "CANCELADO"] } }, orderBy: { id: "desc" }, take: 40 })).filter((o) => telefonoFin(o.telefono) === fin);
-  const o = abiertos.find((x) => !linkMapa(x.calle, x.ciudad, x.provincia));
+  const o = abiertos.find((x) => !linkMapa(x.calle, x.ciudad, x.provincia, x.cp, x.ubicacion));
   if (!o) return null;
   await prisma.$transaction([
     prisma.order.update({ where: { id: o.id }, data: { calle: direccion } }),

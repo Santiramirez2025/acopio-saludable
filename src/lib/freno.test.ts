@@ -63,3 +63,17 @@ test("login: avisa una sola vez, con el fallo que llega al umbral", () => {
   assert.equal(avisos.length, 1);
   assert.equal(decidirLogin({ total: LOGIN_AVISO_TOTAL - 1, ip: 0 }).avisar, true);
 });
+
+test("freno de rutas públicas: pedidos y asistente tienen cupos separados por IP y por ruta", async () => {
+  const { PEDIDOS_MAX_POR_IP, ASISTENTE_IA_MAX_POR_IP, VENTANA_PUBLICA_MS } = await import("./freno");
+  const t0 = 1_000_000;
+  for (let i = 0; i < PEDIDOS_MAX_POR_IP; i++) assert.equal(admiteFreno("pedidos:9.9.9.9", PEDIDOS_MAX_POR_IP, VENTANA_PUBLICA_MS, t0 + i), true);
+  assert.equal(admiteFreno("pedidos:9.9.9.9", PEDIDOS_MAX_POR_IP, VENTANA_PUBLICA_MS, t0 + 100), false);
+  // Otra IP y la misma IP en el asistente no se ven afectadas.
+  assert.equal(admiteFreno("pedidos:8.8.8.8", PEDIDOS_MAX_POR_IP, VENTANA_PUBLICA_MS, t0 + 100), true);
+  assert.equal(admiteFreno("asistente:9.9.9.9", ASISTENTE_IA_MAX_POR_IP, VENTANA_PUBLICA_MS, t0 + 100), true);
+  // Pasada la ventana vuelve a admitir.
+  assert.equal(admiteFreno("pedidos:9.9.9.9", PEDIDOS_MAX_POR_IP, VENTANA_PUBLICA_MS, t0 + VENTANA_PUBLICA_MS + 1), true);
+  // Los topes no frenan a una persona normal: un pedido con algún reintento y una charla larga.
+  assert.ok(PEDIDOS_MAX_POR_IP >= 5 && ASISTENTE_IA_MAX_POR_IP >= 25);
+});

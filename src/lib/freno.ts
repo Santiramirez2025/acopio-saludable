@@ -47,6 +47,19 @@ export function admiteMedicion(eventosUltimoMinuto: number): boolean {
 }
 
 /**
+ * Rutas públicas que disparan algo caro o hacia afuera, por IP y por instancia:
+ * - POST /api/pedidos crea un pedido y manda un mail al email que escriba quien lo envía (Resend, con
+ *   nuestro dominio) más el aviso de venta a Santiago. Sin tope, un script usa la tienda para mandar mails
+ *   a terceros y llena la base de pedidos falsos. Hoy entra cerca de un pedido web por día: 6 intentos en
+ *   10 minutos desde una IP alcanzan para quien se equivoca y reintenta.
+ * - POST /api/asistente llama a la IA (se paga por mensaje). Pasado el tope no se corta la charla: contesta
+ *   el asistente de reglas, que no gasta. 30 mensajes en 10 minutos es más de lo que escribe una persona.
+ */
+export const PEDIDOS_MAX_POR_IP = 6;
+export const ASISTENTE_IA_MAX_POR_IP = 30;
+export const VENTANA_PUBLICA_MS = 10 * 60_000;
+
+/**
  * Freno del login con contraseña, sobre los fallos de los últimos 15 minutos (contados en la base).
  * Por IP corta a quien prueba desde una máquina sin afectar a Santiago; el tope global acota un ataque
  * desde muchas IPs. Hace falta más de una IP para llegar al aviso, así un error de tipeo propio no avisa.

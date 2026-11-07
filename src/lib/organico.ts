@@ -22,10 +22,20 @@ const MAX_LECCIONES = 8;
 
 export type Semilla = { telefono: string; negocio: string; rubro: string; localidad?: string | null; placeId?: string | null; rating?: number | null; resenas?: number | null };
 
-/** Carga negocios a la lista (del panel o de Google). No pisa a los que ya están. */
-export async function cargarSemilla(lista: Semilla[], origen = "semilla"): Promise<{ nuevos: number; descartados: number }> {
+export type YaContactado = { telefono: string; negocio: string; contactado: string | null; baja: boolean };
+
+/**
+ * Carga negocios a la lista (del panel o de Google). No pisa a los que ya están.
+ * Los que ya tienen charla contactada (o pidieron la baja) se guardan igual, pero no cuentan como
+ * nuevos: contactar() nunca les va a escribir, así que salen aparte en yaContactados, con la fecha.
+ */
+export async function cargarSemilla(
+  lista: Semilla[],
+  origen = "semilla",
+): Promise<{ nuevos: number; descartados: number; yaContactados: YaContactado[] }> {
   let nuevos = 0;
   let descartados = 0;
+  const yaContactados: YaContactado[] = [];
   for (const s of lista.slice(0, 500)) {
     const tel = celular(s.telefono);
     const negocio = (s.negocio ?? "").trim().slice(0, 60);
@@ -37,10 +47,18 @@ export async function cargarSemilla(lista: Semilla[], origen = "semilla"): Promi
       INSERT INTO "Prospecto" ("telefono", "negocio", "rubro", "localidad", "placeId", "rating", "resenas", "origen")
       VALUES (${tel}, ${negocio}, ${s.rubro}, ${s.localidad ?? null}, ${s.placeId ?? null}, ${s.rating ?? null}, ${s.resenas ?? null}, ${origen})
       ON CONFLICT ("telefono") DO NOTHING`;
-    if (n > 0) nuevos++;
-    else descartados++;
+    if (n <= 0) {
+      descartados++;
+      continue;
+    }
+    // Mismo filtro que contactar(): si ya hay charla contactada o baja, nunca va a salir.
+    const [previa] = await prisma.$queryRaw<{ contactado: Date | null; baja: boolean }[]>`
+      SELECT c."contactado", c."baja" FROM "WhatsappConversacion" c
+      WHERE c."telefono" = ${tel} AND (c."contactado" IS NOT NULL OR c."baja") LIMIT 1`;
+    if (previa) yaContactados.push({ telefono: tel, negocio, contactado: previa.contactado ? previa.contactado.toISOString() : null, baja: previa.baja });
+    else nuevos++;
   }
-  return { nuevos, descartados };
+  return { nuevos, descartados, yaContactados };
 }
 
 /** Si hay clave de Google, busca negocios nuevos por rubro y localidad y los suma a la lista. */
@@ -49,10 +67,12 @@ export async function reabastecer(): Promise<number> {
   if (!clave) return 0;
   const [{ n }] = await prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM "Prospecto" WHERE "estado" = 'nuevo'`;
   if (Number(n) >= POR_DIA * 5) return 0; // todavía hay lista para una semana
+  // Solo rubros que usan lo que vendemos (orden de Laura, 6/11). Sin dietéticas (competencia) ni
+  // gimnasios (van por alianza con Flor, no por robot).
   const busquedas = [
-    ["dietética", "dietética Villa Carlos Paz"], ["dietética", "dietética Córdoba capital"], ["gimnasio", "gimnasio Villa Carlos Paz"],
-    ["cafetería", "cafetería Villa Carlos Paz"], ["cafetería", "cafetería de especialidad Córdoba"], ["hotel", "hotel Villa Carlos Paz"],
-    ["cabañas / complejo", "cabañas Villa Carlos Paz"], ["dietética", "dietética Cosquín La Falda"], ["dietética", "dietética Alta Gracia"],
+    ["heladería", "heladería Villa Carlos Paz"], ["panadería", "panadería Villa Carlos Paz"], ["pastelería", "pastelería Villa Carlos Paz"],
+    ["cafetería", "cafetería Villa Carlos Paz"], ["restaurante", "restaurante Villa Carlos Paz"], ["cafetería", "cafetería Cosquín La Falda"],
+    ["panadería", "panadería Cosquín La Falda"], ["heladería", "heladería Alta Gracia"],
   ];
   const semilla: Semilla[] = [];
   for (const [rubro, q] of busquedas) {

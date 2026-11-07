@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { ErrorPedido, crearPedido } from "@/lib/pedidos";
 import { mpConfigurado } from "@/lib/mercadopago";
+import { admiteFreno, ipDe, PEDIDOS_MAX_POR_IP, VENTANA_PUBLICA_MS } from "@/lib/freno";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  // Cada pedido manda un mail al email que se escriba: sin tope, la tienda serviría para mandar mails a terceros.
+  if (!admiteFreno(`pedidos:${ipDe(req)}`, PEDIDOS_MAX_POR_IP, VENTANA_PUBLICA_MS)) {
+    return NextResponse.json({ error: "Recibimos varios pedidos seguidos desde tu conexión. Esperá unos minutos o escribinos por WhatsApp y te lo armamos." }, { status: 429 });
+  }
   let cuerpo: { lineas?: unknown; cliente?: unknown; envioOpcionId?: unknown; medioPago?: unknown };
   try {
     cuerpo = await req.json();
