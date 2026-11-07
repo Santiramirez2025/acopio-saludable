@@ -1278,7 +1278,7 @@ test("lista La Granja: el precio por kilo se lleva a la presentación chica", ()
   assert.equal(costoDePresentacion(2162, 2162, 400), 2162); // por unidad: no se toca
 });
 
-import { resumenPedido, textoRecompra } from "./recompra-reglas";
+import { resumenPedido, textoRecompra, recompraEnEspera } from "./recompra-reglas";
 test("recompra: resumen corto para la plantilla y códigos exactos para el vendedor", () => {
   const despensa = [
     { codigo: "TG-MIXCG", producto: "Mix Clásico con cajú y girasol", presentacion: "x 1 kg", cantidad: 1, comboSlug: "despensa-4-kilos" },
@@ -1868,4 +1868,17 @@ test("envío de la zona: sale del subtotal real y sin subtotal da la regla, no �
   assert.doesNotMatch(sinElegir.detalle, /no llega/);
   assert.match(sinElegir.detalle, /sin cargo desde/);
   assert.deepEqual(zonaDeLugar("vertiente de arredondo, un barrio de san antonio"), { tipo: "propia" });
+});
+
+test("recompra: sin almendra asegurada, espera quien llevó mixes con cajú, Despensa o Alacena; lo demás sale", () => {
+  const it = (producto: string, comboSlug: string | null = null) => ({ codigo: "X", producto, presentacion: "x 1 kg", cantidad: 1, comboSlug });
+  assert.equal(recompraEnEspera([it("Pasas de uva negras sin semilla", "despensa-4-kilos")]), true);
+  assert.equal(recompraEnEspera([it("Nuez mariposa", "alacena-de-frutos-secos")]), true);
+  assert.equal(recompraEnEspera([it("Mix Clásico con cajú y girasol")]), true);
+  assert.equal(recompraEnEspera([it("Mix Clásico con cajú")]), true);
+  assert.equal(recompraEnEspera([it("Dátiles con carozo"), it("Pasas de uva negras sin semilla")]), false);
+  assert.equal(recompraEnEspera([it("Mix de semillas")]), false);
+  assert.equal(recompraEnEspera([it("Pan dulce", "pan-dulce-casero")]), false);
+  // Cuando entra la almendra se apaga y sale todo.
+  assert.equal(recompraEnEspera([it("Mix Clásico con cajú")], false), false);
 });

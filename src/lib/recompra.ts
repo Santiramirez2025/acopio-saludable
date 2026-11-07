@@ -1,4 +1,4 @@
-// Recompra: a los 20–25 días de entregado, el cliente recibe «¿Te armo la misma despensa?» con su pedido
+// Recompra: a los 20–35 días de entregado (era 20–25; se estiró el 7/11 para no perder a los que quedan en espera), el cliente recibe «¿Te armo la misma despensa?» con su pedido
 // anterior listo. Es la venta más barata que existe: ya nos conoce, ya probó y ya tenemos su dirección.
 //
 // Sale una sola vez por pedido, con plantilla (pasaron más de 24 h) y a quien no volvió a comprar desde
@@ -9,7 +9,7 @@ import { prisma } from "./prisma";
 import { primerNombre } from "./whatsapp-interactivo";
 import { numeroPedido } from "./pedido-calculos";
 import { pesos } from "./precios";
-import { textoRecompra, resumenPedido, type ItemRecompra } from "./recompra-reglas";
+import { textoRecompra, resumenPedido, recompraEnEspera, type ItemRecompra } from "./recompra-reglas";
 import { telefonoWa } from "./telefono";
 
 // v2 (29/10): la v1 decía «pagás al recibir»; se cobra antes de entregar.
@@ -24,7 +24,7 @@ async function candidatos(): Promise<Candidato[]> {
     SELECT o."id", o."nombre", o."telefono", o."calle", o."ciudad", o."total"::text AS total FROM "Order" o
     JOIN LATERAL (SELECT max(e."fecha") AS entregado FROM "OrderEvent" e WHERE e."orderId" = o."id" AND e."estado" = 'ENTREGADO') ev ON true
     WHERE o."estado" = 'ENTREGADO' AND o."nombre" NOT ILIKE '%prueba%'
-      AND coalesce(ev.entregado, o."updatedAt") BETWEEN now() - interval '25 days' AND now() - interval '20 days'
+      AND coalesce(ev.entregado, o."updatedAt") BETWEEN now() - interval '35 days' AND now() - interval '20 days'
       -- No volvió a comprar desde ese pedido.
       AND NOT EXISTS (SELECT 1 FROM "Order" n WHERE n."id" <> o."id" AND n."createdAt" > o."createdAt" AND n."estado" <> 'CANCELADO'
                       AND right(regexp_replace(n."telefono", '[^0-9]', '', 'g'), 10) = right(regexp_replace(o."telefono", '[^0-9]', '', 'g'), 10))
@@ -53,14 +53,17 @@ async function plantilla(tel: string, nombre: string, resumen: string): Promise<
   return Boolean(res?.ok);
 }
 
-export async function correrRecompra(): Promise<{ enviados: string[]; fallidos: number }> {
+export async function correrRecompra(): Promise<{ enviados: string[]; fallidos: number; enEspera: string[] }> {
   const enviados: string[] = [];
+  const enEspera: string[] = [];
   let fallidos = 0;
   for (const o of await candidatos()) {
     const tel = telefonoWhatsapp(o.telefono);
     if (!tel) { fallidos++; continue; }
     const items = await prisma.$queryRaw<ItemRecompra[]>`SELECT "codigo", "producto", "presentacion", "cantidad", "comboSlug" FROM "OrderItem" WHERE "orderId" = ${o.id} ORDER BY "id"`;
     if (!items.length) continue;
+    // Lleva mixes con cajú, Despensa o Alacena y no aseguramos la almendra: queda para cuando entre (ver recompra-reglas).
+    if (recompraEnEspera(items)) { enEspera.push(`${o.nombre} (${numeroPedido(o.id)})`); continue; }
     const nombre = primerNombre(o.nombre) || "¿cómo estás?";
     if (await plantilla(tel, nombre, resumenPedido(items))) {
       const texto = textoRecompra({ numero: numeroPedido(o.id), id: o.id, nombre, items, direccion: `${o.calle}, ${o.ciudad}`, total: pesos(Number(o.total)) });
@@ -72,7 +75,7 @@ export async function correrRecompra(): Promise<{ enviados: string[]; fallidos: 
     } else fallidos++;
     await new Promise((r) => setTimeout(r, 500));
   }
-  return { enviados, fallidos };
+  return { enviados, fallidos, enEspera };
 }
 
 export async function crearPlantillaRecompra(): Promise<unknown> {
