@@ -43,3 +43,17 @@ export function textoRecompra(o: { numero: string; id: number; nombre: string; i
     `[Para el vendedor: pedido anterior (total ${o.total}): ${lineas.join("; ")}. Dirección anterior: ${o.direccion}.]`
   );
 }
+
+/**
+ * EN ESPERA (Martín 7/11, con la respuesta de Pablo del 7/11 8:10): sin dato de almendra en casa no se aseguran los dos
+ * mixes con cajú, y por eso tampoco la Despensa ni la Alacena. A esos clientes no se les pregunta «¿te armo lo mismo?»
+ * hasta que entre la almendra: si dicen que sí y pagan, no podemos fallarle a alguien que ya volvió.
+ * No se pierden: la ventana de recompra llega a 35 días, así que salen cuando esto vuelva a false.
+ */
+export const RECOMPRA_EN_ESPERA_ACTIVA = true;
+const COMBOS_EN_ESPERA = new Set(["despensa-4-kilos", "despensa-chica", "alacena-de-frutos-secos", "mixes-del-mes"]);
+
+export function recompraEnEspera(items: ItemRecompra[], activa = RECOMPRA_EN_ESPERA_ACTIVA): boolean {
+  if (!activa) return false;
+  return items.some((i) => (i.comboSlug && COMBOS_EN_ESPERA.has(i.comboSlug)) || (/^mix\b/i.test(i.producto) && /caj[uú]/i.test(i.producto)));
+}
