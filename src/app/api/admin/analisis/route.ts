@@ -128,6 +128,8 @@ async function trafico(dias: number) {
   const porDia: Record<string, Record<string, number> & { sesiones?: number }> = {};
   const sesionesDia: Record<string, Set<string>> = {};
   const paginas: Record<string, number> = {};
+  // Desde qué página se agregó al carrito: mide si el catálogo, la ficha o el inicio son los que mueven el carrito.
+  const agregarPorPagina: Record<string, number> = {};
   const origenes: Record<string, number> = {};
   const porSesion: Record<string, Set<string>> = {};
   const origenDeSesion: Record<string, string> = {};
@@ -144,6 +146,7 @@ async function trafico(dias: number) {
       (porSesion[d.s] ??= new Set()).add(e);
     }
     if (e === "pagina" && d.r) paginas[d.r] = (paginas[d.r] ?? 0) + 1;
+    if (e === "agregar" && d.r) agregarPorPagina[d.r] = (agregarPorPagina[d.r] ?? 0) + 1;
     if (e === "pagina" && d.o && !/acopiosaludable/.test(d.o)) origenes[d.o] = (origenes[d.o] ?? 0) + 1;
     if (d.s && d.o && !/acopiosaludable/.test(d.o) && !origenDeSesion[d.s]) origenDeSesion[d.s] = d.o;
   }
@@ -173,7 +176,7 @@ async function trafico(dias: number) {
     if (ev.has("compra")) x.compraron++;
   }
   const campanas = Object.entries(porOrigen).sort((a, b) => b[1].sesiones - a[1].sesiones).slice(0, 20);
-  return { dias, desde: "registro propio desde el 28/10/2026", porDia, embudo, paginas: top(paginas), origenes: top(origenes), campanas, nota: "compraron: pedidos no cancelados con origen web en el período (mismo origen que parte=ventas); los de WhatsApp no suman. campanas: sesiones por origen; los links con ?utm_source=…&utm_campaign=… aparecen como utm:fuente/campaña" };
+  return { dias, desde: "registro propio desde el 28/10/2026", porDia, embudo, paginas: top(paginas), agregarPorPagina: top(agregarPorPagina), origenes: top(origenes), campanas, nota: "agregarPorPagina: en qué página se tocó «Agregar». compraron: pedidos no cancelados con origen web en el período (mismo origen que parte=ventas); los de WhatsApp no suman. campanas: sesiones por origen; los links con ?utm_source=…&utm_campaign=… aparecen como utm:fuente/campaña" };
 }
 
 /** Harinar vs La Granja por kilo, y qué se compra en cada uno (ver lib/harinar.ts). */
