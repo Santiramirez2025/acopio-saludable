@@ -1343,6 +1343,12 @@ test("ML: el precio mínimo deja la ganancia mínima y no sube si ya alcanza", a
   assert.equal(precioMinimoMl(25800) % 500, 0);
 });
 
+test("ML: dátiles sueltos por bulto tienen costo conocido (3 y 5 kg)", async () => {
+  const { SKU_ML } = await import("./mercadolibre-reglas");
+  assert.deepEqual(SKU_ML["AS-DATIL-3KG"], { codigo: "LG-DATIL", cantidad: 3 });
+  assert.deepEqual(SKU_ML["AS-DATIL-5KG"], { codigo: "LG-DATIL", cantidad: 5 });
+});
+
 test("Plantilla dietética v3: sin tropical ni góndola (T-037)", async () => {
   const { PLANTILLAS } = await import("./whatsapp-plantillas");
   assert.equal(PLANTILLAS.dietetica.nombre, "acopio_negocios_dietetica_v3");
