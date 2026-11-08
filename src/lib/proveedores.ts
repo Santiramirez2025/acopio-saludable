@@ -10,7 +10,7 @@
 //
 // Puro (sin base): se prueba sin gastar nada.
 
-export type IdProveedor = "propio" | "lagranja" | "distrimay";
+export type IdProveedor = "propio" | "lagranja" | "harinar" | "distrimay";
 
 export type Proveedor = { id: IdProveedor; nombre: string; que: string; como: string; contacto: string };
 
@@ -29,6 +29,13 @@ export const PROVEEDORES: Record<IdProveedor, Proveedor> = {
     como: "Retiro en Av. Juan B. Justo 8620, Córdoba (lun a vie 7 a 17) · envío solo en Capital",
     contacto: "5493518634363",
   },
+  harinar: {
+    id: "harinar",
+    nombre: "Distribuidora HARINAR",
+    que: "Girasol pelado, lino, avena, harina integral, salvado, gluten y gotas de chocolate (códigos HR-…)",
+    como: "Dinamarca 282, Carlos Paz · catálogo app.pediwa.com/harinarsas",
+    contacto: "",
+  },
   distrimay: {
     id: "distrimay",
     nombre: "Distrimay",
@@ -38,7 +45,7 @@ export const PROVEEDORES: Record<IdProveedor, Proveedor> = {
   },
 };
 
-export const ORDEN_PROVEEDORES: IdProveedor[] = ["lagranja", "propio", "distrimay"];
+export const ORDEN_PROVEEDORES: IdProveedor[] = ["lagranja", "harinar", "propio", "distrimay"];
 
 const normal = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -55,6 +62,9 @@ export function esDeMarca(marca: string | null | undefined): boolean {
 export function proveedorDe(p: { producto: string; marca?: string | null; codigo?: string }): IdProveedor {
   if (p.codigo?.startsWith("TG-")) return MIX.test(normal(p.producto)) ? "propio" : "lagranja";
   if (p.codigo?.startsWith("LG-")) return "lagranja";
+  // Los HR-… son de Harinar (segundo proveedor desde el 28/10). Antes caían en el «return distrimay» del final:
+  // el panel los contaba como Distrimay y /catalogo/solo-granja los habría ocultado.
+  if (p.codigo?.startsWith("HR-")) return "harinar";
   if (esDeMarca(p.marca)) return "distrimay";
   const t = normal(p.producto);
   if (/bolson|caja x/.test(t)) return "distrimay"; // presentaciones de Distrimay que no se arman igual en otro lado
