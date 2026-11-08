@@ -903,6 +903,7 @@ test("a quién se le compra cada cosa", () => {
   assert.equal(proveedorDe({ producto: "Azucar Mascabo", marca: S }), "lagranja");
   assert.equal(proveedorDe({ producto: "Pasas de uva sin semillas", marca: S }), "lagranja");
   assert.equal(proveedorDe({ producto: "Datiles con carozo", marca: S }), "lagranja");
+  for (const codigo of ["HR-GLUTEN-500", "HR-GOTAS-250", "HR-HINTEGRAL", "HR-SALVADO-500"]) assert.equal(proveedorDe({ producto: "Gluten de trigo", marca: S, codigo }), "harinar", codigo);
   assert.equal(proveedorDe({ producto: "Sal Rosada del Himalaya", marca: S }), "lagranja");
   assert.equal(proveedorDe({ producto: "Alfajores Surtidos Sin Gluten", marca: "Yuka" }), "distrimay");
   assert.equal(proveedorDe({ producto: "Pasta de Mani Natural", marca: "Entrenuts" }), "distrimay");
