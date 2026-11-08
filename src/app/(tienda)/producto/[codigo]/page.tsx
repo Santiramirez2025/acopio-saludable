@@ -117,7 +117,8 @@ export default async function Producto({ params }: Props) {
           </div>
           <div className="rounded-2xl bg-white p-4 shadow-ficha">
             <p className="font-display text-4xl font-extrabold leading-none tabular-nums">{pesos(p.precio)}</p>
-            {porUnidad && <p className="mt-1.5 text-xs tabular-nums text-stone-500">Equivale a {pesos(porUnidad.valor)} {porUnidad.etiqueta}</p>}
+            {/* En un envase de 1 kg o 1 L el «por kilo» repite el precio: se saca y la línea queda para subir los botones. */}
+            {porUnidad && p.contenido !== 1000 && <p className="mt-1.5 text-xs tabular-nums text-stone-500">Equivale a {pesos(porUnidad.valor)} {porUnidad.etiqueta}</p>}
             {p.transferencia && <p className="mt-2 text-sm font-semibold text-acopio-600">{cfg.descuentoTransferenciaPct}% menos si pagás por transferencia</p>}
             {reventa && (
               <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-acopio-100 px-3.5 py-2.5 text-sm">
