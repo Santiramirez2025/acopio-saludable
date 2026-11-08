@@ -57,3 +57,46 @@ export function recompraEnEspera(items: ItemRecompra[], activa = RECOMPRA_EN_ESP
   if (!activa) return false;
   return items.some((i) => (i.comboSlug && COMBOS_EN_ESPERA.has(i.comboSlug)) || (/^mix\b/i.test(i.producto) && /caj[uú]/i.test(i.producto)));
 }
+
+/**
+ * EL BOT TAMPOCO COBRA LO QUE NO ASEGURAMOS (Martín 8/11, hallazgo de Nico del 7/11, caso …6653): con el interruptor
+ * de arriba en true, la recompra ya no ofrecía la Despensa, pero el vendedor igual la cotizaba con los botones de pago.
+ * Mientras siga en true, si el pedido armado trae Despensa, Alacena, Mixes del mes o un mix con cajú, eso sale del
+ * pedido y entra lo que sí sale seguro (dátiles con carozo, mix de semillas y pasas, 1 kg c/u: los 3 kilos, que
+ * además pasan los filtros de Ana). Los precios los pone el servidor, como siempre.
+ */
+export const ALTERNATIVA_SEGURA: { tipo: "producto"; id: string; cantidad: number }[] = [
+  { tipo: "producto", id: "LG-DATIL", cantidad: 1 },
+  { tipo: "producto", id: "LG-MIXSEM", cantidad: 1 },
+  { tipo: "producto", id: "TG-PASAS", cantidad: 1 },
+];
+
+type LineaArmada = { tipo: "producto" | "combo"; id: string; cantidad: number };
+
+export function lineaEnEspera(l: { tipo: "producto" | "combo"; id: string; nombre: string }): boolean {
+  return l.tipo === "combo"
+    ? COMBOS_EN_ESPERA.has(l.id)
+    : /^mix\b/i.test(l.nombre) && /caj[uú]/i.test(l.nombre);
+}
+
+/** Lo que queda para cotizar y los nombres de lo que se sacó. Sin nada en espera, devuelve las mismas líneas. */
+export function sinLoEnEspera<L extends LineaArmada>(
+  lineas: L[],
+  cotizadas: { tipo: "producto" | "combo"; id: string; nombre: string }[],
+  activa = RECOMPRA_EN_ESPERA_ACTIVA,
+): { lineas: LineaArmada[]; quitados: string[] } {
+  if (!activa) return { lineas, quitados: [] };
+  const fuera = cotizadas.filter(lineaEnEspera);
+  if (!fuera.length) return { lineas, quitados: [] };
+  const clave = (l: { tipo: string; id: string }) => `${l.tipo}|${l.id}`;
+  const sacar = new Set(fuera.map(clave));
+  const quedan: LineaArmada[] = lineas.filter((l) => !sacar.has(clave(l)));
+  for (const a of ALTERNATIVA_SEGURA) if (!quedan.some((l) => clave(l) === clave(a))) quedan.push({ ...a });
+  return { lineas: quedan, quitados: [...new Set(fuera.map((f) => f.nombre))] };
+}
+
+/** El texto que reemplaza al del modelo cuando hubo que cambiar el pedido: de frente, sin culpa y con el cierre. */
+export function textoEnEspera(quitados: string[]): string {
+  const que = quitados.length === 1 ? quitados[0] : `${quitados.slice(0, -1).join(", ")} y ${quitados.at(-1)}`;
+  return `Te cuento algo antes de cobrarte: ${que} lleva el mix con cajú, que lo estamos reponiendo, y no te quiero cobrar algo que no te pueda llevar. Te armé lo que sí sale seguro esta semana 👇`;
+}

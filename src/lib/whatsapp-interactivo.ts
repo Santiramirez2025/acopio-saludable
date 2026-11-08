@@ -11,6 +11,7 @@
 
 import { PAGO_AL_RECIBIR } from "./politica";
 import { pesos } from "./precios";
+import { textoEnEspera } from "./recompra-reglas";
 import type { EnvioCotizado, Ficha, Respuesta } from "./asistente-catalogo";
 
 export type Boton = { id: string; titulo: string };
@@ -109,6 +110,8 @@ export type PedidoArmado = {
   falta: string | null;
   /** Envío ya cotizado para su zona. Sin esto todavía no se muestran los botones de pago. */
   envio?: (EnvioCotizado & { totalConEnvio: string | null; transferenciaConEnvio: string | null }) | null;
+  /** Lo que se sacó porque no lo aseguramos (recompra-reglas: sinLoEnEspera). Con esto el texto lo explica. */
+  quitados?: string[];
 };
 
 /**
@@ -120,6 +123,8 @@ export type PedidoArmado = {
  * - Nada de eso → texto.
  */
 export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Saliente[] {
+  // Se cambió el pedido por algo que no aseguramos: lo dice el servidor, no el modelo, y sin las fotos de lo que salió.
+  if (pedido?.quitados?.length) r = { texto: textoEnEspera(pedido.quitados) };
   // Pidió fotos: van primero, cada una con nombre y precio al pie, y después el texto con sus botones.
   if (r.fotos?.length) {
     const fotos: Saliente[] = r.fotos.slice(0, 4).map((f) => ({ tipo: /\.mp4($|\?)/i.test(f.url) ? "video" : "imagen", url: f.url, pie: corte(f.pie, TOPE.cuerpo) }));
