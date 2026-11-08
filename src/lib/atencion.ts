@@ -26,6 +26,7 @@ import { esPedidoWeb, leerPedidoWeb, resolverPedidoWeb } from "./pedido-web";
 import { catalogo } from "./asistente-catalogo";
 import { leerConfig } from "./config";
 import { pesos, renglonCombo } from "./precios";
+import { sinLoEnEspera } from "./recompra-reglas";
 import { zonaSinMinimo } from "./minimo-zona";
 
 /** Transferencia de la Despensa redondeada a $100, la misma que ya cotizan el bot y el equipo ($35.500 → $32.700). */
@@ -110,8 +111,17 @@ async function responderWhatsapp(clave: string, salientes0: Saliente[]): Promise
 }
 
 /** El pedido armado, cotizado por el servidor: los precios nunca salen del modelo. Con el envío si ya se sabe la zona. */
-async function pedidoDe(lineas: { tipo: "producto" | "combo"; id: string; cantidad: number }[], envio?: EnvioCotizado | null): Promise<PedidoArmado | null> {
+async function pedidoDe(lineas: { tipo: "producto" | "combo"; id: string; cantidad: number }[], envio?: EnvioCotizado | null, yaRevisado = false): Promise<PedidoArmado | null> {
   if (!lineas.length) return null;
+  // Lo que no aseguramos (almendra) no se cotiza con botones de pago: sale y entra lo seguro (recompra-reglas).
+  if (!yaRevisado) {
+    const { lineas: seguras, quitados } = sinLoEnEspera(lineas, (await cotizarCarrito(lineas)).lineas);
+    if (quitados.length) {
+      console.log("chat: pedido con lo que no aseguramos, se cambia por lo seguro", quitados);
+      const p = await pedidoDe(seguras, envio, true);
+      return p ? { ...p, quitados } : null;
+    }
+  }
   const cfg = await leerConfig();
   // Si ya se sabe que entrega en Carlos Paz, rige el mínimo de la zona propia. Si todavía no se sabe la zona,
   // también: la mayoría es de Carlos Paz y decirle «te faltan $10.000» cuando ya llega le corta la compra
@@ -144,7 +154,21 @@ const lineasDeCamino = (camino: string) => leerPedido(camino.replace(/^\/carrito
 
 /** Tocó «Mercado Pago»: recién ahí va el link, dentro de un botón y explicado. Sin pasar por el modelo. */
 async function cobrarConLink(clave: string, camino: string): Promise<void> {
+  if (await cambiadoPorEspera(clave, camino)) return;
   await responderWhatsapp(clave, await planCobroLink(camino));
+}
+
+/**
+ * Un botón de pago viejo (o el pedido guardado de antes) con algo que hoy no aseguramos: no se cobra. Se le explica,
+ * se guarda el pedido seguro y vuelve a elegir zona y pago con eso. true si hubo que cambiarlo.
+ */
+async function cambiadoPorEspera(clave: string, camino: string): Promise<boolean> {
+  const pedido = await pedidoDe(lineasDeCamino(camino));
+  if (!pedido?.quitados?.length) return false;
+  console.log("chat: botón de pago con lo que no aseguramos, no se cobra", cola(clave), pedido.quitados);
+  await guardarPedido(clave, pedido.camino);
+  await responderWhatsapp(clave, planWhatsapp({ texto: "" }, pedido));
+  return true;
 }
 
 /** El mensaje con el botón «Pagar mi pedido». Separado para que el simulador muestre lo mismo. */
@@ -188,6 +212,7 @@ async function cerrarVenta(
     await responder(clave, `Tu pedido ya está hecho: es el ${numeroPedido(reciente.id)} por ${pesos(Number(reciente.total))}. Si querés cambiar algo, decime qué y lo ajusto.`);
     return;
   }
+  if (await cambiadoPorEspera(clave, camino)) return;
   const lineas = leerPedido(camino.replace(/^\/carrito\?p=/, ""));
   let pedido;
   try {
