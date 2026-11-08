@@ -26,6 +26,9 @@ export const SKU_ML: Record<string, { combo?: string; codigo?: string; cantidad?
   "AS-MIXC-2KG": { codigo: "TG-MIXC", cantidad: 2 },
   "AS-MIXC-3KG": { codigo: "TG-MIXC", cantidad: 3 },
   "AS-MIXC-5KG": { codigo: "TG-MIXC", cantidad: 5 },
+  // Sueltos por bulto (8/11): en ML solo convienen de 3 kg para arriba por el cargo fijo y el envío.
+  "AS-DATIL-3KG": { codigo: "LG-DATIL", cantidad: 3 },
+  "AS-DATIL-5KG": { codigo: "LG-DATIL", cantidad: 5 },
 };
 
 /** Cargos de ML (Clásica, alimentos) y envío que paga el vendedor desde $33.000. Revisar cada tanto. */
