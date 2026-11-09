@@ -9,4 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - run: curl -fsS --max-time 120 https://www.acopiosaludable.com/api/whatsapp/recordatorios
+      # Con el secreto RECORDATORIOS_SECRET cargado en GitHub y en Vercel, la ruta solo acepta este llamado.
+      # Orden para activarlo: primero el secreto de GitHub, después la variable de Vercel (si no, se cortan).
+      - run: curl -fsS --max-time 120 -H "Authorization: Bearer $CLAVE" https://www.acopiosaludable.com/api/whatsapp/recordatorios
+        env:
+          CLAVE: ${{ secrets.RECORDATORIOS_SECRET }}
