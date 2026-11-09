@@ -22,6 +22,8 @@ import { AvisoSuplementos, RielProductos, TarjetaCombo, TituloSeccion } from "@/
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { PRODUCTOS_PROVEEDORES } from "@/lib/catalogo-proveedores";
 import { textosSeguros } from "@/lib/filtros-producto";
+import { nutrientesDe } from "@/lib/nutrientes";
+import { PanelNutri } from "@/components/Nutri";
 
 type Props = { params: Promise<{ codigo: string }> };
 
@@ -60,6 +62,8 @@ export default async function Producto({ params }: Props) {
   const esBolson = /bols[oó]n|caja x|\b(5|10|20|25) ?(kg|kilos?)\b/i.test(`${p.presentacion} ${p.producto}`);
   const reventa = esBolson ? precioSugerido(p.precio, cfg.recargoSugeridoPct) : null;
   const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
+  // Qué aporta (la Nutri): solo para los productos de los que sabemos qué llevan.
+  const nutri = nutrientesDe(p.codigo);
   const [combos, relacionados] = await Promise.all([
     combosTienda({ tipo: "COMBO", activo: true, items: { some: { codigo: p.codigo } } }),
     productosTienda({ where: { categoria: p.categoria, codigo: { not: p.codigo } }, take: 8 }),
@@ -166,6 +170,8 @@ export default async function Producto({ params }: Props) {
           {p.esSuplemento && <AvisoSuplementos />}
         </div>
       </div>
+
+      {nutri && <PanelNutri n={nutri} producto={`${p.producto} ${p.presentacion}`} />}
 
       {combos.filter((c) => c.disponible).length > 0 && (
         <section>

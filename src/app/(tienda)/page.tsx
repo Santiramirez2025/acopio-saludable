@@ -13,6 +13,7 @@ import { umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
 import { DestacadoInicio } from "@/components/DestacadoInicio";
+import { DibujoNutri } from "@/components/Nutri";
 import { ListaCombo, RielOfertas, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 import { ofertasDelProveedor } from "@/lib/ofertas";
 import { vidrieraDeStock } from "@/lib/en-stock";
@@ -120,6 +121,19 @@ export default async function Home() {
           <RielProductos productos={vidriera} />
         </section>
       )}
+
+      {/* El juego: tres preguntas y una recomendación con el porqué. Retiene y lleva al carrito (Santiago, 9/11). */}
+      <section aria-labelledby="quiz-titulo" className="overflow-hidden rounded-3xl bg-acopio-50">
+        <Link href="/que-mix-sos" className="grid items-center gap-4 p-4 sm:grid-cols-[112px_1fr_auto] sm:p-6 hover:bg-acopio-100">
+          <DibujoNutri className="mx-auto h-28 w-24 sm:h-32 sm:w-28" hablando />
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-acopio-700">Un juego de 30 segundos</p>
+            <h2 id="quiz-titulo" className="mt-1 text-balance font-display text-2xl font-extrabold leading-tight sm:text-3xl">¿Qué mix sos?</h2>
+            <p className="mt-1 max-w-xl text-sm text-stone-700">Tres preguntas y la Nutri de Acopio te dice qué fruto seco o mix te conviene, qué aporta y cómo comerlo. Con el precio y el botón para pedirlo.</p>
+          </div>
+          <span className="btn-comprar whitespace-nowrap">Jugar</span>
+        </Link>
+      </section>
 
       <section aria-labelledby="herramientas">
         <h2 id="herramientas" className="sr-only">Armá tu compra</h2>

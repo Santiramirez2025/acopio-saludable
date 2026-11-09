@@ -38,3 +38,20 @@
      y acá no queremos que ningún campo vuelva a quedar por debajo de 16px. */
   input, select, textarea { font-size: 16px !important; }
 }
+
+/* La Nutri (ficha de producto y «¿Qué mix sos?»): entra, habla, y las barras crecen cuando se ven.
+   Con prefers-reduced-motion todo esto se apaga arriba, en @layer base. */
+.nutri-barra { transition: width 900ms cubic-bezier(.2,.8,.2,1); }
+@keyframes nutri-entra { from { transform: translateY(10px) scale(.96); opacity: 0 } to { transform: none; opacity: 1 } }
+.nutri-entra { animation: nutri-entra 520ms cubic-bezier(.2,.8,.2,1) both; }
+@keyframes nutri-boca { 0%,100% { transform: scaleY(1) } 50% { transform: scaleY(.35) } }
+.nutri-boca { transform-origin: 60px 67px; animation: nutri-boca 420ms ease-in-out 6; }
+@keyframes nutri-parpadeo { 0%,92%,100% { transform: scaleY(1) } 96% { transform: scaleY(.1) } }
+.nutri-ojo { transform-origin: center; transform-box: fill-box; animation: nutri-parpadeo 4.2s ease-in-out infinite; }
+.nutri-tarjeta { opacity: 0; }
+@keyframes nutri-tarjeta { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+.nutri-tarjeta-entra { animation: nutri-tarjeta 480ms cubic-bezier(.2,.8,.2,1) both; }
+@keyframes quiz-paso { from { opacity: 0; transform: translateX(16px) } to { opacity: 1; transform: none } }
+.quiz-paso { animation: quiz-paso 320ms cubic-bezier(.2,.8,.2,1) both; }
+@keyframes quiz-festejo { 0% { transform: scale(.92); opacity: 0 } 60% { transform: scale(1.03) } 100% { transform: none; opacity: 1 } }
+.quiz-festejo { animation: quiz-festejo 560ms cubic-bezier(.2,.8,.2,1) both; }

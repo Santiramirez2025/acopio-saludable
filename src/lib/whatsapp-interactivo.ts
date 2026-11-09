@@ -11,6 +11,7 @@
 
 import { PAGO_AL_RECIBIR } from "./politica";
 import { pesos } from "./precios";
+import { urlSitio } from "./sitio";
 import { textoEnEspera } from "./recompra-reglas";
 import type { EnvioCotizado, Ficha, Respuesta } from "./asistente-catalogo";
 
@@ -167,20 +168,18 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     );
     if (pedido.envio.totalConEnvio) lineas.push(`Total con envío: ${pedido.envio.totalConEnvio}`);
     if (pedido.envio.transferenciaConEnvio) lineas.push(`Por transferencia: ${pedido.envio.transferenciaConEnvio}`);
-    lineas.push("", "¿Cómo preferís pagar?");
+    // 9/11 (Santiago): la venta se cierra EN LA WEB. Un solo botón que abre el carrito ya armado; ahí elige
+    // Mercado Pago o transferencia (con su 8%), queda registrado y se puede comprar a cualquier hora.
+    // Si escribe «transferencia» en el chat igual se le dan los datos (lo resuelve atencion.ts).
+    void PAGO_AL_RECIBIR;
+    lineas.push("", "Te lo dejo armado en la web: ahí elegís Mercado Pago o transferencia (8% menos) y queda confirmado al toque.");
     return [
       {
-        tipo: "botones",
+        tipo: "cta",
         cuerpo: corte(lineas.join("\n"), TOPE.cuerpo),
-        pie: "Acopio Saludable · Villa Carlos Paz",
-        botones: [
-          { id: corte(`${ID.pagar}${pedido.camino}`, 256), titulo: "Mercado Pago" },
-          { id: corte(`${ID.transferencia}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Transferencia" },
-          // Pagar al recibir solo en Carlos Paz y alrededores: en Córdoba capital hay zonas donde no conviene ir a cobrar.
-          ...(PAGO_AL_RECIBIR && pedido.envio.alRecibir
-            ? [{ id: corte(`${ID.recibir}${pedido.camino}~${pedido.envio.costo ?? ""}~${pedido.envio.lugar}`, 256), titulo: "Pago al recibir" }]
-            : []),
-        ],
+        texto: "Terminar mi pedido",
+        url: `${urlSitio()}${pedido.camino}`,
+        pie: "acopiosaludable.com · pago seguro",
       },
     ];
   }
