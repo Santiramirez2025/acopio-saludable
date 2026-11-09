@@ -61,7 +61,9 @@ export function estaPublicado(p: Product, margenMinimoPct: number): boolean {
   return p.visible && p.estado === "ACTIVO" && Number(p.margenPct) >= margenMinimoPct;
 }
 
-type ComboConItems = Combo & { items: (ComboItem & { product: Product })[] };
+export { fichaSinStock } from "./filtros-producto";
+
+type ComboConItems =Combo & { items: (ComboItem & { product: Product })[] };
 
 export type ComboTienda = {
   slug: string;

@@ -6,13 +6,13 @@ import { pesos } from "@/lib/precios";
 import type { ProductoTienda } from "@/lib/tienda";
 
 /** Tarjeta chica del producto bandera para la primera pantalla del inicio: precio, agregar y WhatsApp. */
-export function DestacadoInicio({ p }: { p: Pick<ProductoTienda, "codigo" | "producto" | "presentacion" | "precio" | "transferencia" | "fotoUrl"> }) {
+export function DestacadoInicio({ p, etiqueta = "El mix de la casa" }: { p: Pick<ProductoTienda, "codigo" | "producto" | "presentacion" | "precio" | "transferencia" | "fotoUrl">; etiqueta?: string }) {
   return (
     <div className="mt-4 rounded-2xl bg-white p-3 text-acopio-900 shadow-ficha">
       <Link href={`/producto/${encodeURIComponent(p.codigo)}`} className="flex items-center gap-3">
         <Foto src={p.fotoUrl} alt={`${p.producto} ${p.presentacion}`} className="aspect-square w-16 shrink-0 overflow-hidden rounded-xl" sizes="64px" prioridad />
         <span className="min-w-0 flex-1">
-          <span className="chip bg-sol text-acopio-900">El mix de la casa</span>
+          <span className="chip bg-sol text-acopio-900">{etiqueta}</span>
           <span className="mt-1 block truncate font-display text-base font-extrabold leading-tight">{p.producto} {p.presentacion}</span>
           <span className="block text-sm tabular-nums text-stone-700">
             <b className="text-lg text-acopio-900">{pesos(p.precio)}</b>

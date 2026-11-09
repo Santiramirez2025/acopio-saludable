@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
 import { lineaCompraMinima } from "@/lib/minimo-zona";
-import { aTienda, combosTienda, estaPublicado, productosTienda } from "@/lib/tienda";
+import { aTienda, combosTienda, estaPublicado, fichaSinStock, productosTienda } from "@/lib/tienda";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadBase, precioSugerido } from "@/lib/precios";
 import { cortarEnPalabra, marcaVisible } from "@/lib/texto";
@@ -30,7 +30,7 @@ type Props = { params: Promise<{ codigo: string }> };
 async function cargar(codigoCrudo: string) {
   const codigo = decodeURIComponent(codigoCrudo); // texto: conserva ceros a la izquierda
   const [p, cfg] = await Promise.all([prisma.product.findUnique({ where: { codigo } }), leerConfig()]);
-  return p && estaPublicado(p, cfg.margenMinimoPct) ? p : null;
+  return p && (estaPublicado(p, cfg.margenMinimoPct) || fichaSinStock(p, cfg.margenMinimoPct)) ? p : null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -54,6 +54,8 @@ export default async function Producto({ params }: Props) {
   const propias = fila.fotos.filter((x) => x.startsWith("/img/"));
   if (propias.length) fila.fotos = propias;
   const p = aTienda(fila, cfg);
+  // Sin stock por ahora: la ficha queda (el link no se rompe), pero sin «Agregar» y con aviso por WhatsApp.
+  const sinStock = fila.estado === "SIN_STOCK";
   // Si el panel no tiene el texto cargado, se usa el del catálogo: en los mixes de la casa es lo que trae
   // la bolsa, y sin eso el cliente pregunta «¿qué lleva?» y se va.
   const porQue = fila.porQueLoElegimos ?? PRODUCTOS_PROVEEDORES.find((x) => x.codigo === fila.codigo)?.porQueLoElegimos ?? null;
@@ -80,7 +82,7 @@ export default async function Producto({ params }: Props) {
       "@type": "Offer",
       price: p.precio.toFixed(2),
       priceCurrency: "ARS",
-      availability: "https://schema.org/InStock",
+      availability: sinStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: "Acopio Saludable" },
       url: `${urlSitio()}/producto/${encodeURIComponent(p.codigo)}`,
@@ -130,17 +132,35 @@ export default async function Producto({ params }: Props) {
                 <span className="font-semibold text-acopio-700">Ganás <span className="tabular-nums">{pesos(reventa.ganancia)}</span> por unidad</span>
               </div>
             )}
-            <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
-            {/* A la par de agregar: el mensaje llega con producto, cantidad y precio, y se contesta de una. */}
-            <EnlaceWhatsapp
-              mensaje={`Hola! Quiero pedir:\n• 1 × ${p.producto} ${p.presentacion}: ${pesos(p.precio)}\n¿Me ayudás con el pedido?`}
-              className="btn-whatsapp mt-2 w-full"
-              medirComo="whatsapp_desde_ficha"
-            >
-              Pedir por WhatsApp
-            </EnlaceWhatsapp>
+            {sinStock ? (
+              <>
+                <p className="mt-4 rounded-xl bg-tierra-100 px-3.5 py-3 text-sm text-stone-800" role="status">
+                  <b>Sin stock por ahora.</b> No lo podemos armar esta semana. Escribinos y te avisamos cuando vuelva.
+                </p>
+                <EnlaceWhatsapp
+                  mensaje={`Hola! Vi que ${p.producto} ${p.presentacion} está sin stock. ¿Me avisan cuando vuelva?`}
+                  className="btn-whatsapp mt-2 w-full"
+                  medirComo="whatsapp_desde_ficha"
+                >
+                  Avisame cuando vuelva
+                </EnlaceWhatsapp>
+                <Link href="/catalogo" className="btn-sec mt-2 w-full">Ver lo que hay en el catálogo</Link>
+              </>
+            ) : (
+              <>
+                <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
+                {/* A la par de agregar: el mensaje llega con producto, cantidad y precio, y se contesta de una. */}
+                <EnlaceWhatsapp
+                  mensaje={`Hola! Quiero pedir:\n• 1 × ${p.producto} ${p.presentacion}: ${pesos(p.precio)}\n¿Me ayudás con el pedido?`}
+                  className="btn-whatsapp mt-2 w-full"
+                  medirComo="whatsapp_desde_ficha"
+                >
+                  Pedir por WhatsApp
+                </EnlaceWhatsapp>
+              </>
+            )}
             <BotonCompartir etiqueta="Compartir" texto={`Mirá ${p.producto} ${p.presentacion} en Acopio Saludable:`} ruta={`/producto/${encodeURIComponent(p.codigo)}`} className="btn-sec mt-2 w-full" />
-            <CuentaRegresiva corte={proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null} className="mt-3" />
+            {!sinStock && <CuentaRegresiva corte={proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null} className="mt-3" />}
             <p className="mt-3 text-xs text-stone-600">{lineaCompraMinima(cfg)}</p>
             {p.categoria === "Congelados" && <p className="mt-3 rounded-xl bg-tierra-100 px-3.5 py-2.5 text-sm text-stone-700"><b>Producto congelado:</b> solo se entrega en Villa Carlos Paz y el sur de Punilla. No se envía por correo.</p>}
             <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} costoZona={costoEntregaZona(cfg)} zonaPaga={zonaPagaDe(cfg.tabla)} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />
