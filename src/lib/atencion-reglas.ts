@@ -83,3 +83,17 @@ export function notaCobroAlMarcarEntregado(medioPago: string | null | undefined)
   if (medioPago === "MERCADOPAGO") return "Marcado Entregado = cobrado, por Mercado Pago (la acreditación no se verifica en este paso)";
   return "Cobrado al entregar";
 }
+
+/**
+ * Duda de confianza: «el tema es la fiabilidad de la entrega, ¿tienen local?» (…6653, 7/11). Esa vez el bot
+ * contestó con el resumen del pedido y los botones de pago, y la clienta no pagó. A una duda así se le contesta
+ * la duda, sin botones de pago en ese mensaje.
+ */
+export function esDudaDeConfianza(texto: string): boolean {
+  const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return (
+    /\bfiab|\bconfiabl|\bconfianza\b|\bestafa|\btrucho|\bchanta|\bes (un )?(lugar |sitio |negocio )?seguro\b|\bson (de )?verdad\b|\bson reales\b|\bson confiables\b/.test(t) ||
+    /como (se|sabes|se yo|puedo saber) que (me )?(llega|lo traen|lo entregan|es real|no es)/.test(t) ||
+    /\bmiedo (a|de) (pagar|que no)|\bdesconf/.test(t)
+  );
+}

@@ -41,7 +41,7 @@ import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
 import { transcribirAudio } from "./oir-audio";
 import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
-import { hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, yaMandoComprobante } from "./atencion-reglas";
+import { esDudaDeConfianza, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, yaMandoComprobante } from "./atencion-reglas";
 import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from "./direccion-cliente";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
@@ -789,7 +789,10 @@ export async function pensar(c: {
     const oportunas = fotosOportunas({ entrante: c.texto, respuesta: respuesta.texto, combos, historial: c.historial });
     if (oportunas.length) respuesta = { ...respuesta, fotos: oportunas.map((f) => ({ url: `${urlSitio()}${f.url}`, pie: f.pie })) };
   }
-  let salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, pedido);
+  // A una duda de confianza se le contesta la duda: sin el resumen ni los botones de pago en ese mensaje
+  // (salvo que en ese mismo mensaje haya pedido algo nuevo). El pedido guardado no cambia.
+  const pedidoParaMostrar = esDudaDeConfianza(c.texto) && !nuevas.length ? null : pedido;
+  let salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, pedidoParaMostrar);
   // Sin repetir: si el resumen del pedido o la pregunta de la zona ya salieron en los últimos
   // mensajes, no se mandan de nuevo. A Juan le llegó tres veces lo mismo y eso molesta.
   const recientes = c.historial.slice(-6).filter((h) => h.de === "acopio").map((h) => normalizar(h.texto));
