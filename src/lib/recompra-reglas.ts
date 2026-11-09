@@ -100,3 +100,26 @@ export function textoEnEspera(quitados: string[]): string {
   const que = quitados.length === 1 ? quitados[0] : `${quitados.slice(0, -1).join(", ")} y ${quitados.at(-1)}`;
   return `Te cuento algo antes de cobrarte: ${que} lleva el mix con cajú, que lo estamos reponiendo, y no te quiero cobrar algo que no te pueda llevar. Te armé lo que sí sale seguro esta semana 👇`;
 }
+
+/**
+ * CARRITO POR DEFECTO SIN ALMENDRA (Martín 9/11, propuesta de Nico y orden de Laura del 9/11): con el interruptor de
+ * espera en true (no hay almendra asegurada), la Alacena y los mixes con cajú no se proponen de entrada. Si la persona
+ * no nombró productos, el carrito armado son los 3 kilos seguros (dátiles con carozo, mix de semillas y pasas), que
+ * pasan los filtros de Ana (33,7% bruto / 18,5% contribución por transferencia). Antes, el modelo proponía la Alacena y
+ * sinLoEnEspera la cambiaba después: el cliente veía un combo y recibía otro. Se vuelve atrás solo, con el interruptor.
+ */
+export function textosPorDefecto(espera = RECOMPRA_EN_ESPERA_ACTIVA) {
+  return espera
+    ? {
+        gama: "los dátiles con carozo, las pasas, el mix de semillas y la nuez",
+        carrito: "los 3 kilos que salen seguro esta semana: dátiles con carozo, mix de semillas y pasas, 1 kg de cada uno (buscar_productos y el total de las herramientas); no propongas la Alacena, la Despensa ni mixes con cajú, que los estamos reponiendo",
+        corto: "los 3 kilos: dátiles con carozo, mix de semillas y pasas",
+        caro: "bajá a medio kilo de lo que eligió o a uno solo de los 3 kilos",
+      }
+    : {
+        gama: "un mix, la nuez, la almendra y el cajú",
+        carrito: "la Alacena de frutos secos (recomendar_combo: precio y qué trae, con la cantidad de cada cosa)",
+        corto: "la Alacena",
+        caro: "bajá al Mix Clásico con cajú y girasol de 1 kg o a medio kilo",
+      };
+}
