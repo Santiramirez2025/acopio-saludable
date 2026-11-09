@@ -24,7 +24,9 @@ import { diasHasta, temporadaActual } from "@/lib/temporada";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 // El mix de la casa (orden de Santiago 4/11): va en la primera pantalla, con precio y para pedir de una.
+// Si el mix está sin stock (9/11: falta almendra), la tarjeta pasa a las pasas, lo que más se vende.
 const DESTACADO = "TG-MIXC";
+const DESTACADO_SI_FALTA = "TG-PASAS";
 
 export default async function Home() {
   const cfg = await leerConfig();
@@ -41,7 +43,7 @@ export default async function Home() {
     prisma.product.groupBy({ by: ["categoria"], where: publicado, _count: true, orderBy: { _count: { categoria: "desc" } } }),
     prisma.product.findMany({ where: { AND: [publicado, { comboItems: { some: { combo: { tipo: "PEDIDO_NICHO" } } } }] }, select: { codigo: true } }),
     ofertasDelProveedor(8),
-    productosTienda({ where: { codigo: DESTACADO }, take: 1 }),
+    productosTienda({ where: { codigo: { in: [DESTACADO, DESTACADO_SI_FALTA] } } }).then((ps) => [ps.find((x) => x.codigo === DESTACADO) ?? ps[0]]),
   ]);
   const seVende = new Set(vendibles.map((v) => v.codigo));
   // Los destacados son lo que tenemos en mano: uno por producto, con foto, y lo que más se vende primero.
@@ -76,7 +78,7 @@ export default async function Home() {
             <p className="mt-3 max-w-md text-[15px] text-white/80 sm:text-[17px]">
               Frutos secos, cereales, suplementos, snacks y especias por volumen, para tu casa o tu negocio. {zonaSinMinimo(cfg) ? <>En Villa Carlos Paz y la zona sin compra mínima, con entrega sin cargo desde {pesos(umbralZona(cfg))}. Envíos a todo el país desde {pesos(cfg.compraMinima)} por pedido.</> : <>Desde {pesos(cfg.compraMinima)} por pedido con envíos a todo el país{cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? <>, y desde {pesos(cfg.compraMinimaPropia)} en Villa Carlos Paz</> : null}.</>}
             </p>
-            {destacado && <DestacadoInicio p={destacado} />}
+            {destacado && <DestacadoInicio p={destacado} etiqueta={destacado.codigo === DESTACADO ? "El mix de la casa" : "El más vendido"} />}
             <p className="mt-5 text-sm font-semibold text-sol">¿Para quién comprás?</p>
             <div className="riel mt-2 md:mx-0 md:flex-wrap md:px-0">
               {[...NICHOS].sort((a, b) => Number(b.id === "familias") - Number(a.id === "familias")).map((n) => (

@@ -96,3 +96,11 @@ export const WHERE_SIN_TACC: Prisma.ProductWhereInput = {
     { NOT: { presentacion: { contains: "fraccionad", mode: "insensitive" as const } } },
   ],
 };
+
+/**
+ * Producto publicado pero sin stock por ahora (estado SIN_STOCK): la ficha sigue en pie y dice que no hay,
+ * para que el link de Google o de un anuncio no termine en «no encontrado». No se puede agregar al carrito.
+ */
+export function fichaSinStock(p: { visible: boolean; estado: string; margenPct: unknown }, margenMinimoPct: number): boolean {
+  return p.visible && p.estado === "SIN_STOCK" && Number(p.margenPct) >= margenMinimoPct;
+}

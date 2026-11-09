@@ -1906,3 +1906,13 @@ test("recompra: sin almendra asegurada, espera quien llevó mixes con cajú, Des
   // Cuando entra la almendra se apaga y sale todo.
   assert.equal(recompraEnEspera([it("Mix Clásico con cajú")], false), false);
 });
+
+test("ficha sin stock: se muestra (sin Agregar) solo si está publicada y en SIN_STOCK", async () => {
+  const { fichaSinStock } = await import("./filtros-producto");
+  const base = { visible: true, estado: "SIN_STOCK", margenPct: 30 };
+  assert.equal(fichaSinStock(base, 20), true);
+  assert.equal(fichaSinStock({ ...base, visible: false }, 20), false);
+  assert.equal(fichaSinStock({ ...base, estado: "BORRADOR" }, 20), false);
+  assert.equal(fichaSinStock({ ...base, estado: "ACTIVO" }, 20), false);
+  assert.equal(fichaSinStock(base, 40), false);
+});
