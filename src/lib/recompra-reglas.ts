@@ -53,9 +53,21 @@ export function textoRecompra(o: { numero: string; id: number; nombre: string; i
 export const RECOMPRA_EN_ESPERA_ACTIVA = true;
 const COMBOS_EN_ESPERA = new Set(["despensa-4-kilos", "despensa-chica", "alacena-de-frutos-secos", "mixes-del-mes"]);
 
+/**
+ * ALMENDRA SUELTA (Nico 10/11, caso real AS-00012, $63.160): la recompra de las 10:40 AR le preguntó «¿te armo lo
+ * mismo?» a un cliente que llevó almendras non pareil + nuez + cajú. Sin almendra en casa, un «Sí, lo mismo» cobraba
+ * algo que no podemos llevar. La almendra suelta queda en espera igual que los mixes con cajú (solo la que se vende
+ * como almendra: la granola «con almendras» viene hecha y no depende de esto).
+ */
+export function esAlmendraSuelta(nombre: string): boolean {
+  return /^almendras?\b/i.test(nombre.trim());
+}
+
 export function recompraEnEspera(items: ItemRecompra[], activa = RECOMPRA_EN_ESPERA_ACTIVA): boolean {
   if (!activa) return false;
-  return items.some((i) => (i.comboSlug && COMBOS_EN_ESPERA.has(i.comboSlug)) || (/^mix\b/i.test(i.producto) && /caj[uú]/i.test(i.producto)));
+  return items.some(
+    (i) => (i.comboSlug && COMBOS_EN_ESPERA.has(i.comboSlug)) || (/^mix\b/i.test(i.producto) && /caj[uú]/i.test(i.producto)) || esAlmendraSuelta(i.producto),
+  );
 }
 
 /**
@@ -76,7 +88,7 @@ type LineaArmada = { tipo: "producto" | "combo"; id: string; cantidad: number };
 export function lineaEnEspera(l: { tipo: "producto" | "combo"; id: string; nombre: string }): boolean {
   return l.tipo === "combo"
     ? COMBOS_EN_ESPERA.has(l.id)
-    : /^mix\b/i.test(l.nombre) && /caj[uú]/i.test(l.nombre);
+    : (/^mix\b/i.test(l.nombre) && /caj[uú]/i.test(l.nombre)) || esAlmendraSuelta(l.nombre);
 }
 
 /** Lo que queda para cotizar y los nombres de lo que se sacó. Sin nada en espera, devuelve las mismas líneas. */
@@ -91,14 +103,23 @@ export function sinLoEnEspera<L extends LineaArmada>(
   const clave = (l: { tipo: string; id: string }) => `${l.tipo}|${l.id}`;
   const sacar = new Set(fuera.map(clave));
   const quedan: LineaArmada[] = lineas.filter((l) => !sacar.has(clave(l)));
+  // Si solo salió almendra suelta y queda algo en el pedido (nuez, cajú…), no se le suman los 3 kilos: se cobra el resto.
+  const soloAlmendra = fuera.every((f) => f.tipo === "producto" && esAlmendraSuelta(f.nombre));
+  if (soloAlmendra && quedan.length) return { lineas: quedan, quitados: [...new Set(fuera.map((f) => f.nombre))] };
   for (const a of ALTERNATIVA_SEGURA) if (!quedan.some((l) => clave(l) === clave(a))) quedan.push({ ...a });
   return { lineas: quedan, quitados: [...new Set(fuera.map((f) => f.nombre))] };
 }
 
 /** El texto que reemplaza al del modelo cuando hubo que cambiar el pedido: de frente, sin culpa y con el cierre. */
 export function textoEnEspera(quitados: string[]): string {
-  const que = quitados.length === 1 ? quitados[0] : `${quitados.slice(0, -1).join(", ")} y ${quitados.at(-1)}`;
-  return `Te cuento algo antes de cobrarte: ${que} lleva el mix con cajú, que lo estamos reponiendo, y no te quiero cobrar algo que no te pueda llevar. Te armé lo que sí sale seguro esta semana 👇`;
+  const resto = quitados.filter((q) => !esAlmendraSuelta(q));
+  const conAlmendra = resto.length < quitados.length;
+  if (!resto.length) {
+    return "Te cuento algo antes de cobrarte: la almendra la estamos reponiendo, y no te quiero cobrar algo que no te pueda llevar. Te armé lo que sí sale seguro esta semana 👇";
+  }
+  const que = resto.length === 1 ? resto[0] : `${resto.slice(0, -1).join(", ")} y ${resto.at(-1)}`;
+  const extra = conAlmendra ? " (la almendra suelta también)" : "";
+  return `Te cuento algo antes de cobrarte: ${que} lleva el mix con cajú, que lo estamos reponiendo${extra}, y no te quiero cobrar algo que no te pueda llevar. Te armé lo que sí sale seguro esta semana 👇`;
 }
 
 /**
