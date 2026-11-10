@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { gastarAcceso } from "./acceso";
 import { avisarSantiago } from "./avisos";
 import { decidirLogin } from "./freno";
+import { SESION_ADMIN_MAX_AGE_S } from "./sesion-admin";
 
 // Hash de un valor al azar descartado: si el email no existe se compara igual, y la respuesta no delata qué emails son válidos.
 const HASH_SEÑUELO = "$2a$10$p4MhGaRKPrhREdu/vEpcwu2HN9oGkURh9yT88wbyGD6xG7XeTIJy6";
@@ -20,7 +21,8 @@ async function fallosLogin(ipHash: string) {
 }
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 60 },
+  // 7 días sin uso (antes 60 fijos): ver lib/sesion-admin.ts.
+  session: { strategy: "jwt", maxAge: SESION_ADMIN_MAX_AGE_S },
   pages: { signIn: "/admin/login" },
   providers: [
     CredentialsProvider({

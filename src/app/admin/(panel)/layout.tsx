@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sincronizadoHoy } from "@/lib/sync";
 import { InstalarPanel } from "@/components/InstalarPanel";
+import { RenovarSesion } from "@/components/RenovarSesion";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         </div>
       </header>
       <InstalarPanel />
+      <RenovarSesion />
       {!preciosAlDia && (
         <Link href="/admin/actualizaciones" className="block bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-900 print:hidden">
           Sincronizá los precios de hoy →
