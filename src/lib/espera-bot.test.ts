@@ -54,3 +54,33 @@ test("bot: con lo cambiado, el mensaje lo explica (no el texto del modelo) y no 
   assert.ok(!m.cuerpo.includes("Te armo la Despensa"));
   assert.ok(m.botones.every((b) => b.titulo !== "Mercado Pago" && b.titulo !== "Transferencia"));
 });
+
+// Caso real AS-00012 (10/11): recompra a quien llevó almendras non pareil + nuez + cajú, sin almendra en casa.
+test("bot: la almendra suelta sale del pedido; queda el resto sin sumarle los 3 kilos", () => {
+  const lineas = [
+    { tipo: "producto" as const, id: "702", cantidad: 1 },
+    { tipo: "producto" as const, id: "TG-NUEZ", cantidad: 1 },
+    { tipo: "producto" as const, id: "TG-CAJU", cantidad: 1 },
+  ];
+  const cotizadas = [
+    { tipo: "producto" as const, id: "702", nombre: "Almendras Non Pareil x 500gr Fraccionada" },
+    { tipo: "producto" as const, id: "TG-NUEZ", nombre: "Nuez Mariposa blanca light x 1 kg" },
+    { tipo: "producto" as const, id: "TG-CAJU", nombre: "Castañas de cajú W4 x 1 kg" },
+  ];
+  const r = sinLoEnEspera(lineas, cotizadas, true);
+  assert.deepEqual(r.quitados, ["Almendras Non Pareil x 500gr Fraccionada"]);
+  assert.deepEqual(r.lineas.map((l) => l.id), ["TG-NUEZ", "TG-CAJU"]);
+  assert.ok(textoEnEspera(r.quitados).includes("la almendra la estamos reponiendo"));
+  assert.ok(!textoEnEspera(r.quitados).includes("mix con cajú"));
+});
+
+test("bot: si solo pidió almendra, entran los 3 kilos; la granola con almendras no se toca", () => {
+  const r = sinLoEnEspera(
+    [{ tipo: "producto" as const, id: "LG-ALMNP-500", cantidad: 2 }],
+    [{ tipo: "producto" as const, id: "LG-ALMNP-500", nombre: "Almendras Non Pareil x 500 g" }],
+    true,
+  );
+  assert.deepEqual(r.lineas.map((l) => l.id), ["LG-DATIL", "LG-MIXSEM", "TG-PASAS"]);
+  assert.equal(lineaEnEspera({ tipo: "producto", id: "8000001", nombre: "Granola proteica de arandanos y almendras S/Azucar" }), false);
+  assert.ok(textoEnEspera(["Despensa de 4 kilos", "Almendras Non Pareil x 500 g"]).includes("Despensa de 4 kilos lleva el mix con cajú"));
+});

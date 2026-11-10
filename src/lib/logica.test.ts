@@ -1902,6 +1902,7 @@ test("recompra: sin almendra asegurada, espera quien llevó mixes con cajú, Des
   assert.equal(recompraEnEspera([it("Mix Clásico con cajú")]), true);
   assert.equal(recompraEnEspera([it("Dátiles con carozo"), it("Pasas de uva negras sin semilla")]), false);
   assert.equal(recompraEnEspera([it("Mix de semillas")]), false);
+  assert.equal(recompraEnEspera([it("Almendras Non Pareil"), it("Nuez Mariposa blanca light")]), true);
   assert.equal(recompraEnEspera([it("Pan dulce", "pan-dulce-casero")]), false);
   // Cuando entra la almendra se apaga y sale todo.
   assert.equal(recompraEnEspera([it("Mix Clásico con cajú")], false), false);
