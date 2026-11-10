@@ -11,6 +11,9 @@ jobs:
     steps:
       # Con el secreto RECORDATORIOS_SECRET cargado en GitHub y en Vercel, la ruta solo acepta este llamado.
       # Orden para activarlo: primero el secreto de GitHub, después la variable de Vercel (si no, se cortan).
-      - run: curl -fsS --max-time 120 -H "Authorization: Bearer $CLAVE" https://www.acopiosaludable.com/api/whatsapp/recordatorios
+      # Va como bloque (run: |): «Authorization: Bearer» en una línea suelta rompe el YAML (": " se lee como clave)
+      # y GitHub deja de correr el workflow sin avisar. Pasó entre #489 y este arreglo.
+      - run: |
+          curl -fsS --max-time 120 -H "Authorization: Bearer $CLAVE" https://www.acopiosaludable.com/api/whatsapp/recordatorios
         env:
           CLAVE: ${{ secrets.RECORDATORIOS_SECRET }}
