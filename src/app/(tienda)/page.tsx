@@ -6,13 +6,15 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
 import { AVISO_SIN_TACC, WHERE_SIN_TACC, wherePublicado } from "@/lib/filtros-producto";
-import { combosTienda, productosTienda } from "@/lib/tienda";
+import { combosTienda, productosTienda, type ComboTienda, type ProductoTienda } from "@/lib/tienda";
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadSuelta } from "@/lib/precios";
 import { umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
-import { DestacadoInicio } from "@/components/DestacadoInicio";
+import { DestacadoComboInicio, DestacadoInicio } from "@/components/DestacadoInicio";
+import { DESTACADO_PRODUCTO, DESTACADO_SI_FALTA, elegirDestacado } from "@/lib/destacado-inicio";
+import { totalTransferencia } from "@/lib/combos-tema";
 import { DibujoNutri } from "@/components/Nutri";
 import { ListaCombo, RielOfertas, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 import { ofertasDelProveedor } from "@/lib/ofertas";
@@ -24,14 +26,12 @@ import { diasHasta, temporadaActual } from "@/lib/temporada";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 // El mix de la casa (orden de Santiago 4/11): va en la primera pantalla, con precio y para pedir de una.
-// Si el mix está sin stock (9/11: falta almendra), la tarjeta pasa a las pasas, lo que más se vende.
-const DESTACADO = "TG-MIXC";
-const DESTACADO_SI_FALTA = "TG-PASAS";
+// Si el mix está sin stock (falta almendra), va el Trío del desayuno (orden de Laura 10/11); si tampoco, las pasas.
 
 export default async function Home() {
   const cfg = await leerConfig();
   const publicado = wherePublicado(cfg.margenMinimoPct);
-  const [alfajores, sinTacc, totalSinTacc, ganchos, combos, pedidos, portadas, conteos, vendibles, ofertas, [destacado]] = await Promise.all([
+  const [alfajores, sinTacc, totalSinTacc, ganchos, combos, pedidos, portadas, conteos, vendibles, ofertas, candidatos] = await Promise.all([
     // Las cajas primero y las más baratas adelante: el gancho es cuánto sale el alfajor suelto.
     productosTienda({ where: { AND: [WHERE_SIN_TACC, { producto: { contains: "alfajor", mode: "insensitive" } }, { fotoUrl: { not: null } }] }, orderBy: [{ precioPublico: "asc" }], take: 4 }),
     productosTienda({ where: { AND: [WHERE_SIN_TACC, { fotoUrl: { not: null } }] }, take: 8 }),
@@ -43,8 +43,9 @@ export default async function Home() {
     prisma.product.groupBy({ by: ["categoria"], where: publicado, _count: true, orderBy: { _count: { categoria: "desc" } } }),
     prisma.product.findMany({ where: { AND: [publicado, { comboItems: { some: { combo: { tipo: "PEDIDO_NICHO" } } } }] }, select: { codigo: true } }),
     ofertasDelProveedor(8),
-    productosTienda({ where: { codigo: { in: [DESTACADO, DESTACADO_SI_FALTA] } } }).then((ps) => [ps.find((x) => x.codigo === DESTACADO) ?? ps[0]]),
+    productosTienda({ where: { codigo: { in: [DESTACADO_PRODUCTO, DESTACADO_SI_FALTA] } } }),
   ]);
+  const destacado = elegirDestacado<ProductoTienda, ComboTienda>(candidatos, combos);
   const seVende = new Set(vendibles.map((v) => v.codigo));
   // Los destacados son lo que tenemos en mano: uno por producto, con foto, y lo que más se vende primero.
   const vidriera = (() => { const v = vidrieraDeStock(ganchos, true); return (v.length >= 4 ? v : ganchos).slice(0, 8); })();
@@ -78,7 +79,14 @@ export default async function Home() {
             <p className="mt-3 max-w-md text-[15px] text-white/80 sm:text-[17px]">
               Frutos secos, cereales, suplementos, snacks y especias por volumen, para tu casa o tu negocio. {zonaSinMinimo(cfg) ? <>En Villa Carlos Paz y la zona sin compra mínima, con entrega sin cargo desde {pesos(umbralZona(cfg))}. Envíos a todo el país desde {pesos(cfg.compraMinima)} por pedido.</> : <>Desde {pesos(cfg.compraMinima)} por pedido con envíos a todo el país{cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? <>, y desde {pesos(cfg.compraMinimaPropia)} en Villa Carlos Paz</> : null}.</>}
             </p>
-            {destacado && <DestacadoInicio p={destacado} etiqueta={destacado.codigo === DESTACADO ? "El mix de la casa" : "El más vendido"} />}
+            {destacado?.tipo === "producto" && <DestacadoInicio p={destacado.p} etiqueta={destacado.esLaCasa ? "El mix de la casa" : "El más vendido"} />}
+            {destacado?.tipo === "combo" && (
+              <DestacadoComboInicio
+                c={destacado.c}
+                etiqueta={zonaSinMinimo(cfg) && destacado.c.precio >= umbralZona(cfg) ? "Combo · sin cargo en Carlos Paz" : "Combo de la semana"}
+                transferencia={cfg.descuentoTransferenciaPct > 0 ? totalTransferencia(destacado.c.precio, cfg.descuentoTransferenciaPct) : null}
+              />
+            )}
             <p className="mt-5 text-sm font-semibold text-sol">¿Para quién comprás?</p>
             <div className="riel mt-2 md:mx-0 md:flex-wrap md:px-0">
               {[...NICHOS].sort((a, b) => Number(b.id === "familias") - Number(a.id === "familias")).map((n) => (
