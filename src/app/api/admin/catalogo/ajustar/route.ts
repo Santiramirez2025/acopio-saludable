@@ -80,10 +80,13 @@ export async function POST(req: Request) {
     // La foto propia (generada con el estilo de los anuncios) manda; si no hay, queda la que tenía.
     const foto = fotoProducto(p.codigo) ?? previo?.fotoUrl ?? null;
     const oculto = OCULTOS_PROPIOS.includes(p.codigo);
+    // 10/11: un SIN_STOCK puesto a mano (POST /catalogo/stock o el panel) se respeta. Antes cada ajuste
+    // lo volvía a ACTIVO y la Despensa reaparecía en venta sin almendra en casa.
+    const estado = previo?.estado === "SIN_STOCK" ? ("SIN_STOCK" as const) : datos.estado;
     await prisma.product.upsert({
       where: { codigo: p.codigo },
       create: { codigo: p.codigo, ...datos, visible: !oculto, fotoUrl: foto, fotos: foto ? [foto] : [] },
-      update: { ...datos, visible: !oculto, ocultoMotivo: oculto ? "Sin stock en el proveedor" : null, fotoUrl: foto, fotos: foto ? [foto] : previo?.fotos ?? [] },
+      update: { ...datos, estado, visible: !oculto, ocultoMotivo: oculto ? "Sin stock en el proveedor" : null, fotoUrl: foto, fotos: foto ? [foto] : previo?.fotos ?? [] },
     });
     if (!previo || Number(previo.costo) !== p.costo || Number(previo.precioPublico) !== precio) {
       await prisma.priceHistory.create({ data: { codigo: p.codigo, costo: p.costo, precioPublico: precio, origen: "proveedor" } });
