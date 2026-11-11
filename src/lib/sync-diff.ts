@@ -1,7 +1,15 @@
 // Cálculo del diff de una actualización de precios. Función pura: decide qué se aplica solo y qué espera aprobación.
 
 export type Entrante = { codigo: string; producto: string; presentacion?: string; categoria?: string; costo: number | null; precioPublico: number | null; fotos?: string | null };
-export type Actual = { codigo: string; producto: string; costo: number; precioPublico: number; estado: "ACTIVO" | "BORRADOR" | "SIN_STOCK" };
+export type Actual = {
+  codigo: string;
+  producto: string;
+  costo: number;
+  precioPublico: number;
+  estado: "ACTIVO" | "BORRADOR" | "SIN_STOCK";
+  /** SIN_STOCK puesto a mano (no hay en casa): la lista del proveedor no lo vuelve a la venta. Ver sin-stock-a-mano.ts. */
+  aMano?: boolean;
+};
 
 export type TipoCambio = "CAMBIO" | "NUEVO" | "DESAPARECIDO" | "REAPARECIDO";
 export type ItemDiff = {
@@ -66,6 +74,7 @@ export function calcularDiff(
   const recibidos = new Set(entrantes.map((e) => e.codigo));
   const items: ItemDiff[] = [];
   const avisos: string[] = [];
+  const pausadosAMano: string[] = [];
 
   for (const e of entrantes) {
     const a = porCodigo.get(e.codigo);
@@ -95,9 +104,15 @@ export function calcularDiff(
         estado: Math.abs(pct) < opciones.umbralAutoPct ? "APLICADO" : "PENDIENTE",
       });
     }
-    if (a.estado === "SIN_STOCK") {
+    if (a.estado === "SIN_STOCK" && a.aMano) {
+      pausadosAMano.push(a.producto);
+    } else if (a.estado === "SIN_STOCK") {
       items.push({ codigo: a.codigo, producto: a.producto, tipo: "REAPARECIDO", costoAntes: null, costoNuevo: null, precioAntes: null, precioNuevo: null, pct: null, estado: "APLICADO" });
     }
+  }
+
+  if (pausadosAMano.length) {
+    avisos.push(`${pausadosAMano.length} siguen sin stock aunque el proveedor los lista, porque los pausamos a mano (no hay en casa): ${pausadosAMano.slice(0, 5).join(", ")}. Se vuelven a la venta con POST /catalogo/stock ACTIVO o desde el panel.`);
   }
 
   // Desaparecidos: solo si la lectura fue completa. Una lectura parcial no puede dejar productos sin stock.

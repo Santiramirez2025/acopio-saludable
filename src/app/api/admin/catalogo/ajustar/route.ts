@@ -12,6 +12,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { margenPct } from "@/lib/precios";
 import { estaEnStock } from "@/lib/en-stock";
+import { MOTIVO_SIN_STOCK_A_MANO } from "@/lib/sin-stock-a-mano";
 import { COMBOS_A_DESACTIVAR, COMBOS_PROVEEDORES, OCULTAR, OCULTOS_PROPIOS, PRODUCTOS_PROVEEDORES, REEMPLAZOS, fotoCombo, fotoProducto, precioDe } from "@/lib/catalogo-proveedores";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
     await prisma.product.upsert({
       where: { codigo: p.codigo },
       create: { codigo: p.codigo, ...datos, visible: !oculto, fotoUrl: foto, fotos: foto ? [foto] : [] },
-      update: { ...datos, estado, visible: !oculto, ocultoMotivo: oculto ? "Sin stock en el proveedor" : null, fotoUrl: foto, fotos: foto ? [foto] : previo?.fotos ?? [] },
+      update: { ...datos, estado, visible: !oculto, ocultoMotivo: oculto ? "Sin stock en el proveedor" : estado === "SIN_STOCK" && previo?.ocultoMotivo === MOTIVO_SIN_STOCK_A_MANO ? MOTIVO_SIN_STOCK_A_MANO : null, fotoUrl: foto, fotos: foto ? [foto] : previo?.fotos ?? [] },
     });
     if (!previo || Number(previo.costo) !== p.costo || Number(previo.precioPublico) !== precio) {
       await prisma.priceHistory.create({ data: { codigo: p.codigo, costo: p.costo, precioPublico: precio, origen: "proveedor" } });

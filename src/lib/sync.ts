@@ -5,6 +5,7 @@ import { margenPct } from "./precios";
 import { clasificarNichos, clasificarObjetivos, detectarUnidad, motivoOculto } from "./clasificar";
 import { urlsDesdeCampoPhotos } from "./fotos";
 import { calcularDiff, sanearEntrantes, type Entrante } from "./sync-diff";
+import { MOTIVO_SIN_STOCK_A_MANO, esSinStockAMano } from "./sin-stock-a-mano";
 
 const ZONA = "America/Argentina/Cordoba";
 export const diaLocal = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: ZONA }); // AAAA-MM-DD
@@ -48,7 +49,8 @@ async function aplicarItem(tx: Tx, i: Pick<PriceSyncItem, "codigo" | "tipo" | "c
   } else if (i.tipo === "DESAPARECIDO") {
     await tx.product.updateMany({ where: { codigo: i.codigo, estado: "ACTIVO" }, data: { estado: "SIN_STOCK" } });
   } else if (i.tipo === "REAPARECIDO") {
-    await tx.product.updateMany({ where: { codigo: i.codigo, estado: "SIN_STOCK" }, data: { estado: "ACTIVO" } });
+    // Nunca vuelve a la venta lo que pausamos a mano (ni siquiera aprobando un ítem viejo del panel).
+    await tx.product.updateMany({ where: { codigo: i.codigo, estado: "SIN_STOCK", OR: [{ ocultoMotivo: null }, { ocultoMotivo: { not: MOTIVO_SIN_STOCK_A_MANO } }] }, data: { estado: "ACTIVO" } });
   }
 }
 
@@ -92,10 +94,11 @@ export async function registrarSync(args: { origen: string; modo: unknown; compl
   const where = args.prefijo
     ? { OR: [{ codigo: { startsWith: args.prefijo } }, { codigo: { in: entrantes.map((e) => e.codigo) } }] }
     : { NOT: [{ codigo: { startsWith: "TG-" } }, { codigo: { startsWith: "LG-" } }] };
-  const actuales = (await prisma.product.findMany({ where, select: { codigo: true, producto: true, costo: true, precioPublico: true, estado: true, fotoUrl: true } })).map((p) => ({
+  const actuales = (await prisma.product.findMany({ where, select: { codigo: true, producto: true, costo: true, precioPublico: true, estado: true, fotoUrl: true, ocultoMotivo: true } })).map(({ ocultoMotivo, ...p }) => ({
     ...p,
     costo: Number(p.costo),
     precioPublico: Number(p.precioPublico),
+    aMano: esSinStockAMano({ estado: p.estado, ocultoMotivo }),
   }));
   const { items, avisos } = calcularDiff(actuales, entrantes, { umbralAutoPct: Number(cfg.umbralAutoPct), completo: args.completo === true });
   if (descartados) avisos.push(`${descartados} filas descartadas por código o precio inválido (o repetidas).`);
