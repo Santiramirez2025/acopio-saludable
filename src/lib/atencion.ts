@@ -9,7 +9,7 @@ import { PAGO_AL_RECIBIR } from "./politica";
 import { conPresentacion } from "./whatsapp-saludo";
 import { zonaDeLugar } from "./envio-zona";
 import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
-import { buscarEnCatalogo, comboDelAnuncio, type Accion, type EnvioCotizado, type Respuesta } from "./asistente-catalogo";
+import { buscarEnCatalogo, comboDelAnuncio, comboDelAnuncioAgotado, type Accion, type EnvioCotizado, type Respuesta } from "./asistente-catalogo";
 import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
@@ -660,11 +660,14 @@ export async function pensar(c: {
   // instrucciones, para no romper el caché del prompt.
   const textoAnuncio = c.anuncio ? [c.anuncio.titulo, c.anuncio.texto].filter(Boolean).join(" — ").slice(0, 300) : "";
   const combo = textoAnuncio ? await comboDelAnuncio(textoAnuncio) : null;
+  const agotado = textoAnuncio && !combo ? await comboDelAnuncioAgotado(textoAnuncio).catch(() => null) : null;
   const anuncio = textoAnuncio
     ? `<anuncio>Tocó un anuncio que decía: ${textoAnuncio}.${
         combo
           ? ` Es el combo slug ${combo.slug} «${combo.nombre}», hoy a ${pesos(Math.round(combo.precio))} (lista ${pesos(Math.round(combo.precioLista))}), trae: ${combo.items.map((i) => `${i.cantidad} x ${i.producto.producto} ${i.producto.presentacion}`).join(", ")}.`
-          : ""
+          : agotado
+            ? ` El combo del anuncio («${agotado.agotado.nombre}») HOY NO HAY. No le preguntes para qué lo buscaba: en ESE MISMO mensaje decí en media frase que ese hoy no está y ofrecé el combo slug ${agotado.reemplazo.slug} «${agotado.reemplazo.nombre}», lo más parecido que hay hoy, a ${pesos(Math.round(agotado.reemplazo.precio))}, que trae: ${agotado.reemplazo.items.map((i) => `${i.cantidad} x ${i.producto.producto} ${i.producto.presentacion}`).join(", ")}. Cerrá ofreciendo dejárselo listo. No prometas cuándo vuelve el otro.`
+            : ""
       } Si su mensaje es una pregunta (dirección, envío, pago, un producto), contestala PRIMERO en una frase y recién después ofrecé lo del anuncio. Si no pregunta nada concreto, arrancá por el anuncio: qué trae y por qué conviene, y ofrecé dejárselo listo.</anuncio>\n\n`
     : "";
   const cliente = c.nombre ? `<cliente>${primerNombre(c.nombre) ? `Se llama ${primerNombre(c.nombre)}` : `Su perfil de WhatsApp dice «${c.nombre.slice(0, 40)}» (no es un nombre de persona: no lo llames así)`}${c.historial.length ? " (ya lo saludaste: no lo saludes de nuevo)" : ""}.</cliente>\n` : "";
