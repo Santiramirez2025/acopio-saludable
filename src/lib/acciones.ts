@@ -17,6 +17,7 @@ import { generarTokenSync, registrarSync, resolverPendientes, textoResumen } fro
 import { codigoMarcador } from "./marcador";
 import { urlSitio } from "./sitio";
 import { NICHO_IDS, OBJETIVO_IDS } from "./taxonomia";
+import { MOTIVO_SIN_STOCK_A_MANO, motivoAlGuardarVisible } from "./sin-stock-a-mano";
 import { aplicarFotos, importarCatalogo, leerCatalogoCsv } from "./catalogo";
 import { leerJsonFotos } from "./fotos";
 import { leerDiasCorte } from "./corte";
@@ -136,9 +137,10 @@ export async function guardarProducto(fd: FormData) {
           clasificacionRevisada: fd.get("clasificacionRevisada") === "on",
           estado,
           visible,
+          // Visible: solo puede llevar la marca «sin stock a mano» (que la lectura del proveedor respeta).
           ocultoMotivo: visible
-            ? null
-            : (previo.ocultoMotivo ?? "Oculto a mano"),
+            ? motivoAlGuardarVisible(previo, estado)
+            : (previo.ocultoMotivo === MOTIVO_SIN_STOCK_A_MANO ? "Oculto a mano" : (previo.ocultoMotivo ?? "Oculto a mano")),
           gancho: fd.get("gancho") === "on",
           porQueLoElegimos: textoONull(fd, "porQueLoElegimos"),
         },
