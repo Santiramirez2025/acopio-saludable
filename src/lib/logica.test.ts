@@ -460,6 +460,10 @@ test("el asistente reconoce la intención y nunca responde consultas de salud co
   assert.equal(detectar("tenés maní sin sal?"), "buscar");
   assert.deepEqual(palabrasClave("¿Tenés nueces peladas?").map((g) => g[0]), ["nueces", "peladas"]);
   assert.ok(palabrasClave("nueces")[0].includes("nuez"));
+  // 11/11: «nuez maní cagu» terminó en «no tenemos cajú solo».
+  assert.ok(palabrasClave("Nuez maní cagu")[2].includes("caju"));
+  assert.ok(palabrasClave("kaju")[0].includes("caju"));
+  assert.ok(palabrasClave("nues")[0].includes("nuez"));
 });
 
 import { linkSeguimiento } from "./envios/seguimiento";
