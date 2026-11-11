@@ -12,15 +12,19 @@ type Plantilla = { nombre: string; cuerpo: string; botones: [string, string]; co
 /** Qué plantilla le toca a cada rubro y qué tiene que saber el vendedor cuando contestan. */
 export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" | "dietetica", Plantilla> = {
   desayuno: {
-    nombre: "acopio_alojamientos_desayuno_v2",
+    // v3 (Martín 11/11): sin «sin TACC» (la v2 lo prometía y por eso estaba frenada) y cierra con la
+    // pregunta de precio de la venta en frío (política 3/11, punto 6).
+    nombre: "acopio_alojamientos_desayuno_v3",
     cuerpo:
       "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
-      "Ofrecemos a los alojamientos de la zona lo que lleva el desayuno: granola, frutos secos, mermeladas y productos sin TACC para el huésped que los pide. Por volumen y con entrega sin costo en Carlos Paz y alrededores.\n\n" +
-      "¿Le puedo pasar precios a quien se ocupa de las compras?",
-    botones: ["Sí, pasame precios", "No, gracias"],
+      "Para la temporada abastecemos el desayuno de hoteles y hosterías de la zona: granola, frutos secos, dátiles y semillas, fraccionados frescos y por volumen, con entrega sin costo en Carlos Paz y alrededores.\n\n" +
+      "¿A cuánto está pagando hoy el kilo de granola? Si podemos mejorarlo, le paso nuestro precio.",
+    botones: ["Le paso mi precio", "No, gracias"],
     contexto:
-      "le escribimos nosotros ofreciendo abastecer el desayuno (granola, frutos secos, mermeladas). Sobre sin TACC ofrecé solo envasados de marca que veas en stock y nunca garantices lo fraccionado. Atendelo como cliente de negocio: " +
-      "usá pedido_para_negocio con «hotel», nombrá dos o tres productos concretos con su precio real y preguntá cuántos desayunos sirven por semana para armarle el pedido.",
+      "le escribimos nosotros ofreciendo abastecer el desayuno (granola, frutos secos, dátiles, semillas) y le preguntamos a cuánto paga hoy el kilo de granola. " +
+      "PRIMERO preguntá (o anotá, si ya lo dijo) qué producto compra hoy, a cuánto el kilo y cuántos kilos por semana: ese precio se registra siempre, escribilo textual en tu respuesta para que Leo lo vea. " +
+      "Después compará con el precio real de buscar_productos: si el nuestro es menor, decilo con el número; si no, no bajes nada de tu cuenta y ofrecé lo que sí tenemos (fraccionado fresco, entrega sin costo en la zona) y que Leo, de ventas mayoristas, le confirma el precio por volumen por este chat. " +
+      "No ofrezcas ni prometas nada «sin TACC». Se paga antes de entregar, por transferencia o Mercado Pago. Atendelo como cliente de negocio: usá pedido_para_negocio con «hotel».",
   },
   kit: {
     nombre: "acopio_alojamientos_kit_v2",
@@ -34,15 +38,19 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "usá pedido_para_negocio con «cabañas», proponé un kit concreto con precios reales y preguntá cuántas unidades tiene para calcular el costo por kit.",
   },
   gastronomia: {
-    nombre: "acopio_negocios_gastronomia_v1",
+    // v2 (Martín 11/11): la v1 («¿Le paso la lista de precios?») tuvo 0 respuestas en 37 envíos (4-10/11).
+    // Una sola variable: el cierre pasa a la pregunta de precio de la venta en frío (política 3/11, punto 6).
+    nombre: "acopio_negocios_gastronomia_v2",
     cuerpo:
       "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
-      "Abastecemos cafeterías, panaderías y heladerías con frutos secos, granola, semillas y dátiles para bowls, toppings y pastelería. Por volumen, con entrega sin costo en Carlos Paz y alrededores y envíos a todo Córdoba.\n\n" +
-      "¿Le paso la lista de precios a quien hace las compras?",
-    botones: ["Sí, pasame precios", "No, gracias"],
+      "Abastecemos heladerías, cafeterías y panaderías con frutos secos, granola, semillas y dátiles para bowls, toppings y pastelería. Por volumen, con entrega sin costo en Carlos Paz y alrededores y envíos a todo Córdoba.\n\n" +
+      "¿A cuánto está pagando hoy el kilo de nuez o de dátiles? Si podemos mejorarlo, le paso nuestro precio.",
+    botones: ["Le paso mi precio", "No, gracias"],
     contexto:
-      "le escribimos nosotros ofreciendo abastecer su cocina (frutos secos, granola, semillas, dátiles, cacao). Atendelo como cliente de negocio: " +
-      "usá pedido_para_negocio con «cafeterías», nombrá dos o tres insumos con su precio real por kilo y preguntá cuántos kilos usan por semana para armarle el pedido.",
+      "le escribimos nosotros ofreciendo abastecer su cocina (frutos secos, granola, semillas, dátiles, cacao) y le preguntamos a cuánto paga hoy el kilo de nuez o de dátiles. " +
+      "PRIMERO preguntá (o anotá, si ya lo dijo) qué producto compra hoy, a cuánto el kilo y cuántos kilos por semana: ese precio se registra siempre, escribilo textual en tu respuesta para que Leo lo vea. " +
+      "Después compará con el precio real de buscar_productos: si el nuestro es menor, decilo con el número; si no, no bajes nada de tu cuenta y ofrecé lo que sí tenemos (fraccionado fresco, entrega sin costo en la zona) y que Leo, de ventas mayoristas, le confirma el precio por volumen por este chat. " +
+      "Se paga antes de entregar, por transferencia o Mercado Pago. Atendelo como cliente de negocio: usá pedido_para_negocio con «cafeterías».",
   },
   gimnasio: {
     nombre: "acopio_negocios_gimnasio_v1",
@@ -77,11 +85,12 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
 };
 
 /**
- * Plantillas frenadas: el texto aprobado en Meta promete «sin TACC» y la de kit, budines que no vendemos.
- * Los alojamientos quedan en la lista sin escribirles hasta que haya un texto nuevo aprobado.
+ * Plantillas frenadas: la de kit promete «sin TACC» y budines que no vendemos; cabañas y departamentos
+ * quedan en la lista sin escribirles hasta que haya un texto nuevo aprobado. Hoteles y hostels vuelven
+ * con la desayuno v3 (11/11), que ya no nombra «sin TACC».
  * Dietética (T-037): la v2 ofrecía el tropical y «listos para la góndola». Queda frenada hasta que Meta apruebe la v3.
  */
-const FRENADAS: ReadonlySet<keyof typeof PLANTILLAS> = new Set(["desayuno", "kit", "dietetica"] as const);
+const FRENADAS: ReadonlySet<keyof typeof PLANTILLAS> = new Set(["kit", "dietetica"] as const);
 
 /**
  * Rubros que el robot no contacta por decisión, no por plantilla (orden de Laura, 6/11): dietéticas,
