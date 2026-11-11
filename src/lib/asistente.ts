@@ -53,9 +53,16 @@ export function detectar(texto: string): Intencion {
 const VACIAS = new Set("a al algo algun alguna busco buscando con cual cuales cuanto cuesta cuestan dame de del el ella en es esta este hay la las le lo los me mi necesito para por precio precios que quiero quisiera se si son su tenes tienen tiene un una unas unos vende venden vendes y o sale salen comprar compro kilo kilos kg gramos gr medio".split(" "));
 
 /** Palabras con las que buscar en el catálogo, con su forma en singular. */
+/**
+ * Cómo escribe la gente lo que sí tenemos. 11/11: Daniel pidió «nuez maní cagu» y el vendedor le dijo
+ * «no tenemos cajú solo», con el cajú W4 publicado a $23.500. Se perdió la venta por una letra.
+ */
+const MAL_ESCRITAS: Record<string, string> = { cagu: "caju", cayu: "caju", kaju: "caju", cashu: "caju", cajus: "caju", cagus: "caju", nues: "nuez", almendr: "almendra", almendas: "almendras", dactiles: "datiles" };
+
 export function palabrasClave(texto: string): string[][] {
   return normalizar(texto)
     .split(" ")
+    .map((p) => MAL_ESCRITAS[p] ?? p)
     .filter((p) => p.length > 2 && !VACIAS.has(p))
     .slice(0, 4)
     .map((p) => [...new Set([p, p.replace(/ces$/, "z"), p.replace(/(es|s)$/, ""), p.replace(/s$/, "")])].filter((v) => v.length > 2));
