@@ -13,7 +13,7 @@ import { bloqueLeccionesVendedor } from "./organico";
 import { bloqueTemporada } from "./temporada";
 import { leerConfig } from "./config";
 import { SALUDO_GENERAL } from "./whatsapp-saludo";
-import { catalogo, hallarCombos, hallarProductos } from "./asistente-catalogo";
+import { catalogo, comboPedidoAgotado, hallarCombos, hallarProductos } from "./asistente-catalogo";
 import { combosTienda, productosTienda } from "./tienda";
 import { ofertasDelProveedor } from "./ofertas";
 import { cuantoTrae, pesos, renglonCombo } from "./precios";
@@ -332,10 +332,21 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     // 7/11 (Santiago): antes esto decía «ofrecé lo más parecido» y el vendedor respondía a «¿tenés semillas de
     // zapallo?» con «no, pero tengo girasol a $6.700, ¿me pasás tu dirección?». Pedir una cosa y que te
     // empujen otra con el precio por delante espanta. Primero se dice que no, y se pregunta.
-    if (!productos.length && !combos.length)
+    // Excepción a la regla del 7/11 (propuesta de Nico, 11/11): si pide un combo que existe pero hoy está agotado
+    // («la Despensa», «los 4 kilos»), se ofrece el más parecido con su precio, como en el primer mensaje (#510).
+    const agotado = soloSinTacc || combos.length ? null : await comboPedidoAgotado(consulta);
+    if (agotado) {
+      const r = agotado.reemplazo;
+      return {
+        texto: `«${consulta}» es el combo ${agotado.agotado.nombre}, que HOY ESTÁ AGOTADO (no digas que no figura el precio). Lo más parecido que sí sale hoy:\n- combo slug ${r.slug} · ${r.nombre} · trae ${r.items.map(({ producto, cantidad }) => `${cantidad} x ${producto.producto} ${producto.presentacion}`).join(", ")} · ${pesos(Math.round(r.precio))}\nDecí en una frase que ${agotado.agotado.nombre} hoy no está, ofrecé ${r.nombre} con lo que trae y su precio, y preguntá si se lo dejás listo. Sin pedir la dirección todavía.`,
+        fichas: [{ href: `/combos/${r.slug}`, nombre: `Combo ${r.nombre}`, detalle: `Trae: ${r.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)).join(" · ")}`, precio: pesos(Math.round(r.precio)), foto: r.fotoUrl }],
+      };
+    }
+    if (!productos.length && !combos.length) {
       return {
         texto: `Sin resultados para «${consulta}»: no lo tenemos. Decilo derecho y corto («${consulta} no tengo»), SIN ofrecer un reemplazo en ese mismo mensaje y SIN precio. Terminá preguntando para qué lo buscaba o qué más necesita («¿para qué lo usás?», «¿qué más estabas buscando?»). Recién si contesta algo que otro producto nuestro resuelve de verdad, se lo ofrecés. Nunca pidas la dirección ni empujes el envío acá: todavía no hay pedido.`,
       };
+    }
     const fichasCombo: Ficha[] = combos.map((c) => ({
       href: `/combos/${c.slug}`,
       nombre: `Combo ${c.nombre}`,

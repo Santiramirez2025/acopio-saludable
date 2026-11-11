@@ -22,3 +22,26 @@ export function comboParecido<C extends Combo>(agotado: C, combos: C[]): C | nul
   }
   return mejor;
 }
+
+// 11/11 20:43 (Daniel, charla vieja del anuncio): «¿Cuánto sale los 4k surtido?» a mitad de charla.
+// El arreglo del primer mensaje no aplica y el bot volvió a «hoy no tenemos la Despensa, ¿para qué la buscabas?».
+// Si lo que pide es un combo que existe pero hoy está agotado, se ofrece el parecido igual que en el primer mensaje.
+
+const normal = (t: string) => ` ${t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9ñ\s]/g, " ").replace(/\s+/g, " ").trim()} `;
+const VACIAS = new Set(["de", "del", "la", "el", "los", "las", "con", "para", "y", "kilos", "kilo", "kg"]);
+
+/** El combo agotado que la persona está pidiendo por su nombre («la despensa») o por sus kilos («los 4k», «4 kilos»). */
+export function comboAgotadoPedido<C extends Combo>(texto: string, combos: C[]): C | null {
+  const t = normal(texto);
+  const kilos = [...t.matchAll(/ (\d+) ?(?:k|kg|kgs|kilo|kilos) /g)].map((m) => m[1]);
+  const candidatos = combos.filter((c) => !c.disponible).filter((c) => {
+    const n = normal(c.nombre);
+    const palabras = n.trim().split(" ").filter((p) => p.length > 3 && !VACIAS.has(p) && !/^\d+$/.test(p));
+    // Solo la primera palabra propia del nombre («despensa», «alacena»): «frutos secos» no es pedir la Alacena.
+    const p = palabras[0];
+    const porNombre = !!p && (t.includes(` ${p} `) || t.includes(` ${p.replace(/s$/, "")} `));
+    const porKilos = kilos.some((k) => n.includes(` ${k} kilos `) || n.includes(` ${k} kg `));
+    return porNombre || porKilos;
+  });
+  return candidatos.sort((a, b) => b.nombre.length - a.nombre.length)[0] ?? null;
+}
