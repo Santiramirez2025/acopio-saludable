@@ -5,6 +5,7 @@ import { normalizar, palabrasClave } from "./asistente";
 import { combosTienda, productosTienda, type ComboTienda, type ProductoTienda } from "./tienda";
 import { pesos, renglonCombo } from "./precios";
 import { AVISO_SUPLEMENTOS } from "./sitio";
+import { comboParecido } from "./anuncio-reemplazo";
 
 export type Enlace = { href: string; texto: string; externo?: boolean };
 export type Ficha = { href: string; nombre: string; detalle: string; precio: string; foto: string | null };
@@ -100,6 +101,16 @@ export async function hallarCombos(texto: string): Promise<ComboTienda[]> {
 }
 
 /** El combo que nombra un anuncio («Despensa de 4 kilos a $35.268»), si hay uno. */
+/** El combo del anuncio cuando HOY no está disponible, con el disponible más parecido para ofrecer en su lugar. */
+export async function comboDelAnuncioAgotado(texto: string): Promise<{ agotado: ComboTienda; reemplazo: ComboTienda } | null> {
+  const t = ` ${normalizar(texto)} `;
+  const todos = await combosTienda({ activo: true, tipo: "COMBO" });
+  const agotado = todos.filter((c) => !c.disponible && t.includes(` ${normalizar(c.nombre)} `)).sort((a, b) => b.nombre.length - a.nombre.length)[0];
+  if (!agotado) return null;
+  const reemplazo = comboParecido(agotado, todos);
+  return reemplazo ? { agotado, reemplazo } : null;
+}
+
 export async function comboDelAnuncio(texto: string): Promise<ComboTienda | null> {
   const t = ` ${normalizar(texto)} `;
   const combos = (await combosTienda({ activo: true, tipo: "COMBO" })).filter((c) => c.disponible);
