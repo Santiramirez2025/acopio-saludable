@@ -1845,13 +1845,28 @@ test("el vendedor sabe qué día es, en hora de Argentina", () => {
   assert.match(hoyEnArgentina(new Date("2026-11-03T13:00:00Z")), /martes.*\b3\b/);
 });
 
-test("captación: alojamientos frenados por «sin TACC» y budines; el resto sigue", () => {
-  for (const r of ["hotel", "hostel", "cabañas / complejo", "departamentos / alquiler temporario"]) assert.equal(rubroHabilitado(r), false, r);
-  for (const r of ["cafetería", "gimnasio", "panadería"]) assert.equal(rubroHabilitado(r), true, r);
+test("captación: cabañas frenadas por «sin TACC» y budines; hoteles vuelven con la desayuno v3; el resto sigue", () => {
+  for (const r of ["cabañas / complejo", "departamentos / alquiler temporario"]) assert.equal(rubroHabilitado(r), false, r);
+  for (const r of ["hotel", "hostel", "cafetería", "gimnasio", "panadería", "heladería"]) assert.equal(rubroHabilitado(r), true, r);
   // T-037: dietética frenada hasta que Meta apruebe la v3.
   assert.equal(rubroHabilitado("dietética"), false);
   assert.doesNotMatch(contextoProspecto("cabañas / complejo", "X"), /budines sin TACC/);
   assert.match(contextoProspecto("cabañas / complejo", "X"), /Budines no tenemos/);
+});
+
+test("captación 11/11: hoteles y gastronomía cierran con la pregunta de precio y sin «sin TACC»", async () => {
+  const { PLANTILLAS } = await import("./whatsapp-plantillas");
+  for (const k of ["desayuno", "gastronomia"] as const) {
+    const p = PLANTILLAS[k];
+    assert.match(p.cuerpo, /¿A cuánto está pagando hoy el kilo de [^?]+\?/, k);
+    assert.doesNotMatch(p.cuerpo, /TACC|al recibir/i, k);
+    assert.ok(p.cuerpo.length <= 1024, k);
+    assert.ok(p.botones.every((b) => b.length <= 25), k);
+    assert.match(p.contexto, /se registra siempre/, k);
+    assert.doesNotMatch(p.contexto, /ofrecé[^.]*sin TACC/i, k);
+  }
+  assert.equal(PLANTILLAS.desayuno.nombre, "acopio_alojamientos_desayuno_v3");
+  assert.equal(PLANTILLAS.gastronomia.nombre, "acopio_negocios_gastronomia_v2");
 });
 
 test("captación 6/11: dietéticas y afines afuera por decisión (aunque se apruebe la v3) y 10 por día", async () => {
