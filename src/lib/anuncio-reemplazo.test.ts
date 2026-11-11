@@ -21,3 +21,17 @@ test("a igualdad de productos, el de precio más cercano", () => {
   const caro = { ...pan, slug: "pan-caro", precio: 34000 };
   assert.equal(comboParecido(despensa, [pan, caro])?.slug, "pan-caro");
 });
+
+import { comboAgotadoPedido } from "./anuncio-reemplazo";
+
+test("a mitad de charla: «los 4k surtido» es la Despensa agotada", () => {
+  assert.equal(comboAgotadoPedido("Cuanto sale los 4k  surtido", [trio, despensa, pan])?.slug, "despensa");
+  assert.equal(comboAgotadoPedido("precio de la despensa", [trio, despensa])?.slug, "despensa");
+  assert.equal(comboAgotadoPedido("4 kilos", [trio, despensa])?.slug, "despensa");
+});
+
+test("no confunde lo que no es un combo agotado", () => {
+  assert.equal(comboAgotadoPedido("nuez mani caju", [trio, despensa, pan]), null);
+  assert.equal(comboAgotadoPedido("trío del desayuno", [trio, despensa]), null);
+  assert.equal(comboAgotadoPedido("1 kg de pasas", [trio, despensa]), null);
+});
