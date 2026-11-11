@@ -31,7 +31,7 @@ export default async function FrutosSecosCarlosPaz() {
 
   const preguntas: [string, string][] = [
     ["¿Dónde compro frutos secos por kilo en Villa Carlos Paz?", "Acá mismo: somos una dietética online de Villa Carlos Paz. Elegís por la web o por WhatsApp y te llevamos el pedido a tu casa o a tu negocio. No tenemos local a la calle."],
-    ["¿Los mixes los arman ustedes?", "Sí. El Mix Clásico y sus variantes (con cajú, con girasol, sin maní, tropical) los armamos en casa con frutos secos que compramos por bolsa grande, y te los mandamos en bolsas de 1 kg, 500 g o 250 g según el producto."],
+    ["¿Los mixes los arman ustedes?", "Sí. El Mix Clásico con cajú (con o sin girasol), el sin maní y el tropical los armamos en casa con frutos secos que compramos por bolsa grande, y te los mandamos en bolsas de 1 kg, 500 g o 250 g según el producto."],
     ["¿Cobran el envío en Carlos Paz?", `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca la entrega es ${costoEntregaZona(cfg)}, en ${cfg.plazoEntregaPropia}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
     ["¿Hay compra mínima?", sinMinimo ? `No. ${textoZonaSinMinimo(cfg)} Sumás frutos secos, combos y cualquier otro producto de la tienda.` : `Sí, ${minimo} por pedido en la zona de entrega, sumando frutos secos, combos y cualquier otro producto de la tienda.`],
     ["¿Cómo pago?", "Por transferencia, con descuento, o con Mercado Pago. Si preferís, consultanos por WhatsApp y te armamos el pedido."],
@@ -64,7 +64,7 @@ export default async function FrutosSecosCarlosPaz() {
       <section className="grid gap-3 sm:grid-cols-3">
         {[
           ["Entrega en la zona", `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}: ${costoEntregaZona(cfg)}.`],
-          ["Mixes armados en casa", "Mix Clásico con cajú, con girasol, sin maní y tropical. Sabés lo que lleva cada uno antes de comprar."],
+          ["Mixes armados en casa", "Mix Clásico con cajú (con o sin girasol), sin maní y tropical. Sabés lo que lleva cada uno antes de comprar."],
           ["Por kilo, mejor precio", sinMinimo ? `Comprás en bolsa grande y pagás menos por kilo. Sin compra mínima; entrega sin cargo desde ${minimo}.` : `Comprás en bolsa grande y pagás menos por kilo. Compra mínima de ${minimo}, combinando lo que quieras.`],
         ].map(([t, d]) => (
           <div key={t} className="rounded-2xl bg-white p-4 shadow-ficha">
