@@ -14,6 +14,7 @@ import { CuentaRegresiva } from "@/components/CuentaRegresiva";
 import { Plazos } from "@/components/Plazos";
 import { costoEntregaZona } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
+import { descripcionLd, imagenesLd } from "@/lib/producto-ld";
 import { Medir } from "@/components/Medicion";
 import { BotonCompartir } from "@/components/Compartir";
 import { Galeria } from "@/components/Galeria";
@@ -77,7 +78,8 @@ export default async function Producto({ params }: Props) {
     sku: p.codigo,
     ...(marcaVisible(p.marca) ? { brand: { "@type": "Brand", name: p.marca } } : {}),
     category: p.categoria,
-    image: fila.fotos.length ? fila.fotos : undefined,
+    description: descripcionLd(`${p.producto} ${p.presentacion}`, p.categoria, porQue),
+    image: imagenesLd(urlSitio(), fila.fotos, fila.fotoUrl),
     offers: {
       "@type": "Offer",
       price: p.precio.toFixed(2),
