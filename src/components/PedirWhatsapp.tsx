@@ -2,16 +2,18 @@
 
 import { pesosCliente } from "./Carrito";
 import { linkWhatsapp } from "@/lib/pedido-calculos";
+import { lineaOrigen } from "@/lib/origen-web";
+import { leerOrigen } from "./Origen";
 
 /** El carrito armado como mensaje: el vendedor lo recibe y cierra el pedido (dirección y pago) en la charla. */
-export function mensajePedido(lineas: { nombre: string; cantidad: number; subtotal: number }[], subtotal: number): string {
+export function mensajePedido(lineas: { nombre: string; cantidad: number; subtotal: number }[], subtotal: number, origen?: string): string {
   const detalle = lineas.map((l) => `• ${l.cantidad} × ${l.nombre}: ${pesosCliente(l.subtotal)}`).join("\n");
-  return `Hola! Quiero hacer este pedido de la web:\n${detalle}\nTotal: ${pesosCliente(subtotal)}`;
+  return `Hola! Quiero hacer este pedido de la web:\n${detalle}\nTotal: ${pesosCliente(subtotal)}${lineaOrigen(origen)}`;
 }
 
 /** Botón «Pedir por WhatsApp» del carrito y del checkout. Lo cuenta el medidor global por `data-medir` (ver Medicion.tsx). */
 export function PedirWhatsapp({ numero, lineas, subtotal }: { numero?: string | null; lineas: { nombre: string; cantidad: number; subtotal: number; disponible: boolean }[]; subtotal: number }) {
-  const href = numero ? linkWhatsapp(numero, mensajePedido(lineas.filter((l) => l.disponible), subtotal)) : null;
+  const href = numero ? linkWhatsapp(numero, mensajePedido(lineas.filter((l) => l.disponible), subtotal, leerOrigen())) : null;
   if (!href) return null;
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="btn-whatsapp w-full" data-medir="whatsapp_desde_carrito">

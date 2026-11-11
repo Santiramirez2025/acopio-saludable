@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { MARCA, campaniaEnMensajes } from "./origen-web";
 import type { MedioPago, Order } from "@prisma/client";
 import { prisma } from "./prisma";
 import { enviarComprobante, urlComprobante } from "./comprobante-envio";
@@ -340,7 +341,11 @@ export async function crearPedidoWhatsapp(a: {
     ? totales(cotizacion.subtotal, envio, a.medioPago, { ...cfg, descuentoTransferenciaPct: 0 }, mayoristaPct, propia)
     : totales(cotizacion.subtotal, envio, a.medioPago, cfg, 0, propia);
   const charla = await prisma.$queryRaw<{ anuncioTitulo: string | null; prospecto: string | null }[]>`SELECT "anuncioTitulo", "prospecto" FROM "WhatsappConversacion" WHERE "telefono" = ${a.telefono}`;
-  const origen = charla[0]?.prospecto ? `whatsapp · prospección: ${charla[0].prospecto}` : charla[0]?.anuncioTitulo ? `whatsapp · anuncio: ${charla[0].anuncioTitulo}` : "whatsapp";
+  // Si vino de la web con un link con utm (consultorio, alianza) y tocó «Pedir por WhatsApp», el mensaje trae «Vengo de: …».
+  const campania = charla[0]?.prospecto || charla[0]?.anuncioTitulo ? null : campaniaEnMensajes(
+    (await prisma.whatsappMensaje.findMany({ where: { telefono: a.telefono, de: "cliente", fecha: { gte: new Date(Date.now() - 14 * 86_400_000) }, texto: { contains: MARCA } }, orderBy: { fecha: "desc" }, take: 5, select: { texto: true } }).catch(() => [])).map((m: { texto: string }) => m.texto),
+  );
+  const origen = charla[0]?.prospecto ? `whatsapp · prospección: ${charla[0].prospecto}` : charla[0]?.anuncioTitulo ? `whatsapp · anuncio: ${charla[0].anuncioTitulo}` : campania ? `whatsapp · web: ${campania}` : "whatsapp";
   const pedido = await prisma.order.create({
     data: {
       token: randomBytes(18).toString("base64url"),
