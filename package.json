@@ -30,7 +30,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "three": "^0.169.0",
-    "unpdf": "^0.12.1"
+    "unpdf": "^1.9.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
