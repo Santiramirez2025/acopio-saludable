@@ -185,10 +185,18 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
   }
 
   // Los combos adelante: son la oferta principal aunque la última búsqueda haya sido un producto suelto.
+  const sinAcento = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const textoPlano = sinAcento(texto);
+  // 11/11: el texto decía «Trío del desayuno $21.500» y la tarjeta (foto y «Lo quiero») era del primer combo
+  // que había buscado la herramienta: «Desayuno 30 días» a $34.000. La tarjeta tiene que ser del combo que
+  // NOMBRA el texto; si el texto no nombra ninguno, se deja el primero.
+  const nombrado = (f: Ficha) => textoPlano.includes(sinAcento(f.nombre.replace(/\s*·.*$/, "").trim()));
   const fichas = (r.fichas ?? [])
     .map((f) => ({ f, c: claseDeFicha(f) }))
     .filter((x) => x.c)
-    .sort((a, b) => Number(b.c!.clase === "c") - Number(a.c!.clase === "c"));
+    .sort((a, b) => Number(nombrado(b.f)) - Number(nombrado(a.f)) || Number(b.c!.clase === "c") - Number(a.c!.clase === "c"));
+  // Si el texto nombra un combo, la tarjeta es solo de ese: los demás no van con botón.
+  if (fichas.length > 1 && fichas.some((x) => x.c!.clase === "c" && nombrado(x.f))) fichas.splice(1);
   if (fichas.length) {
     const salida: Saliente[] = [];
     // Combo primero: si lo que ofrece es un combo, va como tarjeta con foto y tres botones.

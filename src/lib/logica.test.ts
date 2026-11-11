@@ -1480,6 +1480,19 @@ test("vendedor: lo que no hay se dice sin empujar un reemplazo ni pedir la direc
   assert.match(fuente, /NO PIDAS LA DIRECCIÓN NI EL ENVÍO HASTA QUE HAYA UN PEDIDO/);
 });
 
+test("whatsapp: la tarjeta es del combo que nombra el texto, no del primero que buscó la herramienta (11/11)", async () => {
+  const { planWhatsapp } = await import("./whatsapp-interactivo");
+  const fichas = [
+    { href: "/combos/desayuno-30-dias", nombre: "Desayuno 30 días", detalle: "", precio: "$ 34.000", foto: "https://x/30.jpg" },
+    { href: "/combos/trio-del-desayuno", nombre: "Trío del desayuno · 3 kilos", detalle: "", precio: "$ 21.500", foto: "https://x/trio.jpg" },
+  ];
+  const r = planWhatsapp({ texto: "Hoy la Despensa no la tenemos. Lo más parecido es el Trío del desayuno de 3 kilos por $21.500. ¿Te lo dejamos listo?", fichas }, null);
+  const foto = r.find((x) => x.tipo === "imagen") as { url: string } | undefined;
+  const tarjeta = r.find((x) => x.tipo === "botones") as { botones: { id: string }[] } | undefined;
+  assert.equal(foto?.url, "https://x/trio.jpg");
+  assert.deepEqual(tarjeta?.botones.map((b) => b.id), ["quiero|c|trio-del-desayuno"]);
+});
+
 test("mapa: link de navegación con la dirección completa y sin repetir", async () => {
   const { linkMapa, direccionCompleta, linkRuta } = await import("./mapa");
   assert.equal(direccionCompleta("Virgen de Lourdes 4480", "Cordoba", "Córdoba"), "Virgen de Lourdes 4480, Cordoba, Argentina");
