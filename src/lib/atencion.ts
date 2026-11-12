@@ -14,7 +14,7 @@ import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
@@ -720,7 +720,9 @@ export async function pensar(c: {
     !web && !ordenId && c.canal === "whatsapp" && (esPrimerPedidoDePrecios({ texto: c.texto, historial: c.historial, deAnuncio: Boolean(textoAnuncio), negocio: c.negocio }) || esToqueReactivacion({ texto: c.texto, historial: c.historial, negocio: c.negocio }))
       ? textoPrimeraListaPorKilo(await catalogo(), primerNombre(c.nombre), pesos)
       : null;
-  const r = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId, subtotalPedido }) : null);
+  const crudo = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId, subtotalPedido }) : null);
+  // Con calle y número ya dados (o un «Envío a X:» ya cotizado) no se repregunta la ciudad (Carlos Taborda, Martha Penfold, 12/11).
+  const r = crudo ? sinRepreguntarCiudad(crudo, c.historial, c.texto) : null;
 
   let respuesta: Respuesta;
   if (r) respuesta = r;

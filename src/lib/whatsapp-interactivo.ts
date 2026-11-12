@@ -460,6 +460,28 @@ export function tieneDireccion(texto: string): boolean {
   return /\b(direccion|calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?))/.test(t);
 }
 
+/**
+ * 12/11 (Nico): a Carlos Taborda le preguntaron «¿De qué ciudad sos?» con «Saavedra 50» ya dado («Seguro contesta
+ * una máquina») y a Martha Penfold le llegaron los botones de ciudad después de «Santo Cabral 212».
+ * Si el cliente ya dio calle y número, o ya le cotizamos «Envío a X:», no se repregunta la zona.
+ */
+const PREGUNTA_CIUDAD = /\s*¿\s*(de qu[eé] (ciudad|zona|localidad) (sos|eres)|de d[oó]nde (sos|eres|me escrib[ií]s)|en qu[eé] (ciudad|zona|localidad|barrio) (est[aá]s|sos|viv[ií]s))\b[^?]*\?/gi;
+const OPCION_CIUDAD = /^(carlos paz( y (la )?zona)?|villa carlos paz|c[oó]rdoba( capital)?|otra (ciudad|zona|localidad))$/i;
+
+export function yaSabemosDonde(historial: { de: string; texto: string }[], textoActual = ""): boolean {
+  if (textoActual && tieneDireccion(textoActual)) return true;
+  return historial.some((h) => (h.de === "yo" && tieneDireccion(h.texto)) || (h.de === "acopio" && /Envío a [^:]+:/.test(h.texto)));
+}
+
+export function sinRepreguntarCiudad<T extends { texto: string; opciones?: string[] }>(r: T, historial: { de: string; texto: string }[], textoActual = ""): T {
+  if (!yaSabemosDonde(historial, textoActual)) return r;
+  const texto = r.texto.replace(PREGUNTA_CIUDAD, "").replace(/[ \t]+\n/g, "\n").trim();
+  const opciones = r.opciones?.filter((o) => !OPCION_CIUDAD.test(o.trim()));
+  const sinCambios = texto === r.texto.trim() && (opciones?.length ?? 0) === (r.opciones?.length ?? 0);
+  if (sinCambios) return r;
+  return { ...r, texto: texto || r.texto, opciones: opciones && opciones.length ? opciones : undefined };
+}
+
 /** «Sí, dejalo listo», «dejalo listo», «listo, dale», «sí»: confirma el pedido que ya está armado. */
 export function confirmaPedido(texto: string): boolean {
   const t = limpio(texto);
