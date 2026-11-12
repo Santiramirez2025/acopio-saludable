@@ -58,6 +58,9 @@ export function limpiarCalle(calle: string | null | undefined): string | null {
   return t;
 }
 
+/** Localidades donde una dirección NO es de Carlos Paz aunque falte la ciudad. */
+const OTRA_LOCALIDAD = /\b(cordoba capital|ciudad de cordoba|capital|tanti|cosquin|la falda|bialet masse|santa maria|icho cruz|cuesta blanca|mayu sumaj|san antonio|tala huasi|villa del lago|san roque|santa cruz del lago|malagueno|la calera|villa allende|mendiolaza|rio ceballos|alta gracia|villa maria)\b/;
+
 /** «Belgrano 123», «Villa Carlos Paz», «Córdoba», «5152» → «Belgrano 123, Villa Carlos Paz, Córdoba 5152, Argentina». */
 export function direccionCompleta(
   calle: string | null | undefined,
@@ -66,7 +69,12 @@ export function direccionCompleta(
   cp?: string | null,
 ): string {
   const partes: string[] = [];
-  for (const p of [limpiarCalle(calle) ?? calle, ciudad, provincia || "Córdoba"]) {
+  // 12/11: sin ciudad («A confirmar»), Google mandaba «Capitán Bustos 1530, Santa Rita» a Córdoba capital (Olga).
+  // Casi todo lo que repartimos es de Carlos Paz: sin ciudad y sin otra localidad en la calle, va Villa Carlos Paz.
+  const sinCiudad = !String(ciudad ?? "").trim() || /a confirmar|la lleva|retira/i.test(String(ciudad));
+  const otra = sin(String(calle ?? "")).match(OTRA_LOCALIDAD)?.[1];
+  const ciudadReal = !sinCiudad ? ciudad : otra ? otra.replace(/\b\w/g, (l) => l.toUpperCase()) : "Villa Carlos Paz";
+  for (const p of [limpiarCalle(calle) ?? calle, ciudadReal, provincia || "Córdoba"]) {
     const t = String(p ?? "").trim();
     if (!t || /la lleva|retira|a confirmar/i.test(t)) continue;
     if (partes.some((x) => sin(x).includes(sin(t)))) continue;

@@ -1961,3 +1961,10 @@ test("12/11: «Sí, dejalo listo» confirma el pedido y reconoce cuando aceptamo
   assert.ok(aceptamosAlRecibir("Anotamos Santo Cabral 212, y pagás en efectivo al recibir. ¿Lo dejamos listo?"));
   assert.ok(!aceptamosAlRecibir("Podés pagarlo con Mercado Pago desde el link de arriba."));
 });
+
+test("12/11: sin ciudad, la dirección va a Villa Carlos Paz (Olga salía en Córdoba capital)", async () => {
+  const { direccionCompleta } = await import("./mapa");
+  assert.equal(direccionCompleta("Capitán Bustos 1530, Santa Rita", "A confirmar"), "Capitán Bustos 1530, Villa Carlos Paz, Córdoba, Argentina");
+  assert.equal(direccionCompleta("Belgrano 50, Tanti", ""), "Belgrano 50, Tanti, Córdoba, Argentina");
+  assert.equal(direccionCompleta("Av. Colón 100", "Córdoba Capital"), "Av. Colón 100, Córdoba Capital, Argentina");
+});
