@@ -14,7 +14,7 @@ import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, pideDatosTransferencia, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
@@ -493,6 +493,18 @@ export async function atender(e: Entrada): Promise<void> {
     const direccion = tieneDireccion(texto) ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160) : undefined;
     console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
     return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: "Villa Carlos Paz" }, direccion || undefined);
+  }
+
+  // 12/11: «Sí, dejalo listo» después de que le aceptamos pagar al recibir: se crea el pedido AL_RECIBIR en el acto.
+  // Antes la IA contestaba «quedó agendado» y el pedido no existía en el panel (Carlos Taborda, Martha Penfold).
+  if (PAGO_AL_RECIBIR && canal === "whatsapp" && guardado?.startsWith("/carrito?p=") && confirmaPedido(texto)) {
+    const hist = await historialDe(e.clave, 12);
+    const previo = [...hist].reverse().find((h) => h.de === "acopio")?.texto ?? "";
+    if (aceptamosAlRecibir(previo) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio))) {
+      const direccion = [...hist].reverse().find((h) => h.de === "cliente" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
+      console.log("chat: confirma el pedido al recibir, se cierra", cola(e.clave));
+      return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: ultimoEnvio ?? "Villa Carlos Paz" }, direccion || undefined);
+    }
   }
 
   // Pide el alias o los datos con el pedido armado: se cierra por transferencia en el acto (total con

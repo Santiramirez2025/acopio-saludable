@@ -460,6 +460,19 @@ export function tieneDireccion(texto: string): boolean {
   return /\b(direccion|calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?))/.test(t);
 }
 
+/** «Sí, dejalo listo», «dejalo listo», «listo, dale», «sí»: confirma el pedido que ya está armado. */
+export function confirmaPedido(texto: string): boolean {
+  const t = limpio(texto);
+  if (t.includes("?")) return false;
+  return /^(si|sii+|dale|ok|okey|listo|perfecto|genial|joya|bueno)?[,.! ]*(si[,! ]*)?(dejalo|dejenlo|dejamelo|dejen|deja)( todo)? listo[.! ]*$|^(si|sii+)[,.! ]*(dale|listo|perfecto|genial|joya|confirmo|confirmado)?[.! ]*$|^(confirmo|confirmado|lo confirmo)[.! ]*$/.test(t);
+}
+
+/** El último mensaje nuestro aceptó pagar al recibir (en efectivo, cuando te lo llevamos). */
+export function aceptamosAlRecibir(textoAcopio: string): boolean {
+  const t = limpio(textoAcopio);
+  return /\b(al recibir|contra ?entrega|cuando (te lo llev|lo recib|lo traig|lo lleve)|en efectivo al recibir|pagas cuando)\b/.test(t);
+}
+
 /** «Gracias», «ok, gracias», «👍» solos: se agradece corto y sin botones, sin volver a ofrecer. */
 export function soloAgradece(texto: string): boolean {
   // «?» o «??» no es un gracias: está esperando la respuesta a algo que preguntó.

@@ -738,7 +738,7 @@ test("whatsapp: pedir una persona es pedirla de verdad, no nombrar whatsapp", ()
   assert.ok(!pidePersona("¡Hola! Quiero precios de frutos secos por kilo"));
 });
 
-import { fichasNombradas } from "./whatsapp-interactivo";
+import { fichasNombradas, confirmaPedido, aceptamosAlRecibir } from "./whatsapp-interactivo";
 test("vendedor: abajo van los productos que nombró", () => {
   const f = (nombre: string) => ({ href: `/combos/${nombre}`, nombre: `Combo ${nombre}`, detalle: "", precio: "$ 1", foto: null });
   const todas = [f("Desayuno 30 días"), f("Despensa de 4 kilos"), f("Alacena de frutos secos")];
@@ -1949,4 +1949,15 @@ test("ficha sin stock: se muestra (sin Agregar) solo si está publicada y en SIN
   assert.equal(fichaSinStock({ ...base, estado: "BORRADOR" }, 20), false);
   assert.equal(fichaSinStock({ ...base, estado: "ACTIVO" }, 20), false);
   assert.equal(fichaSinStock(base, 40), false);
+});
+
+test("12/11: «Sí, dejalo listo» confirma el pedido y reconoce cuando aceptamos pagar al recibir", () => {
+  assert.ok(confirmaPedido("Sí, dejalo listo"));
+  assert.ok(confirmaPedido("dejalo listo"));
+  assert.ok(confirmaPedido("Si"));
+  assert.ok(!confirmaPedido("Sí, pero ¿cuánto sale el envío?"));
+  assert.ok(!confirmaPedido("Muchas gracias"));
+  assert.ok(aceptamosAlRecibir("Dale, Carlos, lo pagás cuando te lo llevamos. ¿Me pasás calle y número para cargarlo?"));
+  assert.ok(aceptamosAlRecibir("Anotamos Santo Cabral 212, y pagás en efectivo al recibir. ¿Lo dejamos listo?"));
+  assert.ok(!aceptamosAlRecibir("Podés pagarlo con Mercado Pago desde el link de arriba."));
 });
