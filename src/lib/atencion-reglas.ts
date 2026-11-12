@@ -27,7 +27,7 @@ export function hoyEnArgentina(ahora: Date = new Date()): string {
  * Los pedidos viejos «al recibir» se respetan: a esos no se les pide pagar antes.
  */
 export function notaPedidoSinPagar(medioPago: string | null | undefined, yaMandoComprobante = false): string {
-  if (medioPago === "AL_RECIBIR") return " Es un pedido viejo acordado para pagar al recibir: se respeta, no le pidas que pague antes ni se lo ofrezcas a nadie más.";
+  if (medioPago === "AL_RECIBIR") return " Es un pedido acordado para pagar al recibir: se respeta, no le pidas que pague antes.";
   // AS-00043 (5/11): mandó el comprobante 17:24 y le preguntamos tres veces si ya había transferido.
   if (yaMandoComprobante) return " YA MANDÓ EL COMPROBANTE, falta que Santiago vea la acreditación. No le preguntes si transfirió ni si lo mandó, no le pidas nada, no pongas botones y no preguntes «¿algo más?». Si da un horario o un dato, guardalo y cerrá solo con: «Anotado. Ya tenemos tu comprobante: apenas Santiago vea la acreditación te confirmamos por acá.». No digas que está pagado.";
   return " TODAVÍA NO PAGÓ: el pedido sale recién con el pago acreditado. No digas que va en el reparto ni que Santiago le confirma el horario; si pregunta cuándo llega, decile que se coordina apenas se acredite el pago. Si dice que paga más tarde, no insistas.";
