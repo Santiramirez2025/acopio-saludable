@@ -41,8 +41,10 @@ export async function POST(req: Request) {
   const activos = await prisma.comboItem.findMany({ where: { combo: { activo: true, slug: { notIn: COMBOS_A_DESACTIVAR } } }, select: { codigo: true } });
   const enCombos = new Set([...COMBOS_PROVEEDORES.flatMap((c) => c.items.map((i) => i.codigo)), ...activos.map((i) => i.codigo).filter((c) => !REEMPLAZOS[c])]);
   const visibles = await prisma.product.findMany({ where: { visible: true }, select: { codigo: true, producto: true, presentacion: true, categoria: true } });
+  // 12/11: las bolsas cerradas propias (LG-…-10KG) se venden a propósito: la regla de «bolsón» es para el catálogo viejo de Distrimay.
+  const propiosCurados = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo));
   const ocultar = visibles.filter(
-    (p) => !enCombos.has(p.codigo) && (OCULTAR.presentacion.test(`${p.presentacion} ${p.producto}`) || OCULTAR.producto.test(p.producto) || OCULTAR.categorias.includes(p.categoria) || OCULTAR.codigos.includes(p.codigo)),
+    (p) => !enCombos.has(p.codigo) && !propiosCurados.has(p.codigo) && (OCULTAR.presentacion.test(`${p.presentacion} ${p.producto}`) || OCULTAR.producto.test(p.producto) || OCULTAR.categorias.includes(p.categoria) || OCULTAR.codigos.includes(p.codigo)),
   );
 
   const resumen = {
