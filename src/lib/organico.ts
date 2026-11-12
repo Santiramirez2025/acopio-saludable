@@ -73,6 +73,10 @@ export async function reabastecer(): Promise<number> {
     ["heladería", "heladería Villa Carlos Paz"], ["panadería", "panadería Villa Carlos Paz"], ["pastelería", "pastelería Villa Carlos Paz"],
     ["cafetería", "cafetería Villa Carlos Paz"], ["restaurante", "restaurante Villa Carlos Paz"], ["cafetería", "cafetería Cosquín La Falda"],
     ["panadería", "panadería Cosquín La Falda"], ["heladería", "heladería Alta Gracia"],
+    // 12/11: Carlos Paz ya está casi barrido; Córdoba capital paga el envío (gratis arriba de $40.000 la mitad).
+    ["cafetería", "cafetería de especialidad Nueva Córdoba"], ["panadería", "panadería artesanal Córdoba Cerro de las Rosas"],
+    ["pastelería", "pastelería Córdoba General Paz"], ["heladería", "heladería artesanal Córdoba"], ["restaurante", "restaurante saludable Córdoba"],
+    ["hotel", "hotel con desayuno Córdoba centro"], ["cafetería", "cafetería Tanti San Antonio de Arredondo Icho Cruz"],
   ];
   const semilla: Semilla[] = [];
   for (const [rubro, q] of busquedas) {
