@@ -1,5 +1,5 @@
 {
- "actualizado": "2026-11-05",
+ "actualizado": "2026-11-12",
  "uso": "Banco de tomas reales de Acopio en 9:16 (1080x1920, con texto ya quemado). Se reutilizan para armar variantes genuinas: otro orden, otro gancho, otro largo, otro audio y otro texto de publicación. Nunca subir el mismo archivo dos veces a la misma red.",
  "base": "https://www.acopiosaludable.com/video/tomas/",
  "videos": [
@@ -320,6 +320,111 @@
      "plano": "Mano con guante negro eligiendo dátiles del cajón de madera original",
      "texto": null,
      "rol": "calidad · manipulación segura y producto a granel"
+    }
+   ]
+  },
+  {
+   "id": "crudo-2026-11-12",
+   "original": null,
+   "objetivo": "Material en crudo de Santiago (12/11): el armado del mix de frutos secos a mano, el fraccionado y el reparto en la Kangoo. Lo que nos diferencia: fraccionado en el día, mezclado a mano y entrega propia todos los días.",
+   "sonido": "Varios con audio ambiente (caída de frutos secos, sirve como ASMR); el de dátiles sin sonido.",
+   "nota": "Verticales 1080x1920, sin precio a la vista. Ideas: (1) «Así se arma tu mix» = nueces caen → almendras → cajú → maní → mezclando → cerrando la bolsa con etiqueta → Kangoo sale. (2) «Repartimos cada día» = bolsas en la Kangoo → Kangoo sale. (3) Semillas ≠ frutos secos: caja de mix de semillas con el texto «Mix de SEMILLAS: lino, chía y sésamo». Si la almendra no está en stock ese día, no publicar los clips de almendra como oferta.",
+   "tomas": [
+    {
+     "n": 1,
+     "archivo": "crudo-1211-pasas-mano-en-caja-10kg.mp4",
+     "seg": 4.6,
+     "plano": "Mano con guante negro agarrando pasas de uva de la caja de 10 kg",
+     "texto": null,
+     "rol": "producto · pasas, cantidad real"
+    },
+    {
+     "n": 2,
+     "archivo": "crudo-1211-almendras-caen-sobre-nueces.mp4",
+     "seg": 2.7,
+     "plano": "Almendras cayendo sobre nueces en el recipiente",
+     "texto": null,
+     "rol": "armado del mix · almendra"
+    },
+    {
+     "n": 3,
+     "archivo": "crudo-1211-bolsas-pedidos-en-kangoo.mp4",
+     "seg": 3.1,
+     "plano": "Bolsas de papel con pedidos listos y la tarjeta de Acopio, dentro de la Kangoo",
+     "texto": null,
+     "rol": "logística · entrega propia"
+    },
+    {
+     "n": 4,
+     "archivo": "crudo-1211-mani-cae-sobre-mix-audio.mp4",
+     "seg": 7.7,
+     "plano": "Maní cayendo sobre el mix de frutos secos, con el sonido",
+     "texto": null,
+     "rol": "armado del mix · ASMR"
+    },
+    {
+     "n": 5,
+     "archivo": "crudo-1211-caju-cae-sobre-almendras.mp4",
+     "seg": 2.5,
+     "plano": "Castañas de cajú cayendo sobre almendras",
+     "texto": null,
+     "rol": "armado del mix · cajú"
+    },
+    {
+     "n": 6,
+     "archivo": "crudo-1211-cerrando-kilo-mix-etiqueta.mp4",
+     "seg": 10.4,
+     "plano": "Cerrando una bolsa de 1 kg de mix de frutos secos con la etiqueta de Acopio",
+     "texto": null,
+     "rol": "producto terminado · cierre"
+    },
+    {
+     "n": 7,
+     "archivo": "crudo-1211-kangoo-llena-sale-reparto.mp4",
+     "seg": 7.0,
+     "plano": "Kangoo cargada de bolsas saliendo al reparto (ya tiene texto: «Repartimos cada día»)",
+     "texto": "Repartimos cada día",
+     "rol": "logística · entrega propia · cierre"
+    },
+    {
+     "n": 8,
+     "archivo": "crudo-1211-mezclando-mix-audio.mp4",
+     "seg": 22.8,
+     "plano": "Mezclando a mano el mix de frutos secos (nuez, cajú, almendra, pasas), 23 s con sonido",
+     "texto": null,
+     "rol": "proceso · ASMR · el más largo"
+    },
+    {
+     "n": 9,
+     "archivo": "crudo-1211-caja-mix-semillas-fraccionado.mp4",
+     "seg": 4.8,
+     "plano": "Caja llena de bolsas de mix de semillas ya fraccionadas",
+     "texto": null,
+     "rol": "producto · semillas (lino, chía y sésamo)"
+    },
+    {
+     "n": 10,
+     "archivo": "crudo-1211-nueces-caen-sobre-pasas.mp4",
+     "seg": 2.1,
+     "plano": "Nueces cayendo sobre pasas de uva",
+     "texto": null,
+     "rol": "armado del mix · nuez"
+    },
+    {
+     "n": 11,
+     "archivo": "crudo-1211-pesando-kilo-datiles.mp4",
+     "seg": 5.4,
+     "plano": "Bolsa de 1 kg de dátiles en la balanza (sin sonido)",
+     "texto": null,
+     "rol": "producto · peso exacto"
+    },
+    {
+     "n": 12,
+     "archivo": "crudo-1211-zoom-almendras-nueces.mp4",
+     "seg": 1.7,
+     "plano": "Zoom a almendras sobre nueces",
+     "texto": null,
+     "rol": "detalle · gancho de 1,7 s"
     }
    ]
   }
