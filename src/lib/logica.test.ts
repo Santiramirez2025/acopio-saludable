@@ -1140,15 +1140,17 @@ test("imágenes oportunas: en el momento justo y sin repetir", () => {
   // Ya se mandó → no se repite
   const conFoto = [{ de: "acopio" as const, texto: "[Foto] Despensa de 4 kilos" }];
   assert.equal(fotosOportunas({ entrante: "y la despensa?", respuesta: "La Despensa de 4 kilos sale $35.227", historial: conFoto }).length, 0);
-  // Tope de 3 por charla
-  const tres = ["a", "b", "c"].map((x) => ({ de: "acopio" as const, texto: `[Foto] ${x}` }));
+  // Tope de 4 por charla (12/11: «todas las ventas con imágenes»)
+  const tres = ["a", "b", "c", "d"].map((x) => ({ de: "acopio" as const, texto: `[Foto] ${x}` }));
   assert.equal(fotosOportunas({ entrante: "¿es confiable?", respuesta: "sí", historial: tres }).length, 0);
   // Charla común sin disparador → nada
   assert.equal(fotosOportunas({ entrante: "hola", respuesta: "¡Hola! ¿Qué estás buscando?", historial: vacio }).length, 0);
   // Pidió una granola: no va la foto del mix (Lorenzo)
   assert.equal(fotosOportunas({ entrante: "Hola! Quiero Granola proteica Sport x 1 kg", respuesta: "La granola sale $14.200", historial: vacio }).length, 0);
-  // El vendedor ofrece un combo que nadie pidió: sin foto
-  assert.equal(fotosOportunas({ entrante: "quiero sal rosada y granola", respuesta: "Te paso: Despensa de 4 kilos a $35.500", historial: vacio }).length, 0);
+  // 12/11: el vendedor ofrece un combo con precio → va su foto, para que vea qué trae antes de pagar
+  assert.equal(fotosOportunas({ entrante: "quiero algo para el desayuno", respuesta: "Te recomiendo el Trío del desayuno a $21.500", historial: vacio })[0].url, "/img/galeria/combo-trio-del-desayuno.jpg");
+  // «mix de semillas» es semillas, no el mix de frutos secos (Olga y Graciela)
+  assert.equal(fotosOportunas({ entrante: "cuánto el mix de semillas?", respuesta: "El mix de semillas sale $5.200", historial: vacio })[0].url, "/img/galeria/producto-mix-semillas.jpg");
 });
 
 test("imágenes oportunas: el primer «precios por kilo» va con la imagen del mix", () => {

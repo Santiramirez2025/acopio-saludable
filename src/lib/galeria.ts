@@ -14,6 +14,8 @@ const COMBOS: Record<string, string> = {
   "desayuno-30-dias": "combo-desayuno-30-dias",
   "mixes-del-mes": "combo-mixes-del-mes",
   "arranque-gym": "combo-arranque-gym",
+  "trio-del-desayuno": "combo-trio-del-desayuno",
+  "pan-dulce-casero": "combo-pan-dulce-casero",
 };
 
 /** Productos con imagen propia (por código). */
@@ -32,6 +34,9 @@ const PRODUCTOS: Record<string, string> = {
   "TG-PASAS": "producto-pasas",
   "TG-PASAS-500": "producto-pasas",
   "LG-PASASRUBIAS": "producto-pasas",
+  "LG-MIXSEM": "producto-mix-semillas",
+  "LG-MIXSEM-500": "producto-mix-semillas",
+  "TG-QUINOAPOP": "producto-quinoa-pop",
 };
 
 /** Video corto (30 s) de cómo armamos el pedido, para el «¿cómo llega?» y la desconfianza. */
@@ -39,6 +44,7 @@ export const VIDEO_ARMAMOS = { url: "/video/asi-armamos-tu-pedido.mp4", pie: "As
 
 /** Fotos reales de la mercadería en la mesa de fraccionado (public/img/reales), por producto. */
 const REALES_PRODUCTO: [RegExp, string, string][] = [
+  [/semilla/i, "real-semillas", "Mix de semillas 1 kg (lino, chía y sésamo)"],
   [/mix.*500|500.*mix/i, "real-mix-500", "Mix clásico 500 g, recién fraccionado"],
   [/\bmix\b/i, "real-mix", "Mix clásico 1 kg, armado en el día"],
   [/almendra.*500|500.*almendra/i, "real-almendras-500", "Almendras Non Pareil 500 g"],
@@ -52,7 +58,6 @@ const REALES_PRODUCTO: [RegExp, string, string][] = [
   [/granola.*prote|prote.*granola/i, "real-granola-proteica", "Granola proteica 1 kg"],
   [/granola/i, "real-granola", "Granola tradicional 1 kg"],
   [/\bmiel\b/i, "real-miel", "Miel pura Los Dos Zánganos"],
-  [/semilla/i, "real-semillas", "Mix de semillas 1 kg"],
 ];
 
 /** La foto real del producto que se nombra (la primera que coincide), o null. */
@@ -100,6 +105,8 @@ type Turno = { de: "yo" | "acopio"; texto: string };
 export type FotoOportuna = { url: string; pie: string };
 
 const NOMBRES_COMBO: [RegExp, string, string][] = [
+  [/tr[ií]o/i, "trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas"],
+  [/pan dulce casero|combo pan dulce/i, "pan-dulce-casero", "Pan dulce casero: pasas y dátiles"],
   [/despensa de 4 kilos|despensa grande/i, "despensa-4-kilos", "Despensa de 4 kilos"],
   [/despensa chica/i, "despensa-chica", "Despensa chica de 2 kilos"],
   [/alacena/i, "alacena-de-frutos-secos", "Alacena de frutos secos"],
@@ -107,23 +114,28 @@ const NOMBRES_COMBO: [RegExp, string, string][] = [
   [/mixes del mes/i, "mixes-del-mes", "Mixes del mes"],
   [/pack gym|arranque gym/i, "arranque-gym", "Pack gym del mes"],
 ];
+// El orden importa: «mix de semillas» tiene que caer en semillas, no en el mix de frutos secos
+// (12/11: Olga y Graciela recibieron el Trío pensando que el mix era de frutos secos).
 const PRODUCTOS_TEXTO: [RegExp, string, string][] = [
+  [/semilla/i, "producto-mix-semillas", "Mix de semillas: lino, chía y sésamo (no son frutos secos)"],
+  [/quinoa/i, "producto-quinoa-pop", "Quinoa pop"],
   [/\bnuez|\bnueces/i, "producto-nuez", "Nuez mariposa"],
   [/almendra/i, "producto-almendras", "Almendras"],
   [/caj[uú]/i, "producto-caju", "Castañas de cajú"],
   [/d[aá]til/i, "producto-datiles", "Dátiles con carozo"],
   [/\bpasas?\b/i, "producto-pasas", "Pasas de uva"],
-  [/\bmix\b/i, "producto-mix-clasico", "Mix clásico con cajú"],
+  [/\bmix\b(?! de semillas)/i, "producto-mix-clasico", "Mix clásico con cajú"],
 ];
 const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen local|d[oó]nde est[aá]n|ver antes|c[oó]mo (llega|viene)|empaque|calidad|fresc/i;
 
 export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
   // 12/11: con el Mix clásico sin stock, la foto de «el más pedido» mostraba algo que no se podía vender (Elvira).
-  const masPedido = (): FotoOportuna | null => (a.mixClasicoDisponible === false ? null : candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido"));
+  const masPedido = (): FotoOportuna | null =>
+    a.mixClasicoDisponible === false ? candidata("combo-trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas") : candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
   const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
   const yaMandadas = nuestros.filter((t) => t.startsWith("[Foto]"));
-  // Máximo 2 fotos por charla: más que eso molesta (y nunca una foto de algo que no pidió).
-  if (yaMandadas.length >= 2) return [];
+  // 12/11 (Santiago): «todas las ventas con imágenes, entra por los ojos». Hasta 4 fotos por charla, nunca repetida.
+  if (yaMandadas.length >= 4) return [];
   const yaSalio = (pie: string) => yaMandadas.some((t) => t.includes(pie));
   const candidata = (archivo: string, pie: string): FotoOportuna | null => (yaSalio(pie) ? null : { url: url(archivo), pie });
   const real = REALES[0];
@@ -140,8 +152,10 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
   }
   // 3. Un combo que la persona nombró o eligió (no uno que el vendedor ofreció por su cuenta).
   const hablaDeCombos = /combo|despensa|alacena|kit|bolsa|caja|mesa|regalo|recomend|conviene|aconsej/i.test(a.entrante);
+  const conPrecio = /\$\s?\d/.test(a.respuesta);
   for (const [re, slug, nombre] of NOMBRES_COMBO) {
-    if (re.test(a.entrante) || (hablaDeCombos && (re.test(a.respuesta) || a.combos?.includes(slug)))) {
+    // 12/11: también cuando el vendedor ofrece el combo con precio: que vea qué trae antes de pagar.
+    if (re.test(a.entrante) || (conPrecio && re.test(a.respuesta)) || (hablaDeCombos && (re.test(a.respuesta) || a.combos?.includes(slug)))) {
       const f = candidata(COMBOS[slug], nombre);
       if (f) return [f];
     }
@@ -149,7 +163,7 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
   // 4. Preguntó por un producto con imagen y le contestamos el precio.
   if (/\$\s?\d/.test(a.respuesta)) {
     for (const [re, archivo, pie] of PRODUCTOS_TEXTO) {
-      if (re.test(a.entrante)) {
+      if (re.test(a.entrante) || re.test(a.respuesta)) {
         const f = candidata(archivo, pie);
         if (f) return [f];
       }

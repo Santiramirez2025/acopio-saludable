@@ -207,7 +207,7 @@ export function recomendarMix(objetivos: ObjetivoMix[], sinMani: boolean): Recom
   const tiene = (o: ObjetivoMix) => objetivos.includes(o);
   if (tiene("intestino")) {
     return {
-      codigo: "LG-MIXSEM", tipo: "producto", titulo: "Mix de semillas para el desayuno",
+      codigo: "LG-MIXSEM", tipo: "producto", titulo: "Mix de semillas (lino, chía y sésamo)",
       porQue: "Lino, chía, sésamo y girasol: entre las cuatro suman más fibra que cualquier fruto seco, más calcio y omega-3. Una cucharada por día y se nota en una semana.",
       suma: { codigo: "LG-DATIL", tipo: "producto", nombre: "Dátiles con carozo", porQue: "8 g de fibra cada 100 g y endulzan el yogur sin azúcar." },
     };
