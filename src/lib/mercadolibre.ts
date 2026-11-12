@@ -82,8 +82,13 @@ async function descripcion(itemId: string): Promise<string> {
 
 /** Redacta la respuesta con el mismo criterio del vendedor, respetando las reglas de ML (sin datos de contacto ni links). */
 async function redactar(p: Pregunta, item: Item, otras: Item[]): Promise<string | null> {
+  return (await borrador(p, item, otras)).texto;
+}
+
+/** Borrador crudo y limpio de la respuesta, con el motivo si no se puede publicar. */
+async function borrador(p: Pregunta, item: Item, otras: Item[]): Promise<{ crudo: string | null; texto: string | null; motivo?: string }> {
   const clave = process.env.ANTHROPIC_API_KEY;
-  if (!clave) return null;
+  if (!clave) return { crudo: null, texto: null, motivo: "sin ANTHROPIC_API_KEY" };
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
@@ -105,9 +110,25 @@ async function redactar(p: Pregunta, item: Item, otras: Item[]): Promise<string 
     }),
     signal: AbortSignal.timeout(30_000),
   }).catch(() => null);
-  if (!res?.ok) return null;
+  if (!res?.ok) return { crudo: null, texto: null, motivo: `IA no respondió (${res?.status ?? "sin conexión"})` };
   const j = (await res.json()) as { content?: { text?: string }[] };
-  return textoRespuestaMl((j.content ?? []).map((b) => b.text ?? "").join(""));
+  const crudo = (j.content ?? []).map((b) => b.text ?? "").join("");
+  const texto = textoRespuestaMl(crudo);
+  return texto ? { crudo, texto } : { crudo, texto: null, motivo: "el borrador rompe una regla de ML (contacto, link o número)" };
+}
+
+/** Solo lectura: preguntas sin responder con su texto, la publicación y el borrador (no publica nada). */
+export async function preguntasPendientes(): Promise<{ id: number; fecha: string; publicacion: string; pregunta: string; borrador: string | null; motivo?: string }[]> {
+  const uid = await miUsuario();
+  const r = await ml<{ questions: Pregunta[] }>(`/questions/search?seller_id=${uid}&status=UNANSWERED&api_version=4`);
+  const items = await misItems().catch(() => [] as Item[]);
+  const out = [];
+  for (const p of r.questions ?? []) {
+    const item = items.find((i) => i.id === p.item_id) ?? (await ml<Item>(`/items/${p.item_id}`));
+    const b = await borrador(p, item, items.filter((i) => i.id !== item.id));
+    out.push({ id: p.id, fecha: p.date_created, publicacion: `${item.id} · ${item.title}`, pregunta: p.text, borrador: b.texto ?? b.crudo, motivo: b.motivo });
+  }
+  return out;
 }
 
 async function misItems(): Promise<Item[]> {
