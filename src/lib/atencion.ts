@@ -17,7 +17,7 @@ import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsa
 import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, pideDatosTransferencia, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
-import { combosTienda, cotizarCarrito } from "./tienda";
+import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
 import { dioPorCerrada } from "./whatsapp-recordatorio";
 import { AVISOS_WHATSAPP, avisarSantiago } from "./avisos";
@@ -789,7 +789,8 @@ export async function pensar(c: {
       ...(respuesta.acciones ?? []).filter((a) => a.clase === "combo").map((a) => a.id),
       ...(respuesta.fichas ?? []).map((f) => f.href.match(/^\/combos\/(.+)$/)?.[1]).filter((x): x is string => Boolean(x)),
     ];
-    const oportunas = fotosOportunas({ entrante: c.texto, respuesta: respuesta.texto, combos, historial: c.historial });
+    const mixClasicoDisponible = (await productosTienda({ where: { codigo: "TG-MIXC" }, take: 1 })).length > 0; // productosTienda solo devuelve lo publicado (ACTIVO con margen)
+    const oportunas = fotosOportunas({ entrante: c.texto, respuesta: respuesta.texto, combos, historial: c.historial, mixClasicoDisponible });
     if (oportunas.length) respuesta = { ...respuesta, fotos: oportunas.map((f) => ({ url: `${urlSitio()}${f.url}`, pie: f.pie })) };
   }
   // A una duda de confianza se le contesta la duda: sin el resumen ni los botones de pago en ese mensaje

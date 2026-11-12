@@ -117,7 +117,9 @@ const PRODUCTOS_TEXTO: [RegExp, string, string][] = [
 ];
 const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen local|d[oó]nde est[aá]n|ver antes|c[oó]mo (llega|viene)|empaque|calidad|fresc/i;
 
-export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[] }): FotoOportuna[] {
+export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
+  // 12/11: con el Mix clásico sin stock, la foto de «el más pedido» mostraba algo que no se podía vender (Elvira).
+  const masPedido = (): FotoOportuna | null => (a.mixClasicoDisponible === false ? null : candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido"));
   const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
   const yaMandadas = nuestros.filter((t) => t.startsWith("[Foto]"));
   // Máximo 2 fotos por charla: más que eso molesta (y nunca una foto de algo que no pidió).
@@ -155,14 +157,14 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
   }
   // 4b. Vuelve por la reactivación o un seguimiento («Sí, pasame precios») y le contestamos con precios: entra por los ojos.
   if (/pasame precios|pasame los precios|agendalo/i.test(a.entrante) && /\$\s?\d/.test(a.respuesta)) {
-    const f = candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
+    const f = masPedido();
     if (f) return [f];
   }
   // 5. Primera respuesta a un pedido de precios en general (el «precios por kilo» del anuncio): lo más pedido.
   // Si pidió un producto puntual (una granola, una harina), no: la foto del mix no tiene nada que ver.
   const preciosEnGeneral = /precio|lista|por kilo|cat[aá]logo|qu[eé] (tienen|venden|hay)/i.test(a.entrante);
   if (!nuestros.length && preciosEnGeneral && /\$\s?\d/.test(a.respuesta)) {
-    const f = candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
+    const f = masPedido();
     if (f) return [f];
   }
   return [];
