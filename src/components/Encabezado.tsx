@@ -101,10 +101,14 @@ export function MedidorPedido() {
   const ruta = usePathname();
   const { cotizacion, lineas } = useCarrito();
   if (!lineas.length || !cotizacion || cotizacion.subtotal <= 0) return null;
-  if (ruta.startsWith("/carrito") || ruta.startsWith("/checkout") || ruta.startsWith("/pedido")) return null;
+  if (ruta.startsWith("/checkout") || ruta.startsWith("/pedido")) return null;
   const { falta, progresoPct, subtotal } = cotizacion;
   // Con la compra mínima de Carlos Paz y la zona ya se puede ir al checkout (ahí se controla la zona).
   const puedePagar = cotizacion.puedePagar || cotizacion.puedePagarEnZona;
+  // En el carrito, en el celular, el botón «Continuar» queda abajo de los productos, el ahorro y el corte:
+  // el medidor lo deja siempre a mano. En la compu el resumen ya es fijo al costado.
+  const enCarrito = ruta.startsWith("/carrito");
+  if (enCarrito && !puedePagar) return null;
   const faltaZona = Math.max(0, cotizacion.compraMinimaPropia - subtotal);
   // Con envío fijo bajo mínimo, en la zona se compra igual: lo que falta es para el envío sin cargo, no para poder pedir.
   const textoZona =
@@ -112,7 +116,7 @@ export function MedidorPedido() {
       ? `En Carlos Paz ya podés comprar · ${pesosCliente(faltaZona)} más y el envío va sin cargo`
       : "Ya podés comprar en Carlos Paz y la zona";
   return (
-    <aside aria-label="Tu pedido" className="fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 mx-auto max-w-md md:inset-x-auto md:bottom-5 md:right-24 md:w-[380px]">
+    <aside aria-label="Tu pedido" className={`fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 mx-auto max-w-md md:inset-x-auto md:bottom-5 md:right-24 md:w-[380px] ${enCarrito ? "md:hidden" : ""}`}>
       <Link href={puedePagar ? "/checkout" : "/carrito"} className="fondo-oscuro block overflow-hidden rounded-2xl bg-acopio-900 text-white shadow-dock" aria-label={puedePagar ? "Finalizar la compra" : "Ver tu pedido"}>
         <div className="flex items-center gap-3 px-4 pb-2.5 pt-3">
           <div className="min-w-0 flex-1">
@@ -121,7 +125,7 @@ export function MedidorPedido() {
               {falta === 0 ? "Llegaste al mínimo. Ya podés comprar." : puedePagar ? textoZona : `Te faltan ${pesosCliente(faltaZona || falta)} para el mínimo`}
             </p>
           </div>
-          <span className="flex min-h-[44px] items-center rounded-full bg-sol px-4 text-sm font-bold text-acopio-900">{puedePagar ? "Comprar" : "Ver pedido"}</span>
+          <span className="flex min-h-[44px] items-center rounded-full bg-sol px-4 text-sm font-bold text-acopio-900">{enCarrito ? "Continuar" : puedePagar ? "Comprar" : "Ver pedido"}</span>
         </div>
         <div className="h-1.5 bg-white/15" role="progressbar" aria-valuenow={progresoPct} aria-valuemin={0} aria-valuemax={100} aria-label="Progreso hacia la compra mínima">
           <div className={`h-full transition-all duration-500 ${falta > 0 ? "bg-sol" : "bg-acopio-500"}`} style={{ width: `${progresoPct}%` }} />
