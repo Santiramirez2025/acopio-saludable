@@ -501,7 +501,7 @@ export async function atender(e: Entrada): Promise<void> {
     const hist = await historialDe(e.clave, 12);
     const previo = [...hist].reverse().find((h) => h.de === "acopio")?.texto ?? "";
     if (aceptamosAlRecibir(previo) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio))) {
-      const direccion = [...hist].reverse().find((h) => h.de === "cliente" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
+      const direccion = [...hist].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
       console.log("chat: confirma el pedido al recibir, se cierra", cola(e.clave));
       return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: ultimoEnvio ?? "Villa Carlos Paz" }, direccion || undefined);
     }
