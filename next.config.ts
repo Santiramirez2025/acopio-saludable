@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
+export const CSP_MINIMA = "base-uri 'self'; object-src 'none'; frame-ancestors 'self'";
+
 const nextConfig: NextConfig = {
+  // Sin «X-Powered-By: Next.js»: no le regalamos el framework a quien escanea buscando versiones vulnerables.
+  poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 30,
@@ -32,10 +36,15 @@ const nextConfig: NextConfig = {
   // Headers de seguridad en todo el sitio (HSTS ya lo pone Vercel):
   // nadie puede meter la tienda ni el panel en un iframe ajeno (clickjacking), el navegador no adivina
   // tipos de archivo, no se filtra la URL completa a terceros y solo nuestras páginas pueden usar el
-  // micrófono (las llamadas del panel); cámara y ubicación quedan cerradas. Sin CSP por ahora: la
-  // tienda carga Meta Pixel, Analytics, YouTube y Three.js y una CSP a ciegas rompería ventas.
+  // micrófono (las llamadas del panel); cámara y ubicación quedan cerradas.
+  // CSP mínima (12/11): solo directivas que no tocan scripts, estilos, imágenes ni conexiones, así que
+  // Meta Pixel, Analytics, YouTube, Three.js y Mercado Pago siguen igual. base-uri frena que un <base>
+  // inyectado mande los links y scripts relativos a otro dominio; object-src cierra <object>/<embed>
+  // (no usamos ninguno); frame-ancestors es lo mismo que X-Frame-Options, en la forma moderna.
+  // La CSP completa (script-src con nonce) queda para más adelante, primero en modo report-only.
   async headers() {
     const seguridad = [
+      { key: "Content-Security-Policy", value: CSP_MINIMA },
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
