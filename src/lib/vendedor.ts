@@ -22,7 +22,7 @@ import { linkWhatsapp } from "./pedidos";
 import { textosPorDefecto } from "./recompra-reglas";
 import { NICHOS } from "./taxonomia";
 import { cortada, fichasNombradas, presentacionDe, separarOpciones, listaDeProductos, listaDeVerdad } from "./whatsapp-interactivo";
-import { totalTransferencia, argumentoCombo, COMBO_ENTRADA, temaDe } from "./combos-tema";
+import { totalTransferencia, argumentoCombo, COMBOS_ENTRADA, temaDe } from "./combos-tema";
 import type { Accion, Enlace, EnvioCotizado, Ficha, Foto, Respuesta } from "./asistente-catalogo";
 import { urlSitio } from "./sitio";
 
@@ -389,7 +389,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const elegidos = [...porTema, ...porItems].slice(0, 2);
     // Sin TACC nunca baja a la Despensa: no es apta. Ahí lo barato se arma a medida con productos sin TACC.
     const esSinTacc = tema?.id.startsWith("sintacc") ?? false;
-    const entrada_ = esSinTacc ? undefined : todos.find((c) => c.slug === COMBO_ENTRADA);
+    const entrada_ = esSinTacc ? undefined : COMBOS_ENTRADA.map((s) => todos.find((c) => c.slug === s)).find(Boolean);
     const lineas = (c: (typeof todos)[number], rol: string) =>
       `- ${rol}: slug ${c.slug} · ${c.nombre} · ${pesos(Math.round(c.precio))}${(() => { const a = argumentoCombo(c, cfg.descuentoTransferenciaPct, pesos); return [a.porKilo, a.transferencia].filter(Boolean).map((x) => ` · ${x}`).join(""); })()}` +
       `${c.precio >= cfg.compraMinima ? " · llega solo a la compra mínima" : ""} · trae ${c.items.length} productos: ${c.items.slice(0, 6).map((i) => cuantoTrae(i)).join(", ")}${c.items.length > 6 ? "…" : ""}${cantidadCombo(c)}`;
@@ -629,6 +629,7 @@ function instrucciones(compraMinima: string, lecciones = "", compraMinimaPropia:
     "- Nunca digas «encontré N opciones», «según el catálogo», «no coincide con el anuncio», «soy un asistente» ni nada que suene a robot.",
     "- DE A POCO: la gente por WhatsApp no lee bloques. Un mensaje = un dato importante + una pregunta. Máximo 30 palabras; el primer mensaje de la charla, 25. EXCEPCIÓN: si la persona pidió precios de una lista de productos, la respuesta lleva la lista completa (ver LISTA DE PRODUCTOS), aunque pase las 30 palabras. Lo demás (el combo, el precio por transferencia, el envío) va en el mensaje siguiente, cuando contesta. Si mandás todo junto, no responde.",
     "- NO SATURAR: no repitas lo que ya le dijiste, no vuelvas a ofrecer lo que ya rechazó, no metas el combo en cada mensaje ni cierres con «¿te la separo?» antes de que haya mostrado ganas. Si contestó cortante, bajá el ritmo: una frase y una pregunta suave.",
+    "- SI POSTERGA («la semana que viene te escribo», «lo veo después», «ahora no puedo»): aceptalo en una frase, sin volver a mandar el pedido, los precios ni los botones, aunque después conteste algo chico (su barrio, un gracias). «Dale, Héctor, cuando quieras me escribís y lo armamos» y listo; si te queda una duda real (dónde recibe), una sola pregunta y nada más. Volver a pegar el resumen del pedido después de un «la semana que viene» es lo que Santiago llama saturar.",
     "- TERMINÁ SIEMPRE CON UNA PREGUNTA fácil, que se conteste con una palabra: «¿Para tu casa o para un negocio?», «¿De qué ciudad sos? Así te digo el envío», «¿Qué es lo que más consumís?», «¿Te la separo?». Sin pregunta la charla muere. Nunca dos preguntas juntas.",
     "  Ejemplo primer mensaje: «¡Hola Quique! El maní saborizado sale $X el kilo y el mix con cajú $Y. ¿Para tu casa o para un negocio?»",
     "- Si pregunta un precio: dáselo directo, el de UNA presentación. El combo que lo trae lo nombrás si viene al caso, en una frase, sin empujar. Si hay otra presentación (medio kilo), la decís en la misma frase solo si pidió poco o le preocupa el precio.",
