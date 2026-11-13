@@ -118,10 +118,14 @@ export async function pizarraArmado(): Promise<Pizarra> {
   const armado = (k: number) => os[k].eventos.some((e) => e.estado === "PREPARADO" || /armado/i.test(e.nota ?? ""));
   // Se arma todo pedido de los últimos 7 días; lo que espera una transferencia lleva «Falta el pago».
   const reciente = (o: (typeof os)[number]) => Date.now() - o.createdAt.getTime() < 7 * 86_400_000;
+  // 13/11 (Santiago): «cuando va a la pizarra es porque ya está confirmado que lo vamos a entregar».
+  // Para armar: pagados y los que se cobran al entregar (pago al recibir aceptado). Lo que espera una
+  // transferencia NO se arma: queda abajo, en «esperando pago», hasta que se acredite.
   const paraArmar = todos.filter(
-    // Todo pedido hecho va a la pizarra solo, apenas entra: también los que pagan por transferencia y todavía
-    // no transfirieron (se arman igual; la tarjeta dice «Falta el pago»). Los de más de 7 días sin pagar, no.
-    (p, k) => ["PAGADO", "EN_COMPRA"].includes(p.estado) || (p.estado === "PENDIENTE_PAGO" && reciente(os[k])) || (p.estado === "ENVIADO" && !armado(k)),
+    (p, k) =>
+      ["PAGADO", "EN_COMPRA"].includes(p.estado) ||
+      (p.estado === "PENDIENTE_PAGO" && os[k].medioPago === "AL_RECIBIR" && reciente(os[k])) ||
+      (p.estado === "ENVIADO" && !armado(k)),
   );
   const esperandoPago = todos.filter((p, k) => p.estado === "PENDIENTE_PAGO" && os[k].medioPago !== "AL_RECIBIR" && reciente(os[k]));
   return {
