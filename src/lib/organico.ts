@@ -15,7 +15,7 @@ import { estadoTexto } from "./salud";
 import { enviarProspecto } from "./whatsapp-prospectos";
 import { rubroHabilitado } from "./whatsapp-plantillas";
 import { demanda, diasHasta, proximaTemporada, temporadaActual } from "./temporada";
-import { bloqueLecciones, celular, elegirHoy, parecidas, POR_DIA, type Candidato, type Resultado } from "./organico-reglas";
+import { bloqueLecciones, celular, elegirHoy, parecidas, POR_DIA, porDia, type Candidato, type Resultado } from "./organico-reglas";
 
 const MODELO = process.env.VENDEDOR_MODELO || "claude-haiku-5-5";
 const MAX_LECCIONES = 8;
@@ -131,7 +131,7 @@ async function resultadosPorRubro(): Promise<Resultado[]> {
 }
 
 /** Escribe a los negocios de hoy. */
-export async function contactar(cantidad = POR_DIA): Promise<{ enviados: { negocio: string; rubro: string }[]; fallidos: number }> {
+export async function contactar(cantidad = porDia()): Promise<{ enviados: { negocio: string; rubro: string }[]; fallidos: number }> {
   const candidatos = await prisma.$queryRaw<Candidato[]>`
     SELECT p."telefono", p."negocio", p."rubro", p."localidad", p."rating", p."resenas" FROM "Prospecto" p
     WHERE p."estado" = 'nuevo'

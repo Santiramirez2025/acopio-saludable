@@ -18,7 +18,16 @@ export type Resultado = { rubro: string; enviados: number; respondieron: number 
  * 6/11: baja a 10 por orden de Laura (48 enviados del 2 al 6/11, 0 respuestas): el esfuerzo va a
  * llamadas y visitas hasta que haya una plantilla que dé un precio en vez de pedir un favor.
  */
-export const POR_DIA = 20; // 12/11 (Santiago): «metele intensidad con frío». Dos tandas por día (9:05 y 16:05), 20 cada una.
+/** Santiago 12/11: «ajustamos la intensidad un poquito cada día». Arranca en 20 por tanda el 13/11 y suma 1 por día hábil
+ *  hasta 40 (el tope sano para no quemar el número de WhatsApp con plantillas de marketing). */
+export function porDia(hoy: Date = new Date()): number {
+  const inicio = Date.UTC(2026, 10, 13);
+  let habiles = 0;
+  const dia = Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate());
+  for (let t = inicio + 86_400_000; t <= dia; t += 86_400_000) if (new Date(t).getUTCDay() !== 0) habiles++;
+  return Math.min(40, 20 + habiles);
+}
+export const POR_DIA = porDia();
 /** Como mucho por rubro en un día, para no apostar todo a uno. */
 export const TOPE_RUBRO = 10;
 

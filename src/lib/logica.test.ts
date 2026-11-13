@@ -1900,7 +1900,11 @@ test("captación 6/11: dietéticas y afines afuera por decisión (aunque se apru
     assert.equal(rubroHabilitado(r), false, r);
   }
   for (const r of ["heladería", "panadería", "pastelería", "cafetería", "restaurante", "almacén"]) assert.equal(rubroExcluido(r), false, r);
-  assert.equal(POR_DIA, 20); // 12/11: más intensidad, dos tandas
+  assert.ok(POR_DIA >= 20 && POR_DIA <= 40); // 12/11: más intensidad, dos tandas
+  const { porDia } = await import("./organico-reglas");
+  assert.equal(porDia(new Date(Date.UTC(2026, 10, 13, 12))), 20);
+  assert.equal(porDia(new Date(Date.UTC(2026, 10, 17, 12))), 23); // sáb 14, lun 16, mar 17 (el domingo no cuenta)
+  assert.equal(porDia(new Date(Date.UTC(2027, 5, 1))), 40);
 });
 
 test("costos de la compra del 3/11: la lista no los pisa hasta la fecha, y después sí", async () => {
