@@ -10,17 +10,19 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { id?: number; codigo?: string; calle?: string; ciudad?: string; ubicacion?: string; notas?: string };
+  const b = (await req.json().catch(() => ({}))) as { id?: number; codigo?: string; calle?: string; ciudad?: string; ubicacion?: string; notas?: string; alRecibir?: boolean };
   const id = b.id ?? Number.parseInt(String(b.codigo ?? "").replace(/\D/g, ""), 10);
   if (!Number.isFinite(id) || id <= 0) return NextResponse.json({ error: "Falta id o codigo (AS-00051)" }, { status: 400 });
   const data: Record<string, string> = {};
+  // 13/11: Santiago le dijo a la clienta «transferís cuando lo recibís»: el pedido pasa a cobrarse al entregar y entra a la pizarra.
+  if (b.alRecibir === true) data.medioPago = "AL_RECIBIR";
   if (b.calle?.trim()) data.calle = b.calle.trim().slice(0, 160);
   if (b.ciudad?.trim()) data.ciudad = b.ciudad.trim().slice(0, 80);
   if (b.ubicacion?.trim()) data.ubicacion = b.ubicacion.trim().slice(0, 200);
   // 13/11: la nota sale en la tarjeta de la pizarra (un cambio de producto que pidió el cliente, el horario).
   if (b.notas?.trim()) data.notas = b.notas.trim().slice(0, 300);
   if (!Object.keys(data).length) return NextResponse.json({ error: "Nada para cambiar (calle, ciudad, ubicacion, notas)" }, { status: 400 });
-  const p = await prisma.order.update({ where: { id }, data, select: { id: true, calle: true, ciudad: true, ubicacion: true, notas: true } });
+  const p = await prisma.order.update({ where: { id }, data, select: { id: true, calle: true, ciudad: true, ubicacion: true, notas: true, medioPago: true } });
   revalidatePath("/admin/pedidos");
   return NextResponse.json({ ok: true, pedido: p });
 }
