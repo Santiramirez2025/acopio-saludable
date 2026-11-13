@@ -25,6 +25,9 @@ export type EnvioCotizado = {
   zonaPropia?: boolean;
   /** Si el envío se cobra solo porque el pedido no llega: desde este subtotal va sin cargo. */
   sinCargoDesde?: number;
+  /** Fuera de la zona propia (Córdoba Capital, correo): la compra mínima y cuánto le falta al pedido (0 = llega). */
+  compraMinima?: number;
+  faltaMinimo?: number;
 };
 /** `fotos`: imágenes de productos que se mandan antes del texto (cuando el cliente pide ver fotos). */
 export type Foto = { url: string; pie: string };

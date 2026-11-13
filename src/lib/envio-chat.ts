@@ -7,11 +7,16 @@ import { pesos } from "./precios";
 import { cotizarConTabla, zonaPagaDe } from "./envios/tabla";
 import { aplicarReglas } from "./envios/cotizar";
 import type { EnvioCotizado } from "./asistente-catalogo";
-import { envioZonaPropia, zonaDeLugar } from "./envio-zona";
+import { conMinimoFueraDeZona, envioZonaPropia, zonaDeLugar } from "./envio-zona";
 export { envioZonaPropia, zonaDeLugar } from "./envio-zona";
 
 export async function cotizarEnvioChat(lugar: string, provincia: string | null, subtotal: number, kilos = 4): Promise<EnvioCotizado | null> {
   const cfg = await leerConfig();
+  const r = await cotizarSinMinimo(cfg, lugar, provincia, subtotal, kilos);
+  return r ? conMinimoFueraDeZona(r, cfg.compraMinima, subtotal) : null;
+}
+
+async function cotizarSinMinimo(cfg: Awaited<ReturnType<typeof leerConfig>>, lugar: string, provincia: string | null, subtotal: number, kilos: number): Promise<EnvioCotizado | null> {
   const zona = zonaDeLugar(lugar, provincia);
   if (!zona) return null;
   if (zona.tipo === "propia" && cfg.entregaPropiaActiva) return envioZonaPropia(cfg, lugar, subtotal);
