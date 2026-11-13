@@ -5,6 +5,8 @@ import { aTienda, combosTienda } from "@/lib/tienda";
 import { pesoCombo, seoCombo } from "@/lib/combo-seo";
 import { medida } from "@/lib/precios";
 import { SITIO, urlSitio } from "@/lib/sitio";
+import { descripcionFeed, tituloLimpio } from "@/lib/producto-ld";
+import { PRODUCTOS_PROVEEDORES } from "@/lib/catalogo-proveedores";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +23,12 @@ export async function GET() {
   const items = filas.filter((f) => !NO_ENVIAR.test(`${f.producto} ${f.presentacion}`)).map((f) => {
     const p = aTienda(f, cfg);
     const foto = p.fotoUrl!.startsWith("/") ? `${base}${p.fotoUrl}` : p.fotoUrl!;
-    const titulo = `${p.producto} ${p.presentacion}`.slice(0, 150);
+    const titulo = tituloLimpio(`${p.producto} ${p.presentacion}`).slice(0, 150);
+    // Misma descripción que la ficha (y que su JSON-LD): el «por qué lo elegimos» si existe.
+    const porQue = f.porQueLoElegimos ?? PRODUCTOS_PROVEEDORES.find((q) => q.codigo === f.codigo)?.porQueLoElegimos ?? null;
     // «Sin categoría» es un hueco del catálogo, no un dato: no se le muestra a Google.
     const cat = /^sin categor/i.test(p.categoria ?? "") ? "" : p.categoria;
-    return `<item><g:id>${x(p.codigo)}</g:id><g:title>${x(titulo)}</g:title><g:description>${x(`${titulo}${/sin marca/i.test(p.marca) ? "" : ` de ${p.marca}`}.${cat ? ` ${cat}.` : ""} Entrega a domicilio en Villa Carlos Paz y el sur de Punilla, y envíos a todo el país.`)}</g:description><g:link>${base}/producto/${encodeURIComponent(p.codigo)}</g:link><g:image_link>${x(foto)}</g:image_link><g:price>${p.precio.toFixed(2)} ARS</g:price><g:availability>in_stock</g:availability><g:condition>new</g:condition>${/sin marca/i.test(p.marca) ? "" : `<g:brand>${x(p.marca)}</g:brand>`}${cat ? `<g:product_type>${x(cat)}</g:product_type>` : ""}<g:identifier_exists>no</g:identifier_exists></item>`;
+    return `<item><g:id>${x(p.codigo)}</g:id><g:title>${x(titulo)}</g:title><g:description>${x(descripcionFeed(titulo, cat, p.marca, porQue))}</g:description><g:link>${base}/producto/${encodeURIComponent(p.codigo)}</g:link><g:image_link>${x(foto)}</g:image_link><g:price>${p.precio.toFixed(2)} ARS</g:price><g:availability>in_stock</g:availability><g:condition>new</g:condition>${/sin marca/i.test(p.marca) ? "" : `<g:brand>${x(p.marca)}</g:brand>`}${cat ? `<g:product_type>${x(cat)}</g:product_type>` : ""}<g:identifier_exists>no</g:identifier_exists></item>`;
   });
   // Los combos también van: Despensa 4 kg es lo más vendido. Se marcan como paquete armado por nosotros (is_bundle).
   const combos = (await combosTienda({ tipo: "COMBO", activo: true }))
