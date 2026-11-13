@@ -89,7 +89,8 @@ async function redactar(p: Pregunta, item: Item, otras: Item[]): Promise<string 
 async function borrador(p: Pregunta, item: Item, otras: Item[]): Promise<{ crudo: string | null; texto: string | null; motivo?: string }> {
   const clave = process.env.ANTHROPIC_API_KEY;
   if (!clave) return { crudo: null, texto: null, motivo: "sin ANTHROPIC_API_KEY" };
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const desc = await descripcion(item.id);
+  const pedir = () => fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
@@ -104,15 +105,23 @@ async function borrador(p: Pregunta, item: Item, otras: Item[]): Promise<{ crudo
       messages: [
         {
           role: "user",
-          content: `Publicación: ${item.title} · $${item.price} · stock ${item.available_quantity}\nDescripción:\n${await descripcion(item.id)}\n\nOtras publicaciones nuestras: ${otras.map((o) => `${o.title} ($${o.price})`).join(" · ")}\n\nPregunta: ${p.text}`,
+          content: `Publicación: ${item.title} · $${item.price} · stock ${item.available_quantity}\nDescripción:\n${desc}\n\nOtras publicaciones nuestras: ${otras.map((o) => `${o.title} ($${o.price})`).join(" · ")}\n\nPregunta: ${p.text}`,
         },
       ],
     }),
     signal: AbortSignal.timeout(30_000),
   }).catch(() => null);
-  if (!res?.ok) return { crudo: null, texto: null, motivo: `IA no respondió (${res?.status ?? "sin conexión"})` };
-  const j = (await res.json()) as { content?: { text?: string }[] };
-  const crudo = (j.content ?? []).map((b) => b.text ?? "").join("");
+  // Un reintento si la IA no contesta o devuelve texto vacío (pasó el 11/11 y la pregunta quedó 2 días sin respuesta).
+  let crudo = "";
+  let estado: number | string = "sin conexión";
+  for (let intento = 0; intento < 2 && !crudo.trim(); intento++) {
+    const res = await pedir();
+    estado = res?.status ?? "sin conexión";
+    if (!res?.ok) continue;
+    const j = (await res.json().catch(() => ({}))) as { content?: { text?: string }[] };
+    crudo = (j.content ?? []).map((b) => b.text ?? "").join("");
+  }
+  if (!crudo.trim()) return { crudo: null, texto: null, motivo: `la IA devolvió texto vacío o no respondió (${estado})` };
   const texto = textoRespuestaMl(crudo);
   return texto ? { crudo, texto } : { crudo, texto: null, motivo: "el borrador rompe una regla de ML (contacto, link o número)" };
 }
@@ -153,6 +162,17 @@ export async function responderPregunta(id: number | string): Promise<"respondid
   await ml(`/answers`, { method: "POST", body: JSON.stringify({ question_id: p.id, text: texto }) });
   await avisarSantiago("Pregunta respondida en ML", `💬 ML · ${item.title}\nPreguntaron: «${p.text}»\nRespondimos: «${texto}»`);
   return "respondida";
+}
+
+/** Respuesta escrita por un agente o por Santiago (POST /api/admin/ml accion "responder"): pasa por las mismas reglas
+ *  de ML que la automática (sin contacto, links ni números de teléfono, sin «perfecto»). */
+export async function responderPreguntaConTexto(id: number | string, textoPropuesto: string): Promise<{ estado: "respondida" | "ya"; texto?: string }> {
+  const texto = textoRespuestaMl(textoPropuesto);
+  if (!texto) throw new Error("la respuesta rompe una regla de ML (contacto, link o número) o está vacía");
+  const p = await ml<Pregunta>(`/questions/${id}`);
+  if (p.status !== "UNANSWERED") return { estado: "ya" };
+  await ml(`/answers`, { method: "POST", body: JSON.stringify({ question_id: p.id, text: texto }) });
+  return { estado: "respondida", texto };
 }
 
 /** Barrido: contesta todo lo pendiente (por si se perdió una notificación). */

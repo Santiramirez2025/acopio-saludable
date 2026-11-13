@@ -1345,6 +1345,10 @@ test("Mercado Libre: la respuesta no lleva contacto ni links y nunca «perfecto�
   assert.equal(textoRespuestaMl("¡Hola! Miralo en www.acopiosaludable.com"), null);
   assert.equal(textoRespuestaMl("¡Hola! Perfecto, trae 1 kg de cada uno. Saludos, Acopio Saludable"), "¡Hola! trae 1 kg de cada uno. Saludos, Acopio Saludable");
   assert.ok(textoRespuestaMl("¡Hola! Sí, el mix trae nueces, almendras y cajú. Podés comprarlo ahora y te llega por Mercado Envíos."));
+
+  // Respuesta manual (accion "responder"): nombrar otra publicación por su título está permitido; vacío no.
+  assert.ok(textoRespuestaMl("¡Hola! El kit trae 2 kg de pasas sin semilla y 1 kg de dátiles con carozo. Las almendras las tenemos en la publicación «Frutos Secos Mix 2 Kg Con Cajú Nueces Almendras Por Kilo». Saludos, Acopio Saludable"));
+  assert.equal(textoRespuestaMl("   "), null);
 });
 
 test("ML: el precio mínimo deja la ganancia mínima y no sube si ya alcanza", async () => {
