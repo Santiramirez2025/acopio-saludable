@@ -25,6 +25,7 @@ import { PRODUCTOS_PROVEEDORES } from "@/lib/catalogo-proveedores";
 import { textosSeguros } from "@/lib/filtros-producto";
 import { nutrientesDe } from "@/lib/nutrientes";
 import { PanelNutri } from "@/components/Nutri";
+import { recetasDe, tiempoTexto } from "@/lib/recetas";
 
 type Props = { params: Promise<{ codigo: string }> };
 
@@ -67,6 +68,7 @@ export default async function Producto({ params }: Props) {
   const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
   // Qué aporta (la Nutri): solo para los productos de los que sabemos qué llevan.
   const nutri = nutrientesDe(p.codigo);
+  const recetas = recetasDe(p.codigo).slice(0, 3);
   const [combos, relacionados] = await Promise.all([
     combosTienda({ tipo: "COMBO", activo: true, items: { some: { codigo: p.codigo } } }),
     productosTienda({ where: { categoria: p.categoria, codigo: { not: p.codigo } }, take: 8 }),
@@ -194,6 +196,24 @@ export default async function Producto({ params }: Props) {
       </div>
 
       {nutri && <PanelNutri n={nutri} producto={`${p.producto} ${p.presentacion}`} />}
+
+      {recetas.length > 0 && (
+        // 12/11 (Santiago): cada producto con sus recetas, para que sepa qué hacer con lo que compra.
+        <section>
+          <TituloSeccion href="/recetas" enlace="Todas las recetas">Qué hacer con esto</TituloSeccion>
+          <ul className="grid gap-3 sm:grid-cols-3">
+            {recetas.map((r) => (
+              <li key={r.slug}>
+                <Link href={`/recetas/${r.slug}`} className="group flex h-full flex-col rounded-2xl bg-white p-4 shadow-ficha">
+                  <span className="text-xs font-semibold text-acopio-600">{r.momento} · {tiempoTexto(r)}</span>
+                  <span className="mt-1 font-display text-lg font-bold leading-tight group-hover:underline">{r.titulo}</span>
+                  <span className="mt-1 text-sm text-stone-600">{r.bajada}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {combos.filter((c) => c.disponible).length > 0 && (
         <section>

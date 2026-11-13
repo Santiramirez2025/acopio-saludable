@@ -6,6 +6,7 @@ import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { combosTienda } from "@/lib/tienda";
 import { LOCALIDADES, seIndexa } from "@/lib/localidades";
 import { GUIAS } from "@/lib/guias";
+import { RECETAS } from "@/lib/recetas";
 import { urlSitio } from "@/lib/sitio";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +20,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     prisma.product.groupBy({ by: ["categoria"], where: wherePublicado(cfg.margenMinimoPct) }),
   ]);
   return [
-    ...["", "/catalogo", "/sin-tacc", "/nichos", "/objetivos", "/combos", "/mi-lista", "/armador", "/cotizador-hoteles", "/mayorista", "/abri-tu-dietetica", "/nosotros", "/dietetica-villa-carlos-paz", "/frutos-secos-carlos-paz", "/regalos-navidenos-cordoba", "/mesa-dulce-navidad", "/sin-tacc-carlos-paz", "/guias", "/novedades", "/envios", "/cambios-y-devoluciones", "/contacto", "/app", "/terminos", "/privacidad"].map((r) => ({ url: `${base}${r}` })),
+    ...["", "/catalogo", "/sin-tacc", "/nichos", "/objetivos", "/combos", "/mi-lista", "/armador", "/cotizador-hoteles", "/mayorista", "/abri-tu-dietetica", "/nosotros", "/dietetica-villa-carlos-paz", "/frutos-secos-carlos-paz", "/regalos-navidenos-cordoba", "/mesa-dulce-navidad", "/sin-tacc-carlos-paz", "/guias", "/recetas", "/novedades", "/envios", "/cambios-y-devoluciones", "/contacto", "/app", "/terminos", "/privacidad"].map((r) => ({ url: `${base}${r}` })),
     ...categorias.filter((c) => c.categoria !== "Sin categoría").map((c) => ({ url: `${base}/catalogo?categoria=${encodeURIComponent(c.categoria)}` })),
     ...LOCALIDADES.filter(seIndexa).map((l) => ({ url: `${base}/dietetica/${l.slug}` })),
+    ...RECETAS.map((r) => ({ url: `${base}/recetas/${r.slug}` })),
     ...GUIAS.map((g) => ({ url: `${base}/guias/${g.slug}`, lastModified: new Date(g.actualizada) })),
     ...NICHOS.map((n) => ({ url: `${base}/nichos/${n.id}` })),
     ...OBJETIVOS.map((o) => ({ url: `${base}/objetivos/${o.id}` })),
