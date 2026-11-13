@@ -1337,6 +1337,11 @@ test("la primera respuesta se presenta como asistente con IA, una sola vez", asy
   assert.ok(a.endsWith("¿Para tu casa o un negocio?"));
   assert.ok(conPresentacion("El mix sale $15.400. ¿Te lo separo?").startsWith("¡Hola! Soy el asistente con IA"));
   assert.equal(conPresentacion(a), a);
+  // Un precio con punto de miles no se parte (caso real, Graciela 13/11: «sale $28. Soy el asistente… 500»).
+  const b = conPresentacion("Hola Graciela, la Despensa de 4 kilos sale $28.500, o $26.200 por transferencia.");
+  assert.ok(b.includes("$28.500"), b);
+  assert.ok(b.startsWith("Hola Graciela! Soy el asistente con IA de Acopio"), b);
+  assert.ok(b.endsWith("La Despensa de 4 kilos sale $28.500, o $26.200 por transferencia."), b);
 });
 
 test("Mercado Libre: la respuesta no lleva contacto ni links y nunca «perfecto»", async () => {

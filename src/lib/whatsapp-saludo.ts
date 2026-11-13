@@ -30,7 +30,13 @@ export const PRESENTACION_IA = "Soy el asistente con IA de Acopio 🤖: te armo 
 export function conPresentacion(texto: string): string {
   const t = texto.trim();
   if (!t || t.includes("asistente con IA")) return t;
-  const saludo = t.match(/^¡?hola\b[^!.?\n]*[!.]?\s*/i)?.[0];
-  if (saludo) return `${saludo.trim()} ${PRESENTACION_IA} ${t.slice(saludo.length).trim()}`.trim();
+  // El saludo es solo «Hola» y el nombre: corta en «!», «,» o un punto que no sea parte de un precio.
+  // Antes cortaba en el primer punto y partía «$28.500» en «$28. Soy el asistente… 500».
+  const saludo = t.match(/^¡?hola\b[^!?,.\n\d$]{0,40}(?:[!,]|\.(?!\d))?\s*/i)?.[0];
+  if (saludo) {
+    const resto = t.slice(saludo.length).trim();
+    const cabeza = saludo.trim().replace(/,$/, "!");
+    return `${cabeza} ${PRESENTACION_IA} ${resto.charAt(0).toUpperCase()}${resto.slice(1)}`.trim();
+  }
   return `¡Hola! ${PRESENTACION_IA} ${t}`;
 }
