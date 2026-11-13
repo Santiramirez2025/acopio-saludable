@@ -75,15 +75,6 @@ for (const [nombre, w, h] of [["horizontal", 1920, 1080], ["vertical", 1080, 192
   console.log(final);
 }
 await b.close();
-// Con AGENTE_CLAVE, sube los dos mp4 al almacén y devuelve las URLs públicas para programarlos.
-if (process.env.AGENTE_CLAVE) {
-  const { readFileSync } = await import("node:fs");
-  for (const nombre of ["horizontal", "vertical"]) {
-    const archivo = join(salida, `receta-${r.slug}-${nombre}.mp4`);
-    const res = await fetch(`${SITIO}/api/admin/agentes/imagen`, { method: "POST", headers: { "content-type": "application/json", "x-agente-clave": process.env.AGENTE_CLAVE }, body: JSON.stringify({ nombre: `receta-${r.slug}-${nombre}`, tipo: "video/mp4", datos: readFileSync(archivo).toString("base64") }) });
-    console.log(nombre, "URL:", (await res.json()).url ?? res.status);
-  }
-}
 const titulo = `${r.titulo} | Receta fácil paso a paso`;
 writeFileSync(join(salida, `receta-${r.slug}.txt`), [
   `TÍTULO: ${titulo}`,
