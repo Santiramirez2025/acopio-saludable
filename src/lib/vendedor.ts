@@ -13,7 +13,7 @@ import { bloqueLeccionesVendedor } from "./organico";
 import { bloqueTemporada } from "./temporada";
 import { leerConfig } from "./config";
 import { SALUDO_GENERAL } from "./whatsapp-saludo";
-import { catalogo, comboPedidoAgotado, hallarCombos, hallarProductos } from "./asistente-catalogo";
+import { catalogo, comboPedidoAgotado, hallarCombos, hallarProductos, hallarSinStock } from "./asistente-catalogo";
 import { combosTienda, productosTienda } from "./tienda";
 import { ofertasDelProveedor } from "./ofertas";
 import { cuantoTrae, pesos, renglonCombo } from "./precios";
@@ -344,6 +344,13 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       };
     }
     if (!productos.length && !combos.length) {
+      // 12/11 (Santiago): lo nuestro que hoy no hay se consigue para el día siguiente.
+      const encargo = soloSinTacc ? [] : await hallarSinStock(consulta).catch(() => []);
+      if (encargo.length) {
+        return {
+          texto: `«${consulta}» hoy se nos terminó, pero lo conseguimos para mañana:\n${encargo.map((p) => `- ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}`).join("\n")}\nDecilo así: «hoy se me terminó, pero te lo consigo y te lo llevo mañana en el reparto de las 16» con el precio, y preguntá si se lo encargás y cuántos. No digas «no tengo» ni «no hay». Si dice que sí, pedile nombre y dirección para dejarlo agendado.`,
+        };
+      }
       return {
         texto: `Sin resultados para «${consulta}»: no lo tenemos. Decilo derecho y corto («${consulta} no tengo»), SIN ofrecer un reemplazo en ese mismo mensaje y SIN precio. Terminá preguntando para qué lo buscaba o qué más necesita («¿para qué lo usás?», «¿qué más estabas buscando?»). Recién si contesta algo que otro producto nuestro resuelve de verdad, se lo ofrecés. Nunca pidas la dirección ni empujes el envío acá: todavía no hay pedido.`,
       };

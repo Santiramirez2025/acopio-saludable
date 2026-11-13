@@ -76,6 +76,29 @@ export async function hallarProductos(texto: string, soloSinTacc = false): Promi
     .map((x) => x.p);
 }
 
+/**
+ * 12/11 (Santiago): «cualquier cosa que nos quedamos sin, de un día para el otro lo entregamos». Lo nuestro (TG-/LG-)
+ * que hoy figura sin stock se consigue en La Granja: el vendedor lo ofrece para el reparto del día siguiente
+ * en vez de decir «no tengo». Devuelve lo que coincide con la búsqueda, con el precio de lista.
+ */
+export async function hallarSinStock(texto: string): Promise<{ codigo: string; producto: string; presentacion: string; precio: number }[]> {
+  const grupos = palabrasClave(texto);
+  if (!grupos.length) return [];
+  const { prisma } = await import("./prisma");
+  const filas = await prisma.product.findMany({
+    where: { estado: "SIN_STOCK", visible: true, OR: [{ codigo: { startsWith: "TG-" } }, { codigo: { startsWith: "LG-" } }] },
+    select: { codigo: true, producto: true, presentacion: true, precioPublico: true },
+    take: 200,
+  });
+  return filas
+    .filter((f) => {
+      const indice = ` ${normalizar(`${f.producto} ${f.presentacion}`)} `;
+      return grupos.every((g) => g.some((v) => indice.includes(v)));
+    })
+    .slice(0, 3)
+    .map((f) => ({ codigo: f.codigo, producto: f.producto, presentacion: f.presentacion, precio: Number(f.precioPublico) }));
+}
+
 /** Lo propio (Todo Granolas, La Granja) va antes, y entre lo propio, del más barato al más caro: es lo que promete el anuncio. */
 const propio = (p: { codigo: string }) => (/^(TG|LG)-/.test(p.codigo) ? 1 : 0);
 
