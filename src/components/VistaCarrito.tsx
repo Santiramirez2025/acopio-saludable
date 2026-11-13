@@ -4,7 +4,7 @@ import Link from "next/link";
 import { BarraMinimo, pesosCliente, useCarrito } from "./Carrito";
 import { PedirWhatsapp } from "./PedirWhatsapp";
 import { Foto } from "./Foto";
-import { CuentaRegresiva } from "./CuentaRegresiva";
+import { AvisoRepartoHoy } from "./AvisoReparto";
 
 /** whatsapp: número de la tienda (de la configuración). Si está, el carrito ofrece cerrar el pedido por WhatsApp. */
 export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
@@ -21,7 +21,7 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
       </div>
     );
   }
-  const { puedePagar, falta, subtotal, conTransferencia, gananciaReventa, corte } = cotizacion;
+  const { puedePagar, falta, subtotal, conTransferencia, gananciaReventa } = cotizacion;
   // En Carlos Paz y la zona la compra mínima es más baja: con eso ya se puede seguir; el checkout
   // controla el mínimo de la zona elegida (y el servidor también).
   const puedeSeguir = puedePagar || cotizacion.puedePagarEnZona;
@@ -86,7 +86,7 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
             <p className="font-display text-xl font-bold tabular-nums text-acopio-700">ganás {pesosCliente(gananciaReventa)}</p>
           </div>
         )}
-        <CuentaRegresiva corte={corte} />
+        <AvisoRepartoHoy />
         {puedeSeguir && !cotizando ? (
           <Link href="/checkout" className="btn-comprar w-full">Continuar con la compra</Link>
         ) : (

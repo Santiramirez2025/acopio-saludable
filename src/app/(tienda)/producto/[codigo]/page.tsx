@@ -9,8 +9,7 @@ import { aTienda, combosTienda, estaPublicado, fichaSinStock, productosTienda } 
 import { NICHOS, OBJETIVOS } from "@/lib/taxonomia";
 import { pesos, precioPorUnidadBase, precioSugerido } from "@/lib/precios";
 import { cortarEnPalabra, marcaVisible } from "@/lib/texto";
-import { proximoCorte } from "@/lib/corte";
-import { CuentaRegresiva } from "@/components/CuentaRegresiva";
+import { AvisoRepartoHoy } from "@/components/AvisoReparto";
 import { Plazos } from "@/components/Plazos";
 import { costoEntregaZona } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
@@ -164,7 +163,7 @@ export default async function Producto({ params }: Props) {
               </>
             )}
             <BotonCompartir etiqueta="Compartir" texto={`Mirá ${p.producto} ${p.presentacion} en Acopio Saludable:`} ruta={`/producto/${encodeURIComponent(p.codigo)}`} className="btn-sec mt-2 w-full" />
-            {!sinStock && <CuentaRegresiva corte={proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null} className="mt-3" />}
+            {!sinStock && <AvisoRepartoHoy className="mt-3" />}
             <p className="mt-3 text-xs text-stone-600">{lineaCompraMinima(cfg)}</p>
             {p.categoria === "Congelados" && <p className="mt-3 rounded-xl bg-tierra-100 px-3.5 py-2.5 text-sm text-stone-700"><b>Producto congelado:</b> solo se entrega en Villa Carlos Paz y el sur de Punilla. No se envía por correo.</p>}
             <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} costoZona={costoEntregaZona(cfg)} zonaPaga={zonaPagaDe(cfg.tabla)} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />
