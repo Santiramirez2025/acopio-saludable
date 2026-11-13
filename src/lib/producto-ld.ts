@@ -18,3 +18,20 @@ export function descripcionLd(titulo: string, categoria: string, porQue?: string
   if (texto) return texto.length > 5000 ? `${texto.slice(0, 4997)}...` : texto;
   return `${titulo}, en ${categoria.toLowerCase()}. Entrega a domicilio en Villa Carlos Paz y el sur de Punilla, y envíos a todo el país.`;
 }
+
+/** Título sin el punto final que traen algunas presentaciones («x 500 g.»): en Shopping se ve como error. */
+export function tituloLimpio(t: string): string {
+  return t.replace(/\s+/g, " ").trim().replace(/[.\s]+$/, "");
+}
+
+/**
+ * Descripción del feed de Merchant Center: la misma que la ficha (el «por qué lo elegimos»), para que
+ * el feed y la página digan lo mismo. Sin ese texto, la línea neutra de siempre (título, marca, categoría, entrega).
+ */
+export function descripcionFeed(titulo: string, categoria: string, marca: string, porQue?: string | null): string {
+  const texto = porQue?.replace(/\s+/g, " ").trim();
+  if (texto) return descripcionLd(titulo, categoria, texto);
+  const t = tituloLimpio(titulo);
+  const m = !marca || /sin marca/i.test(marca) ? "" : ` de ${marca}`;
+  return `${t}${m}.${categoria ? ` ${categoria}.` : ""} Entrega a domicilio en Villa Carlos Paz y el sur de Punilla, y envíos a todo el país.`;
+}
