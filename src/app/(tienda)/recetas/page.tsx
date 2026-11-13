@@ -30,7 +30,7 @@ export default function Recetas() {
               {lista.map((r) => (
                 <li key={r.slug}>
                   <Link href={`/recetas/${r.slug}`} className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-ficha">
-                    <div className="relative aspect-[5/3]"><Image src={r.foto} alt={r.titulo} fill sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw" className="object-cover" /></div>
+                    <div className="relative aspect-[5/3]"><Image src={`/img/recetas/${r.slug}.jpg`} alt={r.titulo} fill sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw" className="object-cover object-top" /></div>
                     <div className="flex flex-1 flex-col p-4">
                       <h3 className="font-display text-lg font-bold leading-tight group-hover:underline">{r.titulo}</h3>
                       <p className="mt-1 text-sm text-stone-600">{r.bajada}</p>

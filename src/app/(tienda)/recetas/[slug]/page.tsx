@@ -49,7 +49,11 @@ export default async function RecetaPagina({ params }: Props) {
           <div className="flex flex-wrap gap-2 text-sm font-semibold">
             {[`⏱ ${tiempoTexto(r)}`, `🍽 ${r.rinde}`, `👩‍🍳 ${r.dificultad}`].map((t) => <span key={t} className="rounded-full bg-acopio-100 px-3 py-1.5 text-acopio-900">{t}</span>)}
           </div>
-          <div className="relative aspect-[5/2] overflow-hidden rounded-3xl"><Image src={r.foto} alt={r.titulo} fill priority sizes="(min-width:768px) 60vw, 100vw" className="object-cover" /></div>
+          {r.foto ? (
+            <div className="relative aspect-[5/2] overflow-hidden rounded-3xl"><Image src={r.foto} alt={r.titulo} fill priority sizes="(min-width:768px) 60vw, 100vw" className="object-cover" /></div>
+          ) : (
+            <div className="relative aspect-[4/5] max-w-sm overflow-hidden rounded-3xl"><Image src={`/img/recetas/${r.slug}.jpg`} alt={r.titulo} fill priority sizes="384px" className="object-cover" /></div>
+          )}
         </div>
         <aside className="rounded-3xl bg-white p-5 shadow-ficha">
           <h2 className="font-display text-xl font-black text-acopio-900">Ingredientes</h2>
@@ -61,7 +65,7 @@ export default async function RecetaPagina({ params }: Props) {
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-xs text-stone-500">● Lo tenemos en Acopio, fraccionado en el día.</p>
+          <p className="mt-3 text-xs text-stone-500">● Lo tenemos en Acopio, fraccionado en el día. Si algo se nos terminó, te lo conseguimos y te lo llevamos al día siguiente.</p>
           <a href={`/img/recetas/${r.slug}.jpg`} download className="btn mt-4 w-full justify-center">Guardar la receta en el celu</a>
         </aside>
       </div>
