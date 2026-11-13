@@ -50,7 +50,7 @@ export function textoRecompra(o: { numero: string; id: number; nombre: string; i
  * hasta que entre la almendra: si dicen que sí y pagan, no podemos fallarle a alguien que ya volvió.
  * No se pierden: la ventana de recompra llega a 35 días, así que salen cuando esto vuelva a false.
  */
-export const RECOMPRA_EN_ESPERA_ACTIVA = true;
+export const RECOMPRA_EN_ESPERA_ACTIVA = false; // Santiago 12/11 21:47: volvió la almendra (Nico 13/11: el bot seguía diciendo «lo estamos reponiendo», casos Ale y Marga)
 const COMBOS_EN_ESPERA = new Set(["despensa-4-kilos", "despensa-chica", "alacena-de-frutos-secos", "mixes-del-mes"]);
 
 /**
