@@ -1979,3 +1979,13 @@ test("12/11: sin ciudad, la dirección va a Villa Carlos Paz (Olga salía en Có
   assert.equal(direccionCompleta("Belgrano 50, Tanti", ""), "Belgrano 50, Tanti, Córdoba, Argentina");
   assert.equal(direccionCompleta("Av. Colón 100", "Córdoba Capital"), "Av. Colón 100, Córdoba Capital, Argentina");
 });
+
+test("13/11 Yol: quien dice que transfiere con el pedido hecho recibe monto y alias", async () => {
+  const { vaATransferir } = await import("./whatsapp-interactivo");
+  assert.equal(vaATransferir("Regio, te hare transferencia por los 32.200"), true);
+  assert.equal(vaATransferir("Como te transfiero."), true);
+  assert.equal(vaATransferir("voy a transferir ahora"), true);
+  assert.equal(vaATransferir("ya te transferí, te mando el comprobante"), false);
+  assert.equal(vaATransferir("Enviaré comprobante"), false);
+  assert.equal(vaATransferir("se puede pagar por transferencia?"), false);
+});

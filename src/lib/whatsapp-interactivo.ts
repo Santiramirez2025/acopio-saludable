@@ -454,6 +454,18 @@ export function pideDatosTransferencia(texto: string, ultimoNuestro = ""): boole
   return ofrecimos && /^(si|sii+|dale|ok|okey|bueno|por favor|si,? (mandamelos|pasamelos|dale|por favor|porfa)|mandamelos|pasamelos)[.! ]*$/.test(t);
 }
 
+/**
+ * 13/11 (Santiago, con Yol): «Regio, te haré transferencia por los 32.200» con el pedido ya hecho, y el bot le
+ * contestó «en el link elegís transferencia». A quien ya dice que transfiere se le da el monto final y el alias
+ * directo. Cuenta «te hago/haré la transferencia», «transfiero», «cómo te transfiero», «voy a transferir»;
+ * no cuenta si ya transfirió (eso es el comprobante) ni si pregunta si se puede.
+ */
+export function vaATransferir(texto: string): boolean {
+  const t = limpio(texto);
+  if (/\b(ya )?(te )?(transferi|pague|deposite)\b|\btransferid[oa]\b|\bhice (la |una )?transferencia\b|comprobante|se puede (pagar|transferir)|puedo (pagar|transferir)|aceptan/.test(t)) return false;
+  return /\b(te )?(hago|hare|mando|envio|paso) (la |una )?transferencia\b|\b(te )?transfiero\b|\bcomo (te )?(transfiero|pago|te pago)\b|\bvoy a (transferir|hacer (la |una )?transferencia|pagar)\b|\b(pago|lo pago|te pago) (por|con) transferencia\b|\ba donde (te )?(transfiero|deposito)\b/.test(t);
+}
+
 /** ¿Pasó una dirección? Una calle con número, o «esquina», «barrio», «casa», «depto». */
 export function tieneDireccion(texto: string): boolean {
   const t = limpio(texto);

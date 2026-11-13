@@ -14,7 +14,7 @@ import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
@@ -25,7 +25,7 @@ import { fotosOportunas } from "./galeria";
 import { esPedidoWeb, leerPedidoWeb, resolverPedidoWeb } from "./pedido-web";
 import { catalogo } from "./asistente-catalogo";
 import { leerConfig } from "./config";
-import { pesos, renglonCombo } from "./precios";
+import { pesos, precioTransferencia, renglonCombo } from "./precios";
 import { sinLoEnEspera } from "./recompra-reglas";
 import { zonaSinMinimo } from "./minimo-zona";
 
@@ -504,6 +504,30 @@ export async function atender(e: Entrada): Promise<void> {
       const direccion = [...hist].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
       console.log("chat: confirma el pedido al recibir, se cierra", cola(e.clave));
       return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: ultimoEnvio ?? "Villa Carlos Paz" }, direccion || undefined);
+    }
+  }
+
+  // 13/11 (Santiago, con Yol): con el pedido YA creado y sin pagar, quien dice que transfiere o pide el alias
+  // recibe el monto final y los datos en el acto. Nada de «en el link elegís transferencia»: es un cliente
+  // que ya compra, hay que hacérselo fácil.
+  if (canal === "whatsapp" && guardado?.startsWith("orden:")) {
+    const previo = [...(await historialDe(e.clave, 9)).slice(0, -1)].reverse().find((h) => h.de === "acopio")?.texto ?? "";
+    if (vaATransferir(texto) || pideDatosTransferencia(texto, previo)) {
+      const cfg = await leerConfig();
+      const orden = await prisma.order.findUnique({ where: { id: Number(guardado.slice(6)) || 0 } }).catch(() => null);
+      if (orden && orden.estado === "PENDIENTE_PAGO" && cfg.transferenciaDatos) {
+        const monto =
+          orden.medioPago === "TRANSFERENCIA"
+            ? Number(orden.total)
+            : (precioTransferencia(Number(orden.subtotal), cfg.descuentoTransferenciaPct) ?? Number(orden.subtotal)) + Number(orden.envioCobrado);
+        const quien = e.nombre ? `, ${primerNombre(e.nombre)}` : "";
+        console.log("chat: va a transferir con pedido hecho, monto y alias directo", cola(e.clave), orden.id);
+        await responder(
+          e.clave,
+          `¡Dale${quien}! Son ${pesos(monto)} por transferencia (pedido ${numeroPedido(orden.id)}).\n\n${cfg.transferenciaDatos}\n\nMandame el comprobante por acá y sale en el reparto de las 16 🙌`,
+        );
+        return;
+      }
     }
   }
 
