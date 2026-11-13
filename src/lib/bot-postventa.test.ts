@@ -11,7 +11,12 @@ test("AS-00042: un pedido ENVIADO no se promete en el reparto de hoy ni con plaz
   assert.match(n, /pasar_a_whatsapp/);
   assert.equal(notaPlazoEntrega("ENVIADO"), "");
   assert.equal(notaPlazoEntrega("ENTREGADO"), "");
-  assert.match(notaPlazoEntrega("PAGADO"), /24 a 48 h/);
+  assert.match(notaPlazoEntrega("PAGADO"), /reparto de las 16/);
+  assert.match(notaPlazoEntrega("PAGADO"), /24 a 48 h hábiles más el plazo del correo/);
+  // Pedido sin pagar: la regla del reparto (antes de las 15 sale hoy), no «no prometas día» (13/11).
+  assert.match(notaPlazoEntrega("PENDIENTE_PAGO"), /antes de las 15, sale ese mismo día/);
+  assert.doesNotMatch(notaPlazoEntrega("PENDIENTE_PAGO"), /No prometas un día/);
+  assert.match(notaPlazoEntrega(null), /reparto de las 16/);
 });
 
 test("ENTREGADO: agradece, y si falta algo deriva sin prometer", () => {
