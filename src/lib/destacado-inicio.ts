@@ -4,7 +4,7 @@
 // y en Carlos Paz va sin cargo) en vez de las pasas sueltas a $5.900 (que pagan $3.000 de envío).
 
 /** Combos que se empujan esta semana, en este orden. Si uno no se puede vender, se saltea. */
-export const COMBOS_DE_LA_SEMANA = ["trio-del-desayuno", "pan-dulce-casero"] as const;
+export const COMBOS_DE_LA_SEMANA = ["trio-de-frutos-secos", "trio-del-desayuno", "pan-dulce-casero"] as const;
 
 /** El mix de la casa (orden de Santiago 4/11) y lo que va si no está. */
 export const DESTACADO_PRODUCTO = "TG-MIXC";

@@ -770,7 +770,7 @@ import { planTrae } from "./whatsapp-interactivo";
 test("combos: cada búsqueda va a su combo, y sin TACC gana", () => {
   assert.equal(temaDe("Busco productos sin tacc")?.slugs[0], "caja-sin-tacc-del-mes");
   assert.equal(temaDe("alfajores sin gluten")?.slugs[0], "merienda-sin-tacc");
-  assert.deepEqual(temaDe("Nueces x kg.")?.slugs, ["despensa-4-kilos", "alacena-de-frutos-secos", "trio-del-desayuno"]);
+  assert.deepEqual(temaDe("Nueces x kg.")?.slugs, ["trio-de-frutos-secos", "despensa-4-kilos", "alacena-de-frutos-secos"]); // 12/11: el 3 kg con mix de frutos secos es el que vende
   assert.equal(temaDe("Quiero el trio desayuno 3 kl")?.slugs[0], "trio-del-desayuno"); // 12/11: a Olga le salió el Desayuno 30 días
   assert.equal(temaDe("¡Hola! Quiero precios de frutos secos por kilo")?.id, "frutos-secos");
   assert.equal(temaDe("algo para el desayuno, granola")?.id, "desayuno");

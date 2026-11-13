@@ -19,7 +19,7 @@ export const TEMAS: Tema[] = [
   // 12/11: el Trío (semillas, dátiles, pasas) va primero: es el que hay y el que empuja Santiago. El Desayuno 30 días
   // (granolas y miel) salía solo porque «Trío del desayuno» cae en «desayun», y a Olga se lo ofreció dos veces cuando pidió el Trío.
   { id: "desayuno", nombre: "desayuno", patron: /\b(desayun|granola|avena|chia|cereal|muesli|pasta de mani|mantequilla de mani)/, slugs: ["trio-del-desayuno", "desayuno-30-dias"] },
-  { id: "frutos-secos", nombre: "frutos secos y semillas", patron: /\b(fruto|frutos secos|almendra|nuez|nueces|mani|castana|pasa|pasas|datil|semilla|girasol|zapallo|mix)/, slugs: ["despensa-4-kilos", "alacena-de-frutos-secos", "trio-del-desayuno"] },
+  { id: "frutos-secos", nombre: "frutos secos y semillas", patron: /\b(fruto|frutos secos|almendra|nuez|nueces|mani|castana|pasa|pasas|datil|semilla|girasol|zapallo|mix)/, slugs: ["trio-de-frutos-secos", "despensa-4-kilos", "alacena-de-frutos-secos"] },
   { id: "especias", nombre: "especias", patron: /\b(especia|condimento|oregano|pimenton|comino|curry|curcuma|especiero)/, slugs: ["especiero-completo"] },
   { id: "reposteria", nombre: "repostería", patron: /\b(reposter|harina|premezcla|bizcochuelo|torta|budin|cacao|azucar mascabo)/, slugs: ["reposteria-casera"] },
   { id: "picada", nombre: "picada y snacks", patron: /\b(picada|snack|aperitivo|copetin|para picar)/, slugs: ["picada-y-snacks"] },
@@ -29,7 +29,8 @@ export const TEMAS: Tema[] = [
 /** El combo de entrada: el único que llega al mínimo sin pasar de $40.000. Es la red cuando el resto parece caro. */
 export const COMBO_ENTRADA = "despensa-4-kilos";
 /** Si la Despensa no está (sin almendra, 11/11), la red es el Trío del desayuno: 3 kilos a $21.500. En orden de preferencia. */
-export const COMBOS_ENTRADA = [COMBO_ENTRADA, "trio-del-desayuno"];
+// 12/11 (Santiago): el que vende es el 3 kg con mix de frutos secos: va primero.
+export const COMBOS_ENTRADA = ["trio-de-frutos-secos", COMBO_ENTRADA, "trio-del-desayuno"];
 
 const sinTildes = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 

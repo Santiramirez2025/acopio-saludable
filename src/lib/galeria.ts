@@ -15,6 +15,7 @@ const COMBOS: Record<string, string> = {
   "mixes-del-mes": "combo-mixes-del-mes",
   "arranque-gym": "combo-arranque-gym",
   "trio-del-desayuno": "combo-trio-del-desayuno",
+  "trio-de-frutos-secos": "combo-trio-de-frutos-secos",
   "pan-dulce-casero": "combo-pan-dulce-casero",
 };
 
@@ -105,6 +106,7 @@ type Turno = { de: "yo" | "acopio"; texto: string };
 export type FotoOportuna = { url: string; pie: string };
 
 const NOMBRES_COMBO: [RegExp, string, string][] = [
+  [/tr[ií]o de frutos|tr[ií]o (con|de) mix|3 ?(kg|kilos) (con|de) (mix|frutos)/i, "trio-de-frutos-secos", "Trío de frutos secos: mix con cajú, dátiles y pasas"],
   [/tr[ií]o/i, "trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas"],
   [/pan dulce casero|combo pan dulce/i, "pan-dulce-casero", "Pan dulce casero: pasas y dátiles"],
   [/despensa de 4 kilos|despensa grande/i, "despensa-4-kilos", "Despensa de 4 kilos"],
@@ -131,7 +133,7 @@ const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen
 function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
   // 12/11: con el Mix clásico sin stock, la foto de «el más pedido» mostraba algo que no se podía vender (Elvira).
   const masPedido = (): FotoOportuna | null =>
-    a.mixClasicoDisponible === false ? candidata("combo-trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas") : candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
+    a.mixClasicoDisponible === false ? candidata("combo-trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas") : candidata("combo-trio-de-frutos-secos", "Trío de frutos secos: mix con cajú, dátiles y pasas · el más pedido") ?? candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
   const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
   const yaMandadas = nuestros.filter((t) => t.startsWith("[Foto]"));
   // 12/11 (Santiago): «todas las ventas con imágenes, entra por los ojos». Hasta 4 fotos por charla, nunca repetida.
@@ -187,7 +189,7 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
 /** Videos de venta (Santiago, 12/11: «vendemos con precio y video, y logo para que nos reconozcan»).
  *  El pie lleva {precio:CODIGO} y atencion.ts lo reemplaza por el precio del día. Uno por tema y por charla. */
 const VIDEOS: [RegExp, string, string][] = [
-  [/semilla|tr[ií]o/i, "/video/reels/reel-2026-11-12-semillas-no-frutos-secos.mp4", "Mix de semillas (lino, chía y sésamo) vs. mix de frutos secos: los dos fraccionados en el día"],
+  [/semilla|tr[ií]o del desayuno/i, "/video/reels/reel-2026-11-12-semillas-no-frutos-secos.mp4", "Mix de semillas (lino, chía y sésamo) vs. mix de frutos secos: los dos fraccionados en el día"],
   [/mix|frutos secos|despensa|alacena|nuez|caj[uú]|almendra|man[ií]\b/i, "/video/reels/reel-2026-11-12-asi-armamos-tu-mix.mp4", "Así armamos tu mix de frutos secos, a mano y el mismo día · Mix clásico con cajú {precio:TG-MIXC} el kilo"],
   [/cu[aá]ndo (llega|me llega|lo tra|lo llev)|env[ií]o|reparto|hoy mismo|para hoy/i, "/video/reels/reel-2026-11-12-repartimos-cada-dia.mp4", "Repartimos todos los días a las 16: si pagás antes de las 15, hoy lo tenés"],
 ];

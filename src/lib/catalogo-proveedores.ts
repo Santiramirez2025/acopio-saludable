@@ -214,6 +214,9 @@ export const COMBOS_PROVEEDORES: ComboProveedor[] = [
   { slug: "despensa-chica", nombre: "Despensa chica de 2 kilos", descuentoPct: 7 /* 3/11: $15.800 en la tienda */, destacado: true, items: [{ codigo: "TG-MIXCG-500", cantidad: 1 }, { codigo: "LG-DATIL-500", cantidad: 1 }, { codigo: "TG-PASAS-500", cantidad: 1 }, { codigo: "LG-MIXSEM-500", cantidad: 1 }] },
   // 10/11: sin almendra, la Despensa y los mixes con cajú están SIN_STOCK. Estos dos se arman con lo que hay
   // (compra de La Granja del 5/11) y pasan los $20.000 del envío sin cargo. Se quedan aunque vuelva la almendra.
+  // 12/11 (Santiago): «lo que funcionó mucho es el 3 kg pero con mix de frutos secos». Los que compraron el Trío
+  // pensaban que el mix era de frutos secos: este es ese combo. Escalera: Trío semillas $21.500 → este ~$24.000 → Despensa 4 kg $28.500.
+  { slug: "trio-de-frutos-secos", nombre: "Trío de frutos secos · mix con cajú, dátiles y pasas (3 kg)", descuentoPct: 12.5 /* suelto $27.300; costo $17.619 */, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "trio-del-desayuno", nombre: "Trío del desayuno · semillas, dátiles y pasas (3 kg)", descuentoPct: 2 /* $21.500 en la tienda; suelto $22.000 */, destacado: true, items: [{ codigo: "LG-MIXSEM", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "pan-dulce-casero", nombre: "Pan dulce casero · pasas y dátiles", descuentoPct: 2 /* $22.000 en la tienda; suelto $22.700 */, destacado: true, items: [{ codigo: "TG-PASAS", cantidad: 2 }, { codigo: "LG-DATIL", cantidad: 1 }] },
   // 12/11: «Abrí tu dietética» (orden de Santiago): las bolsas cerradas básicas, 55 kilos, para arrancar a fraccionar. Suelto suma $473.000.
