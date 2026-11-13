@@ -1938,16 +1938,18 @@ test("la nota de cobro al marcar Entregado dice el medio real", async () => {
 });
 test("recompra: sin almendra asegurada, espera quien llevó mixes con cajú, Despensa o Alacena; lo demás sale", () => {
   const it = (producto: string, comboSlug: string | null = null) => ({ codigo: "X", producto, presentacion: "x 1 kg", cantidad: 1, comboSlug });
-  assert.equal(recompraEnEspera([it("Pasas de uva negras sin semilla", "despensa-4-kilos")]), true);
-  assert.equal(recompraEnEspera([it("Nuez mariposa", "alacena-de-frutos-secos")]), true);
-  assert.equal(recompraEnEspera([it("Mix Clásico con cajú y girasol")]), true);
-  assert.equal(recompraEnEspera([it("Mix Clásico con cajú")]), true);
-  assert.equal(recompraEnEspera([it("Dátiles con carozo"), it("Pasas de uva negras sin semilla")]), false);
-  assert.equal(recompraEnEspera([it("Mix de semillas")]), false);
-  assert.equal(recompraEnEspera([it("Almendras Non Pareil"), it("Nuez Mariposa blanca light")]), true);
-  assert.equal(recompraEnEspera([it("Pan dulce", "pan-dulce-casero")]), false);
+  assert.equal(recompraEnEspera([it("Pasas de uva negras sin semilla", "despensa-4-kilos")], true), true);
+  assert.equal(recompraEnEspera([it("Nuez mariposa", "alacena-de-frutos-secos")], true), true);
+  assert.equal(recompraEnEspera([it("Mix Clásico con cajú y girasol")], true), true);
+  assert.equal(recompraEnEspera([it("Mix Clásico con cajú")], true), true);
+  assert.equal(recompraEnEspera([it("Dátiles con carozo"), it("Pasas de uva negras sin semilla")], true), false);
+  assert.equal(recompraEnEspera([it("Mix de semillas")], true), false);
+  assert.equal(recompraEnEspera([it("Almendras Non Pareil"), it("Nuez Mariposa blanca light")], true), true);
+  assert.equal(recompraEnEspera([it("Pan dulce", "pan-dulce-casero")], true), false);
   // Cuando entra la almendra se apaga y sale todo.
   assert.equal(recompraEnEspera([it("Mix Clásico con cajú")], false), false);
+  // Santiago 12/11 21:47: volvió la almendra; por defecto, apagado.
+  assert.equal(recompraEnEspera([it("Mix Clásico con cajú")]), false);
 });
 
 test("ficha sin stock: se muestra (sin Agregar) solo si está publicada y en SIN_STOCK", async () => {
