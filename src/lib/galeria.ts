@@ -4,6 +4,8 @@
 //
 // Puro (sin base): se prueba sin gastar nada.
 
+import { hablaDeFueraDeZona } from "./envio-zona";
+
 const BASE = "/img/galeria";
 
 /** Combos con imagen propia (por slug). */
@@ -204,6 +206,8 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
     const yaSalio = videosYa.some((t) => t.includes(pie.split(" · ")[0].slice(0, 30)));
     if (yaSalio) continue;
     if (archivo.includes("asi-armamos") && a.mixClasicoDisponible === false) continue;
+    // 13/11: a Graciela (Córdoba Capital) le llegó «si pagás antes de las 15, hoy lo tenés» con el costo del envío. Es solo para la zona.
+    if (archivo.includes("repartimos-cada-dia") && hablaDeFueraDeZona(`${a.entrante} ${a.respuesta}`)) continue;
     if (re.test(a.entrante) || (conPrecio && re.test(a.respuesta))) return fotos.length ? [fotos[0], { url: archivo, pie }] : [{ url: archivo, pie }];
   }
   return fotos;

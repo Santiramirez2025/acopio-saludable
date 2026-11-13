@@ -30,6 +30,7 @@ import { urlSitio } from "./sitio";
 /** Meta necesita una URL pública absoluta para la foto. */
 const absoluta = (u: string) => (u.startsWith("http") ? u : `${urlSitio()}${u.startsWith("/") ? "" : "/"}${u}`);
 import { cotizarEnvioChat } from "./envio-chat";
+import { instruccionCostoEnvio } from "./envio-zona";
 import { instruccionPedidoNegocio, pieFotoCombo, rubroRevende } from "./atencion-reglas";
 import { EN_STOCK, productosDe, sugerirDelStock } from "./en-stock";
 import { fotoRealDe, fotosReales, imagenCombo, imagenProducto, pideFotosReales } from "./galeria";
@@ -382,7 +383,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const envio = lugar ? await cotizarEnvioChat(lugar, entrada.provincia ? String(entrada.provincia) : null, ctx.subtotalPedido ?? 0, Number(entrada.kilos) || 4) : null;
     if (!envio) return { texto: `No reconozco «${lugar}». Preguntale en qué provincia queda, en una frase.` };
     return {
-      texto: `${envio.detalle}${envio.zonaPropia ? " Es zona de reparto propio: no hay compra mínima, no le hables de mínimo, de correo ni de sumar productos para llegar." : ""} Decíselo en una frase y, si ya eligió algo, decile que abajo le quedan los botones para pagar. No vuelvas a agregar el pedido: ya está guardado.`,
+      texto: instruccionCostoEnvio(envio),
       envio,
     };
   }
@@ -648,7 +649,7 @@ function instrucciones(compraMinima: string, lecciones = "", compraMinimaPropia:
     "- PRECIOS SIEMPRE DE HOY Y REDONDOS: cada precio que digas sale de las herramientas de este turno (buscar_productos, recomendar_combo), nunca copiado de mensajes anteriores de la charla, que pueden haber cambiado. Decilos tal cual vienen («$25.000»), sin inventar cifras con decimales ni restar porcentajes vos: el precio por transferencia también viene de la herramienta.",
     "- Como mucho un emoji y solo si suma.",
     "- CLIENTE QUE YA COMPRA O YA DIJO QUE PAGA (Santiago, 13/11): si el pedido ya está hecho y dice que transfiere, o es alguien que ya nos compró y está comprando de nuevo, lo práctico es darle el MONTO FINAL por transferencia y los datos para transferir en el mismo mensaje, sin mandarlo al link a elegir. Nunca cierres con «¿Te queda alguna duda para pagar?», «¿Cuándo lo pagás?» ni nada que suene a apurarlo o a orden de pago: se lee como presión. Cerrá con algo útil (el horario del reparto, si quiere sumar algo) o sin pregunta.",
-    "- REPARTO (Santiago, 12/11): sale todos los días a las 16:00 en Carlos Paz y la zona. Lo que se paga antes de las 15:00 sale ese mismo día; lo que entra después, al día siguiente desde las 16:00. Podés decirlo así («si lo pagás antes de las 15, hoy a la tarde lo tenés»): es la forma de cerrar la venta hoy.",
+    "- REPARTO (Santiago, 12/11): sale todos los días a las 16:00 en Carlos Paz y la zona. Lo que se paga antes de las 15:00 sale ese mismo día; lo que entra después, al día siguiente desde las 16:00. Podés decirlo así («si lo pagás antes de las 15, hoy a la tarde lo tenés»): es la forma de cerrar la venta hoy. SOLO para Carlos Paz y la zona de reparto propio: a Córdoba Capital y a otras localidades (correo) nunca digas «sale hoy» ni «antes de las 15»; ahí es 24 a 48 h hábiles (más el plazo del correo si va por correo).",
     `- RECETAS (Santiago, 12/11): si pregunta cómo se usa, qué puede hacer con algo o pide recetas, contestá corto y pasale la receta de nuestra web: ${RECETAS.map((r) => `${r.titulo} → acopiosaludable.com/recetas/${r.slug}`).join("; ")}. La guía completa: acopiosaludable.com/recetas. Nunca prometas efectos de salud.`,
     "- HORARIO DE ENTREGA: anotá el horario que te dice como preferencia, pero nunca confirmes una hora puntual («alrededor de las 13:30», «hoy a la tarde»): decile «lo anotamos y Santiago te confirma el horario del reparto por acá». Si ya eligió productos y zona y lo que pide es un día para recibir, no dejes la charla en esa promesa: cargá el pedido con agregar_al_pedido y pasale cómo pagar: «Te dejo el pedido armado para pagar. Apenas se acredita, coordinamos el día que estés en casa». El reparto lo arma Santiago y una hora prometida que no se cumple es un cliente perdido.",
     "- SI PIDE QUE LO LLAMEN: nunca digas que no llamamos. Decí «Dale, Santiago te llama en un rato» y seguí ayudando por acá (a Santiago le llega el aviso solo).",

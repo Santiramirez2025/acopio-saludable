@@ -722,7 +722,7 @@ export async function pensar(c: {
   const tieneCalle = Boolean(orden?.calle && orden.calle.trim().length > 4 && !/a confirmar/i.test(orden.calle));
   const horario = orden?.notas?.match(/Horario:\s*([^·]+)/i)?.[1]?.trim();
   const yaTenemos = orden
-    ? ` Datos que YA tenemos: nombre ${orden.nombre}${tieneCalle ? `, dirección ${orden.calle}, ${orden.ciudad}` : ", FALTA la dirección"}${horario ? `, horario ${horario}` : ""}. No vuelvas a pedir lo que ya está; si falta algo, pedí solo eso y una sola vez.${notaPlazoEntrega(estadoOrden)}`
+    ? ` Datos que YA tenemos: nombre ${orden.nombre}${tieneCalle ? `, dirección ${orden.calle}, ${orden.ciudad}` : ", FALTA la dirección"}${horario ? `, horario ${horario}` : ""}. No vuelvas a pedir lo que ya está; si falta algo, pedí solo eso y una sola vez.${notaPlazoEntrega(estadoOrden, orden.ciudad)}`
     : "";
   const eventosComprobante = ordenId && estadoOrden === "PENDIENTE_PAGO" ? await prisma.orderEvent.findMany({ where: { orderId: ordenId }, select: { nota: true } }).catch(() => []) : [];
   const enQueAnda =
