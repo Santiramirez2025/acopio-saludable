@@ -805,7 +805,17 @@ export async function pensar(c: {
     ];
     const mixClasicoDisponible = (await productosTienda({ where: { codigo: "TG-MIXC" }, take: 1 })).length > 0; // productosTienda solo devuelve lo publicado (ACTIVO con margen)
     const oportunas = fotosOportunas({ entrante: c.texto, respuesta: respuesta.texto, combos, historial: c.historial, mixClasicoDisponible });
-    if (oportunas.length) respuesta = { ...respuesta, fotos: oportunas.map((f) => ({ url: `${urlSitio()}${f.url}`, pie: f.pie })) };
+    if (oportunas.length) {
+      // {precio:CODIGO} en el pie de un video → precio del día (nunca un precio viejo quemado en el video).
+      const codigos = [...new Set(oportunas.flatMap((f) => [...f.pie.matchAll(/\{precio:([A-Z0-9-]+)\}/g)].map((m) => m[1])))];
+      const precios = codigos.length ? new Map((await productosTienda({ where: { codigo: { in: codigos } } })).map((p) => [p.codigo, p.precio])) : new Map<string, number>();
+      const pie = (t: string) => {
+        const sinPrecio = [...t.matchAll(/\{precio:([A-Z0-9-]+)\}/g)].some((m) => !precios.has(m[1]));
+        if (sinPrecio) return t.split(" · ")[0];
+        return t.replace(/\{precio:([A-Z0-9-]+)\}/g, (_, c: string) => `$${Math.round(precios.get(c)!).toLocaleString("es-AR")}`);
+      };
+      respuesta = { ...respuesta, fotos: oportunas.map((f) => ({ url: `${urlSitio()}${f.url}`, pie: pie(f.pie) })) };
+    }
   }
   // A una duda de confianza se le contesta la duda: sin el resumen ni los botones de pago en ese mensaje
   // (salvo que en ese mismo mensaje haya pedido algo nuevo). El pedido guardado no cambia.

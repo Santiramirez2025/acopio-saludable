@@ -128,7 +128,7 @@ const PRODUCTOS_TEXTO: [RegExp, string, string][] = [
 ];
 const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen local|d[oó]nde est[aá]n|ver antes|c[oó]mo (llega|viene)|empaque|calidad|fresc/i;
 
-export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
+function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
   // 12/11: con el Mix clásico sin stock, la foto de «el más pedido» mostraba algo que no se podía vender (Elvira).
   const masPedido = (): FotoOportuna | null =>
     a.mixClasicoDisponible === false ? candidata("combo-trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas") : candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
@@ -182,4 +182,27 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
     if (f) return [f];
   }
   return [];
+}
+
+/** Videos de venta (Santiago, 12/11: «vendemos con precio y video, y logo para que nos reconozcan»).
+ *  El pie lleva {precio:CODIGO} y atencion.ts lo reemplaza por el precio del día. Uno por tema y por charla. */
+const VIDEOS: [RegExp, string, string][] = [
+  [/semilla|tr[ií]o/i, "/video/reels/reel-2026-11-12-semillas-no-frutos-secos.mp4", "Mix de semillas (lino, chía y sésamo) vs. mix de frutos secos: los dos fraccionados en el día"],
+  [/mix|frutos secos|despensa|alacena|nuez|caj[uú]|almendra|man[ií]\b/i, "/video/reels/reel-2026-11-12-asi-armamos-tu-mix.mp4", "Así armamos tu mix de frutos secos, a mano y el mismo día · Mix clásico con cajú {precio:TG-MIXC} el kilo"],
+  [/cu[aá]ndo (llega|me llega|lo tra|lo llev)|env[ií]o|reparto|hoy mismo|para hoy/i, "/video/reels/reel-2026-11-12-repartimos-cada-dia.mp4", "Repartimos todos los días a las 16: si pagás antes de las 15, hoy lo tenés"],
+];
+
+export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
+  const fotos = fotosBase(a);
+  const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
+  const videosYa = nuestros.filter((t) => t.startsWith("[Video]"));
+  if (videosYa.length >= 2) return fotos;
+  const conPrecio = /\$\s?\d/.test(a.respuesta);
+  for (const [re, archivo, pie] of VIDEOS) {
+    const yaSalio = videosYa.some((t) => t.includes(pie.split(" · ")[0].slice(0, 30)));
+    if (yaSalio) continue;
+    if (archivo.includes("asi-armamos") && a.mixClasicoDisponible === false) continue;
+    if (re.test(a.entrante) || (conPrecio && re.test(a.respuesta))) return fotos.length ? [fotos[0], { url: archivo, pie }] : [{ url: archivo, pie }];
+  }
+  return fotos;
 }

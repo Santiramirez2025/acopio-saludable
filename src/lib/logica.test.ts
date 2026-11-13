@@ -1139,7 +1139,10 @@ test("imágenes oportunas: en el momento justo y sin repetir", () => {
   assert.equal(fotosOportunas({ entrante: "precio nueces?", respuesta: "La nuez sale $24.872 el kilo", historial: vacio })[0].url, "/img/galeria/producto-nuez.jpg");
   // Ya se mandó → no se repite
   const conFoto = [{ de: "acopio" as const, texto: "[Foto] Despensa de 4 kilos" }];
-  assert.equal(fotosOportunas({ entrante: "y la despensa?", respuesta: "La Despensa de 4 kilos sale $35.227", historial: conFoto }).length, 0);
+  assert.equal(fotosOportunas({ entrante: "y la despensa?", respuesta: "La Despensa de 4 kilos sale $35.227", historial: conFoto }).filter((f) => !f.url.endsWith(".mp4")).length, 0);
+  // 12/11: el video de venta sale una sola vez por tema
+  const conVideo = [{ de: "acopio" as const, texto: "[Video] Así armamos tu mix de frutos secos, a mano y el mismo día · Mix clásico con cajú $12.500 el kilo" }];
+  assert.ok(!fotosOportunas({ entrante: "y la nuez?", respuesta: "La nuez sale $20.500", historial: conVideo }).some((f) => f.url.endsWith(".mp4")));
   // Tope de 4 por charla (12/11: «todas las ventas con imágenes»)
   const tres = ["a", "b", "c", "d"].map((x) => ({ de: "acopio" as const, texto: `[Foto] ${x}` }));
   assert.equal(fotosOportunas({ entrante: "¿es confiable?", respuesta: "sí", historial: tres }).length, 0);
