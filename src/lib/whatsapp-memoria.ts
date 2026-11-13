@@ -90,6 +90,29 @@ export async function registrarSalida(telefono: string, de: "bot" | "persona", t
   }
 }
 
+/**
+ * Lo que se contestó a mano desde la bandeja de Meta (Messenger/Instagram) llega como eco. Antes se ignoraba y el panel
+ * mostraba esas charlas como «sin contestar» (12/11: 14 charlas de Messenger que sí estaban contestadas).
+ * Se guarda como «persona», una sola vez por id, solo si la charla existe y si no es el eco de algo que mandó el bot.
+ */
+export async function registrarEco(idMensaje: string, clave: string, texto: string): Promise<boolean> {
+  const existe = await prisma.$queryRaw<{ n: number }[]>`SELECT 1 AS n FROM "WhatsappConversacion" WHERE "telefono" = ${clave} LIMIT 1`;
+  if (!existe.length) return false;
+  const delBot = await prisma.$queryRaw<{ n: number }[]>`
+    SELECT 1 AS n FROM "WhatsappMensaje"
+    WHERE "telefono" = ${clave} AND "de" <> 'cliente' AND "texto" = ${texto} AND "fecha" > now() - interval '10 minutes'
+    LIMIT 1
+  `;
+  if (delBot.length) return false;
+  const n = await prisma.$executeRaw`
+    INSERT INTO "WhatsappMensaje" ("id", "telefono", "de", "texto")
+    VALUES (${idMensaje}, ${clave}, 'persona', ${texto})
+    ON CONFLICT ("id") DO NOTHING
+  `;
+  if (n) await prisma.$executeRaw`UPDATE "WhatsappConversacion" SET "noLeidos" = 0, "ultimoMensaje" = now() WHERE "telefono" = ${clave}`;
+  return n > 0;
+}
+
 /** El id del último mensaje que escribió el cliente: sirve para contestar una sola vez a una ráfaga. */
 export async function ultimoDelCliente(telefono: string): Promise<string | null> {
   const filas = await prisma.$queryRaw<{ id: string }[]>`

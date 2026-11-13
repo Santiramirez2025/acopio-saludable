@@ -9,6 +9,7 @@ import crypto from "node:crypto";
 import { atender, cola } from "@/lib/atencion";
 import { metaActivo, nombreMeta, paginaMeta } from "@/lib/meta-mensajes";
 import { comentariosDe } from "@/lib/comentarios";
+import { registrarEco } from "@/lib/whatsapp-memoria";
 import { atenderComentarios } from "@/lib/comentarios-atender";
 
 export const dynamic = "force-dynamic";
@@ -67,7 +68,13 @@ export async function POST(req: Request) {
     const pagina = await paginaMeta();
     for (const ev of eventos) {
       const de = ev.sender?.id;
-      if (!de || ev.message?.is_echo) continue;
+      // Eco: lo que mandó la página. Si lo escribió una persona desde la bandeja, queda en el panel como contestado.
+      if (ev.message?.is_echo) {
+        const para = ev.recipient?.id;
+        if (para && ev.message.mid && ev.message.text) await registrarEco(ev.message.mid, `${prefijo}${para}`, ev.message.text.slice(0, 1200)).catch((e) => console.error("meta: eco falló", e));
+        continue;
+      }
+      if (!de) continue;
       // En Instagram, los mensajes que manda la cuenta también llegan con el id de la cuenta como remitente.
       if (de === pagina?.id || de === pagina?.instagram) continue;
       const clave = `${prefijo}${de}`;
