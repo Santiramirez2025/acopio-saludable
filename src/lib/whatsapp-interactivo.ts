@@ -704,3 +704,43 @@ export function listaDeProductos(texto: string): string[] {
 export function listaDeVerdad(encontrados: number, pedidos: number): boolean {
   return encontrados > 0 && encontrados * 2 >= pedidos;
 }
+
+/**
+ * Sin IA (sáb 14/11, anuncio «3 kilos, 3 recetas»): 5 charlas escribieron «Hola, vi el video del Trío y lo quiero»
+ * entre las 15:17 y las 16:09 y las 5 recibieron «En un rato te escribe Santiago con los precios»; esperaron
+ * entre 40 y 50 minutos el precio. Si el cliente nombra el Trío o vino de un anuncio con combo, sin IA igual
+ * recibe el combo con precio, el link del carrito y la pregunta de la ciudad. La charla sigue pasando a Santiago.
+ */
+export function nombraElTrio(texto: string): boolean {
+  const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return /\btrio\b/.test(t);
+}
+
+export function textoComboSinIA(c: {
+  combo: { slug: string; nombre: string; precio: number; items: { producto: { producto: string; presentacion: string }; cantidad: number }[] };
+  conTransferencia: number | null;
+  nombre: string | null;
+  sinCargoDesde: number;
+  sitio: string;
+  pesos: (n: number) => string;
+}): string | null {
+  const { combo } = c;
+  if (!(combo.precio > 0)) return null;
+  const nombreCombo = combo.nombre.split("·")[0].trim();
+  const trae = combo.items
+    .map((i) => {
+      const cuanto = i.producto.presentacion.replace(/^x\s*/i, "").trim();
+      const que = i.producto.producto.replace(/\s+x\s+\d.*$/i, "").trim();
+      const q = que.charAt(0).toLowerCase() + que.slice(1);
+      return `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${cuanto ? `${cuanto} de ` : ""}${q}`;
+    })
+    .filter(Boolean);
+  const listaTrae = trae.length > 1 ? `${trae.slice(0, -1).join(", ")} y ${trae[trae.length - 1]}` : trae[0] ?? "";
+  const precio = `${c.pesos(combo.precio)}${c.conTransferencia ? `, o ${c.pesos(c.conTransferencia)} por transferencia` : ""}`;
+  const zona = combo.precio >= c.sinCargoDesde ? "En Carlos Paz y la zona te lo llevamos sin cargo." : "En Carlos Paz y la zona te lo llevamos nosotros.";
+  return [
+    `¡Hola${c.nombre ? ` ${c.nombre}` : ""}! El ${nombreCombo}${listaTrae ? ` trae ${listaTrae}` : ""}: ${precio}.`,
+    `Lo dejás pedido acá 👉 ${c.sitio}/carrito?p=c-${combo.slug}*1&utm_source=whatsapp&utm_campaign=combo-sin-ia`,
+    `¿De qué ciudad sos? ${zona}`,
+  ].join("\n");
+}
