@@ -744,3 +744,45 @@ export function textoComboSinIA(c: {
     `¿De qué ciudad sos? ${zona}`,
   ].join("\n");
 }
+
+/**
+ * Sin IA, después del Trío (sáb 14/11, anuncio «3 kilos, 3 recetas»): Carlos (Cabalango) escribió «¿Dónde están?
+ * Vamos a buscarlo» y Mary contestó «El de 22.000» al precio; los dos recibieron «En un rato te escribe Santiago»
+ * y esperaron 15 a 40 minutos. De 13 charlas del Trío, 3 preguntaron dónde estamos para ir a buscarlo (el tema
+ * «retiro/local» está en 137 de 1.351 charlas). Sin IA el bot ya contesta las dos cosas: no hay local, te lo
+ * llevamos (sin dar ninguna dirección), y si acepta el combo le pide calle, número y barrio. La charla sigue
+ * pasando a Santiago.
+ */
+function sinTildes(texto: string): string {
+  return texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+export function preguntaDondeEstan(texto: string): boolean {
+  const t = sinTildes(texto);
+  return (
+    /\bdonde (estan|esta el (negocio|local)|quedan?|los encuentro|se encuentran|es el (negocio|local))\b/.test(t) ||
+    /\b(tu|su) direccion\b|\bdame (la|tu) direccion\b|\bdireccion del (local|negocio)\b/.test(t) ||
+    /\b(tienen|hay) local\b/.test(t) ||
+    /\b(retirar|retiro|lo retiro|paso a buscar|voy a buscar|vamos a buscar|ir a buscar|lo busco|voy personalmente)/.test(t)
+  );
+}
+
+export function textoDondeEstanSinIA(c: { nombre: string | null; sinCargoDesde: number; pesos: (n: number) => string }): string {
+  return [
+    `¡Hola${c.nombre ? ` ${c.nombre}` : ""}! No tenemos local a la calle: trabajamos online desde Villa Carlos Paz y el pedido te lo llevamos nosotros.`,
+    `En Carlos Paz y la zona va sin cargo desde ${c.pesos(c.sinCargoDesde)}. ¿Me pasás calle, número y barrio así te lo agendo?`,
+  ].join("\n");
+}
+
+/** Respuesta corta que toma el combo que le acabamos de ofrecer con link: «lo quiero», «sí», «dale», «el de 22.000», «ese». */
+export function aceptaComboOfrecido(texto: string, historial: { de: string; texto: string }[]): boolean {
+  const ultimoNuestro = [...historial].reverse().find((h) => h.de === "acopio")?.texto ?? "";
+  if (!/carrito\?p=c-/.test(ultimoNuestro)) return false;
+  const t = sinTildes(texto).replace(/[!¡.?¿,]/g, " ").replace(/\s+/g, " ").trim();
+  if (!t || t.length > 40) return false;
+  return /^(s+i+|si+ quiero|dale|lo quiero|quiero|lo tomo|me interesa|ese|esa|el de \$? ?[\d.]+|ese de \$? ?[\d.]+|ok|bueno|listo|joya|va)( .*)?$/.test(t) && !/\bno\b/.test(t);
+}
+
+export function textoPideDireccionSinIA(nombre: string | null): string {
+  return `¡Genial${nombre ? ` ${nombre}` : ""}! ¿Me pasás calle, número y barrio? En Carlos Paz y la zona te lo llevamos nosotros y así te lo dejo agendado.`;
+}
