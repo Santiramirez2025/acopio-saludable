@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { pesosCliente, useCarrito } from "./Carrito";
 import { envioQueSeCobra } from "@/lib/pedido-calculos";
 import { PedirWhatsapp } from "./PedirWhatsapp";
+import { registrar } from "@/lib/medicion";
+import { datosCompletos } from "@/lib/embudo-checkout";
 
 type Opcion = { id: string; nombre: string; modalidad: string; precio: number; plazo: string; masBarata: boolean };
 type Envio = { opciones: Opcion[]; pesoTotalKg: number; bultos: number; puedePagar: boolean; compraMinima: number; falta: number };
@@ -23,6 +25,13 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const consulta = useRef(0);
+  // Un evento por paso y por visita al checkout (solo el registro propio, no Meta): mide dónde se va la gente.
+  const medidos = useRef(new Set<string>());
+  const paso = (e: string) => {
+    if (medidos.current.has(e)) return;
+    medidos.current.add(e);
+    registrar(e);
+  };
   // Beneficio por recomendación: se consulta cuando ya hay email o WhatsApp, y el servidor lo vuelve a calcular al confirmar.
   const [contacto, setContacto] = useState({ email: "", telefono: "" });
   const [beneficio, setBeneficio] = useState<{ pct: number; texto: string | null; tipo?: string | null }>({ pct: 0, texto: null });
@@ -41,6 +50,13 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
     return () => clearTimeout(t);
   }, [contacto]);
   const leerContacto = (e: React.FocusEvent<HTMLInputElement>) => setContacto((c) => ({ ...c, [e.target.name]: e.target.value.trim() }));
+  // Paso 1 completo cuando nombre, email y WhatsApp están cargados (se mira al salir de cualquiera de los tres).
+  const verDatos = (e: React.FocusEvent<HTMLInputElement>) => {
+    const f = e.target.form;
+    if (!f) return;
+    const v = (n: string) => String((f.elements.namedItem(n) as HTMLInputElement | null)?.value ?? "");
+    if (datosCompletos(v("nombre"), v("email"), v("telefono"))) paso("checkout_datos");
+  };
   const cpValido = /^[A-Za-z]?\d{4}[A-Za-z]{0,3}$/.test(cp.trim());
 
   // El envío se calcula solo apenas hay provincia y código postal, y se recalcula si cambia el carrito.
@@ -59,10 +75,12 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
         if (n !== consulta.current) return;
         if (!r.ok) throw new Error(datos.error);
         setEnvio(datos);
+        paso(datos.puedePagar ? "checkout_envio" : "checkout_bajo_minimo");
         setOpcionId((previa) => (datos.opciones.some((o: Opcion) => o.id === previa) ? previa : (datos.opciones.find((o: Opcion) => o.masBarata)?.id ?? "")));
       } catch (e) {
         if (n !== consulta.current) return;
         setEnvio(null);
+        paso("checkout_error_envio");
         setErrorEnvio(e instanceof Error && e.message ? e.message : "No pudimos calcular el envío");
       } finally {
         if (n === consulta.current) setCotizandoEnvio(false);
@@ -99,14 +117,18 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
     if (!opcion) return setError("Elegí una opción de envío");
     if (envio && !envio.puedePagar) return setError(`El pedido no llega a la compra mínima de ${pesosCliente(envio.compraMinima)} para tu zona`);
     setEnviando(true);
+    paso("checkout_confirmar");
     const f = new FormData(e.currentTarget);
     const cliente = Object.fromEntries(["nombre", "email", "telefono", "calle", "ciudad", "notas"].map((k) => [k, f.get(k)]));
     try {
       const r = await fetch("/api/pedidos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lineas, cliente: { ...cliente, provincia, cp }, envioOpcionId: opcion.id, medioPago: medio, origen: leerOrigen() }) });
       const datos = await r.json();
       if (!r.ok) throw new Error(datos.error);
+      paso("checkout_pedido");
+      paso(medio === "MERCADOPAGO" ? "checkout_a_mp" : "checkout_transferencia");
       window.location.href = datos.url;
     } catch (err) {
+      registrar("checkout_error_pedido");
       setError(err instanceof Error && err.message ? err.message : "No pudimos registrar el pedido");
       setEnviando(false);
     }
@@ -123,9 +145,9 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
             <p className="mb-3 rounded-lg bg-acopio-50 px-3 py-2 text-sm text-acopio-800">Te recomendó un amigo: si es tu primera compra, tenés 5% de descuento. Se aplica solo al poner tu email o WhatsApp.</p>
           )}
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="sm:col-span-2"><label className="etiqueta" htmlFor="nombre">Nombre y apellido o razón social</label><input className="campo" id="nombre" name="nombre" autoComplete="name" required minLength={3} /></div>
-            <div><label className="etiqueta" htmlFor="email">Email</label><input className="campo" id="email" name="email" type="email" autoComplete="email" required onBlur={leerContacto} /></div>
-            <div><label className="etiqueta" htmlFor="telefono">WhatsApp (con código de área)</label><input className="campo" id="telefono" name="telefono" type="tel" autoComplete="tel" required onBlur={leerContacto} /></div>
+            <div className="sm:col-span-2"><label className="etiqueta" htmlFor="nombre">Nombre y apellido o razón social</label><input className="campo" id="nombre" name="nombre" autoComplete="name" required minLength={3} onBlur={verDatos} /></div>
+            <div><label className="etiqueta" htmlFor="email">Email</label><input className="campo" id="email" name="email" type="email" autoComplete="email" required onBlur={(e) => { leerContacto(e); verDatos(e); }} /></div>
+            <div><label className="etiqueta" htmlFor="telefono">WhatsApp (con código de área)</label><input className="campo" id="telefono" name="telefono" type="tel" autoComplete="tel" required onBlur={(e) => { leerContacto(e); verDatos(e); }} /></div>
           </div>
         </fieldset>
 

@@ -4,10 +4,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { admiteFreno, admiteMedicion, ipDe } from "@/lib/freno";
+import { EVENTOS_CHECKOUT } from "@/lib/embudo-checkout";
 
 export const dynamic = "force-dynamic";
 
-const EVENTOS = new Set(["pagina", "contacto", "ver_producto", "agregar", "iniciar_compra", "compra", "lead_sistema", "whatsapp_desde_carrito", "whatsapp_desde_ficha", "whatsapp_desde_inicio"]);
+const EVENTOS = new Set(["pagina", "contacto", "ver_producto", "agregar", "iniciar_compra", "compra", "lead_sistema", "whatsapp_desde_carrito", "whatsapp_desde_ficha", "whatsapp_desde_inicio", ...EVENTOS_CHECKOUT]);
 const ROBOTS = /bot|crawl|spider|slurp|preview|facebookexternalhit|headless|lighthouse|vercel/i;
 // Dos frenos, los dos contestan 204 sin guardar (nada que adivinar ni reintentar):
 // 1) por IP en memoria de la instancia (60 por minuto: una persona genera unos pocos; para un script que

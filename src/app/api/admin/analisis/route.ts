@@ -1,5 +1,6 @@
 // Radiografía del negocio para replantear el catálogo: qué se vendió, qué preguntó la gente y qué
 // tiene La Granja hoy. Solo administrador. GET ?parte=pedidos|whatsapp|catalogo|lagranja|harinar|trafico|ventas (&dias=N)
+import { embudoCheckout } from "@/lib/embudo-checkout";
 import { esPedidoWeb } from "@/lib/ventas-resumen";
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
@@ -164,6 +165,8 @@ async function trafico(dias: number) {
     compraron: pedidosWeb,
     carritosAbandonados: ses.filter((x) => x.has("agregar") && !x.has("iniciar_compra") && !x.has("compra") && !x.has("contacto")).length,
   };
+  // Dónde se cae el checkout, paso por paso (eventos checkout_* de Checkout.tsx, desde el 14/11).
+  const checkout = embudoCheckout(ses);
   const top = (o: Record<string, number>) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 12);
   // Qué hizo cada origen (link con utm o sitio que la mandó): para medir influencers, piezas y campañas.
   const porOrigen: Record<string, { sesiones: number; agregaron: number; whatsapp: number; compraron: number }> = {};
@@ -176,7 +179,7 @@ async function trafico(dias: number) {
     if (ev.has("compra")) x.compraron++;
   }
   const campanas = Object.entries(porOrigen).sort((a, b) => b[1].sesiones - a[1].sesiones).slice(0, 20);
-  return { dias, desde: "registro propio desde el 28/10/2026", porDia, embudo, paginas: top(paginas), agregarPorPagina: top(agregarPorPagina), origenes: top(origenes), campanas, nota: "agregarPorPagina: en qué página se tocó «Agregar». compraron: pedidos no cancelados con origen web en el período (mismo origen que parte=ventas); los de WhatsApp no suman. campanas: sesiones por origen; los links con ?utm_source=…&utm_campaign=… aparecen como utm:fuente/campaña" };
+  return { dias, desde: "registro propio desde el 28/10/2026", porDia, embudo, checkout, paginas: top(paginas), agregarPorPagina: top(agregarPorPagina), origenes: top(origenes), campanas, nota: "agregarPorPagina: en qué página se tocó «Agregar». compraron: pedidos no cancelados con origen web en el período (mismo origen que parte=ventas); los de WhatsApp no suman. checkout: de las sesiones que entraron al checkout, cuántas llegaron a cada paso (datos → envío → confirmar → pedido creado) y en qué paso se fue cada una (seVanEn); se mide desde el 14/11. campanas: sesiones por origen; los links con ?utm_source=…&utm_campaign=… aparecen como utm:fuente/campaña" };
 }
 
 /** Harinar vs La Granja por kilo, y qué se compra en cada uno (ver lib/harinar.ts). */
