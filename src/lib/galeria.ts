@@ -69,6 +69,37 @@ export function fotoRealDe(texto: string): { url: string; pie: string } | null {
   return r ? { url: `/img/reales/${r[1]}.jpg`, pie: r[2] } : null;
 }
 
+/**
+ * Foto real de la mesa de fraccionado para la ficha de un producto (14/11, Santiago: «mejoramos las imágenes»).
+ * Va como segunda foto de la galería («así te llega»); en la miel va primera, porque la ilustración
+ * mostraba pasta de maní y la foto real es el frasco que llevamos. Por código, para no confundir
+ * «semillas de girasol» con el mix de semillas.
+ */
+const REAL_POR_CODIGO: [RegExp, string][] = [
+  [/^TG-NUEZ/, "real-nuez"],
+  [/^LG-ALMNP-500$/, "real-almendras-500"],
+  [/^LG-ALMNP/, "real-almendras"],
+  [/^TG-CAJU$/, "real-caju"],
+  [/^TG-BANANA/, "real-banana"],
+  [/^LG-DATIL/, "real-datiles"],
+  [/^TG-GIRASOL/, "real-girasol"],
+  [/^(LG|TG)-GPROTE/, "real-granola-proteica"],
+  [/^(LG|TG)-GTRAD/, "real-granola"],
+  [/^LG-MIEL/, "real-miel"],
+  [/^TG-MIX(C|CG)-500$/, "real-mix-500"],
+  [/^TG-MIX(C|CG)$/, "real-mix"],
+  [/^TG-PASAS/, "real-pasas"],
+  [/^LG-MIXSEM/, "real-semillas"],
+];
+
+export function fotoRealProducto(codigo: string): string | null {
+  const r = REAL_POR_CODIGO.find(([re]) => re.test(codigo));
+  return r ? `/img/reales/${r[1]}.jpg` : null;
+}
+
+/** La miel va con la foto real primero: la ilustración no representa el producto. */
+export const REAL_PRIMERO = new Set(["LG-MIEL", "LG-MIEL-1KG"]);
+
 /** Fotos reales: cómo armamos y cómo llega el pedido. Para la desconfianza y el «¿cómo llega?». */
 export const REALES = [
   { archivo: "real-asi-llega", pie: "Así llega tu pedido: en bolsa kraft, fraccionado y con una nota para vos" },

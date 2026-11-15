@@ -1,6 +1,7 @@
 // Capa de lectura de la tienda pública. Nada de lo que sale de acá incluye el costo.
 
 import { queTraeMix } from "./mix-composicion";
+import { fotoRealProducto, REAL_PRIMERO } from "./galeria";
 import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
@@ -47,7 +48,8 @@ export function aTienda(p: Product, reglas: ReglasPrecio = {}): ProductoTienda {
     precio,
     contenido: contenidoNeto(p.contenido, p.unidad, p.presentacion),
     unidad: p.unidad,
-    fotoUrl: p.fotoUrl,
+    // La miel va con su foto real (la ilustración mostraba pasta de maní, 14/11).
+    fotoUrl: REAL_PRIMERO.has(p.codigo) ? fotoRealProducto(p.codigo) ?? p.fotoUrl : p.fotoUrl,
     gancho: p.gancho,
     esSuplemento: p.categoria === "Suplementos",
     sinTacc: esSinTacc(p),

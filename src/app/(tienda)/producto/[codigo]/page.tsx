@@ -14,6 +14,7 @@ import { Plazos } from "@/components/Plazos";
 import { costoEntregaZona } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { descripcionLd, imagenesLd } from "@/lib/producto-ld";
+import { fotoRealProducto, REAL_PRIMERO } from "@/lib/galeria";
 import { Medir } from "@/components/Medicion";
 import { BotonCompartir } from "@/components/Compartir";
 import { Galeria } from "@/components/Galeria";
@@ -54,6 +55,12 @@ export default async function Producto({ params }: Props) {
   // Con imagen propia no se muestra la foto del proveedor.
   const propias = fila.fotos.filter((x) => x.startsWith("/img/"));
   if (propias.length) fila.fotos = propias;
+  // 14/11: la foto real de la mesa de fraccionado («así te llega») como segunda foto, o primera en la miel.
+  const real = fotoRealProducto(fila.codigo);
+  if (real && !fila.fotos.includes(real)) {
+    const base = fila.fotos.length ? fila.fotos : fila.fotoUrl ? [fila.fotoUrl] : [];
+    fila.fotos = REAL_PRIMERO.has(fila.codigo) ? [real, ...base] : [...base, real];
+  }
   const p = aTienda(fila, cfg);
   // Sin stock por ahora: la ficha queda (el link no se rompe), pero sin «Agregar» y con aviso por WhatsApp.
   const sinStock = fila.estado === "SIN_STOCK";
