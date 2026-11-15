@@ -2,6 +2,8 @@
 
 import { queTraeMix } from "./mix-composicion";
 import { fotoRealProducto, REAL_PRIMERO } from "./galeria";
+
+const PORTADA_NAVIDAD = new Set(["pan-dulce-casero", "mesa-navidena", "regalo-navideno"]);
 import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
@@ -96,7 +98,8 @@ export function aComboTienda(c: ComboConItems, margenMinimoPct: number, reglas: 
     tipo: c.tipo,
     nicho: c.nicho,
     destacado: c.destacado,
-    fotoUrl: c.fotoUrl,
+    // 14/11 (Santiago: «todas diferentes»): los combos de Navidad van con su portada de la misma familia.
+    fotoUrl: PORTADA_NAVIDAD.has(c.slug) ? `/img/combos/v3/${c.slug}.webp` : c.fotoUrl,
     descuentoPct: Number(c.descuentoPct),
     precioLista: calc.precioLista,
     precio: calc.precioCombo,
@@ -223,7 +226,7 @@ export async function cotizarCarrito(entrada: unknown, minimo?: number): Promise
         nombre: c.nombre,
         detalle: `Combo · ${c.items.reduce((s, i) => s + i.cantidad, 0)} productos`,
         contenido: c.items.map(({ producto, cantidad }) => renglonCombo(producto, cantidad)),
-        fotoUrl: c.fotoUrl ?? c.items[0]?.producto.fotoUrl ?? null,
+        fotoUrl: PORTADA_NAVIDAD.has(c.slug) ? `/img/combos/v3/${c.slug}.webp` : c.fotoUrl ?? c.items[0]?.producto.fotoUrl ?? null,
         href: `/combos/${c.slug}`,
         precioUnitario: c.precio,
         precioLista: c.precioLista,
