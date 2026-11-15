@@ -18,6 +18,8 @@
 //
 // Puro (sin base): se aplica con /api/admin/catalogo/ajustar y se prueba sin gastar nada.
 
+import { FOTO_ENCARGO, POR_ENCARGO, PRODUCTOS_ENCARGO } from "./catalogo-encargo";
+
 export type ProductoProveedor = {
   codigo: string;
   producto: string;
@@ -46,11 +48,7 @@ const SUELTO = "Sin marca / fraccionado";
 
 export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
   // ——— 28/10/2026: harinas de Harinar (Carlos Paz, más baratas que La Granja) y especias y fécula de La Granja ———
-  // Los HR-… se compran en Distribuidora HARINAR (ver lib/harinar.ts): van como «propio» para que la lista de La Granja no les pise el costo.
-  { codigo: "HR-HINTEGRAL", codigoProveedor: "propio", producto: "Harina integral", marca: SUELTO, presentacion: "x 1 kg", categoria: "Harinas y Féculas", contenido: 1000, unidad: "g", costo: 900, margen: 1.1111, pesoBrutoG: 1020, porQueLoElegimos: "Harina integral de trigo, para panes, pizzas y budines caseros. Fraccionada en el día." },
-  { codigo: "HR-SALVADO-500", codigoProveedor: "propio", producto: "Salvado de trigo", marca: SUELTO, presentacion: "x 500 g", categoria: "Harinas y Féculas", contenido: 500, unidad: "g", costo: 360, margen: 2.3333, pesoBrutoG: 520, porQueLoElegimos: "Para sumar fibra al yogur, la avena o la masa del pan." },
-  { codigo: "HR-GLUTEN-500", codigoProveedor: "propio", producto: "Gluten de trigo", marca: SUELTO, presentacion: "x 500 g", categoria: "Harinas y Féculas", contenido: 500, unidad: "g", costo: 4650, margen: 0.6989, pesoBrutoG: 520, porQueLoElegimos: "Para seitán y para que el pan integral levante más." },
-  { codigo: "HR-GOTAS-250", codigoProveedor: "propio", producto: "Gotas de chocolate negro", marca: "Águila", presentacion: "x 250 g", categoria: "Repostería", contenido: 250, unidad: "g", costo: 2680, margen: 0.8284, pesoBrutoG: 270, porQueLoElegimos: "No se derriten en el horno: para galletas, budines y pan dulce." },
+  // 14/11 (Santiago): «harinar no voy a comprar más». Los HR-… salieron: las harinas y las gotas pasan a La Granja por encargo (catalogo-encargo.ts).
   { codigo: "LG-FECMAND", codigoProveedor: "001-216", producto: "Fécula de mandioca", marca: SUELTO, presentacion: "x 1 kg", categoria: "Harinas y Féculas", contenido: 1000, unidad: "g", costo: 3304, margen: 0.7857, pesoBrutoG: 1020, porQueLoElegimos: "Para chipá, panes y para espesar salsas." },
   { codigo: "LG-CANELA-100", codigoProveedor: "977-004", producto: "Canela molida", marca: SUELTO, presentacion: "x 100 g", categoria: "Especias", contenido: 100, unidad: "g", costo: 908, margen: 1.6432, pesoBrutoG: 110 },
   { codigo: "LG-CURCUMA-100", codigoProveedor: "977-009", producto: "Cúrcuma molida", marca: SUELTO, presentacion: "x 100 g", categoria: "Especias", contenido: 100, unidad: "g", costo: 636, margen: 1.8302, pesoBrutoG: 110 },
@@ -194,6 +192,9 @@ export const PRODUCTOS_PROVEEDORES: ProductoProveedor[] = [
 ];
 
 /** Productos del catálogo propio que todavía no tienen foto propia en public/img/productos/prov. */
+// Lo nuevo de La Granja, por encargo (14/11).
+PRODUCTOS_PROVEEDORES.push(...PRODUCTOS_ENCARGO);
+
 const SIN_FOTO_PROPIA = ["LG-CIRUELA", "LG-CIRUELA-500", "LG-CIRUELASC", "LG-CIRUELASC-500", "LG-HIGOS", "LG-HIGOS-500", "LG-DAMASCO", "LG-DAMASCO-500", "LG-DATILSC", "LG-FRUTAMIXTA", "LG-ARANDANOS", "LG-ARANDANOS-500", "LG-PISTACHO", "LG-PISTACHO-250", "LG-AVELLANA", "LG-AVELLANA-250", "LG-CAJUTS", "LG-CAJUTS-500", "LG-MIXENERG", "LG-MIXPREMIUM", "LG-MIXCERV", "LG-ZAPALLO", "LG-ZAPALLO-500", "LG-MANISS", "LG-MANICS", "LG-SESAMO", "LG-AMARANTOPOP", "LG-QUINOA", "LG-COCO", "LG-COCO-500", "LG-CACAO", "LG-MIEL-1KG", "LG-GARBANZO-1KG", "LG-LENTEJA-1KG", "LG-LENTEJAROJA", "LG-POROTONEGRO", "LG-ARROZYAMANI", "LG-ARROZINT", "LG-ARROZBASMATI", "TG-ALFAJORFS", "LG-SAL", "LG-GARRAPMANI-500", "LG-ALMGARRAP-250", "LG-PASASCHOC-400", "LG-PANDULCE-CERAL", "LG-BOLSAREGALO"];
 /** Presentaciones que usan la foto de otra (mismo producto, otro peso). */
 const FOTO_DE: Record<string, string> = { "TG-MIXC-500": "TG-MIXC", "LG-NUEZ-10KG": "TG-NUEZ", "LG-CAJU-5KG": "TG-CAJU", "LG-PASAS-10KG": "TG-PASAS", "LG-DATIL-5KG": "LG-DATIL", "LG-MIXSEM-10KG": "LG-MIXSEM", "LG-MANI-25KG": "LG-MIXSEM" };
@@ -209,6 +210,9 @@ export type ComboProveedor = { slug: string; nombre: string; descuentoPct: numbe
  * Los códigos sin prefijo son productos de marca que siguen viniendo de Distrimay.
  */
 export const COMBOS_PROVEEDORES: ComboProveedor[] = [
+  // 14/11 (Santiago: «no veo fácilmente encontrable un kit semanal, yo creo que se vendería mucho»): desayuno y colación
+  // de una semana para la casa, todo en mano. Suelto $24.955; con 8% queda ~$23.000 (costo $15.066, margen ~34%) y pasa los $20.000 del envío sin cargo.
+  { slug: "kit-semanal", nombre: "Kit semanal · desayuno y colación", descuentoPct: 8, destacado: true, items: [{ codigo: "LG-GTRAD", cantidad: 1 }, { codigo: "TG-MIXCG-500", cantidad: 1 }, { codigo: "LG-DATIL-500", cantidad: 1 }, { codigo: "LG-MIXSEM-500", cantidad: 1 }] },
   { slug: "despensa-4-kilos", nombre: "Despensa de 4 kilos", descuentoPct: 12.5 /* 3/11: $28.500 en la tienda ($26.200 por transferencia), antes $35.000; costo $20.783 */, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }, { codigo: "LG-MIXSEM", cantidad: 1 }] },
   // Despensa chica: 2 kilos, llega justo a la compra mínima de Carlos Paz ($20.000).
   { slug: "despensa-chica", nombre: "Despensa chica de 2 kilos", descuentoPct: 7 /* 3/11: $15.800 en la tienda */, destacado: true, items: [{ codigo: "TG-MIXCG-500", cantidad: 1 }, { codigo: "LG-DATIL-500", cantidad: 1 }, { codigo: "TG-PASAS-500", cantidad: 1 }, { codigo: "LG-MIXSEM-500", cantidad: 1 }] },
@@ -252,6 +256,8 @@ export const REEMPLAZOS: Record<string, string> = {
   "706": "TG-NUEZ", "707": "TG-NUEZ", "570": "TG-PASAS", "571": "TG-PASAS", "6543268": "LG-PASASRUBIAS", "7643289": "LG-PASASRUBIAS",
   "5006": "LG-DATIL", "5007": "LG-DATIL", "800000000120": "LG-DATIL", "0111": "LG-DATIL",
   "149": "LG-MIXSEM", "150": "LG-MIXSEM", "522054": "LG-CHIA", "00000011": "LG-CHIA", "800000000158": "LG-LINO", "800000000159": "LG-LINO",
+  // 14/11: Harinar sale. Si algún pedido por rubro tenía un HR-…, pasa a su equivalente de La Granja.
+  "HR-HINTEGRAL": "LG-HINTEGRAL", "HR-GOTAS-250": "LG-GOTAS-250", "HR-SALVADO-500": "LG-SALVAVENA-500", "HR-GLUTEN-500": "LG-HINTEGRAL",
   "77981422628974": "TG-GIRASOL", "800000000162": "TG-GIRASOL",
   "5000": "TG-MANIPIZZA", "000098": "TG-MANIPIZZA", "5002": "TG-MANIJAMON", "0000099": "TG-MANIJAMON", "314151": "TG-MANIQUESO", "32425262": "TG-MANIQUESO", "95668": "LG-GPMANI",
 };
@@ -268,7 +274,8 @@ export const OCULTOS_PROPIOS = [
 
 /** Fotos propias, generadas con el estilo de los anuncios (public/img/productos/prov y combos/v2). */
 const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !SIN_FOTO_PROPIA.includes(c)));
-export const fotoProducto = (codigo: string) => (CON_FOTO.has(codigo) ? `/img/productos/prov/${(FOTO_DE[codigo] ?? codigo).toLowerCase()}.webp` : null);
+export const fotoProducto = (codigo: string) =>
+  FOTO_ENCARGO[codigo] ?? (POR_ENCARGO.has(codigo) ? `/img/productos/encargo/${codigo.toLowerCase()}.webp` : CON_FOTO.has(codigo) ? `/img/productos/prov/${(FOTO_DE[codigo] ?? codigo).toLowerCase()}.webp` : null);
 /** Combos sin portada propia en public/img/combos/v3: sin foto, la página muestra los productos (no una imagen rota). */
 const COMBOS_SIN_PORTADA = new Set<string>([]);
 export const fotoCombo = (slug: string) => (COMBOS_SIN_PORTADA.has(slug) ? null : `/img/combos/v3/${slug}.webp`);

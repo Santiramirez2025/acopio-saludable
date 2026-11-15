@@ -8,6 +8,7 @@ import { Asistente } from "./Asistente";
 
 const NAV = [
   ["/catalogo", "Catálogo"],
+  ["/combos/kit-semanal", "Kit semanal"],
   ["/sin-tacc", "Sin TACC"],
   ["/nichos", "Por negocio"],
   ["/objetivos", "Por objetivo"],

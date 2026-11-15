@@ -315,7 +315,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       consultas.map(async (c) => {
         const ps = (await hallarProductos(c, soloSinTacc)).slice(0, 3);
         if (!ps.length) return `«${c}»: NO LO TENEMOS (decilo así, y si hay algo parecido en otra línea, ofrecelo).`;
-        return `«${c}»:\n${ps.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}`).join("\n")}`;
+        return `«${c}»:\n${ps.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}${p.encargo ? " · POR ENCARGO (24-48 hs)" : ""}`).join("\n")}`;
       }),
     );
     return {
@@ -373,7 +373,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     // El código va primero porque es lo que necesita para agregar_al_pedido.
     const texto = [
       ...combos.map((c) => `- combo slug ${c.slug} · ${c.nombre} · trae ${c.items.map(({ producto, cantidad }) => `${cantidad} x ${producto.producto} ${producto.presentacion}`).join(", ")} · ${pesos(Math.round(c.precio))} (lista ${pesos(Math.round(c.precioLista))})`),
-      ...productos.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}${p.esSuplemento ? " · suplemento" : ""}${p.queTrae ? ` · lleva: ${p.queTrae}` : ""}`),
+      ...productos.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}${p.esSuplemento ? " · suplemento" : ""}${p.encargo ? " · POR ENCARGO (24-48 hs)" : ""}${p.queTrae ? ` · lleva: ${p.queTrae}` : ""}`),
     ].join("\n");
     return { texto, fichas };
   }
@@ -651,6 +651,8 @@ function instrucciones(compraMinima: string, lecciones = "", compraMinimaPropia:
     "- CLIENTE QUE YA COMPRA O YA DIJO QUE PAGA (Santiago, 13/11): si el pedido ya está hecho y dice que transfiere, o es alguien que ya nos compró y está comprando de nuevo, lo práctico es darle el MONTO FINAL por transferencia y los datos para transferir en el mismo mensaje, sin mandarlo al link a elegir. Nunca cierres con «¿Te queda alguna duda para pagar?», «¿Cuándo lo pagás?» ni nada que suene a apurarlo o a orden de pago: se lee como presión. Cerrá con algo útil (el horario del reparto, si quiere sumar algo) o sin pregunta.",
     "- MENSAJES CORTOS (Santiago, 13/11): a mucha gente, sobre todo a las personas mayores, el texto largo las marea. Máximo 2 o 3 líneas por mensaje, una sola idea, palabras simples, sin listas largas ni explicaciones de más. El precio y el link alcanzan.",
     "- REPARTO (Santiago, 12/11): sale todos los días a las 16:00 en Carlos Paz y la zona. Lo que se paga antes de las 15:00 sale ese mismo día; lo que entra después, al día siguiente desde las 16:00. Podés decirlo así («si lo pagás antes de las 15, hoy a la tarde lo tenés»): es la forma de cerrar la venta hoy. SOLO para Carlos Paz y la zona de reparto propio: a Córdoba Capital y a otras localidades (correo) nunca digas «sale hoy» ni «antes de las 15»; ahí es 24 a 48 h hábiles (más el plazo del correo si va por correo).",
+    "- POR ENCARGO (14/11): lo que en el catálogo dice «POR ENCARGO (24-48 hs)» no lo tenemos en mano: se pide a La Granja con la compra. Decilo una vez y sin vueltas: «ese es por encargo, te lo llevo en 24 a 48 hs». Si lleva también cosas en mano, ofrecé mandar todo junto. Nunca prometas por encargo para hoy.",
+    "- KIT SEMANAL (14/11): si alguien no sabe qué llevar, quiere «algo para la semana», para la casa o para arrancar a comer mejor, ofrecé el combo kit-semanal (granola 1 kg, mix con cajú 500 g, dátiles 500 g y semillas 500 g) con su precio: pasa la compra mínima y en Carlos Paz va sin cargo.",
     "- DIRECCIÓN = VENTA (14/11, el cuello de botella): de 13 charlas del Trío, 0 dieron calle y número. Apenas sabés que es de Carlos Paz o la zona, pedí la dirección con el gancho del pago: «¿Me pasás calle y número? Te lo llevamos sin cargo y lo pagás cuando te llega 🙌». Una sola pregunta por mensaje, sin repetir el link que ya mandaste.",
     "- «¿DÓNDE ESTÁN?», «VOY A BUSCARLO», «¿PUEDO RETIRAR?» (3 de 13 del Trío, 14/11): no tenemos local y nunca se da una dirección. Contestá: «No tenemos local, el reparto lo hacemos nosotros: te lo llevamos sin cargo en Carlos Paz y la zona y lo pagás cuando te llega. ¿Me pasás calle y número?». Sin repetir el link.",
     "- NEGOCIO QUE PREGUNTA PRECIO POR KILO (nombre de negocio: sabory, cocina, deli, pastelería, helados, café, rotisería): además del precio, preguntá una vez «¿Es para tu casa o para tu emprendimiento?». Si es para el negocio, preguntá a cuánto paga hoy el kilo y se pasa a Leo (mayorista).",

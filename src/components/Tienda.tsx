@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ComboTienda, ProductoTienda } from "@/lib/tienda";
 import { pesos, precioPorUnidadSuelta, renglonCombo } from "@/lib/precios";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
+import { CHIP_ENCARGO } from "@/lib/catalogo-encargo";
 import { Foto } from "./Foto";
 import { AgregarRapido, BotonAgregar } from "./Carrito";
 
@@ -21,6 +22,7 @@ export function TarjetaProducto({ p, className = "", antes, bajoPct }: { p: Prod
         <div className="flex flex-1 flex-col px-1.5 pt-2.5">
           <h3 className="text-[15px] font-semibold leading-snug"><Link href={href} className="estirado line-clamp-2 after:absolute after:inset-0 after:rounded-xl hover:underline">{p.producto}</Link></h3>
           <p className="mt-0.5 line-clamp-1 text-xs text-stone-600">{p.presentacion}</p>
+          {p.encargo && <p className="mt-1.5 inline-flex w-fit items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">{CHIP_ENCARGO}</p>}
           <div className="mt-auto pb-2.5 pt-2">
             <p className="flex flex-wrap items-baseline gap-x-2 font-display text-xl font-bold leading-none tabular-nums">
               {pesos(p.precio)}

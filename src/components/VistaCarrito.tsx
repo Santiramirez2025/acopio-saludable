@@ -41,6 +41,7 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
               <div className="min-w-0 flex-1">
                 <Link href={l.href} className="line-clamp-2 text-sm leading-snug font-medium hover:underline">{l.nombre}</Link>
                 {l.contenido.length === 0 && <p className="truncate text-xs text-stone-600">{l.detalle}</p>}
+                {l.encargo && <p className="text-xs font-semibold text-amber-800">Por encargo · llega en 24 a 48 hs</p>}
 
                 {l.disponible ? (
                   <p className="text-xs tabular-nums text-stone-600">{pesosCliente(l.precioUnitario)} c/u</p>
@@ -66,6 +67,11 @@ export function VistaCarrito({ whatsapp }: { whatsapp?: string | null }) {
             </li>
           ))}
         </ul>
+        {cotizacion.lineas.some((l) => l.encargo && l.disponible) && (
+          <p className="mt-3 rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900">
+            <b className="font-semibold">Tenés productos por encargo.</b> Los pedimos con tu compra y te llevamos todo junto en 24 a 48 hs. Si querés lo que está en mano antes, avisanos y lo mandamos en el reparto de hoy.
+          </p>
+        )}
         <button type="button" className="mt-3 text-sm text-stone-600 underline" onClick={vaciar}>Vaciar carrito</button>
       </div>
 

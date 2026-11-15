@@ -11,6 +11,7 @@ import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { margenPct } from "@/lib/precios";
+import { clasificarNichos, clasificarObjetivos } from "@/lib/clasificar";
 import { estaEnStock } from "@/lib/en-stock";
 import { MOTIVO_SIN_STOCK_A_MANO } from "@/lib/sin-stock-a-mano";
 import { COMBOS_A_DESACTIVAR, COMBOS_PROVEEDORES, OCULTAR, OCULTOS_PROPIOS, PRODUCTOS_PROVEEDORES, REEMPLAZOS, fotoCombo, fotoProducto, precioDe } from "@/lib/catalogo-proveedores";
@@ -59,6 +60,9 @@ export async function POST(req: Request) {
 
   for (const p of PRODUCTOS_PROVEEDORES) {
     const precio = precioDe(p);
+    // 14/11: sin rubros cargados a mano, la clasificación por palabras clave: así las páginas por negocio
+    // (/nichos/…) y por objetivo muestran también lo propio y lo por encargo, no solo el catálogo viejo.
+    const clasificable = { producto: p.producto, presentacion: p.presentacion, categoria: p.categoria, formato: p.marca.startsWith("Sin marca") ? "Fraccionado" : "Envasado", contenido: p.contenido };
     const datos = {
       producto: p.producto,
       marca: p.marca,
@@ -75,8 +79,8 @@ export async function POST(req: Request) {
       estado: "ACTIVO" as const,
       visible: true,
       ocultoMotivo: null,
-      nichos: p.nichos ?? [],
-      objetivos: p.objetivos ?? [],
+      nichos: p.nichos ?? clasificarNichos(clasificable),
+      objetivos: p.objetivos ?? clasificarObjetivos(clasificable),
       porQueLoElegimos: p.porQueLoElegimos ?? null,
     };
     const previo = await prisma.product.findUnique({ where: { codigo: p.codigo } });

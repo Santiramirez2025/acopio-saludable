@@ -29,3 +29,11 @@ test("combos: los de la semana primero y el resto en su orden", () => {
   const r = ordenarCombos([desayuno, { slug: "a", disponible: true }, pan, trio]).map((c) => c.slug);
   assert.deepEqual(r, ["trio-del-desayuno", "pan-dulce-casero", "desayuno-30-dias", "a"]);
 });
+
+test("14/11: el Kit semanal va en la primera pantalla aunque esté el mix de la casa", () => {
+  const kit = { slug: "kit-semanal", disponible: true };
+  const r = elegirDestacado([{ codigo: "TG-MIXC" }], [kit]);
+  assert.equal(r?.tipo, "combo");
+  const sin = elegirDestacado([{ codigo: "TG-MIXC" }], [{ ...kit, disponible: false }]);
+  assert.equal(sin?.tipo, "producto");
+});

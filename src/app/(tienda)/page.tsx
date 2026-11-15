@@ -19,6 +19,7 @@ import { DibujoNutri } from "@/components/Nutri";
 import { ListaCombo, RielOfertas, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 import { ofertasDelProveedor } from "@/lib/ofertas";
 import { vidrieraDeStock } from "@/lib/en-stock";
+import { POR_ENCARGO } from "@/lib/catalogo-encargo";
 import { diasHasta, temporadaActual } from "@/lib/temporada";
 
 // Portadas propias de las góndolas; las demás usan la foto de un producto.
@@ -31,7 +32,7 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 export default async function Home() {
   const cfg = await leerConfig();
   const publicado = wherePublicado(cfg.margenMinimoPct);
-  const [alfajores, sinTacc, totalSinTacc, ganchos, combos, pedidos, portadas, conteos, vendibles, ofertas, candidatos] = await Promise.all([
+  const [alfajores, sinTacc, totalSinTacc, ganchos, combos, pedidos, portadas, conteos, vendibles, ofertas, candidatos, deEncargo] = await Promise.all([
     // Las cajas primero y las más baratas adelante: el gancho es cuánto sale el alfajor suelto.
     productosTienda({ where: { AND: [WHERE_SIN_TACC, { producto: { contains: "alfajor", mode: "insensitive" } }, { fotoUrl: { not: null } }] }, orderBy: [{ precioPublico: "asc" }], take: 4 }),
     productosTienda({ where: { AND: [WHERE_SIN_TACC, { fotoUrl: { not: null } }] }, take: 8 }),
@@ -44,7 +45,14 @@ export default async function Home() {
     prisma.product.findMany({ where: { AND: [publicado, { comboItems: { some: { combo: { tipo: "PEDIDO_NICHO" } } } }] }, select: { codigo: true } }),
     ofertasDelProveedor(8),
     productosTienda({ where: { codigo: { in: [DESTACADO_PRODUCTO, DESTACADO_SI_FALTA] } } }),
+    // Una vidriera variada de lo nuevo por encargo: uno por góndola primero.
+    productosTienda({ where: { codigo: { in: [...POR_ENCARGO] } }, take: 80 }),
   ]);
+  const nuevos = (() => {
+    const vistos = new Set<string>();
+    const primero = deEncargo.filter((p) => p.fotoUrl && !vistos.has(p.categoria) && vistos.add(p.categoria));
+    return [...primero, ...deEncargo.filter((p) => p.fotoUrl && !primero.includes(p))].slice(0, 12);
+  })();
   const destacado = elegirDestacado<ProductoTienda, ComboTienda>(candidatos, combos);
   const seVende = new Set(vendibles.map((v) => v.codigo));
   // Los destacados son lo que tenemos en mano: uno por producto, con foto, y lo que más se vende primero.
@@ -76,38 +84,47 @@ export default async function Home() {
             <h1 className="text-balance font-display text-[clamp(30px,9vw,38px)] font-extrabold leading-none tracking-tight sm:text-6xl">
               Llená tu despensa de una sola vez.
             </h1>
+            {/* 14/11 (Santiago: «para la primera impresión son muchos botones, te puede marear»): una frase, una
+                propuesta (el Kit semanal) y una sola salida al catálogo. Rubros, sin TACC y herramientas van más abajo. */}
             <p className="mt-3 max-w-md text-[15px] text-white/80 sm:text-[17px]">
-              Frutos secos, cereales, suplementos, snacks y especias por volumen, para tu casa o tu negocio. {zonaSinMinimo(cfg) ? <>En Villa Carlos Paz y la zona sin compra mínima, con entrega sin cargo desde {pesos(umbralZona(cfg))}. Envíos a todo el país desde {pesos(cfg.compraMinima)} por pedido.</> : <>Desde {pesos(cfg.compraMinima)} por pedido con envíos a todo el país{cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? <>, y desde {pesos(cfg.compraMinimaPropia)} en Villa Carlos Paz</> : null}.</>}
+              Frutos secos, semillas y dietética fraccionados en el día.{" "}
+              {zonaSinMinimo(cfg) ? <>En Carlos Paz te lo llevamos sin cargo desde {pesos(umbralZona(cfg))}.</> : cfg.entregaPropiaActiva ? <>En Carlos Paz te lo llevamos en {cfg.plazoEntregaPropia}.</> : <>Envíos a todo el país.</>}
             </p>
             {destacado?.tipo === "producto" && <DestacadoInicio p={destacado.p} etiqueta={destacado.esLaCasa ? "El mix de la casa" : "El más vendido"} />}
             {destacado?.tipo === "combo" && (
               <DestacadoComboInicio
                 c={destacado.c}
-                etiqueta={zonaSinMinimo(cfg) && destacado.c.precio >= umbralZona(cfg) ? "Combo · sin cargo en Carlos Paz" : "Combo de la semana"}
+                etiqueta={destacado.c.slug === "kit-semanal" ? "Para toda la semana" : zonaSinMinimo(cfg) && destacado.c.precio >= umbralZona(cfg) ? "Combo · sin cargo en Carlos Paz" : "Combo de la semana"}
                 transferencia={cfg.descuentoTransferenciaPct > 0 ? totalTransferencia(destacado.c.precio, cfg.descuentoTransferenciaPct) : null}
               />
             )}
-            <p className="mt-5 text-sm font-semibold text-sol">¿Para quién comprás?</p>
-            <div className="riel mt-2 md:mx-0 md:flex-wrap md:px-0">
-              {[...NICHOS].sort((a, b) => Number(b.id === "familias") - Number(a.id === "familias")).map((n) => (
-                <Link key={n.id} href={`/nichos/${n.id}`} className="shrink-0 snap-start whitespace-nowrap flex min-h-[48px] items-center rounded-full bg-white/10 px-4 text-sm font-semibold hover:bg-white hover:text-acopio-900">{n.nombre}</Link>
-              ))}
-            </div>
-            <Link href="/sin-tacc" className="mt-3 flex min-h-[48px] items-center gap-3 rounded-2xl bg-white/10 px-4 text-sm font-semibold hover:bg-white/15">
-              <span className="chip bg-sol text-acopio-900">Sin TACC</span>
-              <span className="min-w-0 flex-1">{totalSinTacc} productos sin gluten</span>
-              <span aria-hidden="true">→</span>
+            <Link href="/catalogo" className="mt-4 inline-flex min-h-[48px] items-center gap-2 text-sm font-semibold text-white underline-offset-4 hover:underline">
+              Ver todo el catálogo <span aria-hidden="true">→</span>
             </Link>
-            <div className="mt-4 flex flex-wrap gap-2.5">
-              <Link href="/mi-lista" className="btn-comprar min-w-0 flex-1 whitespace-nowrap sm:flex-none">Armá tu lista del mes</Link>
-              <Link href="/catalogo" className="inline-flex min-h-[48px] min-w-0 flex-1 items-center whitespace-nowrap justify-center rounded-full border border-white/30 px-5 text-sm font-semibold hover:bg-white/10 sm:flex-none">Ver catálogo</Link>
-            </div>
           </div>
           <div className="relative hidden aspect-[4/3] w-full overflow-hidden rounded-3xl lg:block" aria-hidden="true">
             <Image src="/img/portadas/hero.webp" alt="" fill priority sizes="480px" className="object-cover" />
           </div>
         </div>
       </section>
+
+      {/* Los atajos: lo que antes eran 12 botones en la portada, en cuatro tarjetas claras. */}
+      <nav aria-label="Atajos" className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {[
+          { href: "/combos/kit-semanal", t: "Kit semanal", d: "Desayuno y colación de la semana", e: "🧺" },
+          { href: "/combos", t: "Combos", d: "Ahorrás llevando el pack", e: "🎁" },
+          { href: "/sin-tacc", t: "Sin TACC", d: `${totalSinTacc} productos rotulados`, e: "🌾" },
+          { href: "/novedades", t: "Nuevos", d: "Por encargo, en 24-48 hs", e: "✨" },
+        ].map((a) => (
+          <Link key={a.href} href={a.href} className="flex min-h-[72px] items-center gap-3 rounded-2xl bg-white p-3 shadow-ficha hover:bg-acopio-50">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-acopio-100 text-2xl" aria-hidden="true">{a.e}</span>
+            <span className="min-w-0">
+              <span className="block font-display text-base font-bold leading-tight">{a.t}</span>
+              <span className="block text-xs leading-snug text-stone-600">{a.d}</span>
+            </span>
+          </Link>
+        ))}
+      </nav>
 
       {temporada && deTemporada.length > 0 && (
         <section className="rounded-3xl bg-gradient-to-br from-[#7a1f1f] to-acopio-900 p-4 sm:p-6">
@@ -165,7 +182,21 @@ export default async function Home() {
             </Link>
           ))}
         </div>
+        <p className="mt-4 text-sm font-semibold text-acopio-900">¿Comprás para un negocio?</p>
+        <div className="riel mt-2 md:mx-0 md:flex-wrap md:px-0">
+          {NICHOS.filter((n) => n.id !== "familias").map((n) => (
+            <Link key={n.id} href={`/nichos/${n.id}`} className="flex min-h-[44px] shrink-0 snap-start items-center whitespace-nowrap rounded-full bg-white px-4 text-sm font-semibold shadow-ficha hover:bg-acopio-900 hover:text-white">{n.nombre}</Link>
+          ))}
+        </div>
       </section>
+
+      {nuevos.length > 0 && (
+        <section>
+          <TituloSeccion href="/novedades" enlace="Ver todos">Recién sumados, por encargo</TituloSeccion>
+          <p className="-mt-1 mb-3 max-w-2xl text-sm text-stone-700">Más variedad de La Granja: frutas, harinas, sin TACC, untables, infusiones y suplementos. Los pedimos con tu compra y te llegan en 24 a 48 hs.</p>
+          <RielProductos productos={nuevos} />
+        </section>
+      )}
 
       {alfajores.length > 0 && (
         <section className="rounded-3xl bg-acopio-900 p-4 sm:p-6">

@@ -6,6 +6,8 @@
 //
 // Cuando entra mercadería nueva o se termina algo, se actualiza esta lista.
 
+import { esPorEncargo } from "./catalogo-encargo";
+
 type Item = { id: string; nombre: string; busca: RegExp; excluir?: RegExp; marca?: RegExp; gancho: string };
 
 export const EN_STOCK: Item[] = [
@@ -38,7 +40,8 @@ const POR_DEFECTO = ["nuez", "datil", "miel", "almendra"];
 
 /** Lo que compramos en mano además de lo propio (TG-…, LG-…): discos de arroz Rincón Integral de la compra del 20/10. */
 const OTROS_EN_MANO = new Set(["7798173140021", "7798173140014", "7798173140038"]);
-const esNuestro = (codigo: string) => codigo.startsWith("TG-") || codigo.startsWith("LG-") || OTROS_EN_MANO.has(codigo);
+// Lo por encargo (14/11) no está en mano: no se ofrece como «lo tengo hoy» ni va a la vidriera de stock.
+const esNuestro = (codigo: string) => !esPorEncargo(codigo) && (codigo.startsWith("TG-") || codigo.startsWith("LG-") || OTROS_EN_MANO.has(codigo));
 
 type Prod = { codigo: string; producto: string; marca: string; presentacion: string; precio: number; sinTacc?: boolean };
 

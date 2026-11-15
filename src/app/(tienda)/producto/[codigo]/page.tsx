@@ -124,6 +124,7 @@ export default async function Producto({ params }: Props) {
             {p.marca && !/^sin /i.test(p.marca) && <p className="text-sm font-semibold text-acopio-600">{p.marca}</p>}
             <h1 className="font-display text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-4xl">{p.producto}</h1>
             <p className="mt-1.5 text-stone-600">{p.presentacion}</p>
+            {p.encargo && <p className="mt-2 inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-900">Por encargo · llega en 24 a 48 hs</p>}
             {p.sinTacc && (
               <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-stone-600">
                 <Link href="/sin-tacc" className="inline-flex min-h-[48px] items-center"><span className="chip bg-acopio-900 px-3 py-1.5 text-sm text-white">Sin TACC</span></Link>
@@ -161,7 +162,7 @@ export default async function Producto({ params }: Props) {
                 <BotonAgregar id={p.codigo} etiqueta="Agregar al pedido" className="mt-4" />
                 {/* A la par de agregar: el mensaje llega con producto, cantidad y precio, y se contesta de una. */}
                 <EnlaceWhatsapp
-                  mensaje={`Hola! Quiero pedir:\n• 1 × ${p.producto} ${p.presentacion}: ${pesos(p.precio)}\n¿Me ayudás con el pedido?`}
+                  mensaje={`Hola! Quiero pedir:\n• 1 × ${p.producto} ${p.presentacion}: ${pesos(p.precio)}${p.encargo ? " (por encargo)" : ""}\n¿Me ayudás con el pedido?`}
                   className="btn-whatsapp mt-2 w-full"
                   medirComo="whatsapp_desde_ficha"
                 >
@@ -170,7 +171,11 @@ export default async function Producto({ params }: Props) {
               </>
             )}
             <BotonCompartir etiqueta="Compartir" texto={`Mirá ${p.producto} ${p.presentacion} en Acopio Saludable:`} ruta={`/producto/${encodeURIComponent(p.codigo)}`} className="btn-sec mt-2 w-full" />
-            {!sinStock && <AvisoRepartoHoy className="mt-3" />}
+            {!sinStock && (p.encargo ? (
+              <p className="mt-3 rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-900" role="note">
+                <b>Por encargo:</b> no lo tenemos en el depósito. Lo pedimos con tu compra y te llega en 24 a 48 hs, en el reparto de las 16.
+              </p>
+            ) : <AvisoRepartoHoy className="mt-3" />)}
             <p className="mt-3 text-xs text-stone-600">{lineaCompraMinima(cfg)}</p>
             {p.categoria === "Congelados" && <p className="mt-3 rounded-xl bg-tierra-100 px-3.5 py-2.5 text-sm text-stone-700"><b>Producto congelado:</b> solo se entrega en Villa Carlos Paz y el sur de Punilla. No se envía por correo.</p>}
             <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} costoZona={costoEntregaZona(cfg)} zonaPaga={zonaPagaDe(cfg.tabla)} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />

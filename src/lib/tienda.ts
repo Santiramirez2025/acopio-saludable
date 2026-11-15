@@ -2,10 +2,11 @@
 
 import { queTraeMix } from "./mix-composicion";
 import { fotoRealProducto, REAL_PRIMERO } from "./galeria";
+import { esPorEncargo } from "./catalogo-encargo";
 
 // 14/11 (Santiago: «todas diferentes, dejalo más agradable»): una sola familia de portadas para los combos
 // de frutos secos (fondo blanco, logo, etiqueta amarilla), en public/img/combos/v3.
-const PORTADA_NAVIDAD = new Set(["pan-dulce-casero", "mesa-navidena", "regalo-navideno", "despensa-4-kilos", "despensa-chica", "trio-de-frutos-secos", "trio-del-desayuno", "mixes-del-mes", "alacena-de-frutos-secos", "mix-caju-banana", "abri-tu-dietetica"]);
+const PORTADA_NAVIDAD = new Set(["kit-semanal", "pan-dulce-casero", "mesa-navidena", "regalo-navideno", "despensa-4-kilos", "despensa-chica", "trio-de-frutos-secos", "trio-del-desayuno", "mixes-del-mes", "alacena-de-frutos-secos", "mix-caju-banana", "abri-tu-dietetica"]);
 import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
@@ -34,6 +35,8 @@ export type ProductoTienda = {
   transferencia: number | null;
   /** Solo en mixes: lo que trae, de la ficha. Es lo que el vendedor contesta a «qué tiene el mix». */
   queTrae: string | null;
+  /** 14/11: no lo tenemos en mano, se pide a La Granja con la compra y llega en 24 a 48 hs. */
+  encargo: boolean;
 };
 
 /** Porcentajes de la configuración que forman los precios que ve el cliente. */
@@ -60,6 +63,7 @@ export function aTienda(p: Product, reglas: ReglasPrecio = {}): ProductoTienda {
     sugerido: precioSugerido(precio, reglas.recargoSugeridoPct ?? 0)?.sugerido ?? null,
     transferencia: precioTransferencia(precio, reglas.descuentoTransferenciaPct ?? 0),
     queTrae: queTraeMix(prolijo(textos.producto), p.porQueLoElegimos),
+    encargo: esPorEncargo(p.codigo),
   };
 }
 
@@ -159,6 +163,8 @@ export type LineaCotizada = {
   disponible: boolean;
   /** Qué trae, para los combos: una línea por producto. Vacío en los productos sueltos. */
   contenido: string[];
+  /** Producto por encargo (llega en 24 a 48 hs). */
+  encargo: boolean;
 };
 
 export type Cotizacion = {
@@ -218,6 +224,7 @@ export async function cotizarCarrito(entrada: unknown, minimo?: number): Promise
         precioLista: precio,
         subtotal: disponible ? redondear2(precio * l.cantidad) : 0,
         disponible,
+        encargo: esPorEncargo(p.codigo),
       });
       if (disponible) gananciaReventa += (precioSugerido(precio, cfg.recargoSugeridoPct)?.ganancia ?? 0) * l.cantidad;
     } else {
@@ -234,6 +241,7 @@ export async function cotizarCarrito(entrada: unknown, minimo?: number): Promise
         precioLista: c.precioLista,
         subtotal: c.disponible ? redondear2(c.precio * l.cantidad) : 0,
         disponible: c.disponible,
+        encargo: c.items.some((i) => i.producto.encargo),
       });
     }
   }

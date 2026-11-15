@@ -4,7 +4,8 @@
 // y en Carlos Paz va sin cargo) en vez de las pasas sueltas a $5.900 (que pagan $3.000 de envío).
 
 /** Combos que se empujan esta semana, en este orden. Si uno no se puede vender, se saltea. */
-export const COMBOS_DE_LA_SEMANA = ["trio-de-frutos-secos", "trio-del-desayuno", "pan-dulce-casero"] as const;
+// 14/11: el Kit semanal va primero (Santiago: «se vendería mucho»).
+export const COMBOS_DE_LA_SEMANA = ["kit-semanal", "trio-de-frutos-secos", "trio-del-desayuno", "pan-dulce-casero"] as const;
 
 /** El mix de la casa (orden de Santiago 4/11) y lo que va si no está. */
 export const DESTACADO_PRODUCTO = "TG-MIXC";
@@ -15,8 +16,10 @@ type ConSlug = { slug: string; disponible: boolean };
 
 export type EleccionDestacado<P, C> = { tipo: "producto"; p: P; esLaCasa: boolean } | { tipo: "combo"; c: C } | null;
 
-/** Mix de la casa si se vende; si no, el primer combo de la semana disponible; si no, las pasas. */
+/** El Kit semanal si se vende (14/11); si no, el mix de la casa; si no, el primer combo de la semana disponible; si no, las pasas. */
 export function elegirDestacado<P extends ConCodigo, C extends ConSlug>(productos: P[], combos: C[]): EleccionDestacado<P, C> {
+  const kit = combos.find((x) => x.slug === COMBOS_DE_LA_SEMANA[0] && x.disponible);
+  if (kit) return { tipo: "combo", c: kit };
   const mix = productos.find((x) => x.codigo === DESTACADO_PRODUCTO);
   if (mix) return { tipo: "producto", p: mix, esLaCasa: true };
   for (const slug of COMBOS_DE_LA_SEMANA) {
