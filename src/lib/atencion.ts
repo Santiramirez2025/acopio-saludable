@@ -7,7 +7,7 @@
 
 import { PAGO_AL_RECIBIR } from "./politica";
 import { conPresentacion } from "./whatsapp-saludo";
-import { zonaDeLugar } from "./envio-zona";
+import { hablaDeFueraDeZona, zonaDeLugar } from "./envio-zona";
 import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
 import { buscarEnCatalogo, comboDelAnuncio, comboDelAnuncioAgotado, type Accion, type EnvioCotizado, type Respuesta } from "./asistente-catalogo";
 import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
@@ -48,6 +48,7 @@ import { prisma } from "./prisma";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
 import { telefonoFin } from "./telefono";
 import { sinPerfecto } from "./sin-perfecto";
+import { textoSalidaReparto } from "./salida-reparto";
 
 const SALUD =
   "Entiendo, y qué bueno que te estés cuidando 💚 Sobre salud no te puedo aconsejar, eso lo ve mejor tu médico o nutricionista. " +
@@ -535,7 +536,7 @@ export async function atender(e: Entrada): Promise<void> {
         console.log("chat: va a transferir con pedido hecho, monto y alias directo", cola(e.clave), orden.id);
         await responder(
           e.clave,
-          `¡Dale${quien}! Son ${pesos(monto)} por transferencia (pedido ${numeroPedido(orden.id)}).\n\n${cfg.transferenciaDatos}\n\nMandame el comprobante por acá y sale en el reparto de las 16 🙌`,
+          `¡Dale${quien}! Son ${pesos(monto)} por transferencia (pedido ${numeroPedido(orden.id)}).\n\n${cfg.transferenciaDatos}\n\nMandame el comprobante por acá y ${hablaDeFueraDeZona(orden.ciudad ?? "") ? "te aviso cuando sale" : textoSalidaReparto(Date.now())} 🙌`,
         );
         return;
       }
