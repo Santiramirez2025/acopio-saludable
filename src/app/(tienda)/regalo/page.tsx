@@ -7,7 +7,7 @@ import { RECETAS, tiempoTexto } from "@/lib/recetas";
 
 export const metadata: Metadata = {
   title: "Tu regalo: el recetario de Acopio",
-  description: "Gracias por tu compra. 26 recetas fáciles con frutos secos, semillas y dátiles.",
+  description: "Gracias por tu compra. Recetas fáciles con frutos secos, semillas y dátiles.",
   robots: { index: false, follow: false },
 };
 
