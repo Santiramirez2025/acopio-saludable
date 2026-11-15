@@ -504,6 +504,11 @@ export function confirmaPedido(texto: string): boolean {
 /** El último mensaje nuestro aceptó pagar al recibir (en efectivo, cuando te lo llevamos). */
 export function aceptamosAlRecibir(textoAcopio: string): boolean {
   const t = limpio(textoAcopio);
+  // 15/11 (seguridad): un mensaje nuestro que NIEGA o limita el pago al recibir («fuera de Carlos Paz no hay pago
+  // al recibir», «para Córdoba es pago anticipado») no es una oferta. Antes alcanzaba con que dijera «al recibir»
+  // para que un «pago en efectivo» del cliente creara un pedido Cobrar al entregar en Villa Carlos Paz.
+  // La negación tiene que estar en la misma frase y antes del «al recibir» («no hay compra mínima» en una oferta válida no cuenta).
+  if (/\bno\b[^.?!\n]{0,40}\b(al recibir|contra ?entrega|pagas cuando)\b/.test(t) || /\b(pago anticipado|por adelantado|fuera de (la zona|carlos paz|villa carlos paz))\b/.test(t)) return false;
   return /\b(al recibir|contra ?entrega|cuando (te lo llev|lo recib|lo traig|lo lleve)|en efectivo al recibir|pagas cuando)\b/.test(t);
 }
 

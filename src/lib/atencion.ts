@@ -493,7 +493,10 @@ export async function atender(e: Entrada): Promise<void> {
   // y el bot volvió a preguntar «¿Te lo dejo listo?». Si nuestro último mensaje ya le ofrecía pagar al recibir
   // (solo se ofrece en la zona propia), su elección cierra el pedido aunque no haya una línea «Envío a …».
   const histRecibir = PAGO_AL_RECIBIR && guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) ? await historialDe(e.clave, 12) : [];
-  const ofrecimosRecibir = aceptamosAlRecibir([...histRecibir].reverse().find((h) => h.de === "acopio")?.texto ?? "");
+  // 15/11 (seguridad): si en la charla quedó una ciudad fuera de la zona propia («Córdoba capital»), no hay pago al recibir.
+  const lugarCharla = histRecibir.length ? lugarDelHistorial(histRecibir) : null;
+  const ofrecimosRecibir =
+    aceptamosAlRecibir([...histRecibir].reverse().find((h) => h.de === "acopio")?.texto ?? "") && (!lugarCharla || recibeEnZonaPropia(lugarCharla));
   if (PAGO_AL_RECIBIR && guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (ultimoEnvio ? recibeEnZonaPropia(ultimoEnvio) : ofrecimosRecibir)) {
     const direccion = tieneDireccion(texto)
       ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160)
@@ -507,7 +510,8 @@ export async function atender(e: Entrada): Promise<void> {
   if (PAGO_AL_RECIBIR && canal === "whatsapp" && guardado?.startsWith("/carrito?p=") && confirmaPedido(texto)) {
     const hist = await historialDe(e.clave, 12);
     const previo = [...hist].reverse().find((h) => h.de === "acopio")?.texto ?? "";
-    if (aceptamosAlRecibir(previo) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio))) {
+    const lugarHist = lugarDelHistorial(hist);
+    if (aceptamosAlRecibir(previo) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio)) && (!lugarHist || recibeEnZonaPropia(lugarHist))) {
       const direccion = [...hist].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
       console.log("chat: confirma el pedido al recibir, se cierra", cola(e.clave));
       return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: ultimoEnvio ?? "Villa Carlos Paz" }, direccion || undefined);
