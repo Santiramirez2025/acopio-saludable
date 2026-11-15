@@ -3,7 +3,9 @@
 import { queTraeMix } from "./mix-composicion";
 import { fotoRealProducto, REAL_PRIMERO } from "./galeria";
 
-const PORTADA_NAVIDAD = new Set(["pan-dulce-casero", "mesa-navidena", "regalo-navideno"]);
+// 14/11 (Santiago: «todas diferentes, dejalo más agradable»): una sola familia de portadas para los combos
+// de frutos secos (fondo blanco, logo, etiqueta amarilla), en public/img/combos/v3.
+const PORTADA_NAVIDAD = new Set(["pan-dulce-casero", "mesa-navidena", "regalo-navideno", "despensa-4-kilos", "despensa-chica", "trio-de-frutos-secos", "trio-del-desayuno", "mixes-del-mes", "alacena-de-frutos-secos", "mix-caju-banana", "abri-tu-dietetica"]);
 import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";

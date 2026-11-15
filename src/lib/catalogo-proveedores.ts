@@ -270,7 +270,7 @@ export const OCULTOS_PROPIOS = [
 const CON_FOTO = new Set(PRODUCTOS_PROVEEDORES.map((p) => p.codigo).filter((c) => !SIN_FOTO_PROPIA.includes(c)));
 export const fotoProducto = (codigo: string) => (CON_FOTO.has(codigo) ? `/img/productos/prov/${(FOTO_DE[codigo] ?? codigo).toLowerCase()}.webp` : null);
 /** Combos sin portada propia en public/img/combos/v3: sin foto, la página muestra los productos (no una imagen rota). */
-const COMBOS_SIN_PORTADA = new Set(["abri-tu-dietetica"]);
+const COMBOS_SIN_PORTADA = new Set<string>([]);
 export const fotoCombo = (slug: string) => (COMBOS_SIN_PORTADA.has(slug) ? null : `/img/combos/v3/${slug}.webp`);
 
 OCULTAR.codigos.push(...Object.keys(REEMPLAZOS));
