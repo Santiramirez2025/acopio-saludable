@@ -44,8 +44,16 @@ export function esRespuestaAutomatica(texto: string): boolean {
   return /\b(asistente virtual|respuesta automatica|mensaje automatico|soy (el|la|un|una) (asistente|bot)|gracias por comunicarte|gracias por (tu|su) mensaje|en breve (te|le|nos) (responde|contesta|comunica)|a la brevedad (te|le) (responde|contesta)|fuera (del|de) horario|nuestro horario de atencion es|este es un mensaje automatico|no respondas? a este|canal de notificaciones|este (numero|canal) no (recibe|acepta|responde)|no (recibimos|leemos) (mensajes|respuestas) (en|por) este)/.test(normalizar(texto));
 }
 
+/**
+ * Lugares de Córdoba cuyo nombre contiene una palabra de salud. 15/11: Atilio, del anuncio del Trío,
+ * mandó su dirección («Avenida Cura Brochero 728, San Antonio de Arredondo») y el bot le contestó
+ * «sobre salud no te puedo aconsejar»: una venta lista frenada por el nombre de una calle.
+ * Se sacan antes de buscar la intención; una consulta de salud de verdad sigue detectándose.
+ */
+const LUGARES_CON_PALABRA_DE_SALUD = /\b(cura brochero|villa cura brochero|villa dolores|sagrado corazon|barrio corazon de maria)\b/g;
+
 export function detectar(texto: string): Intencion {
-  const t = normalizar(texto);
+  const t = normalizar(texto).replace(LUGARES_CON_PALABRA_DE_SALUD, " ").replace(/\s+/g, " ").trim();
   for (const [intencion, re] of REGLAS) if (re.test(t)) return intencion;
   return "buscar";
 }
