@@ -25,6 +25,7 @@ import { fotosOportunas } from "./galeria";
 import { esPedidoWeb, leerPedidoWeb, resolverPedidoWeb } from "./pedido-web";
 import { catalogo } from "./asistente-catalogo";
 import { leerConfig } from "./config";
+import { MINIMO_ZONA_PAGA } from "./envios/tabla";
 import { pesos, precioTransferencia, renglonCombo } from "./precios";
 import { sinLoEnEspera } from "./recompra-reglas";
 import { zonaSinMinimo } from "./minimo-zona";
@@ -129,7 +130,9 @@ async function pedidoDe(lineas: { tipo: "producto" | "combo"; id: string; cantid
   // (pasó con Vilma). Si después resulta de otra zona, al cotizar el envío rige el mínimo general.
   // Con envío fijo bajo mínimo, en la zona no hay mínimo: se cotiza con 0 y el envío sale según el subtotal.
   const enZonaPropia = !envio || envio.zonaPropia === true || (envio.propia && envio.costo === 0);
-  const cot = await cotizarCarrito(lineas, enZonaPropia ? (zonaSinMinimo(cfg) ? 0 : cfg.compraMinimaPropia) : undefined);
+  // Córdoba Capital y Malagueño (entrega propia con cargo): mínimo de la ruta, no el del correo (15/11).
+  const enRuta = Boolean(envio && envio.propia && !envio.zonaPropia && (envio.costo ?? 0) > 0);
+  const cot = await cotizarCarrito(lineas, enZonaPropia ? (zonaSinMinimo(cfg) ? 0 : cfg.compraMinimaPropia) : enRuta ? Math.min(MINIMO_ZONA_PAGA, cfg.compraMinima) : undefined);
   if (!cot.lineas.length) return null;
   // El envío propio depende del subtotal real del pedido, no del que se sabía cuando se cotizó el lugar.
   if (envio?.zonaPropia) envio = envioZonaPropia(cfg, envio.lugar, cot.subtotal);

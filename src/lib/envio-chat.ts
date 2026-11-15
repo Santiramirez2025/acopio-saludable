@@ -4,7 +4,7 @@
 
 import { leerConfig } from "./config";
 import { pesos } from "./precios";
-import { cotizarConTabla, zonaPagaDe } from "./envios/tabla";
+import { cotizarConTabla, MINIMO_ZONA_PAGA, zonaPagaDe } from "./envios/tabla";
 import { aplicarReglas } from "./envios/cotizar";
 import type { EnvioCotizado } from "./asistente-catalogo";
 import { conMinimoFueraDeZona, envioZonaPropia, zonaDeLugar } from "./envio-zona";
@@ -13,7 +13,10 @@ export { envioZonaPropia, zonaDeLugar } from "./envio-zona";
 export async function cotizarEnvioChat(lugar: string, provincia: string | null, subtotal: number, kilos = 4): Promise<EnvioCotizado | null> {
   const cfg = await leerConfig();
   const r = await cotizarSinMinimo(cfg, lugar, provincia, subtotal, kilos);
-  return r ? conMinimoFueraDeZona(r, cfg.compraMinima, subtotal) : null;
+  if (!r) return null;
+  // Córdoba Capital y Malagueño (entrega propia con cargo): rige el mínimo de la ruta, no el del correo.
+  const enRuta = r.propia === true && !r.zonaPropia;
+  return conMinimoFueraDeZona(r, enRuta ? Math.min(MINIMO_ZONA_PAGA, cfg.compraMinima) : cfg.compraMinima, subtotal);
 }
 
 async function cotizarSinMinimo(cfg: Awaited<ReturnType<typeof leerConfig>>, lugar: string, provincia: string | null, subtotal: number, kilos: number): Promise<EnvioCotizado | null> {
@@ -22,7 +25,7 @@ async function cotizarSinMinimo(cfg: Awaited<ReturnType<typeof leerConfig>>, lug
   if (zona.tipo === "propia" && cfg.entregaPropiaActiva) return envioZonaPropia(cfg, lugar, subtotal);
   const zp = zonaPagaDe(cfg.tabla);
   if (zona.tipo === "capital" && cfg.entregaPropiaActiva && zp) {
-    return { lugar, costo: zp.precio, propia: true, detalle: `Envío a ${lugar}: ${pesos(zp.precio)}, te lo llevamos nosotros${zp.plazo ? ` en ${zp.plazo}` : ""}.` };
+    return { lugar, costo: zp.precio, propia: true, compraMinima: Math.min(MINIMO_ZONA_PAGA, cfg.compraMinima), detalle: `Envío a ${lugar}: ${pesos(zp.precio)}, te lo llevamos nosotros${zp.plazo ? ` en ${zp.plazo}` : ""}.` };
   }
   const prov = zona.tipo === "correo" ? zona.provincia : "Córdoba";
   const tarifas = cotizarConTabla(cfg.tabla, prov, [{ pesoG: Math.round(Math.min(25, Math.max(0.5, kilos)) * 1000) + 100, unidades: 1, excedido: false }]);

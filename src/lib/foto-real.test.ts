@@ -27,3 +27,11 @@ test("15/11: si saca un producto («mandame solo el mix») no va la foto de lo q
   const r = fotosOportunas({ entrante: "Mándame solo el mix", respuesta: "Dale, sacamos la nuez y te queda el Trío: $24.000", historial: [] });
   assert.ok(!r.some((f) => /nuez|asi-armamos/i.test(f.url)));
 });
+
+test("15/11: Malagueño y Villa San Nicolás son zona de reparto a Córdoba, no correo", async () => {
+  const { zonaDeLugar } = await import("./envio-zona");
+  assert.equal(zonaDeLugar("Malagueño")?.tipo, "capital");
+  assert.equal(zonaDeLugar("villa san nicolas")?.tipo, "capital");
+  assert.equal(zonaDeLugar("Nueva Córdoba")?.tipo, "capital");
+  assert.equal(zonaDeLugar("Carlos Paz")?.tipo, "propia");
+});

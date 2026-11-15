@@ -61,6 +61,13 @@ function leerPropiaPaga(p: TablaEnvios["propiaPaga"]): TablaEnvios["propiaPaga"]
   return { cps: p.cps.trim(), precio, costo: Number.isFinite(costo) && costo >= 0 ? costo : 0, plazo: p.plazo?.trim() || undefined, nombre: p.nombre?.trim() || undefined };
 }
 
+/**
+ * Compra mínima en la zona de entrega propia con cargo (Córdoba Capital y Malagueño). 15/11, Santiago: viaja a
+ * Córdoba a comprar y reparte de paso; con el mínimo general de $60.000 un Trío de $24.000 no se podía pagar y
+ * esas ventas se perdían (Susana, Nora, Vanesa, Luis, Ana María, Ricardo). Nunca más alto que el mínimo general.
+ */
+export const MINIMO_ZONA_PAGA = 20000;
+
 /** La zona de entrega propia con cargo, lista para mostrar. null si no está configurada. */
 export function zonaPagaDe(tabla: TablaEnvios): { nombre: string; precio: number; plazo?: string } | null {
   const z = tabla.propiaPaga;
