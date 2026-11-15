@@ -26,6 +26,41 @@ export function avisoReparto(ahoraMs: number): AvisoReparto {
   return { dia: salto === 1 ? "mañana" : `el ${DIAS[(diaSemana + salto) % 7]}`, restaMs: null };
 }
 
+/** Día del próximo reparto DESPUÉS de hoy (lo por encargo llega de La Granja de un día para el otro):
+ *  «mañana» de lunes a viernes, «el lunes» el sábado (domingo no hay reparto). */
+export function proximoRepartoTrasHoy(ahoraMs: number): string {
+  const diaSemana = new Date(ahoraMs - AR_MS).getUTCDay();
+  let salto = 1;
+  while ((diaSemana + salto) % 7 === 0) salto++;
+  return salto === 1 ? "mañana" : `el ${DIAS[(diaSemana + salto) % 7]}`;
+}
+
+/**
+ * Nota con el día real del reparto para el vendedor de WhatsApp (15/11, Nico y Laura: el domingo el bot le dijo a
+ * Miryam «lo llevamos en el reparto de las 16», a María Teresa y a Atilio «sale hoy», y a Nanci le mandó el video
+ * «si pagás antes de las 15, hoy lo tenés»). Las instrucciones dicen la regla, pero el modelo no sabe qué día ni qué
+ * hora es: esta nota se la dice en cada mensaje.
+ */
+export function notaRepartoDeHoy(ahoraMs: number): string {
+  const local = new Date(ahoraMs - AR_MS);
+  const hoy = DIAS[local.getUTCDay()];
+  const hora = `${String(local.getUTCHours()).padStart(2, "0")}:${String(local.getUTCMinutes()).padStart(2, "0")}`;
+  const a = avisoReparto(ahoraMs);
+  if (a.dia === "hoy")
+    return `(REPARTO, solo Carlos Paz y la zona: hoy es ${hoy}, son las ${hora}. Lo que se paga antes de las 15 sale hoy en el reparto de las 16.)`;
+  const nombre = DIAS[(local.getUTCDay() + (a.dia === "mañana" ? 1 : 2)) % 7];
+  const motivo = local.getUTCDay() === 0 ? "los domingos no hay reparto" : "ya pasaron las 15";
+  return `(REPARTO, solo Carlos Paz y la zona: hoy es ${hoy}, son las ${hora} y ${motivo}. Lo próximo sale ${a.dia === "mañana" ? `mañana ${nombre}` : a.dia} desde las 16. No digas «hoy lo tenés», «sale hoy», «en el reparto de hoy» ni «si pagás antes de las 15»: decí «te lo llevo ${a.dia === "mañana" ? `mañana ${nombre}` : a.dia} desde las 16».)`;
+}
+
+/** Cierre del mensaje con el alias (Carlos Paz y la zona): «sale hoy en el reparto de las 16» o «sale mañana lunes desde las 16». */
+export function textoSalidaReparto(ahoraMs: number): string {
+  const a = avisoReparto(ahoraMs);
+  if (a.dia === "hoy") return "si llega antes de las 15, sale hoy en el reparto de las 16";
+  const dia = new Date(ahoraMs - AR_MS).getUTCDay();
+  return `sale ${a.dia === "mañana" ? `mañana ${DIAS[(dia + 1) % 7]}` : a.dia} en el reparto de las 16`;
+}
+
 /** «2 h 10 min», «45 min». */
 export function textoResta(ms: number): string {
   const horas = Math.floor(ms / 3_600_000);

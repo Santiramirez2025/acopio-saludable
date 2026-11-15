@@ -12,6 +12,7 @@
 import { bloqueLeccionesVendedor } from "./organico";
 import { bloqueTemporada } from "./temporada";
 import { leerConfig } from "./config";
+import { notaRepartoDeHoy, proximoRepartoTrasHoy } from "./salida-reparto";
 import { SALUDO_GENERAL } from "./whatsapp-saludo";
 import { catalogo, comboPedidoAgotado, hallarCombos, hallarProductos, hallarSinStock } from "./asistente-catalogo";
 import { combosTienda, productosTienda } from "./tienda";
@@ -349,7 +350,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
       const encargo = soloSinTacc ? [] : await hallarSinStock(consulta).catch(() => []);
       if (encargo.length) {
         return {
-          texto: `«${consulta}» hoy se nos terminó, pero lo conseguimos para mañana:\n${encargo.map((p) => `- ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}`).join("\n")}\nDecilo así: «hoy se me terminó, pero te lo consigo y te lo llevo mañana en el reparto de las 16» con el precio, y preguntá si se lo encargás y cuántos. No digas «no tengo» ni «no hay». Si dice que sí, pedile nombre y dirección para dejarlo agendado.`,
+          texto: `«${consulta}» hoy se nos terminó, pero lo conseguimos para ${proximoRepartoTrasHoy(Date.now())}:\n${encargo.map((p) => `- ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}`).join("\n")}\nDecilo así: «hoy se me terminó, pero te lo consigo y te lo llevo ${proximoRepartoTrasHoy(Date.now())} en el reparto de las 16» con el precio, y preguntá si se lo encargás y cuántos. No digas «no tengo» ni «no hay». Si dice que sí, pedile nombre y dirección para dejarlo agendado.`,
         };
       }
       return {
@@ -818,6 +819,12 @@ export async function responderComoVendedor(
     ...historial.slice(-8).map((t) => ({ role: (t.de === "yo" ? "user" : "assistant") as "user" | "assistant", content: t.texto })),
     { role: "user" as const, content: carritoTxt ? `${carritoTxt}\n\n${mensaje}` : mensaje },
   ];
+  // El día real del reparto va con el mensaje (no en las instrucciones, para no romper el caché): el domingo 15/11
+  // el bot prometía «sale hoy» y «el reparto de las 16» porque no sabía qué día era.
+  {
+    const ultimo = mensajes[mensajes.length - 1];
+    ultimo.content = `${notaRepartoDeHoy(Date.now())}\n\n${ultimo.content}`;
+  }
   // Lista de productos: se le marca al modelo para que no conteste solo algunos (el 28/10, a Sara 3 de 8).
   const lista = listaDeProductos(mensaje);
   if (lista.length) {

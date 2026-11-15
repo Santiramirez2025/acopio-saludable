@@ -5,6 +5,7 @@
 // Puro (sin base): se prueba sin gastar nada.
 
 import { hablaDeFueraDeZona } from "./envio-zona";
+import { avisoReparto } from "./salida-reparto";
 
 const BASE = "/img/galeria";
 
@@ -231,7 +232,7 @@ const VIDEOS: [RegExp, string, string][] = [
   [/cu[aá]ndo (llega|me llega|lo tra|lo llev)|env[ií]o|reparto|hoy mismo|para hoy/i, "/video/reels/reel-2026-11-12-repartimos-cada-dia.mp4", "Repartimos todos los días a las 16: si pagás antes de las 15, hoy lo tenés"],
 ];
 
-export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
+export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number }): FotoOportuna[] {
   const fotos = fotosBase(a);
   const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
   const videosYa = nuestros.filter((t) => t.startsWith("[Video]"));
@@ -243,6 +244,8 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
     if (archivo.includes("asi-armamos") && (a.mixClasicoDisponible === false || esDerivado(a))) continue;
     // 13/11: a Graciela (Córdoba Capital) le llegó «si pagás antes de las 15, hoy lo tenés» con el costo del envío. Es solo para la zona.
     if (archivo.includes("repartimos-cada-dia") && hablaDeFueraDeZona(`${a.entrante} ${a.respuesta}`)) continue;
+    // 15/11: el domingo a Nanci le llegó «si pagás antes de las 15, hoy lo tenés». Solo sale cuando es verdad: hoy hay reparto y faltan las 15.
+    if (archivo.includes("repartimos-cada-dia") && avisoReparto(a.ahoraMs ?? Date.now()).dia !== "hoy") continue;
     if (re.test(a.entrante) || (conPrecio && re.test(a.respuesta))) return fotos.length ? [fotos[0], { url: archivo, pie }] : [{ url: archivo, pie }];
   }
   return fotos;
