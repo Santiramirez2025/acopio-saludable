@@ -35,3 +35,11 @@ test("15/11: Malagueño y Villa San Nicolás son zona de reparto a Córdoba, no 
   assert.equal(zonaDeLugar("Nueva Córdoba")?.tipo, "capital");
   assert.equal(zonaDeLugar("Carlos Paz")?.tipo, "propia");
 });
+
+test("15/11: primerNombre no grita ni saluda a «Dios» o «Bazar»", async () => {
+  const { primerNombre } = await import("./whatsapp-interactivo");
+  assert.equal(primerNombre("MARIA TERESA🐣"), "Maria");
+  assert.equal(primerNombre("Dios Es Amor🙌"), null);
+  assert.equal(primerNombre("Bazar Osvaldo"), null);
+  assert.equal(primerNombre("Graciela Mirta Tapon"), "Graciela");
+});

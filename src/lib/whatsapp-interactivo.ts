@@ -529,8 +529,10 @@ export function primerNombre(nombre: string | null | undefined): string | null {
   if (/@|gmail|hotmail|yahoo|outlook/i.test(crudo)) return null;
   const p = crudo.split(/\s+/)[0]?.replace(/[^\p{L}]/gu, "") ?? "";
   if (p.length < 2 || p.length > 20) return null;
-  if (/^(casa|hotel|cabañas?|cabanas?|complejo|depto|departamentos?|apart|hostel|hosteria|hostería|posada|resort|spa|kiosco|almacen|almacén|dietetica|dietética|tienda|negocio|empresa|distribuidora|gym|gimnasio|lic|dr|dra|la|el|los|las|mi|mis|info|ventas|administracion|administración)$/i.test(p)) return null;
-  return p[0].toUpperCase() + p.slice(1);
+  if (/^(casa|hotel|cabañas?|cabanas?|complejo|depto|departamentos?|apart|hostel|hosteria|hostería|posada|resort|spa|kiosco|almacen|almacén|dietetica|dietética|tienda|negocio|empresa|distribuidora|gym|gimnasio|lic|dr|dra|la|el|los|las|mi|mis|info|ventas|administracion|administración|dios|bazar|trabajos|taller|estudio|optica|óptica|farmacia|libreria|librería|panaderia|panadería|cafe|café|bar|club|centro|grupo|familia|mundo|vida|amor|sabor|sabores|sabory)$/i.test(p)) return null;
+  // 15/11: «¡De nada, MARIA!» gritaba; el nombre va con la primera en mayúscula y el resto en minúscula si vino todo en mayúsculas.
+  const resto = p.slice(1);
+  return p[0].toUpperCase() + (resto === resto.toUpperCase() ? resto.toLowerCase() : resto);
 }
 
 export function planDeNada(nombre: string | null): Saliente[] {

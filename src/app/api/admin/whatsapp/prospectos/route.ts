@@ -17,6 +17,7 @@ import { crearPlantillaSeguimiento } from "@/lib/seguimiento";
 import { correrReactivacion, crearPlantillaReactivacion } from "@/lib/reactivacion";
 import { correrRecompra, crearPlantillaRecompra } from "@/lib/recompra";
 import { correrRegalo, crearPlantillaRegalo } from "@/lib/regalo-recetas";
+import { avisarViajeCordoba, crearPlantillaViaje } from "@/lib/viaje-cordoba";
 import { cargarSemilla, correrOrganico, leccionesActivas, type Semilla } from "@/lib/organico";
 import { crearPlantillaPedidoProveedor, crearPlantillaProveedor, enviarPedidoProveedor, enviarProveedor } from "@/lib/whatsapp-proveedores";
 import { getServerSession } from "next-auth";
@@ -58,6 +59,13 @@ export async function POST(req: Request) {
   if (cuerpo.accion === "plantilla-reactivacion") return NextResponse.json(await crearPlantillaReactivacion());
   if (cuerpo.accion === "reactivacion") return NextResponse.json(await correrReactivacion());
   if (cuerpo.accion === "plantilla-recompra") return NextResponse.json(await crearPlantillaRecompra());
+  if (cuerpo.accion === "plantilla-viaje") return NextResponse.json(await crearPlantillaViaje());
+  if (cuerpo.accion === "viaje-cordoba") {
+    const c = cuerpo as { telefonos?: unknown; cuando?: unknown };
+    const telefonos = Array.isArray(c.telefonos) ? c.telefonos.filter((t): t is string => typeof t === "string") : [];
+    if (!telefonos.length || typeof c.cuando !== "string" || !c.cuando.trim()) return NextResponse.json({ error: "faltan telefonos o cuando" }, { status: 400 });
+    return NextResponse.json(await avisarViajeCordoba(telefonos, c.cuando.trim().slice(0, 40)));
+  }
   if (cuerpo.accion === "plantilla-regalo") return NextResponse.json(await crearPlantillaRegalo());
   // Regalo de recetas a clientes: sin `forzar: true` solo dice a quién le llegaría.
   if (cuerpo.accion === "regalo") return NextResponse.json(await correrRegalo(cuerpo.forzar !== true));
