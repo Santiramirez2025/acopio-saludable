@@ -511,7 +511,10 @@ export async function atender(e: Entrada): Promise<void> {
 
   // 12/11: «Sí, dejalo listo» después de que le aceptamos pagar al recibir: se crea el pedido AL_RECIBIR en el acto.
   // Antes la IA contestaba «quedó agendado» y el pedido no existía en el panel (Carlos Taborda, Martha Penfold).
-  if (PAGO_AL_RECIBIR && canal === "whatsapp" && guardado?.startsWith("/carrito?p=") && confirmaPedido(texto)) {
+  // 15/11 (Viki, Tanti: «Los espero 🩷»; Lilian: «Saavedra 165, avisame y bajo»): después de aceptarle pagar al recibir,
+  // la dirección o un «los espero» también confirman. El bot repreguntaba «¿Lo dejamos listo?» y el pedido no llegaba al panel.
+  const confirmaAlRecibir = confirmaPedido(texto) || (!texto.includes("?") && (tieneDireccion(texto) || /\b(los|te|lo|las?) esper[oa]\b/i.test(texto)));
+  if (PAGO_AL_RECIBIR && canal === "whatsapp" && guardado?.startsWith("/carrito?p=") && confirmaAlRecibir) {
     const hist = await historialDe(e.clave, 12);
     const previo = [...hist].reverse().find((h) => h.de === "acopio")?.texto ?? "";
     const lugarHist = lugarDelHistorial(hist);
