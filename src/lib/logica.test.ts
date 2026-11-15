@@ -1410,7 +1410,10 @@ test("ML: fila de precios marca la promoción y el precio final bajo el piso", a
 test("estadoAgente: descanso, pendiente, ok, atrasado y falla", async () => {
   const { AGENTES, estadoAgente } = await import("./agentes");
   const logi = AGENTES.find((a) => a.id === "logistica")!;
-  assert.ok(AGENTES.every((a) => a.dias.length === 7), "todos trabajan todos los días");
+  // 15/11: el panel reclamaba informe a los pausados el 14/11 y a los que no trabajan ese día.
+  const victoria = AGENTES.find((a) => a.id === "corporativo")!;
+  assert.equal(estadoAgente(victoria, { dia: 1, min: 12 * 60, fecha: "2026-11-16" }, null).texto, "En pausa");
+  assert.equal(estadoAgente(AGENTES.find((a) => a.id === "web")!, { dia: 0, min: 16 * 60, fecha: "2026-11-15" }, null).estado, "descanso");
   assert.equal(estadoAgente({ ...logi, dias: [1, 2, 3, 4, 5, 6] }, { dia: 0, min: 600, fecha: "2026-10-25" }, null).estado, "descanso");
   assert.equal(estadoAgente(logi, { dia: 1, min: 7 * 60, fecha: "2026-10-26" }, null).estado, "pendiente");
   assert.equal(estadoAgente(logi, { dia: 1, min: 9 * 60, fecha: "2026-10-26" }, { fecha: "2026-10-26", hora: "8:20", ok: true }).estado, "ok");
