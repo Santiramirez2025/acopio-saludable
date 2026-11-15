@@ -236,7 +236,7 @@ async function cerrarVenta(
     ? [
         medio === "TRANSFERENCIA"
           ? `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}${cfg.descuentoTransferenciaPct > 0 ? `, ya con el ${cfg.descuentoTransferenciaPct}% de descuento por transferencia` : ""}. Va a ${direccion.slice(0, 120)}: apenas se acredita la transferencia, sale en el próximo reparto 🙌`
-          : `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Te llega a ${direccion.slice(0, 120)} en ${cfg.plazoEntregaPropia} y lo pagás ahí, en efectivo o por transferencia 🙌`,
+          : `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Va a ${direccion.slice(0, 120)}: ${textoSalidaReparto(Date.now())} y lo pagás ahí, en efectivo o por transferencia 🙌`,
         medio === "TRANSFERENCIA" && cfg.transferenciaDatos ? `Los datos para transferir:\n${cfg.transferenciaDatos}\nMandame el comprobante por acá.` : "Si tenés un horario que te quede mejor, decime y lo anoto.",
       ]
     : medio === "TRANSFERENCIA"

@@ -468,6 +468,11 @@ export function vaATransferir(texto: string): boolean {
 
 /** ¿Pasó una dirección? Una calle con número, o «esquina», «barrio», «casa», «depto». */
 export function tieneDireccion(texto: string): boolean {
+  // 15/11 (Norma, AS-90): «Pásame la dirección y voy yo a comprar» pide NUESTRA dirección para ir a buscarlo.
+  // Contaba como dirección por la palabra «dirección»: se creó un pedido al recibir con esa frase como domicilio
+  // y el bot le contestó «Te llega a Pásame la dirección y voy yo a comprar.». Quien pregunta dónde estamos
+  // o quiere retirar no nos está dando su domicilio.
+  if (preguntaDondeEstan(texto)) return false;
   const t = limpio(texto);
   return /\b(direccion|calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?))/.test(t);
 }
@@ -769,6 +774,8 @@ export function preguntaDondeEstan(texto: string): boolean {
   return (
     /\bdonde (estan|esta el (negocio|local)|quedan?|los encuentro|se encuentran|es el (negocio|local))\b/.test(t) ||
     /\b(tu|su) direccion\b|\bdame (la|tu) direccion\b|\bdireccion del (local|negocio)\b/.test(t) ||
+    /\b(me )?(pasa|pasas|pasame|pasan|mandame|mandas|decime|me das|me decis|cual es|me podes pasar|me pasarias) (la )?(direccion|ubicacion)\b/.test(t) ||
+    /\bvoy yo\b|\bvamos nosotros\b/.test(t) ||
     /\b(tienen|hay) local\b/.test(t) ||
     /\b(retirar|retiro|lo retiro|paso a buscar|voy a buscar|vamos a buscar|ir a buscar|lo busco|voy personalmente)/.test(t)
   );

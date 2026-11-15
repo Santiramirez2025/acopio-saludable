@@ -39,3 +39,16 @@ test("el pedido de dirección no promete pago al recibir ni nombra a Santiago", 
   assert.match(t, /^¡Genial Mary! ¿Me pasás calle, número y barrio\?/);
   assert.doesNotMatch(t, /perfecto|al recibir|antes de pagar|Santiago/i);
 });
+
+test("15/11 (Norma, AS-90): pedir NUESTRA dirección no es dar la suya", async () => {
+  const { tieneDireccion } = await import("./whatsapp-interactivo");
+  for (const t of ["Pásame la dirección y voy yo a comprar.", "Me pasás la dirección. Soy de Carlos Paz", "Cuál es la dirección?", "Mandame la ubicación y voy"]) {
+    assert.equal(preguntaDondeEstan(t), true, t);
+    assert.equal(tieneDireccion(t), false, t);
+  }
+  // Las direcciones reales se siguen reconociendo.
+  for (const t of ["Saavedra 165, avisame y bajo", "El Tordo 382, Barrio Villa Victoria, Tanti", "La dirección es Cartago 100", "Te paso la dirección: Los Tulipanes 197"]) {
+    assert.equal(tieneDireccion(t), true, t);
+    assert.equal(preguntaDondeEstan(t), false, t);
+  }
+});
