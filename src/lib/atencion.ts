@@ -489,8 +489,15 @@ export async function atender(e: Entrada): Promise<void> {
   const guardado = canal === "whatsapp" ? await pedidoGuardado(e.clave) : null;
   // Solo si el último envío que le dijimos no es de otra zona (Córdoba capital, correo): ahí lo ve el vendedor.
   const ultimoEnvio = [...(await historialDe(e.clave, 9))].reverse().find((h) => h.de === "acopio" && /Envío a [^:]+:/.test(h.texto))?.texto.match(/Envío a ([^:]+):/)?.[1];
-  if (PAGO_AL_RECIBIR && guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (ultimoEnvio ? recibeEnZonaPropia(ultimoEnvio) : false)) {
-    const direccion = tieneDireccion(texto) ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160) : undefined;
+  // 14/11 (Graciela, San Antonio): el bot le ofreció pagar al recibir, ella eligió «Pago en efectivo al recibir»
+  // y el bot volvió a preguntar «¿Te lo dejo listo?». Si nuestro último mensaje ya le ofrecía pagar al recibir
+  // (solo se ofrece en la zona propia), su elección cierra el pedido aunque no haya una línea «Envío a …».
+  const histRecibir = PAGO_AL_RECIBIR && guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) ? await historialDe(e.clave, 12) : [];
+  const ofrecimosRecibir = aceptamosAlRecibir([...histRecibir].reverse().find((h) => h.de === "acopio")?.texto ?? "");
+  if (PAGO_AL_RECIBIR && guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (ultimoEnvio ? recibeEnZonaPropia(ultimoEnvio) : ofrecimosRecibir)) {
+    const direccion = tieneDireccion(texto)
+      ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160)
+      : [...histRecibir].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
     console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
     return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: "Villa Carlos Paz" }, direccion || undefined);
   }
