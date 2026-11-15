@@ -21,3 +21,9 @@ test("14/11: harina de almendras o pasta de maní (por encargo) no mandan la fot
   const almendras = fotosOportunas({ entrante: "precio de las almendras", respuesta: "Las almendras 500 g salen $20.500", historial: [] });
   assert.ok(almendras.length > 0);
 });
+
+test("15/11: si saca un producto («mandame solo el mix») no va la foto de lo que saca", async () => {
+  const { fotosOportunas } = await import("./galeria");
+  const r = fotosOportunas({ entrante: "Mándame solo el mix", respuesta: "Dale, sacamos la nuez y te queda el Trío: $24.000", historial: [] });
+  assert.ok(!r.some((f) => /nuez|asi-armamos/i.test(f.url)));
+});

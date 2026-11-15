@@ -165,7 +165,9 @@ const PRODUCTOS_TEXTO: [RegExp, string, string][] = [
 // 14/11: «harina de almendras», «pasta de maní crocante» o lo que es por encargo no son la almendra ni el mix
 // de la foto: mandar esa imagen (o el video del mix) confunde. En esos casos no va foto de producto.
 const DERIVADO = /harina|pasta de|con chocolate|aceite|leche de|bebida|crema de/i;
-const esDerivado = (a: { entrante: string; respuesta: string }) => DERIVADO.test(a.entrante) || /por encargo/i.test(a.respuesta);
+// 15/11: Graciela pidió «mandame solo el mix» y le llegó la foto de la nuez que estaba sacando. Si saca algo, sin foto.
+const SACA = /\bsolo\b|sac[aá](me|lo|la)?\b|sin (la|el|los|las)\b|no quiero|sacamos/i;
+const esDerivado = (a: { entrante: string; respuesta: string }) => DERIVADO.test(a.entrante) || SACA.test(a.entrante) || /por encargo|sacamos/i.test(a.respuesta);
 const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen local|d[oó]nde est[aá]n|ver antes|c[oó]mo (llega|viene)|empaque|calidad|fresc/i;
 
 function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
