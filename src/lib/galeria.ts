@@ -161,6 +161,10 @@ const PRODUCTOS_TEXTO: [RegExp, string, string][] = [
   [/\bpasas?\b/i, "producto-pasas", "Pasas de uva"],
   [/\bmix\b(?! de semillas)/i, "producto-mix-clasico", "Mix clásico con cajú"],
 ];
+// 14/11: «harina de almendras», «pasta de maní crocante» o lo que es por encargo no son la almendra ni el mix
+// de la foto: mandar esa imagen (o el video del mix) confunde. En esos casos no va foto de producto.
+const DERIVADO = /harina|pasta de|con chocolate|aceite|leche de|bebida|crema de/i;
+const esDerivado = (a: { entrante: string; respuesta: string }) => DERIVADO.test(a.entrante) || /por encargo/i.test(a.respuesta);
 const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen local|d[oó]nde est[aá]n|ver antes|c[oó]mo (llega|viene)|empaque|calidad|fresc/i;
 
 function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
@@ -196,7 +200,7 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
     }
   }
   // 4. Preguntó por un producto con imagen y le contestamos el precio.
-  if (/\$\s?\d/.test(a.respuesta)) {
+  if (/\$\s?\d/.test(a.respuesta) && !esDerivado(a)) {
     for (const [re, archivo, pie] of PRODUCTOS_TEXTO) {
       if (re.test(a.entrante) || re.test(a.respuesta)) {
         const f = candidata(archivo, pie);
@@ -236,7 +240,7 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
   for (const [re, archivo, pie] of VIDEOS) {
     const yaSalio = videosYa.some((t) => t.includes(pie.split(" · ")[0].slice(0, 30)));
     if (yaSalio) continue;
-    if (archivo.includes("asi-armamos") && a.mixClasicoDisponible === false) continue;
+    if (archivo.includes("asi-armamos") && (a.mixClasicoDisponible === false || esDerivado(a))) continue;
     // 13/11: a Graciela (Córdoba Capital) le llegó «si pagás antes de las 15, hoy lo tenés» con el costo del envío. Es solo para la zona.
     if (archivo.includes("repartimos-cada-dia") && hablaDeFueraDeZona(`${a.entrante} ${a.respuesta}`)) continue;
     if (re.test(a.entrante) || (conPrecio && re.test(a.respuesta))) return fotos.length ? [fotos[0], { url: archivo, pie }] : [{ url: archivo, pie }];
