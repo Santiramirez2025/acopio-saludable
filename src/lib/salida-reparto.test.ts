@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { avisoReparto, notaRepartoDeHoy, proximoRepartoTrasHoy, textoResta, textoSalidaReparto } from "./salida-reparto";
+import { avisoReparto, notaPedidoEnCamino, notaRepartoDeHoy, proximoRepartoTrasHoy, textoResta, textoSalidaReparto } from "./salida-reparto";
 
 // Horas en Argentina (UTC−3) → instante.
 const ar = (iso: string) => new Date(`${iso}-03:00`).getTime();
@@ -49,4 +49,14 @@ test("lo por encargo llega en el próximo reparto después de hoy: el sábado es
   assert.equal(proximoRepartoTrasHoy(ar("2026-11-14T10:00:00")), "el lunes");
   assert.equal(proximoRepartoTrasHoy(ar("2026-11-15T10:00:00")), "mañana");
   assert.equal(proximoRepartoTrasHoy(ar("2026-11-13T10:00:00")), "mañana");
+});
+
+test("pedido ENVIADO: el bot no lo pasa a mañana ni pregunta si llegó (Graciela AS-85, 16/11)", () => {
+  const n = notaPedidoEnCamino("ENVIADO", "AS-00085");
+  assert.match(n, /AS-00085 de este cliente ya salió en el reparto de hoy/);
+  assert.match(n, /no le digas que sale mañana/);
+  assert.match(n, /no le preguntes si le llegó/);
+  assert.equal(notaPedidoEnCamino("PENDIENTE_PAGO", "AS-00090"), "");
+  assert.equal(notaPedidoEnCamino("ENTREGADO", "AS-00089"), "");
+  assert.equal(notaPedidoEnCamino(null, "AS-00001"), "");
 });

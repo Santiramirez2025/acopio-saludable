@@ -84,3 +84,14 @@ export function textoResta(ms: number): string {
   const minutos = Math.max(1, Math.floor((ms % 3_600_000) / 60_000));
   return `${horas > 0 ? `${horas} h ` : ""}${minutos} min`;
 }
+
+/**
+ * Pedido que ya salió en el reparto (Nico, 16/11): con AS-85 en la camioneta, a las 16:01 el bot le dijo a Graciela
+ * «como ya pasaron las 15, tu pedido sale mañana martes» y después «¿te llegó todo bien?»; ella entendió que no iba
+ * y lo canceló. A Viki (AS-88, esperando en Tanti) le preguntó «¿te llegó todo bien?» antes de la entrega.
+ * La nota del día del reparto vale para pedidos nuevos; uno ENVIADO ya va en camino y manda sobre esa nota.
+ */
+export function notaPedidoEnCamino(estado: string | null | undefined, codigo: string): string {
+  if (estado !== "ENVIADO") return "";
+  return `(PEDIDO EN CAMINO: el pedido ${codigo} de este cliente ya salió en el reparto de hoy y Santiago lo está llevando. Esto manda sobre la nota del reparto: no le digas que sale mañana ni otro día, no le cambies el día y no le preguntes si le llegó. Decile que Santiago va en camino con su pedido y le escribe por acá cuando esté llegando. Si quiere cancelar, cambiar la dirección o no va a estar, decile que se lo avisamos a Santiago ya mismo.)`;
+}

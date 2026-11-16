@@ -12,7 +12,8 @@
 import { bloqueLeccionesVendedor } from "./organico";
 import { bloqueTemporada } from "./temporada";
 import { leerConfig } from "./config";
-import { notaRepartoDeHoy, plazoZonaPropia, proximoRepartoTrasHoy } from "./salida-reparto";
+import { notaPedidoEnCamino, notaRepartoDeHoy, plazoZonaPropia, proximoRepartoTrasHoy } from "./salida-reparto";
+import { prisma } from "./prisma";
 import { SALUDO_GENERAL } from "./whatsapp-saludo";
 import { catalogo, comboPedidoAgotado, hallarCombos, hallarProductos, hallarSinStock } from "./asistente-catalogo";
 import { combosTienda, productosTienda } from "./tienda";
@@ -827,6 +828,13 @@ export async function responderComoVendedor(
   {
     const ultimo = mensajes[mensajes.length - 1];
     ultimo.content = `${notaRepartoDeHoy(Date.now())}\n\n${ultimo.content}`;
+    // Si su pedido ya salió en el reparto, eso manda sobre la nota del día (16/11: Graciela AS-85 canceló porque el
+    // bot le dijo «sale mañana» con el pedido en la camioneta).
+    if (ctx.ordenId) {
+      const orden = await prisma.order.findUnique({ where: { id: ctx.ordenId }, select: { estado: true } }).catch(() => null);
+      const enCamino = notaPedidoEnCamino(orden?.estado, `AS-${String(ctx.ordenId).padStart(5, "0")}`);
+      if (enCamino) ultimo.content = `${enCamino}\n\n${ultimo.content}`;
+    }
   }
   // Lista de productos: se le marca al modelo para que no conteste solo algunos (el 28/10, a Sara 3 de 8).
   const lista = listaDeProductos(mensaje);
