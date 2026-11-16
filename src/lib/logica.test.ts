@@ -1930,16 +1930,18 @@ test("costos de la compra del 3/11: la lista no los pisa hasta la fecha, y despu
 import { envioZonaPropia } from "./envio-zona";
 test("envío de la zona: sale del subtotal real y sin subtotal da la regla, no «no llega»", () => {
   const cfg = { compraMinima: 60000, compraMinimaPropia: 20000, envioBajoMinimo: 3000, entregaPropiaActiva: true, plazoEntregaPropia: "24 a 48 hs" };
-  const despensa = envioZonaPropia(cfg, "Vertientes de Arredondo", 28500);
+  const despensa = envioZonaPropia(cfg, "Villa del Lago, Carlos Paz", 28500);
   assert.equal(despensa.costo, 0);
   assert.match(despensa.detalle, /sin cargo/);
-  const chico = envioZonaPropia(cfg, "Tanti", 15000);
+  const chico = envioZonaPropia(cfg, "Villa Carlos Paz", 15000);
   assert.equal(chico.costo, 3000);
   assert.match(chico.detalle, /no llega/);
-  const sinElegir = envioZonaPropia(cfg, "Tanti", 0);
+  const sinElegir = envioZonaPropia(cfg, "Villa Carlos Paz", 0);
   assert.doesNotMatch(sinElegir.detalle, /no llega/);
   assert.match(sinElegir.detalle, /sin cargo desde/);
   assert.deepEqual(zonaDeLugar("vertiente de arredondo, un barrio de san antonio"), { tipo: "propia" });
+  // 16/11: fuera de la ciudad se cobra por distancia (San Antonio $3.000 aunque el pedido pase los $20.000).
+  assert.equal(envioZonaPropia(cfg, "Vertientes de Arredondo", 28500).costo, 3000);
 });
 
 test("la nota de cobro al marcar Entregado dice el medio real", async () => {

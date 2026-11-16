@@ -4,6 +4,7 @@ import { PROVINCIAS } from "./envios/geo";
 import type { EnvioCotizado } from "./asistente-catalogo";
 import { envioPropioPara, umbralZona, type ReglaMinimo } from "./minimo-zona";
 import { pesos } from "./precios";
+import { cargoVecinaPorLugar, envioVecina, VECINAS_SIN_CARGO_DESDE } from "./envios/vecinas";
 
 const sinTildes = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 
@@ -33,6 +34,23 @@ export function zonaDeLugar(lugar: string, provincia?: string | null): Zona {
  * el fijo configurado (si hay). Se recalcula cada vez que cambia el pedido, por eso vive aparte.
  */
 export function envioZonaPropia(cfg: ReglaMinimo & { plazoEntregaPropia: string }, lugar: string, subtotal: number): EnvioCotizado {
+  // Vecinas (16/11): fuera de Carlos Paz el reparto propio lleva un cargo por distancia, sin cargo recién desde el pedido grande.
+  const cargo = cargoVecinaPorLugar(lugar);
+  if (cargo > 0) {
+    const costo = envioVecina(cargo, subtotal);
+    return {
+      lugar,
+      costo: subtotal > 0 ? costo : cargo,
+      propia: true,
+      zonaPropia: true,
+      alRecibir: true,
+      sinCargoDesde: VECINAS_SIN_CARGO_DESDE,
+      detalle:
+        subtotal > 0 && costo === 0
+          ? `Envío a ${lugar}: sin cargo porque el pedido pasa ${pesos(VECINAS_SIN_CARGO_DESDE)}. Te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.`
+          : `Envío a ${lugar}: ${pesos(cargo)} (queda fuera de la ciudad de Carlos Paz); desde ${pesos(VECINAS_SIN_CARGO_DESDE)} va sin cargo. Te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.`,
+    };
+  }
   const fijo = envioPropioPara(cfg, subtotal);
   const umbral = umbralZona(cfg);
   // Sin subtotal (todavía no eligió nada) no se puede decir «no llega»: se da la regla entera.

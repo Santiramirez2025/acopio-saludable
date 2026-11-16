@@ -121,7 +121,7 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
         {!compacta && (
           <div className="mb-1 flex justify-between gap-3 text-sm">
             <span className="font-medium">
-              {b.llego ? "Envío sin cargo en Carlos Paz y la zona" : `En Carlos Paz y la zona ya podés pedir: sumá ${pesosCliente(b.falta)} más y el envío va sin cargo (si no, envío ${pesosCliente(envioBajo)})`}
+              {b.llego ? "Envío sin cargo en Carlos Paz" : `En Carlos Paz ya podés pedir: sumá ${pesosCliente(b.falta)} más y el envío va sin cargo (si no, envío ${pesosCliente(envioBajo)})`}
             </span>
             {!b.llego && <span className="shrink-0 tabular-nums text-stone-600">{pesosCliente(subtotal)} / {pesosCliente(b.meta)}</span>}
           </div>
@@ -143,7 +143,7 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
             {faltaMeta > 0
               ? haciaZona
                 ? envioBajo > 0
-                  ? `En Carlos Paz y la zona ya podés pedir: sumá ${pesosCliente(faltaMeta)} más y el envío va sin cargo (si no, envío ${pesosCliente(envioBajo)})`
+                  ? `En Carlos Paz ya podés pedir: sumá ${pesosCliente(faltaMeta)} más y el envío va sin cargo (si no, envío ${pesosCliente(envioBajo)})`
                   : `Te faltan ${pesosCliente(faltaMeta)} para pedir en Carlos Paz y la zona`
                 : subtotal >= zona && zona < compraMinima
                   ? `Ya podés pedir si estás en Carlos Paz (${envioBajo > 0 ? "envío sin cargo" : `mínimo ${pesosCliente(zona)}`}) · faltan ${pesosCliente(falta)} para envíos`

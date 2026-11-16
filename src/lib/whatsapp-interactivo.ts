@@ -790,7 +790,7 @@ export function preguntaDondeEstan(texto: string): boolean {
 export function textoDondeEstanSinIA(c: { nombre: string | null; sinCargoDesde: number; pesos: (n: number) => string }): string {
   return [
     `¡Hola${c.nombre ? ` ${c.nombre}` : ""}! No tenemos local a la calle: trabajamos online desde Villa Carlos Paz y el pedido te lo llevamos nosotros.`,
-    `En Carlos Paz y la zona va sin cargo desde ${c.pesos(c.sinCargoDesde)}. ¿Me pasás calle, número y barrio así te lo agendo?`,
+    `En Carlos Paz va sin cargo desde ${c.pesos(c.sinCargoDesde)} (localidades vecinas, con un cargo de envío). ¿Me pasás calle, número y barrio así te lo agendo?`,
   ].join("\n");
 }
 
