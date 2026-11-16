@@ -23,6 +23,13 @@ async function cargar(slug: string) {
 // Combos con una segunda imagen de ambiente en public/img/combos/<slug>-2.webp.
 const SEGUNDA_FOTO = new Set<string>([]);
 
+// Combos de fiestas → su guía (Mateo 16/11: las guías navideñas no tenían enlaces desde la tienda).
+const GUIA_FIESTAS: Record<string, [string, string]> = {
+  "mesa-navidena": ["/mesa-dulce-navidad", "¿Cuánto comprar para la mesa dulce? Calculalo por persona"],
+  "regalo-navideno": ["/regalos-navidenos-cordoba", "Más regalos navideños y regalos para empresas"],
+  "pan-dulce-casero": ["/guias/cuanto-relleno-lleva-el-pan-dulce-casero", "¿Cuánto relleno lleva el pan dulce casero?"],
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const c = await cargar((await params).slug);
   if (!c) return { title: "Combo no disponible" };
@@ -112,6 +119,11 @@ export default async function ComboPagina({ params }: Props) {
               {zonaSinMinimo(cfg)
                 ? `En Villa Carlos Paz y la zona lo podés pedir así${c.precio >= umbralZona(cfg) ? " con entrega sin cargo" : ` (entrega ${pesos(cfg.envioBajoMinimo)}; sin cargo desde ${pesos(umbralZona(cfg))})`}. Para envíos al resto del país la compra mínima es ${pesos(cfg.compraMinima)}: sumá ${pesos(faltaParaMinimo)} más y ya podés comprar: `
                 : `La compra mínima es ${pesos(cfg.compraMinima)}${c.precio >= cfg.compraMinimaPropia && cfg.compraMinimaPropia < cfg.compraMinima ? " (en Villa Carlos Paz y el sur de Punilla ya llega: ahí el mínimo es " + pesos(cfg.compraMinimaPropia) + ")" : ""}. Sumá ${pesos(faltaParaMinimo)} más y ya podés comprar: `}<Link href="/catalogo" className="font-semibold text-acopio-700 underline underline-offset-2">elegí del catálogo</Link> o <Link href="/combos" className="font-semibold text-acopio-700 underline underline-offset-2">mirá otro combo</Link>.
+            </p>
+          )}
+          {GUIA_FIESTAS[c.slug] && (
+            <p className="text-sm text-stone-600">
+              <Link href={GUIA_FIESTAS[c.slug][0]} className="font-semibold text-acopio-700 underline underline-offset-2">{GUIA_FIESTAS[c.slug][1]}</Link>
             </p>
           )}
           <BotonCompartir etiqueta="Compartir combo" texto={`Mirá el combo ${c.nombre} de Acopio Saludable:`} ruta={`/combos/${c.slug}`} className="btn-sec w-full" />

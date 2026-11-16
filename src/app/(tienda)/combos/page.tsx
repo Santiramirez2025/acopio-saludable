@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { pesos } from "@/lib/precios";
 import { umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
@@ -20,6 +21,9 @@ export default async function Combos() {
       ) : (
         <p className="text-stone-600">No hay combos disponibles en este momento.</p>
       )}
+      <p className="mt-6 text-sm text-stone-600">
+        Para las fiestas: <Link href="/mesa-dulce-navidad" className="font-semibold text-acopio-700 underline underline-offset-2">cuánto comprar para la mesa dulce de Navidad</Link> y <Link href="/regalos-navidenos-cordoba" className="font-semibold text-acopio-700 underline underline-offset-2">regalos navideños con frutos secos</Link>.
+      </p>
     </div>
   );
 }
