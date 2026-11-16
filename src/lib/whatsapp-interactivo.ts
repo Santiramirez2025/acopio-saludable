@@ -707,8 +707,12 @@ export function listaDeProductos(texto: string): string[] {
     .replace(/\b(por|x)\s*(kg|kilo)\b/gi, "");
   const partes = limpio
     .split(/\n|,|;|•|\s-\s|\by\b(?=\s+[a-záéíóúñ])/i)
-    .map((p) => p.replace(/^[\s\-*•\d.)]+/, "").replace(/[.?!]+$/, "").trim())
-    .filter((p) => p.length >= 3 && p.length <= 60 && !/^(hola|buen[oa]s?|gracias|sii?|pero|por ejemplo)\b/i.test(p));
+    .map((p) => p.replace(/^[\s\-*•\d.)]+/, "").replace(/[.?!¿¡]+$/, "").trim())
+    // «pero NECESITO nueces» es un producto con muletilla delante (Gladys 16/11: se perdían las nueces).
+    .map((p) => p.replace(/^(pero|y|tambi[eé]n)\s+/i, "").replace(/^(necesito|quiero|busco)\s+/i, "").trim())
+    // «cuánto me sale», «dónde retiro» son preguntas, no productos (se contestaban «— no lo tenemos»).
+    .filter((p) => p.length >= 3 && p.length <= 60 && !/^(hola|buen[oa]s?|gracias|sii?|pero|por ejemplo)\b/i.test(p))
+    .filter((p) => !/^¿?\s*(cu[aá]nto|cu[aá]ndo|d[oó]nde|c[oó]mo|qu[eé]|hacen|tienen|env[ií]an)\b/i.test(p));
   return partes.length >= 3 ? partes.slice(0, 15) : [];
 }
 
