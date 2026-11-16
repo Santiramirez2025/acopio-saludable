@@ -29,3 +29,23 @@ test("15/11: Córdoba capital en la charla no es zona propia (no habilita Cobrar
   assert.notEqual(zonaDeLugar(String(lugar), null)?.tipo, "propia");
   assert.equal(zonaDeLugar("Villa Carlos Paz", null)?.tipo, "propia");
 });
+
+test("16/11: una dirección con ciudad fuera de la zona no confirma Cobrar al entregar", async () => {
+  const { clienteNombraFueraDeZona } = await import("./pedido-charla");
+  const ofrecimos = { de: "acopio" as const, texto: "¿Me pasás calle y número? Te lo llevamos sin cargo y lo pagás cuando te llega 🙌" };
+  assert.ok(clienteNombraFueraDeZona([ofrecimos], "Av. Colón 1234, Córdoba capital"));
+  assert.ok(clienteNombraFueraDeZona([ofrecimos], "Rivadavia 55, Malagueño"));
+  assert.ok(clienteNombraFueraDeZona([{ de: "yo", texto: "soy de Nueva Córdoba" }, ofrecimos], "Obispo Trejo 300"));
+  assert.ok(clienteNombraFueraDeZona([ofrecimos], "mandalo por correo, Belgrano 20"));
+  assert.ok(clienteNombraFueraDeZona([ofrecimos], "San Martín 400, Rosario, Santa Fe"));
+});
+
+test("16/11: las direcciones de la zona propia siguen confirmando", async () => {
+  const { clienteNombraFueraDeZona } = await import("./pedido-charla");
+  const ofrecimos = { de: "acopio" as const, texto: "Lo pagás cuando te lo llevo. ¿Me pasás calle y número?" };
+  assert.ok(!clienteNombraFueraDeZona([ofrecimos], "Saavedra 165, avisame y bajo"));
+  assert.ok(!clienteNombraFueraDeZona([ofrecimos], "Los espero 🩷"));
+  assert.ok(!clienteNombraFueraDeZona([{ de: "yo", texto: "Tanti" }, ofrecimos], "Los Algarrobos 12"));
+  assert.ok(!clienteNombraFueraDeZona([ofrecimos], "Libertad 300, Villa Carlos Paz, Córdoba"));
+  assert.ok(!clienteNombraFueraDeZona([{ de: "yo", texto: "quiero el trío y 1 kg de nuez" }, ofrecimos], "San Antonio de Arredondo, calle 5 nro 20"));
+});
