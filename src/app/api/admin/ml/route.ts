@@ -2,6 +2,7 @@
 // GET: si está conectado, corre el parte (visitas, ventas, reputación, preguntas) y lo devuelve, con los precios
 // de cada publicación (lista, final con promoción, piso). GET ?solo=precios: solo los precios, sin correr el parte.
 // GET ?solo=preguntas: preguntas sin responder con su texto y el borrador de respuesta (no publica nada).
+// GET ?solo=ventas[&dias=7]: ventas pagadas con producto, total, comisión de ML y estado del envío (sin datos del comprador).
 // POST { accion: "precio", item: "MLA…", precio } → cambia el precio (nunca bajo el piso de ganancia).
 // POST { accion: "titulo", item, titulo } · { accion: "descripcion", item, texto } · { accion: "pausar" | "activar", item }
 // POST { accion: "foto_principal", item, url } (cambia solo la primera foto) · { accion: "fotos", item } (lista con posición y URL)
@@ -16,7 +17,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { cambiarDescripcionMl, cambiarFotoMl, agregarFotosMl, cambiarFotoPrincipalMl, cambiarPrecioMl, cambiarTituloMl, categoriaMl, conectado, estadoPublicacionMl, estadoRealMl, fotosMl, parteDiario, preciosMl, preguntasPendientes, promocionesMl, publicarMl, quitarPromocionMl, responderPreguntaConTexto } from "@/lib/mercadolibre";
+import { cambiarDescripcionMl, cambiarFotoMl, agregarFotosMl, cambiarFotoPrincipalMl, cambiarPrecioMl, cambiarTituloMl, categoriaMl, conectado, estadoPublicacionMl, estadoRealMl, fotosMl, parteDiario, preciosMl, preguntasPendientes, promocionesMl, publicarMl, quitarPromocionMl, responderPreguntaConTexto, ventasRecientes } from "@/lib/mercadolibre";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -37,6 +38,7 @@ export async function GET(req: Request) {
     const solo = new URL(req.url).searchParams.get("solo");
     if (solo === "precios") return NextResponse.json({ conectado: true, precios: await preciosMl() });
     if (solo === "preguntas") return NextResponse.json({ conectado: true, preguntas: await preguntasPendientes() });
+    if (solo === "ventas") return NextResponse.json({ conectado: true, ventas: await ventasRecientes(Number(new URL(req.url).searchParams.get("dias")) || 7) });
     const [parte, precios] = await Promise.all([parteDiario(), preciosMl().catch((e) => String(e))]);
     return NextResponse.json({ conectado: true, parte, precios });
   } catch (e) {
