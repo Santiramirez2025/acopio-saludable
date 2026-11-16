@@ -16,7 +16,7 @@ import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
 import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
-import { lugarDelHistorial, sumarLineas } from "./pedido-charla";
+import { clienteNombraFueraDeZona, lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
 import { dioPorCerrada } from "./whatsapp-recordatorio";
@@ -500,7 +500,7 @@ export async function atender(e: Entrada): Promise<void> {
   // 15/11 (seguridad): si en la charla quedó una ciudad fuera de la zona propia («Córdoba capital»), no hay pago al recibir.
   const lugarCharla = histRecibir.length ? lugarDelHistorial(histRecibir) : null;
   const ofrecimosRecibir =
-    aceptamosAlRecibir([...histRecibir].reverse().find((h) => h.de === "acopio")?.texto ?? "") && (!lugarCharla || recibeEnZonaPropia(lugarCharla));
+    aceptamosAlRecibir([...histRecibir].reverse().find((h) => h.de === "acopio")?.texto ?? "") && (!lugarCharla || recibeEnZonaPropia(lugarCharla)) && !clienteNombraFueraDeZona(histRecibir, texto);
   if (PAGO_AL_RECIBIR && guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (ultimoEnvio ? recibeEnZonaPropia(ultimoEnvio) : ofrecimosRecibir)) {
     const direccion = tieneDireccion(texto)
       ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160)
@@ -517,8 +517,9 @@ export async function atender(e: Entrada): Promise<void> {
   if (PAGO_AL_RECIBIR && canal === "whatsapp" && guardado?.startsWith("/carrito?p=") && confirmaAlRecibir) {
     const hist = await historialDe(e.clave, 12);
     const previo = [...hist].reverse().find((h) => h.de === "acopio")?.texto ?? "";
+    // 16/11 (seguridad): una dirección de Córdoba Capital o Malagueño confirma, pero ahí se paga antes: no se cierra al recibir.
     const lugarHist = lugarDelHistorial(hist);
-    if (aceptamosAlRecibir(previo) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio)) && (!lugarHist || recibeEnZonaPropia(lugarHist))) {
+    if (aceptamosAlRecibir(previo) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio)) && (!lugarHist || recibeEnZonaPropia(lugarHist)) && !clienteNombraFueraDeZona(hist, texto)) {
       const direccion = [...hist].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
       console.log("chat: confirma el pedido al recibir, se cierra", cola(e.clave));
       return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: ultimoEnvio ?? "Villa Carlos Paz" }, direccion || undefined);

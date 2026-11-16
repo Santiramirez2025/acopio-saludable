@@ -1,4 +1,5 @@
 // El pedido que se arma charlando: lo nuevo se suma a lo guardado y la zona ya dicha se reutiliza. Puro.
+import { hablaDeFueraDeZona, zonaDeLugar } from "./envio-zona";
 /** Suma lo nuevo a lo guardado: la misma cosa pisa la cantidad, el resto queda. */
 export function sumarLineas(previas: { tipo: "producto" | "combo"; id: string; cantidad: number }[], nuevas: { tipo: "producto" | "combo"; id: string; cantidad: number }[]) {
   const out = previas.map((l) => ({ ...l }));
@@ -22,4 +23,18 @@ export function lugarDelHistorial(historial: { de: "yo" | "acopio"; texto: strin
     if (/^(carlos paz( y zona)?|villa carlos paz|c[oó]rdoba capital)$/i.test(t)) return t.replace(/ y zona$/i, "");
   }
   return null;
+}
+
+/**
+ * 16/11 (seguridad): el cliente nombró en la charla un lugar fuera de la zona propia (Córdoba Capital, Malagueño,
+ * otra provincia o «por correo»). Desde el 15/11 una dirección o un «los espero» cierran un pedido Cobrar al entregar,
+ * y una dirección como «Av. Colón 1234, Córdoba» no la detecta lugarDelHistorial (solo mira el botón y «Envío a X:»).
+ * Si el mismo mensaje nombra un lugar de la zona propia, vale ese. Puro.
+ */
+export function clienteNombraFueraDeZona(historial: { de: "yo" | "acopio"; texto: string }[], textoActual = ""): boolean {
+  const delCliente = [...historial.filter((h) => h.de === "yo").map((h) => h.texto), textoActual].filter(Boolean);
+  return delCliente.some((t) => {
+    const z = zonaDeLugar(t, null);
+    return z ? z.tipo !== "propia" : hablaDeFueraDeZona(t);
+  });
 }
