@@ -2001,3 +2001,17 @@ test("13/11 Yol: quien dice que transfiere con el pedido hecho recibe monto y al
   assert.equal(vaATransferir("Enviaré comprobante"), false);
   assert.equal(vaATransferir("se puede pagar por transferencia?"), false);
 });
+
+test("lista: «pero NECESITO nueces» cuenta y «cuánto me sale / dónde retiro» no son productos (Gladys 16/11)", async () => {
+  const { listaDeProductos } = await import("./whatsapp-interactivo");
+  const l = listaDeProductos("Hola, vi el video del Trío y lo quiero, pero NECESITO nueces, datiles, pasa de uva Sin semilla, pasas de higo, cuanto me sale y dónde retiro?");
+  assert.ok(l.some((p) => /^nueces$/i.test(p)), JSON.stringify(l));
+  assert.ok(!l.some((p) => /cu[aá]nto|d[oó]nde/i.test(p)), JSON.stringify(l));
+  assert.equal(l.length, 4, JSON.stringify(l));
+});
+
+test("vendedor: el bot sabe que el mix del Trío trae nueces y almendras (Ofelia 16/11)", () => {
+  const txt = readFileSync("src/lib/vendedor.ts", "utf8");
+  assert.ok(txt.includes("QUÉ TRAE EL MIX"));
+  assert.ok(txt.includes("w === \"nueces\" ? \"nuez\""));
+});
