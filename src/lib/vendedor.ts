@@ -12,7 +12,7 @@
 import { bloqueLeccionesVendedor } from "./organico";
 import { bloqueTemporada } from "./temporada";
 import { leerConfig } from "./config";
-import { notaRepartoDeHoy, proximoRepartoTrasHoy } from "./salida-reparto";
+import { notaRepartoDeHoy, plazoZonaPropia, proximoRepartoTrasHoy } from "./salida-reparto";
 import { SALUDO_GENERAL } from "./whatsapp-saludo";
 import { catalogo, comboPedidoAgotado, hallarCombos, hallarProductos, hallarSinStock } from "./asistente-catalogo";
 import { combosTienda, productosTienda } from "./tienda";
@@ -450,7 +450,7 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const partes = [
       `Compra mínima: ${textoCompraMinima(cfg)}`,
       cfg.entregaPropiaActiva
-        ? `Entrega propia ${zonaSinMinimo(cfg) ? `sin cargo desde ${pesos(umbralZona(cfg))} (abajo de eso cuesta ${pesos(cfg.envioBajoMinimo)})` : "sin cargo"} en Villa Carlos Paz y todo lo cercano: Estancia Vieja, Santa Cruz del Lago, Villa Parque Siquiman, Villa del Lago, San Roque, Bialet Massé, Tanti, Cabalango y el sur de Punilla (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz, Cuesta Blanca, Tala Huasi) en ${cfg.plazoEntregaPropia}. Los domingos no se entrega.${zp ? ` A ${zp.nombre} también, por ${pesos(zp.precio)}.` : ""}`
+        ? `Entrega propia ${zonaSinMinimo(cfg) ? `sin cargo desde ${pesos(umbralZona(cfg))} (abajo de eso cuesta ${pesos(cfg.envioBajoMinimo)})` : "sin cargo"} en Villa Carlos Paz y todo lo cercano: Estancia Vieja, Santa Cruz del Lago, Villa Parque Siquiman, Villa del Lago, San Roque, Bialet Massé, Tanti, Cabalango y el sur de Punilla (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz, Cuesta Blanca, Tala Huasi) en ${plazoZonaPropia(cfg.plazoEntregaPropia, Date.now())}. Los domingos no se entrega.${zp ? ` A ${zp.nombre} también, por ${pesos(zp.precio)}.` : ""}`
         : "",
       "Al resto del país, por correo: despacho en 24 a 48 hs hábiles y de 2 a 7 días hábiles según zona. El costo se ve en el carrito con el código postal, antes de pagar.",
       cfg.envioGratisDesde ? `Envío gratis desde ${pesos(cfg.envioGratisDesde)}.` : "",

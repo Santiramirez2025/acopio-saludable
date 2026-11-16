@@ -6,6 +6,7 @@ import { proveedorAndreani } from "./andreani";
 import { proveedorMiCorreo } from "./micorreo";
 import { proveedorTabla, type TablaEnvios } from "./tabla";
 import type { Bulto, OpcionEnvio, ShippingProvider, Tarifa } from "./tipos";
+import { plazoZonaPropia } from "../salida-reparto";
 
 export const DESPACHO = "Despacho en 24 a 48 hs hábiles";
 
@@ -44,9 +45,11 @@ export async function cotizarEnvio(
   cfg: ConfigEnvio,
   pedido: { cpDestino: string; provincia: string; bultos: Bulto[]; subtotal: number },
   proveedores: ShippingProvider[] = [proveedorMiCorreo, proveedorAndreani],
+  ahoraMs: number = Date.now(),
 ): Promise<OpcionEnvio[]> {
   const tarifas: Tarifa[] = [];
-  const plazoPropia = cfg.plazoEntregaPropia || "24 a 48 hs hábiles";
+  // Zona propia: el día real del reparto de las 16, no «24 a 48 hs hábiles» (16/11).
+  const plazoPropia = plazoZonaPropia(cfg.plazoEntregaPropia, ahoraMs);
   const sinCargo = cfg.entregaPropiaActiva && cpEnLista(pedido.cpDestino, cfg.cpEntregaPropia);
   if (sinCargo) {
     const bajo = cfg.propiaBajoMinimo;
@@ -68,7 +71,7 @@ export async function cotizarEnvio(
       nombre: "Te lo llevamos nosotros",
       costo: paga.costo ?? 0,
       precioFijo: paga.precio,
-      plazo: `Te lo llevamos en ${paga.plazo || plazoPropia}. Coordinamos el horario por WhatsApp.`,
+      plazo: `Te lo llevamos en ${paga.plazo || cfg.plazoEntregaPropia || "24 a 48 hs hábiles"}. Coordinamos el horario por WhatsApp.`,
     });
   }
   const consulta = { cpOrigen: cfg.cpOrigen, cpDestino: pedido.cpDestino, provincia: pedido.provincia, bultos: pedido.bultos, valorDeclarado: pedido.subtotal };
