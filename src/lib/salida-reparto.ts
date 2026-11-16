@@ -61,6 +61,23 @@ export function textoSalidaReparto(ahoraMs: number): string {
   return `sale ${a.dia === "mañana" ? `mañana ${DIAS[(dia + 1) % 7]}` : a.dia} en el reparto de las 16`;
 }
 
+/**
+ * Plazo de la zona propia para el checkout y el bot (Laura y Nico, 16/11): el plazo guardado por defecto
+ * («24 a 48 hs hábiles») contradecía el reparto diario de las 16 que dice la ficha. Si el plazo guardado es el de
+ * por defecto (o está vacío), se dice el día real; si Santiago escribió otro en el panel, manda el suyo.
+ */
+export function plazoZonaPropia(guardado: string | undefined, ahoraMs: number): string {
+  if (guardado && !/24\s*a\s*48/i.test(guardado)) return guardado;
+  const a = avisoReparto(ahoraMs);
+  const dia = new Date(ahoraMs - AR_MS).getUTCDay();
+  const nombre = (salto: number) => DIAS[(dia + salto) % 7];
+  if (a.dia === "hoy") {
+    const sig = proximoRepartoTrasHoy(ahoraMs);
+    return `el reparto de hoy a las 16 si se paga antes de las 15 (si no, ${sig === "mañana" ? `mañana ${nombre(1)}` : sig} desde las 16)`;
+  }
+  return `el reparto de ${a.dia === "mañana" ? `mañana ${nombre(1)}` : a.dia} desde las 16`;
+}
+
 /** «2 h 10 min», «45 min». */
 export function textoResta(ms: number): string {
   const horas = Math.floor(ms / 3_600_000);

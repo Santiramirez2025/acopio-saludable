@@ -7,13 +7,17 @@ import { primerNombre } from "./whatsapp-interactivo";
 import { telefonoWa } from "./telefono";
 
 export const PLANTILLA_VIAJE = "acopio_viaje_cordoba_v1";
+export { ENVIO_PLANTILLA_VIAJE, plantillaViajeVigente } from "./viaje-cordoba-precio";
+import { plantillaViajeVigente } from "./viaje-cordoba-precio";
 const GRAPH = "https://graph.facebook.com/v21.0";
 
 export const textoViaje = (nombre: string, cuando: string) =>
   `Hola ${nombre}, soy Santiago, de Acopio Saludable. Te escribo por tu pedido: ${cuando} viajamos a Córdoba y te lo podemos llevar nosotros. Ahora la compra mínima es de $20.000 y el envío sale $5.000. ¿Te lo dejo listo? [Botones: Sí, armalo · Ahora no]`;
 
 /** Manda el aviso a esos teléfonos. Nunca dos veces al mismo número ni a quien pidió la baja. */
-export async function avisarViajeCordoba(telefonos: string[], cuando: string): Promise<{ enviados: string[]; salteados: string[]; fallidos: string[] }> {
+export async function avisarViajeCordoba(telefonos: string[], cuando: string, precioZonaPaga?: number | null): Promise<{ enviados: string[]; salteados: string[]; fallidos: string[]; error?: string }> {
+  if (!plantillaViajeVigente(precioZonaPaga))
+    return { enviados: [], salteados: [], fallidos: telefonos, error: `La plantilla ${PLANTILLA_VIAJE} dice envío $5.000 y el vigente es otro: no se manda. Hace falta una plantilla nueva aprobada con el precio de hoy.` };
   const token = process.env.WHATSAPP_TOKEN;
   const id = process.env.WHATSAPP_PHONE_ID;
   const enviados: string[] = [];
