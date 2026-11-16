@@ -238,6 +238,36 @@ export async function ajustarPreciosMl(): Promise<string[]> {
   return cambios;
 }
 
+/** Ventas pagadas de los últimos `dias` días: qué se vendió, cuánto, comisión de ML y estado del envío (sin datos personales del comprador). */
+export async function ventasRecientes(dias = 7): Promise<
+  { id: number; fecha: string; total: number; comision: number; items: { titulo: string; sku: string | null; cantidad: number; precio: number }[]; envio: { id: number | null; tipo: string | null; estado: string | null; subestado: string | null; destino: string | null } }[]
+> {
+  const uid = await miUsuario();
+  const desde = new Date(Date.now() - Math.max(1, Math.min(60, dias)) * 86_400_000).toISOString().slice(0, 10);
+  type Orden = {
+    id: number; date_created: string; total_amount: number; shipping?: { id?: number | null };
+    order_items: { item: { title: string; seller_sku?: string | null }; quantity: number; unit_price: number; sale_fee?: number }[];
+  };
+  const r = await ml<{ results?: Orden[] }>(`/orders/search?seller=${uid}&order.status=paid&order.date_created.from=${desde}T00:00:00.000-03:00&sort=date_desc`);
+  return Promise.all(
+    (r.results ?? []).map(async (o) => {
+      const idEnvio = o.shipping?.id ?? null;
+      const e = idEnvio
+        ? await ml<{ logistic_type?: string; status?: string; substatus?: string | null; receiver_address?: { city?: { name?: string }; state?: { name?: string } } }>(`/shipments/${idEnvio}`).catch(() => null)
+        : null;
+      const destino = [e?.receiver_address?.city?.name, e?.receiver_address?.state?.name].filter(Boolean).join(", ") || null;
+      return {
+        id: o.id,
+        fecha: o.date_created,
+        total: o.total_amount,
+        comision: o.order_items.reduce((s, i) => s + (i.sale_fee ?? 0) * i.quantity, 0),
+        items: o.order_items.map((i) => ({ titulo: i.item.title, sku: i.item.seller_sku ?? null, cantidad: i.quantity, precio: i.unit_price })),
+        envio: { id: idEnvio, tipo: e?.logistic_type ?? null, estado: e?.status ?? null, subestado: e?.substatus ?? null, destino },
+      };
+    }),
+  );
+}
+
 /** Parte diario: visitas de ayer por publicación, preguntas, ventas y reputación. */
 export async function parteDiario({ avisar = false }: { avisar?: boolean } = {}): Promise<string> {
   const uid = await miUsuario();
