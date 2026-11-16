@@ -52,3 +52,24 @@ test("15/11 (Norma, AS-90): pedir NUESTRA dirección no es dar la suya", async (
     assert.equal(preguntaDondeEstan(t), false, t);
   }
 });
+
+test("16/11 (Martín): quieren pasar a buscarlo, con otras palabras", async () => {
+  const { tieneDireccion } = await import("./whatsapp-interactivo");
+  for (const t of ["PUEDE TRANSFERIR Y DESPUÉS PASAR A BUSCAR LA MERCADERÍA?", "Dirección para buscarlo mañana", "SOY DE CALERA MAÑANA PASO POR EL NEGOCIO..", "Yo puedo retirar en su domicilio"]) {
+    assert.equal(preguntaDondeEstan(t), true, t);
+    assert.equal(tieneDireccion(t), false, t);
+  }
+  for (const t of ["Hola, vi el video del Trío y lo quiero", "San Martín 1720, al lado de la ferretería", "Pago cuando llega"]) {
+    assert.equal(preguntaDondeEstan(t), false, t);
+  }
+});
+
+test("16/11: al que viene a Carlos Paz se le ofrece llevárselo acá, pagando antes, sin dar dirección nuestra", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("./vendedor.ts", import.meta.url), "utf8");
+  const regla = src.split("\n").find((l) => l.includes("ES DE OTRA CIUDAD PERO VIENE A CARLOS PAZ")) ?? "";
+  assert.ok(regla, "falta la regla");
+  assert.match(regla, /se paga antes por transferencia o Mercado Pago/);
+  assert.match(regla, /Nunca des una dirección nuestra/);
+  assert.doesNotMatch(regla, /perfecto|antes de pagar/i);
+});

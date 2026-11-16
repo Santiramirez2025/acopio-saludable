@@ -777,7 +777,9 @@ export function preguntaDondeEstan(texto: string): boolean {
     /\b(me )?(pasa|pasas|pasame|pasan|mandame|mandas|decime|me das|me decis|cual es|me podes pasar|me pasarias) (la )?(direccion|ubicacion)\b/.test(t) ||
     /\bvoy yo\b|\bvamos nosotros\b/.test(t) ||
     /\b(tienen|hay) local\b/.test(t) ||
-    /\b(retirar|retiro|lo retiro|paso a buscar|voy a buscar|vamos a buscar|ir a buscar|lo busco|voy personalmente)/.test(t)
+    /\b(retirar|retiro|lo retiro|paso a buscar|voy a buscar|vamos a buscar|ir a buscar|lo busco|voy personalmente)/.test(t) ||
+    // 16/11 (Martín): «Puede transferir y después pasar a buscar», «Dirección para buscarlo mañana», «mañana paso por el negocio».
+    /\b(pasar a buscar|pasamos a buscar|pasa a buscar|para buscarl[oa]|a buscarl[oa]|paso por el (negocio|local)|pasar por el (negocio|local))\b/.test(t)
   );
 }
 
