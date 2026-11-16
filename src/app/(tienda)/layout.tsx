@@ -80,6 +80,10 @@ export default async function TiendaLayout({ children }: { children: React.React
               </p>
               <Link href="/sin-tacc" className="flex min-h-[48px] items-center font-semibold text-white underline underline-offset-4">Productos sin TACC</Link>
               <Link href="/dietetica-villa-carlos-paz" className="flex min-h-[48px] items-center hover:text-white hover:underline">Dietética en Villa Carlos Paz</Link>
+              {/* Mateo 16/11: estas páginas solo se enlazaban entre sí; Google recomienda que cada página importante tenga al menos un enlace interno. */}
+              <Link href="/frutos-secos-carlos-paz" className="flex min-h-[48px] items-center hover:text-white hover:underline">Frutos secos en Carlos Paz</Link>
+              <Link href="/regalos-navidenos-cordoba" className="flex min-h-[48px] items-center hover:text-white hover:underline">Regalos navideños</Link>
+              <Link href="/mesa-dulce-navidad" className="flex min-h-[48px] items-center hover:text-white hover:underline">Mesa dulce de Navidad</Link>
             </div>
             <div>
               <h2 className="mb-1 font-semibold text-white">Comprá por negocio</h2>
