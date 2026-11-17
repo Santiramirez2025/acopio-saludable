@@ -9,6 +9,7 @@
 // 3) Las instrucciones y las herramientas van con cache_control: son idénticas en cada mensaje,
 //    así que se cobran una vez cada cinco minutos en lugar de una vez por mensaje.
 
+import { claves, palabrasDeRespaldo } from "./lista-palabras";
 import { bloqueLeccionesVendedor } from "./organico";
 import { bloqueTemporada } from "./temporada";
 import { leerConfig } from "./config";
@@ -774,15 +775,6 @@ function contexto(carrito: CarritoVisto | null): string {
   ].join("\n");
 }
 
-/** Palabras que cuentan para saber si un producto es lo que pidió («harina de coco» ≠ «coco rallado»). */
-function claves(t: string): string[] {
-  const VACIAS = new Set(["de", "del", "la", "el", "los", "las", "con", "sin", "x", "y", "en", "al", "para", "por", "kg", "kilo", "gr", "g", "polvo"]);
-  return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").split(/\s+/)
-    .filter((w) => w.length > 2 && !VACIAS.has(w))
-    // «nueces» → «nuez» (sin esto quedaba «nuec» y la nuez salía «no lo tenemos»).
-    .map((w) => (w === "nueces" ? "nuez" : w.length > 4 ? w.replace(/(es|s)$/, "") : w));
-}
-
 /** Cada producto de la lista con su presentación y precio, o «no lo tenemos», y el total de uno de cada uno. */
 export async function listaConPrecios(lista: string[]): Promise<{ texto: string; total: number; encontrados: number }> {
   let total = 0;
@@ -798,7 +790,12 @@ export async function listaConPrecios(lista: string[]): Promise<{ texto: string;
         const nombre = new Set(claves(`${x.producto} ${x.presentacion}`));
         return fuertes.length ? fuertes.every((w) => nombre.has(w)) : pedidas.some((w) => nombre.has(w));
       };
-      const candidatos = (await hallarProductos(pedido, false)).filter(sirve);
+      let candidatos = (await hallarProductos(pedido, false)).filter(sirve);
+      // Renglón con prosa alrededor («Yo compro todos los años ….nueces»): se busca por cada palabra que puede ser producto.
+      for (const w of candidatos.length ? [] : palabrasDeRespaldo(pedido)) {
+        candidatos = (await hallarProductos(w, false)).filter((x) => claves(`${x.producto} ${x.presentacion}`).includes(w));
+        if (candidatos.length) break;
+      }
       const p = candidatos.find((x) => /\b1\s?kg\b|1000\s?g/i.test(x.presentacion)) ?? candidatos[0];
       const nombre = pedido.charAt(0).toUpperCase() + pedido.slice(1);
       if (!p) return `• ${nombre} — no lo tenemos`;

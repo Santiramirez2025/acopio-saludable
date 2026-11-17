@@ -2028,5 +2028,5 @@ test("lista: «pero NECESITO nueces» cuenta y «cuánto me sale / dónde retiro
 test("vendedor: el bot sabe que el mix del Trío trae nueces y almendras (Ofelia 16/11)", () => {
   const txt = readFileSync("src/lib/vendedor.ts", "utf8");
   assert.ok(txt.includes("QUÉ TRAE EL MIX"));
-  assert.ok(txt.includes("w === \"nueces\" ? \"nuez\""));
+  assert.ok(readFileSync("src/lib/lista-palabras.ts", "utf8").includes("w === \"nueces\" ? \"nuez\""));
 });
