@@ -618,7 +618,7 @@ test("prospección: bajas, plantilla por rubro y texto guardado", () => {
   assert.equal(plantillaDe("cabañas / complejo"), "kit");
   assert.equal(plantillaDe("departamentos / alquiler temporario"), "kit");
   const t = textoPlantilla("desayuno", "Hotel Capri");
-  assert.ok(t.startsWith("Hola, Hotel Capri."));
+  assert.ok(t.startsWith("Hola, Hotel Capri 👋"));
   assert.ok(!t.includes("{{1}}"));
 });
 
@@ -1901,19 +1901,18 @@ test("captación: cabañas frenadas por «sin TACC» y budines; hoteles vuelven 
   assert.match(contextoProspecto("cabañas / complejo", "X"), /Budines no tenemos/);
 });
 
-test("captación 11/11: hoteles y gastronomía cierran con la pregunta de precio y sin «sin TACC»", async () => {
+test("captación 17/11: las plantillas activas son una pregunta corta, sin pitch largo, sin «sin TACC» ni el nombre del dueño", async () => {
   const { PLANTILLAS } = await import("./whatsapp-plantillas");
-  for (const k of ["desayuno", "gastronomia"] as const) {
+  for (const k of ["desayuno", "gastronomia", "gimnasio", "regalos"] as const) {
     const p = PLANTILLAS[k];
-    assert.match(p.cuerpo, /¿A cuánto está pagando hoy el kilo de [^?]+\?/, k);
-    assert.doesNotMatch(p.cuerpo, /TACC|al recibir/i, k);
-    assert.ok(p.cuerpo.length <= 1024, k);
+    assert.ok(p.cuerpo.length <= 220, k);
+    assert.equal((p.cuerpo.match(/\?/g) ?? []).length, 1, k);
+    assert.doesNotMatch(p.cuerpo, /TACC|al recibir|Santiago/i, k);
     assert.ok(p.botones.every((b) => b.length <= 25), k);
-    assert.match(p.contexto, /se registra siempre/, k);
     assert.doesNotMatch(p.contexto, /ofrecé[^.]*sin TACC/i, k);
   }
-  assert.equal(PLANTILLAS.desayuno.nombre, "acopio_alojamientos_desayuno_v3");
-  assert.equal(PLANTILLAS.gastronomia.nombre, "acopio_negocios_gastronomia_v2");
+  assert.match(PLANTILLAS.desayuno.contexto, /se registra siempre/);
+  assert.match(PLANTILLAS.gastronomia.contexto, /se registra siempre/);
 });
 
 test("captación 6/11: dietéticas y afines afuera por decisión (aunque se apruebe la v3) y 10 por día", async () => {
