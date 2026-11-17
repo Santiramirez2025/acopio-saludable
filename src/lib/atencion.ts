@@ -231,13 +231,16 @@ async function cerrarVenta(
   }
   const total = pesos(Number(pedido.total));
   const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "más el envío, que te confirmo";
+  // 17/11 (Santiago): dos precios según CUÁNDO paga. Al recibir, el de lista; pagando antes por transferencia, con descuento.
+  const antes = medio === "AL_RECIBIR" ? precioTransferencia(Number(pedido.subtotal), cfg.descuentoTransferenciaPct) : null;
+  const ahorroAntes = antes && antes < Number(pedido.subtotal) ? `. Si preferís pagarlo antes por transferencia, te queda en ${pesos(antes + Number(pedido.envioCobrado))}: decime y te paso el alias` : "";
   // Ya pasó la dirección: no se le vuelve a pedir nada. Se confirma y listo.
   if (direccion) await completarEntrega(pedido.id, { direccion });
   const partes = direccion
     ? [
         medio === "TRANSFERENCIA"
           ? `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}${cfg.descuentoTransferenciaPct > 0 ? `, ya con el ${cfg.descuentoTransferenciaPct}% de descuento por transferencia` : ""}. Va a ${direccion.slice(0, 120)}: apenas se acredita la transferencia, sale en el próximo reparto 🙌`
-          : `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Va a ${direccion.slice(0, 120)}: ${textoSalidaReparto(Date.now())} y lo pagás ahí, en efectivo o por transferencia 🙌`,
+          : `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Va a ${direccion.slice(0, 120)}: ${textoSalidaReparto(Date.now())} y lo pagás ahí, en efectivo o por transferencia${ahorroAntes} 🙌`,
         medio === "TRANSFERENCIA" && cfg.transferenciaDatos ? `Los datos para transferir:\n${cfg.transferenciaDatos}\nMandame el comprobante por acá.` : "Si tenés un horario que te quede mejor, decime y lo anoto.",
       ]
     : medio === "TRANSFERENCIA"
@@ -247,7 +250,7 @@ async function cerrarVenta(
           "Para mandártelo pasame en un mensaje: nombre y apellido, dirección (calle, número y barrio) y en qué horario te queda bien recibirlo. Cuando transfieras, mandame el comprobante por acá 🙌",
         ]
       : [
-          `¡Listo! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Lo pagás cuando lo recibís, en efectivo o por transferencia.`,
+          `¡Listo! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Lo pagás cuando lo recibís, en efectivo o por transferencia${ahorroAntes}.`,
           "Para llevártelo pasame en un mensaje: nombre y apellido, dirección (calle, número y barrio) y en qué horario te queda bien recibirlo 🙌",
         ];
   await responderWhatsapp(clave, [{ tipo: "texto", texto: partes.filter(Boolean).join("\n\n") }]);

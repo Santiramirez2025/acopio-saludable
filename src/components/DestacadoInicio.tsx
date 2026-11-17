@@ -16,7 +16,7 @@ export function DestacadoInicio({ p, etiqueta = "El mix de la casa" }: { p: Pick
           <span className="mt-1 block truncate font-display text-base font-extrabold leading-tight">{p.producto} {p.presentacion}</span>
           <span className="block text-sm tabular-nums text-stone-700">
             <b className="text-lg text-acopio-900">{pesos(p.precio)}</b>
-            {p.transferencia && <> · {pesos(p.transferencia)} por transferencia</>}
+            {p.transferencia && <> · {pesos(p.transferencia)} pagando antes por transferencia</>}
           </span>
         </span>
       </Link>
@@ -50,7 +50,7 @@ export function DestacadoComboInicio({ c, etiqueta, transferencia }: { c: Pick<C
           <span className="mt-1 block truncate font-display text-base font-extrabold leading-tight">{c.nombre}</span>
           <span className="block text-sm tabular-nums text-stone-700">
             <b className="text-lg text-acopio-900">{pesos(c.precio)}</b>
-            {transferencia && <> · {pesos(transferencia)} por transferencia</>}
+            {transferencia && <> · {pesos(transferencia)} pagando antes por transferencia</>}
           </span>
         </span>
       </Link>

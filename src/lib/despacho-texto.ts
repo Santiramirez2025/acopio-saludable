@@ -11,16 +11,17 @@ function primerNombre(nombre: string): string {
 }
 
 /** «Ya salió»: solo el aviso y cómo paga. Nada de referidos: no se mezcla con la venta en curso. */
-export function mensajeDespacho(p: Pick<Order, "id" | "nombre" | "medioPago" | "pagadoAt" | "total">): string {
+/** `antes`: lo que paga si transfiere antes de que llegue el cadete (17/11: dos precios según cuándo paga). */
+export function mensajeDespacho(p: Pick<Order, "id" | "nombre" | "medioPago" | "pagadoAt" | "total">, antes?: { monto: number; alias: string } | null): string {
   const nombre = primerNombre(p.nombre);
   const pago =
     p.pagadoAt
       ? "Ya está pago: no tenés que abonar nada al recibirlo."
       : p.medioPago === "AL_RECIBIR"
-        ? `Lo pagás cuando te llega: ${pesos(Number(p.total))}, en efectivo o por transferencia.`
+        ? `Lo pagás cuando te llega: ${pesos(Number(p.total))}, en efectivo o por transferencia.${antes && antes.monto < Number(p.total) ? ` Si lo transferís antes de que llegue el cadete, te queda en ${pesos(antes.monto)} (alias ${antes.alias}; mandanos el comprobante por acá).` : ""}`
         : `Queda pendiente el pago de ${pesos(Number(p.total))}.`;
   // No «ya salió» (no sabe a qué hora le llega): va en el reparto de hoy y el repartidor le escribe antes.
-  return `¡Hola${nombre ? ` ${nombre}` : ""}! 😊 Tu pedido ${numeroPedido(p.id)} ya está en el reparto de hoy. Durante el día te va a escribir por acá el chico del reparto para coordinar la entrega. ${pago}`;
+  return `¡Hola${nombre ? ` ${nombre}` : ""}! 😊 Tu pedido ${numeroPedido(p.id)} ya está en el reparto de hoy. Durante el día te va a escribir por acá el cadete para coordinar la entrega. ${pago}`;
 }
 
 /**
