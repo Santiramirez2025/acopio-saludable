@@ -9,6 +9,7 @@
 // venta (lo quiero, la zona del envío, cómo paga). Una pregunta para conocer al cliente («¿para tu casa o
 // para un negocio?») va en texto, sin botones: con botones en cada mensaje la charla parecía un menú.
 
+import { esNombreDePila } from "./nombres-comunes";
 import { PAGO_AL_RECIBIR } from "./politica";
 import { pesos } from "./precios";
 import { urlSitio } from "./sitio";
@@ -538,9 +539,13 @@ export function soloAgradece(texto: string): boolean {
 export function primerNombre(nombre: string | null | undefined): string | null {
   const crudo = (nombre ?? "").trim();
   if (/@|gmail|hotmail|yahoo|outlook/i.test(crudo)) return null;
-  const p = crudo.split(/\s+/)[0]?.replace(/[^\p{L}]/gu, "") ?? "";
+  // «Lic. María Elena», «Dra. Laura»: el título se saltea.
+  const palabras = crudo.split(/\s+/).map((w) => w.replace(/[^\p{L}]/gu, "")).filter(Boolean);
+  const p = (/^(lic|licenciada|licenciado|dr|dra|prof|profe|sra|sr|ing|arq|cra|cr)$/i.test(palabras[0] ?? "") ? palabras[1] : palabras[0]) ?? "";
   if (p.length < 2 || p.length > 20) return null;
   if (/^(casa|hotel|cabañas?|cabanas?|complejo|depto|departamentos?|apart|hostel|hosteria|hostería|posada|resort|spa|kiosco|almacen|almacén|dietetica|dietética|tienda|negocio|empresa|distribuidora|gym|gimnasio|lic|dr|dra|la|el|los|las|mi|mis|info|ventas|administracion|administración|dios|bazar|trabajos|taller|estudio|optica|óptica|farmacia|libreria|librería|panaderia|panadería|cafe|café|bar|club|centro|grupo|familia|mundo|vida|amor|sabor|sabores|sabory)$/i.test(p)) return null;
+  // 17/11: el perfil suele ser un alias («Gustavobrasentino», «Paton», «Guada bienestar»): solo nombres de pila conocidos.
+  if (!esNombreDePila(p)) return null;
   // 15/11: «¡De nada, MARIA!» gritaba; el nombre va con la primera en mayúscula y el resto en minúscula si vino todo en mayúsculas.
   const resto = p.slice(1);
   return p[0].toUpperCase() + (resto === resto.toUpperCase() ? resto.toLowerCase() : resto);
@@ -758,8 +763,8 @@ export function textoComboSinIA(c: {
     })
     .filter(Boolean);
   const listaTrae = trae.length > 1 ? `${trae.slice(0, -1).join(", ")} y ${trae[trae.length - 1]}` : trae[0] ?? "";
-  const precio = `${c.pesos(combo.precio)}${c.conTransferencia ? `, o ${c.pesos(c.conTransferencia)} por transferencia` : ""}`;
-  const zona = combo.precio >= c.sinCargoDesde ? "En Carlos Paz y la zona te lo llevamos sin cargo." : "En Carlos Paz y la zona te lo llevamos nosotros.";
+  const precio = c.conTransferencia ? `${c.pesos(c.conTransferencia)} pagando antes por transferencia, o ${c.pesos(combo.precio)} al recibir` : c.pesos(combo.precio);
+  const zona = combo.precio >= c.sinCargoDesde ? "En Carlos Paz te lo llevamos sin cargo." : "En Carlos Paz te lo llevamos nosotros.";
   return [
     `¡Hola${c.nombre ? ` ${c.nombre}` : ""}! El ${nombreCombo}${listaTrae ? ` trae ${listaTrae}` : ""}: ${precio}.`,
     `Lo dejás pedido acá 👉 ${c.sitio}/carrito?p=c-${combo.slug}*1&utm_source=whatsapp&utm_campaign=combo-sin-ia`,

@@ -732,7 +732,7 @@ export async function pensar(c: {
             : ""
       } Si su mensaje es una pregunta (dirección, envío, pago, un producto), contestala PRIMERO en una frase y recién después ofrecé lo del anuncio. Si no pregunta nada concreto, arrancá por el anuncio: qué trae y por qué conviene, y ofrecé dejárselo listo.</anuncio>\n\n`
     : "";
-  const cliente = c.nombre ? `<cliente>${primerNombre(c.nombre) ? `Se llama ${primerNombre(c.nombre)}` : `Su perfil de WhatsApp dice «${c.nombre.slice(0, 40)}» (no es un nombre de persona: no lo llames así)`}${c.historial.length ? " (ya lo saludaste: no lo saludes de nuevo)" : ""}.</cliente>\n` : "";
+  const cliente = c.nombre ? `<cliente>${primerNombre(c.nombre) ? `Se llama ${primerNombre(c.nombre)}` : `Su perfil de WhatsApp dice «${c.nombre.slice(0, 40)}», que puede ser un apodo o un alias: NO lo llames por ningún nombre hasta que te diga cómo se llama (al cerrar el pedido, preguntá «¿A nombre de quién lo dejo?»)`}${c.historial.length ? " (ya lo saludaste: no lo saludes de nuevo)" : ""}.</cliente>\n` : "";
   const eligio =
     c.toque?.tipo === "quiero"
       ? `<eligio>Tocó «Lo quiero» en el ${c.toque.clase} ${c.toque.clase === "combo" ? "slug" : "codigo"} ${c.toque.id}. Agregalo YA con agregar_al_pedido (junto con lo que ya había elegido antes) y en una frase ofrecé sumar algo chico o dejarlo listo para pagar.</eligio>\n`

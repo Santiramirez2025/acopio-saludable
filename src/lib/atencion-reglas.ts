@@ -82,7 +82,7 @@ export function instruccionPedidoNegocio(nicho: string): string {
 
 /** Pie de la foto de un combo: que el precio llegue aunque el texto que sigue no salga (AS-00043, 5/11). */
 export function pieFotoCombo(nombre: string, precio: string, transferencia: string | null): string {
-  return transferencia ? `${nombre}: ${precio}, o ${transferencia} por transferencia` : `${nombre}: ${precio}`;
+  return transferencia ? `${nombre}: ${transferencia} pagando antes por transferencia, o ${precio} al recibir` : `${nombre}: ${precio}`;
 }
 
 /**

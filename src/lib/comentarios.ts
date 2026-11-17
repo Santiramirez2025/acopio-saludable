@@ -22,19 +22,39 @@ export function ignorar(texto: string): boolean {
   return !t || /https?:\/\/|www\./i.test(t);
 }
 
-const PUBLICAS_DM = ["¡Te escribimos por privado! 📩", "¡Ya te mandamos los precios por mensaje! 🙌", "¡Te respondimos por privado con todo el detalle! 🌱"];
-const PUBLICAS_GRACIAS = ["¡Gracias! 🙌", "¡Gracias por sumarte! 🌱", "¡Qué bueno que te guste! 💛"];
+/**
+ * 17/11 (Santiago, 18 comentarios del anuncio del Trío): las respuestas públicas eran «¡Te escribimos por privado!»
+ * y el privado iba por Messenger ofreciendo la Despensa a $28.500, que ya no se vendía. A «Y a mí me cobraron
+ * 32 mil pesos» le contestó «¡Qué bueno que te guste! 💛». Ahora la respuesta pública ya trae lo que preguntó
+ * (qué trae, cuánto sale, dónde estamos) y el WhatsApp, que es donde se vende. Las quejas no se contestan solas:
+ * le avisan a Santiago.
+ */
+export const WHATSAPP_VISIBLE = "3541 51-9630";
 
-/** Respuesta pública, rotando para que no parezcan todas iguales. */
-export function respuestaPublica(c: Comentario, conDm: boolean): string {
-  const lista = conDm ? PUBLICAS_DM : PUBLICAS_GRACIAS;
-  return lista[[...c.id].reduce((s, ch) => s + ch.charCodeAt(0), 0) % lista.length];
+export type TipoComentario = "queja" | "donde" | "compra" | "gracias";
+
+export function tipoComentario(texto: string): TipoComentario {
+  const t = sinAcentos(texto);
+  if (/\b(cobrar[oa]n|cobraste|me cobr|engan|estafa|chant|mentira|trucho|caro|carisimo|reclamo|nunca (me )?lleg|no (me )?lleg|no vino|rancio|feo|horrible|pesimo|mala atencion|no contestan|no responden|clavaron)/.test(t)) return "queja";
+  if (/\b(donde|direccion|ubicacion|ubicados|local|retirar|buscar|horario)\b/.test(t)) return "donde";
+  if (tieneIntencion(texto) || /\b(trae|incluye|viene|combo|me interesa|m interesa|interesa|pasas info|pasame)\b/.test(t)) return "compra";
+  return "gracias";
 }
 
-/** El mensaje privado: un precio real, el envío y una pregunta para que conteste. */
-export function mensajePrivado(precioDespensa: string | null): string {
-  const oferta = precioDespensa ? `La Despensa de 4 kilos (mix, dátiles, pasas y semillas) sale ${precioDespensa}` : "Tenemos frutos secos, mixes y despensa por kilo";
-  return `¡Hola! Te escribo por tu comentario 🙌 ${oferta}, y en Carlos Paz te la llevamos sin cargo (al resto del país va por correo). ¿Es para tu casa o para un negocio?`;
+/** Respuesta pública con el dato que preguntó y el WhatsApp. `oferta`: «El Trío son 3 kg (...): $22.000 pagando antes...». */
+export function respuestaPublica(c: Comentario, conDm: boolean, oferta?: string | null): string {
+  const tipo = tipoComentario(c.texto);
+  const rota = [...c.id].reduce((s, ch) => s + ch.charCodeAt(0), 0);
+  if (tipo === "donde") return `¡Hola! No tenemos local: armamos cada pedido y te lo llevamos a tu casa, sin cargo en Carlos Paz. Escribinos al WhatsApp ${WHATSAPP_VISIBLE} y te lo dejamos listo 🙌`;
+  if (tipo === "compra" || conDm) return `¡Hola! ${oferta ? `${oferta} ` : ""}Escribinos al WhatsApp ${WHATSAPP_VISIBLE} y te lo dejamos listo 🙌`;
+  return GRACIAS[rota % GRACIAS.length];
+}
+const GRACIAS = ["¡Gracias! 🙌", "¡Gracias por sumarte! 🌱", "¡Qué bueno que te guste! 💛"];
+
+/** El mensaje privado: lo que se vende hoy y el WhatsApp, donde se cierra la venta. */
+export function mensajePrivado(oferta: string | null): string {
+  const que = oferta ?? "Tenemos frutos secos, mixes y semillas por kilo, y te los llevamos sin cargo en Carlos Paz.";
+  return `¡Hola! Te escribo por tu comentario 🙌 ${que} Para pedirlo, escribinos al WhatsApp: wa.me/549${WHATSAPP_VISIBLE.replace(/\D/g, "")} ¿Es para tu casa?`;
 }
 
 type Cambio = { field?: string; value?: Record<string, unknown> };

@@ -25,11 +25,12 @@ export function conMensaje(href: string, mensaje: string): string {
 }
 
 /** La primera respuesta de la charla avisa, en media frase, que atiende una IA y que puede preguntar lo que quiera. */
-export const PRESENTACION_IA = "Soy el asistente con IA de Acopio 🤖: te armo el pedido y te respondo cualquier consulta.";
+// 17/11 (Santiago: «sin molestar con tanto texto»): media línea, no una frase entera.
+export const PRESENTACION_IA = "Te atiende el asistente de Acopio 🤖.";
 
 export function conPresentacion(texto: string): string {
   const t = texto.trim();
-  if (!t || t.includes("asistente con IA")) return t;
+  if (!t || t.includes("asistente con IA") || t.includes("asistente de Acopio")) return t;
   // El saludo es solo «Hola» y el nombre: corta en «!», «,» o un punto que no sea parte de un precio.
   // Antes cortaba en el primer punto y partía «$28.500» en «$28. Soy el asistente… 500».
   const saludo = t.match(/^¡?hola\b[^!?,.\n\d$]{0,40}(?:[!,]|\.(?!\d))?\s*/i)?.[0];

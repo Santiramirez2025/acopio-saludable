@@ -992,7 +992,19 @@ test("bandeja: etapa de venta de cada charla", () => {
   assert.equal(teEspera({ ...base, estado: "persona", ultimoDe: "persona" }), false);
 });
 
-import { comentariosDe, mensajePrivado, tieneIntencion } from "./comentarios";
+import { comentariosDe, mensajePrivado, respuestaPublica, tieneIntencion, tipoComentario } from "./comentarios";
+
+test("comentarios: una queja no se agradece, una pregunta trae el dato y el WhatsApp (17/11)", () => {
+  assert.equal(tipoComentario("Y a mí me cobraron 32 mil pesos"), "queja");
+  assert.equal(tipoComentario("será publicidad engañosa?"), "queja");
+  assert.equal(tipoComentario("Dirección en carlos paz"), "donde");
+  assert.equal(tipoComentario("Que trae el combo ..?"), "compra");
+  assert.equal(tipoComentario("M interesa"), "compra");
+  assert.equal(tipoComentario("Qué rico 😍"), "gracias");
+  const c = (texto: string) => ({ canal: "facebook" as const, id: "1_2", texto, autorId: "9", autorNombre: null, esRespuesta: false });
+  assert.match(respuestaPublica(c("Quisiera dirección"), false), /No tenemos local.*3541 51-9630/);
+  assert.match(respuestaPublica(c("Que trae el combo"), true, "El Trío son 3 kg: $22.000."), /Trío son 3 kg.*3541 51-9630/);
+});
 
 test("comentarios: intención de compra y lectura del webhook", () => {
   assert.equal(tieneIntencion("Precio?"), true);
@@ -1005,7 +1017,7 @@ test("comentarios: intención de compra y lectura del webhook", () => {
   const fb = comentariosDe("page", [{ changes: [{ field: "feed", value: { item: "comment", verb: "add", comment_id: "2_3", post_id: "2", parent_id: "2", message: "info", from: { id: "7", name: "Juan" } } }] }]);
   assert.equal(fb.length, 1);
   assert.equal(fb[0].esRespuesta, false);
-  assert.match(mensajePrivado("$ 35.232"), /35\.232.*\?$/);
+  assert.match(mensajePrivado("El Trío son 3 kg: $22.000."), /22\.000.*wa\.me\/5493541519630.*\?$/);
 });
 
 import { nuevas, textoAviso, type Publicacion } from "./radar";
@@ -1330,17 +1342,17 @@ test("canales: el precio de Mercado Libre y PedidosYa deja al menos lo mismo que
   assert.ok(despensa > 48000 && despensa < 56000, String(despensa));
 });
 
-test("la primera respuesta se presenta como asistente con IA, una sola vez", async () => {
+test("la primera respuesta se presenta como asistente, en media línea y una sola vez", async () => {
   const { conPresentacion } = await import("./whatsapp-saludo");
   const a = conPresentacion("¡Hola Quique! El mix sale $15.400 el kilo. ¿Para tu casa o un negocio?");
-  assert.ok(a.startsWith("¡Hola Quique! Soy el asistente con IA de Acopio"));
+  assert.ok(a.startsWith("¡Hola Quique! Te atiende el asistente de Acopio"), a);
   assert.ok(a.endsWith("¿Para tu casa o un negocio?"));
-  assert.ok(conPresentacion("El mix sale $15.400. ¿Te lo separo?").startsWith("¡Hola! Soy el asistente con IA"));
+  assert.ok(conPresentacion("El mix sale $15.400. ¿Te lo separo?").startsWith("¡Hola! Te atiende el asistente de Acopio"));
   assert.equal(conPresentacion(a), a);
   // Un precio con punto de miles no se parte (caso real, Graciela 13/11: «sale $28. Soy el asistente… 500»).
   const b = conPresentacion("Hola Graciela, la Despensa de 4 kilos sale $28.500, o $26.200 por transferencia.");
   assert.ok(b.includes("$28.500"), b);
-  assert.ok(b.startsWith("Hola Graciela! Soy el asistente con IA de Acopio"), b);
+  assert.ok(b.startsWith("Hola Graciela! Te atiende el asistente de Acopio"), b);
   assert.ok(b.endsWith("La Despensa de 4 kilos sale $28.500, o $26.200 por transferencia."), b);
 });
 
