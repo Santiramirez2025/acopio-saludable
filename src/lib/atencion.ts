@@ -994,3 +994,41 @@ export async function retomarCharla(clave: string): Promise<boolean> {
   }
   return true;
 }
+
+/**
+ * 17/11 (Santiago, por Virginia: «hay mensajes sin contestar, eso no puede pasar»). Virginia pidió hablar con una
+ * persona, la charla quedó «en manos de una persona» y cuando pasó la dirección y pidió el alias nadie le contestó
+ * en dos horas: el bot estaba callado y ninguna persona la miraba.
+ *
+ * Red de seguridad: cada 15 minutos, toda charla de WhatsApp en manos de una persona cuyo último mensaje es del
+ * cliente y lleva más de 20 minutos sin respuesta vuelve al vendedor, que contesta en el acto. De 8 a 21 y con la
+ * ventana de 24 h abierta. Un «gracias», un «ok» o un emoji no se contestan: solo vuelve al vendedor.
+ */
+export async function rescatarCharlasMudas(ahora = new Date()): Promise<{ revisadas: number; contestadas: number }> {
+  const hora = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Argentina/Cordoba", hour: "numeric", hour12: false }).format(ahora)) % 24;
+  if (hora < 8 || hora >= 21) return { revisadas: 0, contestadas: 0 };
+  const mudas = await prisma.$queryRaw<{ telefono: string; texto: string }[]>`
+    SELECT c."telefono", m."texto"
+    FROM "WhatsappConversacion" c
+    JOIN LATERAL (
+      SELECT "de", "texto", "fecha" FROM "WhatsappMensaje"
+      WHERE "telefono" = c."telefono" AND "texto" NOT LIKE '[reacción%'
+      ORDER BY "fecha" DESC LIMIT 1
+    ) m ON true
+    WHERE c."estado" = 'persona' AND c."telefono" NOT LIKE 'fb.%' AND c."telefono" NOT LIKE 'ig.%'
+      AND m."de" = 'cliente' AND m."fecha" < now() - interval '20 minutes' AND m."fecha" > now() - interval '20 hours'
+    LIMIT 15`;
+  let contestadas = 0;
+  for (const c of mudas) {
+    if (soloAgradece(c.texto) || c.texto.trim().length < 3) {
+      await cambiarEstado(c.telefono, "bot");
+      continue;
+    }
+    const ok = await retomarCharla(c.telefono).catch((e) => {
+      console.error("rescate de charla muda falló", cola(c.telefono), e);
+      return false;
+    });
+    if (ok) contestadas++;
+  }
+  return { revisadas: mudas.length, contestadas };
+}
