@@ -836,8 +836,8 @@ export async function responderComoVendedor(
     // Si su pedido ya salió en el reparto, eso manda sobre la nota del día (16/11: Graciela AS-85 canceló porque el
     // bot le dijo «sale mañana» con el pedido en la camioneta).
     if (ctx.ordenId) {
-      const orden = await prisma.order.findUnique({ where: { id: ctx.ordenId }, select: { estado: true } }).catch(() => null);
-      const enCamino = notaPedidoEnCamino(orden?.estado, `AS-${String(ctx.ordenId).padStart(5, "0")}`);
+      const orden = await prisma.order.findUnique({ where: { id: ctx.ordenId }, select: { estado: true, notas: true } }).catch(() => null);
+      const enCamino = notaPedidoEnCamino(orden?.estado, `AS-${String(ctx.ordenId).padStart(5, "0")}`, Date.now(), orden?.notas);
       if (enCamino) ultimo.content = `${enCamino}\n\n${ultimo.content}`;
     }
   }
