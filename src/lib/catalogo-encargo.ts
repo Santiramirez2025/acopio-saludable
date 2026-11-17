@@ -10,6 +10,7 @@
 // (codigoProveedor) deja actualizar el costo solo.
 
 import type { ProductoProveedor } from "./catalogo-proveedores";
+import { FILAS_LISTA } from "./catalogo-encargo-lista";
 
 const SUELTO = "Sin marca / fraccionado";
 
@@ -21,12 +22,12 @@ export function margenEncargo(costo: number, tipo: "fraccionado" | "envasado" | 
   return costo < 1500 ? 0.7 : costo < 5000 ? 0.6 : costo < 10000 ? 0.55 : costo < 20000 ? 0.5 : 0.4;
 }
 
-type Fila = [codigo: string, codigoProveedor: string, producto: string, marca: string, presentacion: string, categoria: string, contenido: number, unidad: "g" | "ml", costo: number, porQue: string];
+export type Fila = [codigo: string, codigoProveedor: string, producto: string, marca: string, presentacion: string, categoria: string, contenido: number, unidad: "g" | "ml", costo: number, porQue: string];
 
 /** Bolsa fraccionada: precio por kilo de la lista × gramos. */
 const kg = (precioKilo: number, gramos: number) => Math.round((precioKilo * gramos) / 1000);
 
-const FILAS: Fila[] = [
+const FILAS_ELEGIDAS: Fila[] = [
   // ——— Frutos secos, chocolates y harinas de frutos secos ———
   ["LG-MIXTROP", "981-006", "Mix tropical", SUELTO, "x 1 kg", "Frutos secos y mix", 1000, "g", 10574, "Frutos secos con frutas tropicales: el mix más dulce, para los chicos y la merienda."],
   ["LG-ALMCHOC-250", "023-003", "Almendras con chocolate semiamargo", SUELTO, "x 250 g", "Frutos secos y mix", 250, "g", kg(36660, 250), "Almendra entera bañada en chocolate semiamargo: para regalar o para el postre."],
@@ -132,13 +133,18 @@ const FILAS: Fila[] = [
   ["LG-SALGRUESA", "005-109", "Sal rosada del Himalaya gruesa", SUELTO, "x 1 kg", "Almacen", 1000, "g", 2606, "Para molinillo o para la parrilla."],
 ];
 
+/** Los elegidos a mano (con su texto) más el resto de la lista de La Granja (16/11: todo por encargo). */
+const FILAS: Fila[] = [...FILAS_ELEGIDAS, ...FILAS_LISTA];
+
 /** Rubros a mano donde las palabras clave no alcanzan (el resto lo clasifica el ajuste del catálogo). */
 const NICHOS_POR_CATEGORIA: Record<string, string[]> = { Especias: ["rotiserias", "familias", "dieteticas"], "Sin TACC": ["familias", "dieteticas", "cafeterias"] };
 
 const TIPO_POR_CATEGORIA: Record<string, "especia" | "suplemento"> = { Especias: "especia", Suplementos: "suplemento" };
+/** Yuyos e infusiones sueltas de 100 g: mismo margen que las especias (bolsa chica, mucho fraccionado). */
+const esHierbaSuelta = (categoria: string, marca: string, contenido: number) => categoria === "Café, yerba e infusiones" && marca === SUELTO && contenido <= 100;
 
 export const PRODUCTOS_ENCARGO: ProductoProveedor[] = FILAS.map(([codigo, codigoProveedor, producto, marca, presentacion, categoria, contenido, unidad, costo, porQue]) => {
-  const tipo = TIPO_POR_CATEGORIA[categoria] ?? (marca === SUELTO ? "fraccionado" : "envasado");
+  const tipo = esHierbaSuelta(categoria, marca, contenido) ? "especia" : TIPO_POR_CATEGORIA[categoria] ?? (marca === SUELTO ? "fraccionado" : "envasado");
   return {
     codigo,
     codigoProveedor,
@@ -151,7 +157,7 @@ export const PRODUCTOS_ENCARGO: ProductoProveedor[] = FILAS.map(([codigo, codigo
     costo,
     margen: margenEncargo(costo, tipo),
     // Peso para el envío: lo que trae más el envase (los líquidos y potes pesan más).
-    pesoBrutoG: unidad === "ml" ? Math.round(contenido * 1.25) + 60 : /unidades|comprimidos|saquitos/.test(presentacion) ? 250 : contenido + 30,
+    pesoBrutoG: unidad === "ml" ? Math.round(contenido * 1.25) + 60 : /unidad|comprimidos|saquitos|cápsulas|sobres/.test(presentacion) ? 250 : contenido + 30,
     porQueLoElegimos: porQue,
     ...(NICHOS_POR_CATEGORIA[categoria] ? { nichos: NICHOS_POR_CATEGORIA[categoria] } : {}),
   };

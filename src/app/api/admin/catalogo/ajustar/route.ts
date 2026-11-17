@@ -17,7 +17,7 @@ import { MOTIVO_SIN_STOCK_A_MANO } from "@/lib/sin-stock-a-mano";
 import { COMBOS_A_DESACTIVAR, COMBOS_PROVEEDORES, OCULTAR, OCULTOS_PROPIOS, PRODUCTOS_PROVEEDORES, REEMPLAZOS, fotoCombo, fotoProducto, precioDe } from "@/lib/catalogo-proveedores";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
