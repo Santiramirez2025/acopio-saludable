@@ -1,18 +1,20 @@
 // Localidades vecinas a Villa Carlos Paz (Santiago, 16/11: «todo lo que es fuera de Carlos Paz se cobra envío;
 // si no, es muy largo el viaje y muy corta la ganancia»). El reparto propio llega igual, en el mismo día,
-// pero con un cargo por distancia. Sin cargo solo desde un pedido grande. Puro: se prueba sin base.
+// pero con un cargo por distancia. Puro: se prueba sin base.
 //
-// Por código postal (la web) y por nombre (el chat) tienen que dar lo mismo: 5153 es San Antonio de Arredondo,
-// Mayu Sumaj, Icho Cruz, Cuesta Blanca y Tala Huasi; 5155 Tanti y Cabalango; 5158 Bialet Massé y Parque Siquiman.
+// 16/11 a la noche (Santiago, por un pedido a Parque Siquiman): «solo Carlos Paz es gratis, y San Antonio de Arredondo
+// y por acá cerca; lo otro no es gratis, si no me sale más el combustible». Desde ahí el cargo se cobra SIEMPRE,
+// sin umbral de pedido grande, y San Antonio de Arredondo y Mayu Sumaj van como Carlos Paz.
+//
+// Por código postal (la web) y por nombre (el chat): 5153 es San Antonio de Arredondo y Mayu Sumaj (sin cargo), y también
+// Icho Cruz, Cuesta Blanca y Tala Huasi (que por nombre pagan); 5155 Tanti y Cabalango; 5158 Bialet Massé y Parque Siquiman.
 // Santa Cruz del Lago y Estancia Vieja comparten el 5152 con Carlos Paz y están pegadas: van como Carlos Paz.
 
-export const VECINAS_SIN_CARGO_DESDE = 60000;
-
-const POR_CP: Record<string, number> = { "5153": 3000, "5155": 4000, "5158": 4000 };
+const POR_CP: Record<string, number> = { "5155": 5000, "5158": 5000 };
 
 const POR_NOMBRE: [RegExp, number][] = [
-  [/\b(san antonio de arredondo|san antonio|arredondo|mayu sumaj|icho cruz|villa rio icho cruz|cuesta blanca|tala huasi)\b/, 3000],
-  [/\b(tanti|cabalango|bialet masse|villa parque siquiman|parque siquiman|siquiman)\b/, 4000],
+  [/\b(icho cruz|villa rio icho cruz|cuesta blanca|tala huasi)\b/, 4000],
+  [/\b(tanti|cabalango|bialet masse|villa parque siquiman|parque siquiman|siquiman)\b/, 5000],
 ];
 
 const sinTildes = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
@@ -30,7 +32,7 @@ export function cargoVecinaPorLugar(lugar: string): number {
   return POR_NOMBRE.find(([re]) => re.test(t))?.[1] ?? 0;
 }
 
-/** Lo que se cobra en una vecina con ese subtotal: el cargo, o 0 desde el pedido grande. */
-export function envioVecina(cargo: number, subtotal: number): number {
-  return cargo > 0 && subtotal < VECINAS_SIN_CARGO_DESDE ? cargo : 0;
+/** Lo que se cobra en una vecina: el cargo, siempre (sin umbral de pedido grande). */
+export function envioVecina(cargo: number, _subtotal?: number): number {
+  return cargo > 0 ? cargo : 0;
 }

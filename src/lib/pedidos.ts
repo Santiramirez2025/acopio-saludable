@@ -69,7 +69,7 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
   if (!cp) throw new ErrorPedido("Revisá el código postal (4 números)");
   if (!zonaDeProvincia(provincia)) throw new ErrorPedido("Elegí la provincia");
   // En la zona de reparto propio la compra mínima es más baja; y si hay envío fijo bajo mínimo, no hay mínimo: se compra con cualquier subtotal.
-  const enZona = c.entregaPropiaActiva && (cargoVecinaPorCp(cp) > 0 || cpEnLista(cp, c.cpEntregaPropia));
+  const enZona = c.entregaPropiaActiva && (cargoVecinaPorCp(cp) > 0 || /^5153/.test(cp.replace(/\D/g, "")) || cpEnLista(cp, c.cpEntregaPropia));
   const minimoZona = Math.min(c.compraMinimaPropia, c.compraMinima);
   // En la zona de entrega propia con cargo (Córdoba Capital, Malagueño) el mínimo es el de la ruta, no el del correo.
   const enPaga = c.entregaPropiaActiva && !enZona && Boolean(c.tabla.propiaPaga && cpEnLista(cp, c.tabla.propiaPaga.cps));

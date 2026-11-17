@@ -1,7 +1,7 @@
 // Orquestador de envíos: entrega propia + correos con credenciales; la tabla entra como respaldo.
 
 import { cpEnLista, zonaDeProvincia } from "./geo";
-import { cargoVecinaPorCp, envioVecina, VECINAS_SIN_CARGO_DESDE } from "./vecinas";
+import { cargoVecinaPorCp, envioVecina } from "./vecinas";
 import { pesos, precioRedondo } from "../precios";
 import { proveedorAndreani } from "./andreani";
 import { proveedorMiCorreo } from "./micorreo";
@@ -53,9 +53,9 @@ export async function cotizarEnvio(
   const plazoPropia = plazoZonaPropia(cfg.plazoEntregaPropia, ahoraMs);
   // Vecinas (San Antonio, Tanti, Bialet Massé…): reparto propio con cargo por distancia, aunque el CP no esté en la lista sin cargo.
   const cargoVecina = cargoVecinaPorCp(pedido.cpDestino);
-  const sinCargo = cfg.entregaPropiaActiva && (cargoVecina > 0 || cpEnLista(pedido.cpDestino, cfg.cpEntregaPropia));
+  const sinCargo = cfg.entregaPropiaActiva && (cargoVecina > 0 || /^5153/.test(pedido.cpDestino.replace(/\D/g, "")) || cpEnLista(pedido.cpDestino, cfg.cpEntregaPropia));
   if (sinCargo && envioVecina(cargoVecina, pedido.subtotal) > 0) {
-    tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Te lo llevamos nosotros", costo: 0, precioFijo: cargoVecina, plazo: `Te lo llevamos en ${plazoPropia}. Coordinamos el horario por WhatsApp. Pedidos desde ${pesos(VECINAS_SIN_CARGO_DESDE)} van sin cargo.` });
+    tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Te lo llevamos nosotros", costo: 0, precioFijo: cargoVecina, plazo: `Te lo llevamos en ${plazoPropia}. Coordinamos el horario por WhatsApp.` });
   } else if (sinCargo) {
     const bajo = cfg.propiaBajoMinimo;
     const plazo = `Te lo llevamos en ${plazoPropia}. Coordinamos el horario por WhatsApp.`;

@@ -1940,8 +1940,9 @@ test("envío de la zona: sale del subtotal real y sin subtotal da la regla, no �
   assert.doesNotMatch(sinElegir.detalle, /no llega/);
   assert.match(sinElegir.detalle, /sin cargo desde/);
   assert.deepEqual(zonaDeLugar("vertiente de arredondo, un barrio de san antonio"), { tipo: "propia" });
-  // 16/11: fuera de la ciudad se cobra por distancia (San Antonio $3.000 aunque el pedido pase los $20.000).
-  assert.equal(envioZonaPropia(cfg, "Vertientes de Arredondo", 28500).costo, 3000);
+  // 16/11 a la noche: San Antonio de Arredondo va como Carlos Paz; más lejos se cobra siempre.
+  assert.equal(envioZonaPropia(cfg, "Vertientes de Arredondo", 28500).costo, 0);
+  assert.equal(envioZonaPropia(cfg, "Villa Parque Siquiman", 61000).costo, 5000);
 });
 
 test("la nota de cobro al marcar Entregado dice el medio real", async () => {
