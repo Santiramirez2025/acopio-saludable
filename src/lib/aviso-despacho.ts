@@ -10,8 +10,6 @@ import { numeroPedido } from "./pedido-calculos";
 import { mensajeDespacho, mensajesGracias } from "./despacho-texto";
 import { urlSitio } from "./sitio";
 import { telefonoWa } from "./telefono";
-import { leerConfig } from "./config";
-import { precioTransferencia } from "./precios";
 
 function telefonoDe(p: Order): string | null {
   const d = p.telefono.replace(/\D/g, "");
@@ -36,15 +34,8 @@ export async function avisarDespachoWhatsapp(p: Order): Promise<"texto" | "plant
     }
     return null;
   }
-  // 17/11: al que paga al recibir se le recuerda que transfiriendo antes de que llegue el cadete paga con descuento.
-  let antes: { monto: number; alias: string } | null = null;
-  if (p.medioPago === "AL_RECIBIR" && !p.pagadoAt) {
-    const cfg = await leerConfig().catch(() => null);
-    const alias = /alias:\s*(\S+)/i.exec(cfg?.transferenciaDatos ?? "")?.[1];
-    const conDescuento = cfg ? precioTransferencia(Number(p.subtotal), cfg.descuentoTransferenciaPct) : null;
-    if (alias && conDescuento) antes = { monto: conDescuento + Number(p.envioCobrado), alias };
-  }
-  const texto = mensajeDespacho(p, antes);
+  // 17/11 (Santiago, en plena entrega): en la puerta se cobra el precio al recibir, sin ofrecer otro precio.
+  const texto = mensajeDespacho(p);
   if ((await ventanaAbierta(tel).catch(() => false)) && (await enviarTexto(tel, texto))) {
     await registrarSalida(tel, "persona", texto).catch(() => undefined);
     return "texto";
