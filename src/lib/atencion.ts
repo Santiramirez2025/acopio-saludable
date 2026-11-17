@@ -759,8 +759,12 @@ export async function pensar(c: {
         : estadoOrden === "PENDIENTE_PAGO"
           ? notaPedidoSinPagar(orden?.medioPago, yaMandoComprobante(eventosComprobante.map((x) => x.nota)))
           : "";
+  // 17/11: Myriam dijo «Lo recibí ayer» y el bot le contestó que su pedido iba en el reparto de hoy. Lo que dice ella manda.
+  const RECIBIO = /\b(lo|la|los|las)? ?(recib[ií]|tengo)\b|ya (me )?(lleg[oó]|lo tengo|est[aá] ac[aá])|me lleg[oó]|lleg[oó] (todo|bien|perfecto)/i;
+  const diceQueLoRecibio = [c.texto, ...c.historial.filter((h) => h.de !== "acopio").slice(-3).map((h) => h.texto)].some((t) => RECIBIO.test(t) && !/no (lo |me )?(recib|lleg)/i.test(t));
+  const yaLoTiene = diceQueLoRecibio && estadoOrden !== "ENTREGADO" ? " Ella/él acaba de decir que YA LO RECIBIÓ: creele. No digas que está en el reparto, que sale hoy ni mañana. Agradecé corto y nada más." : "";
   const cerrado = ordenId
-    ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
+    ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaLoTiene}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";
   // El carrito de la web llega armado: se carga exacto, sin IA y sin ofrecer otra cosa.
   const web = esPedidoWeb(c.texto) && !ordenId ? await armarPedidoWeb(c.texto, Boolean(c.historial.some((h) => h.de === "acopio"))) : null;

@@ -141,7 +141,9 @@ export type FotoOportuna = { url: string; pie: string };
 
 const NOMBRES_COMBO: [RegExp, string, string][] = [
   [/tr[ií]o de frutos|tr[ií]o (con|de) mix|3 ?(kg|kilos) (con|de) (mix|frutos)/i, "trio-de-frutos-secos", "Trío de frutos secos: mix con cajú, dátiles y pasas"],
-  [/tr[ií]o/i, "trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas"],
+  [/tr[ií]o del desayuno|tr[ií]o (con|de) semillas/i, "trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas"],
+  // 17/11: a Clau, que pedía el Trío del anuncio (frutos secos), le llegó la foto del Trío del desayuno. «Trío» a secas es el del anuncio.
+  [/tr[ií]o/i, "trio-de-frutos-secos", "Trío de frutos secos: mix con cajú, dátiles y pasas"],
   [/pan dulce casero|combo pan dulce/i, "pan-dulce-casero", "Pan dulce casero: pasas y dátiles"],
   [/despensa de 4 kilos|despensa grande/i, "despensa-4-kilos", "Despensa de 4 kilos"],
   [/despensa chica/i, "despensa-chica", "Despensa chica de 2 kilos"],
