@@ -85,13 +85,46 @@ export function textoResta(ms: number): string {
   return `${horas > 0 ? `${horas} h ` : ""}${minutos} min`;
 }
 
+/** Hora pactada en las notas del pedido («a las 19», «19 hs», «19:30»); si no hay, la del reparto (16). */
+export function horaSalidaPactada(notas: string | null | undefined): number {
+  const m = (notas ?? "").match(/\b(?:a\s+las|desde\s+las|tipo)\s+(\d{1,2})(?:[:.](\d{2}))?|\b(\d{1,2})(?:[:.](\d{2}))?\s*(?:h|hs|horas)\b/i);
+  if (!m) return HORA_REPARTO;
+  const h = Number(m[1] ?? m[3]);
+  const min = Number(m[2] ?? m[4] ?? 0);
+  return h >= 8 && h <= 22 ? h + min / 60 : HORA_REPARTO;
+}
+
+function textoHora(h: number): string {
+  const min = Math.round((h % 1) * 60);
+  return min ? `${Math.floor(h)}:${String(min).padStart(2, "0")}` : String(Math.floor(h));
+}
+
 /**
  * Pedido que ya salió en el reparto (Nico, 16/11): con AS-85 en la camioneta, a las 16:01 el bot le dijo a Graciela
  * «como ya pasaron las 15, tu pedido sale mañana martes» y después «¿te llegó todo bien?»; ella entendió que no iba
  * y lo canceló. A Viki (AS-88, esperando en Tanti) le preguntó «¿te llegó todo bien?» antes de la entrega.
  * La nota del día del reparto vale para pedidos nuevos; uno ENVIADO ya va en camino y manda sobre esa nota.
+ *
+ * Laura, 17/11: Gonza pasa a ENVIADO a las 8:15 los pedidos del reparto de la TARDE, y a las 8:41 el bot le dijo a
+ * Quique (AS-105, entrega a las 19) y a Lidia (AS-92, espera en un cruce desde las 16) «el cadete va en camino».
+ * Antes de la hora del reparto (o de la pactada en las notas) se dice que está en el reparto de hoy y a qué hora sale;
+ * «va en camino» solo después. Y no se nombra a Santiago (regla del 16/11): «el equipo».
  */
-export function notaPedidoEnCamino(estado: string | null | undefined, codigo: string): string {
+export function notaPedidoEnCamino(
+  estado: string | null | undefined,
+  codigo: string,
+  ahoraMs: number = Date.now(),
+  notas?: string | null,
+): string {
   if (estado !== "ENVIADO") return "";
-  return `(PEDIDO EN CAMINO: el pedido ${codigo} de este cliente ya salió en el reparto de hoy y el cadete lo está llevando. Esto manda sobre la nota del reparto: no le digas que sale mañana ni otro día, no le cambies el día y no le preguntes si le llegó. Decile que el cadete va en camino con su pedido y le escribe por acá cuando esté llegando. Si quiere cancelar, cambiar la dirección o no va a estar, decile que se lo avisamos a Santiago ya mismo.)`;
+  const local = new Date(ahoraMs - AR_MS);
+  const ahoraH = local.getUTCHours() + local.getUTCMinutes() / 60;
+  const salida = horaSalidaPactada(notas);
+  const comun = `Esto manda sobre la nota del reparto: no le digas que sale mañana ni otro día, no le cambies el día y no le preguntes si le llegó.`;
+  const cambios = `Si quiere cancelar, cambiar la dirección o no va a estar, decile que se lo avisás al equipo ya mismo.`;
+  if (ahoraH < salida) {
+    const hora = textoHora(salida);
+    return `(PEDIDO EN EL REPARTO DE HOY: el pedido ${codigo} de este cliente está en el reparto de hoy, que sale desde las ${hora}. ${comun} Todavía NO va en camino: no digas «va en camino», «ya salió» ni «está llegando», y no le pidas que espere afuera. Decile que su pedido está en el reparto de hoy, sale desde las ${hora} y el cadete le escribe por acá cuando esté llegando. ${cambios})`;
+  }
+  return `(PEDIDO EN CAMINO: el pedido ${codigo} de este cliente ya salió en el reparto de hoy y el cadete lo está llevando. ${comun} Decile que el cadete va en camino con su pedido y le escribe por acá cuando esté llegando. ${cambios})`;
 }
