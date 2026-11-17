@@ -3,10 +3,13 @@
 /**
  * La lista de La Granja trae el precio por kilo; nosotros vendemos también medio kilo y 250 g. Si el precio
  * de la lista es justo el del kilo para una presentación chica (el costo de antes × 1000/contenido, con
- * margen de ±20%), se lleva a la presentación. Así el cacao de 250 g no toma el precio del kilo (23/10).
+ * margen de ±20%), se lleva a la presentación. Así el cacao de 250 g no toma el precio del kilo (23/10), y la
+ * bolsa cerrada de 10 kg no toma el precio de un kilo (17/11).
  */
 export function costoDePresentacion(precioLista: number, costoAntes: number, contenido: number | null): number {
-  if (contenido && contenido > 0 && contenido < 1000 && costoAntes > 0) {
+  // Lo mismo para las bolsas cerradas (5, 10, 25 kg): la lista trae el kilo y el costo es kilo × kilos. Sin esto
+  // la bolsa de nuez de 10 kg tomaba $13.000 de costo y quedaba esperando aprobación con −90% (17/11, Pablo).
+  if (contenido && contenido !== 1000 && contenido > 0 && costoAntes > 0) {
     const factor = 1000 / contenido;
     const ratio = precioLista / costoAntes;
     if (ratio > factor * 0.8 && ratio < factor * 1.2) return Math.round((precioLista * contenido) / 1000);
