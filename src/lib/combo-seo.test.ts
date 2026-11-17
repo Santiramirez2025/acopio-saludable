@@ -10,13 +10,14 @@ test("combo: precio y peso en título y descripción, sin repetir kilos ni espac
   const s = seoCombo(despensa, 20000);
   assert.equal(s.title, "Combo Despensa de 4 kilos: $ 35.000");
   assert.match(s.description, /4 kg por \$ 35\.000, ahorrás \$ 6\.900\./);
-  assert.match(s.description, /sin cargo en Carlos Paz/);
+  assert.match(s.description, /Sin cargo en Villa Carlos Paz; resto de la zona con costo\./);
+  assert.doesNotMatch(s.description, /sur de Punilla/);
   assert.ok(s.description.length <= 155, String(s.description.length));
   assert.equal(/ /.test(s.title + s.description), false);
 });
 
 test("combo: abajo del mínimo no promete entrega sin cargo", () => {
-  assert.doesNotMatch(seoCombo({ ...despensa, precio: 15000 }, 20000).description, /sin cargo/);
+  assert.doesNotMatch(seoCombo({ ...despensa, precio: 15000 }, 20000).description, /[Ss]in cargo/);
 });
 
 test("combo: si los productos no entran se corta la lista, nunca el precio", () => {

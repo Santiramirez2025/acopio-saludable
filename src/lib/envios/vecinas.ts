@@ -17,6 +17,12 @@ const POR_NOMBRE: [RegExp, number][] = [
   [/\b(tanti|cabalango|bialet masse|villa parque siquiman|parque siquiman|siquiman)\b/, 5000],
 ];
 
+/** Las vecinas con cargo, como se las nombra en la tienda (mismo cargo que POR_NOMBRE; lo controla vecinas.test.ts). */
+export const VECINAS_CON_CARGO: { lugares: string[]; cargo: number }[] = [
+  { lugares: ["Icho Cruz", "Cuesta Blanca", "Tala Huasi"], cargo: 4000 },
+  { lugares: ["Tanti", "Cabalango", "Bialet Massé", "Parque Siquiman"], cargo: 5000 },
+];
+
 const sinTildes = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 
 /** Cargo por distancia de ese código postal: 0 en Carlos Paz y fuera del reparto propio. */

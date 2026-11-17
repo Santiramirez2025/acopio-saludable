@@ -65,7 +65,7 @@ test("la regla de la zona: envío fijo abajo del umbral, nada arriba, y apagada 
 test("lineaCompraMinima: con zona sin mínimo el $ 60.000 no aparece solo; sin envío fijo vuelve el texto de siempre", () => {
   const regla = { compraMinima: 60000, compraMinimaPropia: 20000, envioBajoMinimo: 3000, entregaPropiaActiva: true };
   const sinMin = lineaCompraMinima(regla).replace(/\s/g, " ");
-  assert.match(sinMin, /^En Villa Carlos Paz y la zona no hay compra mínima: sin cargo desde \$ 20\.000\. Al resto del país, compra mínima de \$ 60\.000/);
+  assert.match(sinMin, /^En Villa Carlos Paz y la zona no hay compra mínima; en Villa Carlos Paz, sin cargo desde \$ 20\.000\. Al resto del país, compra mínima de \$ 60\.000/);
   assert.match(lineaCompraMinima({ ...regla, envioBajoMinimo: 0 }).replace(/\s/g, " "), /^Compra mínima de \$ 60\.000 por pedido/);
 });
 
