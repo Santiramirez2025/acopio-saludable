@@ -25,7 +25,8 @@ import { PRODUCTOS_PROVEEDORES } from "@/lib/catalogo-proveedores";
 import { textosSeguros } from "@/lib/filtros-producto";
 import { nutrientesDe } from "@/lib/nutrientes";
 import { PanelNutri } from "@/components/Nutri";
-import { recetasDe, tiempoTexto } from "@/lib/recetas";
+import { RECETAS, recetasDe, tiempoTexto } from "@/lib/recetas";
+import { fichaViva } from "@/lib/ficha-viva";
 
 type Props = { params: Promise<{ codigo: string }> };
 
@@ -74,7 +75,10 @@ export default async function Producto({ params }: Props) {
   const porUnidad = precioPorUnidadBase(p.precio, p.contenido, p.unidad);
   // Qué aporta (la Nutri): solo para los productos de los que sabemos qué llevan.
   const nutri = nutrientesDe(p.codigo);
-  const recetas = recetasDe(p.codigo).slice(0, 3);
+  // 16/11 (Santiago): cada producto con su dato, sus tips y una idea de cocina, además de la Nutri y las recetas.
+  const viva = fichaViva({ producto: p.producto, categoria: p.categoria });
+  const recetasPropias = recetasDe(p.codigo);
+  const recetas = (recetasPropias.length ? recetasPropias : RECETAS.filter((r) => viva.recetas?.includes(r.slug))).slice(0, 3);
   const [combos, relacionados] = await Promise.all([
     combosTienda({ tipo: "COMBO", activo: true, items: { some: { codigo: p.codigo } } }),
     productosTienda({ where: { categoria: p.categoria, codigo: { not: p.codigo } }, take: 8 }),
@@ -207,6 +211,23 @@ export default async function Producto({ params }: Props) {
       </div>
 
       {nutri && <PanelNutri n={nutri} producto={`${p.producto} ${p.presentacion}`} />}
+
+      <section className="rounded-3xl bg-white p-4 shadow-ficha sm:p-6" aria-labelledby="viva-titulo">
+        <h2 id="viva-titulo" className="font-display text-xl font-bold">Para sacarle el jugo</h2>
+        <p className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-stone-800"><b>¿Sabías?</b> {viva.dato}</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <ul className="space-y-2 text-sm text-stone-700">
+            {viva.tips.map((t) => (
+              <li key={t} className="flex gap-2"><span aria-hidden className="text-acopio-600">✓</span><span>{t}</span></li>
+            ))}
+          </ul>
+          <div className="rounded-2xl bg-acopio-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-acopio-700">Idea para hoy</p>
+            <p className="mt-1 font-display text-lg font-bold leading-tight">{viva.idea.titulo}</p>
+            <p className="mt-1 text-sm text-stone-700">{viva.idea.como}</p>
+          </div>
+        </div>
+      </section>
 
       {recetas.length > 0 && (
         // 12/11 (Santiago): cada producto con sus recetas, para que sepa qué hacer con lo que compra.
