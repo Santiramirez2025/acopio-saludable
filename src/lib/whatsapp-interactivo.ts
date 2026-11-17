@@ -473,7 +473,13 @@ export function tieneDireccion(texto: string): boolean {
   // y el bot le contestó «Te llega a Pásame la dirección y voy yo a comprar.». Quien pregunta dónde estamos
   // o quiere retirar no nos está dando su domicilio.
   if (preguntaDondeEstan(texto)) return false;
-  const t = limpio(texto);
+  // 17/11 (Al Meyui, AS-114): «Seguro estoy 18 :30» es un horario, no un domicilio. Contaba como «palabra + número»
+  // y pisó la dirección que ya había dado (Atahualpa 513): el pedido salió «Va a Seguro estoy 18 :30».
+  // Las horas se sacan antes de buscar calle y número.
+  const t = limpio(texto)
+    .replace(/\b\d{1,2} ?[:.] ?\d{2}\b( ?hs?\b)?/g, " ")
+    .replace(/\b(a|hasta|desde|despues de|antes de|tipo|como a|entre|y|estoy|estare|llego|vuelvo|salgo|seguro|exacto)( (la|las))? \d{1,2}\b( ?(hs?|horas?|y media|y cuarto|en punto)\b)?/g, " ")
+    .replace(/\b\d{1,2} ?(hs|horas?)\b/g, " ");
   return /\b(direccion|calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?))/.test(t);
 }
 
