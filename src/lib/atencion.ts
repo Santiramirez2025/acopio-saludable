@@ -6,6 +6,7 @@
 // Lo único que cambia por canal es cómo se manda la respuesta.
 
 import { PAGO_AL_RECIBIR } from "./politica";
+import { botPasaAlRecibir } from "./cobro-permiso";
 import { conPresentacion } from "./whatsapp-saludo";
 import { hablaDeFueraDeZona, zonaDeLugar } from "./envio-zona";
 import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
@@ -531,6 +532,22 @@ export async function atender(e: Entrada): Promise<void> {
   // recibe el monto final y los datos en el acto. Nada de «en el link elegís transferencia»: es un cliente
   // que ya compra, hay que hacérselo fácil.
   if (canal === "whatsapp" && guardado?.startsWith("orden:")) {
+    // 17/11: con el pedido por transferencia y en la zona, «lo pago al recibir» pasa el pedido a cobrar al entregar
+    // (la respuesta la sigue dando el vendedor con la regla del 16/11). Queda un evento con la frase del cliente.
+    if (PAGO_AL_RECIBIR && pagaAlRecibir(texto)) {
+      const id = Number(guardado.slice(6)) || 0;
+      const o = await prisma.order
+        .findUnique({ where: { id }, select: { estado: true, medioPago: true, pagadoAt: true, ciudad: true, provincia: true, subtotal: true, envioCobrado: true, total: true } })
+        .catch(() => null);
+      if (o && botPasaAlRecibir({ estado: o.estado, medioPago: o.medioPago, pagado: !!o.pagadoAt }, zonaDeLugar(o.ciudad ?? "", o.provincia)?.tipo ?? null)) {
+        await prisma.order.update({ where: { id }, data: { medioPago: "AL_RECIBIR" } }).catch(() => null);
+        const efectivo = Number(o.subtotal) + Number(o.envioCobrado);
+        await prisma.orderEvent
+          .create({ data: { orderId: id, estado: "PENDIENTE_PAGO", nota: `Pasa a cobrar al entregar (bot, el cliente dijo: «${texto.replace(/\s+/g, " ").trim().slice(0, 80)}») · ${pesos(Number(o.total))} si transfiere en el momento / ${pesos(Math.max(efectivo, Number(o.total)))} en efectivo` } })
+          .catch(() => null);
+        console.log("chat: pedido por transferencia pasa a cobrar al entregar", cola(e.clave), id);
+      }
+    }
     const previo = [...(await historialDe(e.clave, 9)).slice(0, -1)].reverse().find((h) => h.de === "acopio")?.texto ?? "";
     if (vaATransferir(texto) || pideDatosTransferencia(texto, previo)) {
       const cfg = await leerConfig();
