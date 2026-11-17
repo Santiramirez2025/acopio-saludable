@@ -87,7 +87,7 @@ export function textoResta(ms: number): string {
 
 /** Hora pactada en las notas del pedido («a las 19», «19 hs», «19:30»); si no hay, la del reparto (16). */
 export function horaSalidaPactada(notas: string | null | undefined): number {
-  const m = (notas ?? "").match(/\b(?:a\s+las|desde\s+las|tipo)\s+(\d{1,2})(?:[:.](\d{2}))?|\b(\d{1,2})(?:[:.](\d{2}))?\s*(?:h|hs|horas)\b/i);
+  const m = (notas ?? "").match(/\b(?:a\s+partir\s+de\s+las|a\s+las|desde\s+las|tipo)\s+(\d{1,2})(?:[:.](\d{2}))?|\b(\d{1,2})(?:[:.](\d{2}))?\s*(?:h|hs|horas)\b/i);
   if (!m) return HORA_REPARTO;
   const h = Number(m[1] ?? m[3]);
   const min = Number(m[2] ?? m[4] ?? 0);

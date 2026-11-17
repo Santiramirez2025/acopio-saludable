@@ -86,4 +86,8 @@ test("hora pactada en las notas", () => {
   assert.equal(horaSalidaPactada("PAGA AL RECIBIR $22.000/$24.000"), 16);
   assert.equal(horaSalidaPactada(null), 16);
   assert.equal(horaSalidaPactada("a las 3"), 16);
+  assert.equal(horaSalidaPactada("Horario: A partir de las 16:30 · Referencia: Al lado"), 16.5);
+  assert.equal(horaSalidaPactada("Horario: después de las 18 hs · Venta por WhatsApp"), 18);
+  assert.equal(horaSalidaPactada("Horario: Lunes 16/11 desde las 16"), 16);
+  assert.equal(horaSalidaPactada("Horario: Martes 17, tipo 15:30 hs (preferencia)"), 15.5);
 });
