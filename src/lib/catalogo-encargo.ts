@@ -42,7 +42,7 @@ const FILAS_ELEGIDAS: Fila[] = [
   ["LG-MANGO-500", "980-042", "Mango en cubos", SUELTO, "x 500 g", "Frutas desecadas", 500, "g", kg(8001, 500), "Dulce y tierno: solo, en el yogur o en el mix."],
   ["LG-ANANA-500", "980-006", "Ananá en trozos", SUELTO, "x 500 g", "Frutas desecadas", 500, "g", kg(12333, 500), "Ananá deshidratado de colores: para el mix, la granola o la tabla."],
   ["LG-GOJI-250", "978-208", "Bayas de goji", SUELTO, "x 250 g", "Frutas desecadas", 250, "g", kg(20410, 250), "Ácidas y chiquitas: sobre el yogur, el açaí o la avena."],
-  ["LG-PELON-500", "010-021", "Pelones de durazno", "Marcilli", "x 500 g", "Frutas desecadas", 500, "g", kg(12481, 500), "Durazno sin carozo deshidratado: el postre de la abuela, con o sin hervir."],
+  ["LG-PELON-500", "010-021", "Pelones de durazno", "Sin marca / envasado", "x 500 g", "Frutas desecadas", 500, "g", kg(12481, 500), "Durazno sin carozo deshidratado: el postre de la abuela, con o sin hervir."],
   ["LG-COCOESC-250", "004-006", "Coco en escamas", SUELTO, "x 250 g", "Frutas desecadas", 250, "g", kg(14742, 250), "Escamas grandes de coco: tostadas 3 minutos en sartén, para bowls y granola."],
   ["LG-PAPAYA-500", "009-130", "Papaya en cubos de colores", SUELTO, "x 500 g", "Frutas desecadas", 500, "g", kg(8207, 500), "La fruta del pan dulce y del budín navideño."],
   ["LG-FRUTAESC-500", "009-117", "Fruta escurrida", SUELTO, "x 500 g", "Frutas desecadas", 500, "g", kg(5704, 500), "Fruta abrillantada surtida para pan dulce casero."],
@@ -60,8 +60,8 @@ const FILAS_ELEGIDAS: Fila[] = [
   // ——— Legumbres y granos para cocinar ———
   ["LG-ADUKI", "001-258", "Porotos aduki", SUELTO, "x 1 kg", "Legumbres", 1000, "g", kg(1870, 1000), "Poroto rojo chico de cocción rápida: guisos, hamburguesas y ensaladas."],
   ["LG-MUNG", "001-255", "Porotos mung", SUELTO, "x 1 kg", "Legumbres", 1000, "g", kg(2260, 1000), "Para germinar en casa o para un dal: se cocinan sin remojo largo."],
-  ["LG-ARVEJAS-400", "916-512", "Arvejas partidas", "Marcilli", "x 400 g", "Legumbres", 400, "g", 655, "Para el guiso y la sopa crema de invierno."],
-  ["LG-ALUBIA-400", "916-508", "Porotos alubia", "Marcilli", "x 400 g", "Legumbres", 400, "g", 1069, "El poroto blanco de la cazuela y el guiso de mondongo."],
+  ["LG-ARVEJAS-400", "916-512", "Arvejas partidas", "Sin marca / envasado", "x 400 g", "Legumbres", 400, "g", 655, "Para el guiso y la sopa crema de invierno."],
+  ["LG-ALUBIA-400", "916-508", "Porotos alubia", "Sin marca / envasado", "x 400 g", "Legumbres", 400, "g", 1069, "El poroto blanco de la cazuela y el guiso de mondongo."],
   ["LG-SOJATEX", "001-278", "Soja texturizada gruesa", SUELTO, "x 1 kg", "Legumbres", 1000, "g", kg(1547, 1000), "Hidratada en caldo, reemplaza la carne picada en salsas, empanadas y rellenos."],
   ["LG-BURGOL", "001-272", "Trigo burgol fino", SUELTO, "x 1 kg", "Cereales y granolas", 1000, "g", kg(2052, 1000), "Para tabule y kibbe: se hidrata en agua caliente, sin cocinar."],
 
@@ -108,7 +108,7 @@ const FILAS_ELEGIDAS: Fila[] = [
   ["LG-OLIVA-500", "935-002", "Aceite de oliva extra virgen", "Pisi", "x 500 cc", "Almacen", 500, "ml", 14293, "Oliva extra virgen de San Juan."],
   ["LG-MERM-FROJOS", "913-006", "Mermelada de frutos rojos con stevia", "Rincón de Vida", "x 400 g", "Almacen", 400, "g", 5267, "Endulzada con stevia, sin azúcar agregada."],
   ["LG-DDL-STEVIA", "958-006", "Dulce de leche con stevia", "Trini", "x 400 g", "Almacen", 400, "g", 6698, "Dulce de leche sin azúcar agregada."],
-  ["LG-STEVIA-250", "916-401", "Stevia líquida", "Marcilli", "x 250 cc", "Almacen", 250, "ml", 2495, "Unas gotas endulzan el mate o el café."],
+  ["LG-STEVIA-250", "916-401", "Stevia líquida", "Sin marca / envasado", "x 250 cc", "Almacen", 250, "ml", 2495, "Unas gotas endulzan el mate o el café."],
 
   // ——— Infusiones ———
   ["LG-TE-VERDE", "947-008", "Té verde", "Heredia", "x 25 saquitos", "Café, yerba e infusiones", 25, "g", 3943, "Té verde en saquitos de una marca serrana."],

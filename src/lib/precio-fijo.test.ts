@@ -13,3 +13,8 @@ test("precio único: hoy ningún combo (el Trío volvió a $22.000 por transfere
 test("la base del descuento suma todos los renglones cuando no hay combos de precio único", () => {
   assert.equal(baseTransferencia([{ comboSlug: "trio-de-frutos-secos", importe: 24000 }, { comboSlug: null, importe: 10000 }]), 34000);
 });
+
+test("la marca Marcilli no aparece en el catálogo (Santiago, 17/11)", async () => {
+  const { PRODUCTOS_PROVEEDORES } = await import("./catalogo-proveedores");
+  assert.doesNotMatch(JSON.stringify(PRODUCTOS_PROVEEDORES), /marcilli/i);
+});
