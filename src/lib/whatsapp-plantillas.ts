@@ -86,10 +86,10 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
     // 16/11 (Santiago: «no puede pasar otro día sin recibir nada; buscá en mejores lugares con mejores ofertas»).
     // Las plantillas de abastecimiento preguntaban el precio que paga hoy y nadie contestó (0 respuestas).
     // Esta va a empresas en el mes en que deciden el regalo de fin de año: oferta concreta, de temporada,
-    // y una pregunta que se contesta con un número.
-    nombre: "acopio_empresas_regalos_v1",
+    // y una pregunta que se contesta con un número. v2: sin el nombre de Santiago (16/11: no se nombra más al dueño).
+    nombre: "acopio_empresas_regalos_v2",
     cuerpo:
-      "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
+      "Hola, {{1}}. Le escribo de Acopio Saludable, de Villa Carlos Paz.\n\n" +
       "Armamos las cajas de fin de año para equipos y clientes: frutos secos, garrapiñadas, pan dulce y chocolates, con la tarjeta de su empresa y entrega sin cargo en Carlos Paz.\n\n" +
       "Usted me dice para cuántas personas y cuánto quiere gastar por caja, y hoy mismo le mando 3 opciones con foto. ¿Para cuántas personas sería?",
     botones: ["Pasame opciones", "No, gracias"],

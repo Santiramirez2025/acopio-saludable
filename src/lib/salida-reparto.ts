@@ -93,5 +93,5 @@ export function textoResta(ms: number): string {
  */
 export function notaPedidoEnCamino(estado: string | null | undefined, codigo: string): string {
   if (estado !== "ENVIADO") return "";
-  return `(PEDIDO EN CAMINO: el pedido ${codigo} de este cliente ya salió en el reparto de hoy y Santiago lo está llevando. Esto manda sobre la nota del reparto: no le digas que sale mañana ni otro día, no le cambies el día y no le preguntes si le llegó. Decile que Santiago va en camino con su pedido y le escribe por acá cuando esté llegando. Si quiere cancelar, cambiar la dirección o no va a estar, decile que se lo avisamos a Santiago ya mismo.)`;
+  return `(PEDIDO EN CAMINO: el pedido ${codigo} de este cliente ya salió en el reparto de hoy y el cadete lo está llevando. Esto manda sobre la nota del reparto: no le digas que sale mañana ni otro día, no le cambies el día y no le preguntes si le llegó. Decile que el cadete va en camino con su pedido y le escribe por acá cuando esté llegando. Si quiere cancelar, cambiar la dirección o no va a estar, decile que se lo avisamos a Santiago ya mismo.)`;
 }
