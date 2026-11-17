@@ -716,7 +716,7 @@ test("whatsapp: productos van en lista para tocar, pedido con botón a la web, s
   const cta = pedido[0] as Extract<(typeof pedido)[number], { tipo: "cta" }>;
   assert.equal(cta.texto, "Terminar mi pedido");
   assert.match(cta.url, /\/carrito\?p=c-despensa\*1$/);
-  assert.match(cta.cuerpo, /Envío: \$\s15\.000\nTotal con envío: \$ 50\.268\nPor transferencia: \$ 47\.447/);
+  assert.match(cta.cuerpo, /Envío: \$\s15\.000\nTotal con envío: \$ 50\.268\nPagando antes por transferencia: \$ 47\.447/);
   assert.match(cta.cuerpo, /Mercado Pago o transferencia/);
   const cp = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Carlos Paz", costo: 0, detalle: "x", propia: true, alRecibir: true, totalConEnvio: "$ 35.268", transferenciaConEnvio: "$ 32.447" } });
   // Tampoco en Carlos Paz hay pago al recibir ni botones de pago en el chat: mismo botón a la web.

@@ -137,14 +137,17 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
 
   if (pedido) {
     const lineas = [texto, "", ...pedido.renglones.map((l) => `• ${l}`), `Total: ${pedido.total}`];
-    if (pedido.conTransferencia) lineas.push(`Por transferencia: ${pedido.conTransferencia}`);
+    if (pedido.conTransferencia) lineas.push(`Pagando antes por transferencia: ${pedido.conTransferencia}`);
     if (pedido.falta) {
       lineas.push(`Te faltan ${pedido.falta} para la compra mínima.`);
       return [{ tipo: "texto", texto: corte(lineas.join("\n"), 4000) }];
     }
     // Primero la zona: sin saber cuánto sale el envío, la gente no paga (pasó: dijeron «lo quiero» y se frenaron).
     if (!pedido.envio) {
-      if (!/\?\s*$/.test(texto)) lineas.push("", "¿De qué barrio o ciudad sos? Así te digo el envío.");
+      // 17/11 (Santiago: «sin molestar con tanto texto»): con un solo producto el texto ya lo nombra con su precio,
+      // así que no se repite el resumen; y si el texto ya pregunta la ciudad, no se pregunta dos veces.
+      if (pedido.renglones.length === 1 && /\$\s?\d/.test(texto)) lineas.splice(1);
+      if (!/\?/.test(texto) || !/(ciudad|barrio|zona|de d[oó]nde)/i.test(texto)) lineas.push("", "¿De qué barrio o ciudad sos? Así te digo el envío.");
       return [
         {
           tipo: "botones",
@@ -158,7 +161,7 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
       ];
     }
     // Con el envío ya cotizado, el «por transferencia» de arriba se reemplaza por el que lo incluye.
-    const iTransf = lineas.findIndex((l) => l.startsWith("Por transferencia"));
+    const iTransf = lineas.findIndex((l) => l.startsWith("Pagando antes por transferencia"));
     if (iTransf >= 0) lineas.splice(iTransf, 1);
     lineas.push(
       pedido.envio.costo === 0
@@ -168,7 +171,7 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
           : `Envío: ${pesos(pedido.envio.costo)}${pedido.envio.sinCargoDesde ? ` (sin cargo desde ${pesos(pedido.envio.sinCargoDesde)})` : ""}`,
     );
     if (pedido.envio.totalConEnvio) lineas.push(`Total con envío: ${pedido.envio.totalConEnvio}`);
-    if (pedido.envio.transferenciaConEnvio) lineas.push(`Por transferencia: ${pedido.envio.transferenciaConEnvio}`);
+    if (pedido.envio.transferenciaConEnvio) lineas.push(`Pagando antes por transferencia: ${pedido.envio.transferenciaConEnvio}`);
     // 9/11 (Santiago): la venta se cierra EN LA WEB. Un solo botón que abre el carrito ya armado; ahí elige
     // Mercado Pago o transferencia (con su 8%), queda registrado y se puede comprar a cualquier hora.
     // Si escribe «transferencia» en el chat igual se le dan los datos (lo resuelve atencion.ts).
