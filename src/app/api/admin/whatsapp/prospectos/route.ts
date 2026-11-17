@@ -16,7 +16,7 @@ import { avisarReparto, crearPlantillaReparto, crearPlantillaRepartoHoy } from "
 import { crearPlantillaSeguimiento } from "@/lib/seguimiento";
 import { correrReactivacion, crearPlantillaReactivacion } from "@/lib/reactivacion";
 import { correrRecompra, crearPlantillaRecompra } from "@/lib/recompra";
-import { correrRegalo, crearPlantillaRegalo } from "@/lib/regalo-recetas";
+import { correrRegalo, crearPlantillaRegalo, topeRegalo } from "@/lib/regalo-recetas";
 import { avisarViajeCordoba, crearPlantillaViaje } from "@/lib/viaje-cordoba";
 import { leerConfig } from "@/lib/config";
 import { zonaPagaDe } from "@/lib/envios/tabla";
@@ -70,8 +70,8 @@ export async function POST(req: Request) {
     return NextResponse.json(await avisarViajeCordoba(telefonos, c.cuando.trim().slice(0, 40), zonaPagaDe(cfgViaje.tabla)?.precio ?? null));
   }
   if (cuerpo.accion === "plantilla-regalo") return NextResponse.json(await crearPlantillaRegalo());
-  // Regalo de recetas a clientes: sin `forzar: true` solo dice a quién le llegaría.
-  if (cuerpo.accion === "regalo") return NextResponse.json(await correrRegalo(cuerpo.forzar !== true));
+  // Regalo de recetas a clientes: sin `forzar: true` solo dice a quién le llegaría. Por tandas: `cantidad` (20 por defecto, 40 como mucho).
+  if (cuerpo.accion === "regalo") return NextResponse.json(await correrRegalo(cuerpo.forzar !== true, topeRegalo(cuerpo.cantidad)));
   if (cuerpo.accion === "recompra") return NextResponse.json(await correrRecompra());
   // Captación orgánica: cargar negocios a la lista, correr el día ahora, ver las lecciones.
   if (cuerpo.accion === "semilla") return NextResponse.json(await cargarSemilla(Array.isArray(cuerpo.lista) ? (cuerpo.lista as Semilla[]) : []));

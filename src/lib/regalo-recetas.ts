@@ -5,6 +5,9 @@
 import { prisma } from "./prisma";
 import { primerNombre } from "./whatsapp-interactivo";
 import { telefonoWa } from "./telefono";
+import { REGALO_TOPE_DEFECTO } from "./regalo-tope";
+
+export { topeRegalo } from "./regalo-tope";
 
 // v2: la v1 decía «26 recetas» y son 25; sin número no queda vieja cuando se sumen más.
 export const PLANTILLA_REGALO = "acopio_regalo_recetas_v2";
@@ -40,11 +43,14 @@ async function plantilla(tel: string, nombre: string): Promise<boolean> {
   return Boolean(res?.ok);
 }
 
-/** Con `simular` solo dice a quién le llegaría. */
-export async function correrRegalo(simular: boolean): Promise<{ simulado: boolean; destinatarios: string[]; enviados: string[]; fallidos: number }> {
-  const lista = await candidatos();
-  const destinatarios = lista.map((c) => c.nombre);
-  if (simular) return { simulado: true, destinatarios, enviados: [], fallidos: 0 };
+/** Con `simular` solo dice a quién le llegaría. Manda como mucho `tope` (ver topeRegalo); `pendientes` son los que quedan. */
+export async function correrRegalo(simular: boolean, tope: number = REGALO_TOPE_DEFECTO): Promise<{ simulado: boolean; destinatarios: string[]; enviados: string[]; fallidos: number; pendientes: number }> {
+  const todos = await candidatos();
+  const lista = todos.slice(0, Math.max(0, tope));
+  const pendientes = todos.length - lista.length;
+  // Solo el primer nombre: la respuesta la leen agentes y no hace falta el nombre completo del cliente.
+  const destinatarios = lista.map((c) => primerNombre(c.nombre) || "cliente");
+  if (simular) return { simulado: true, destinatarios, enviados: [], fallidos: 0, pendientes };
   const enviados: string[] = [];
   let fallidos = 0;
   for (const c of lista) {
@@ -56,11 +62,12 @@ export async function correrRegalo(simular: boolean): Promise<{ simulado: boolea
         INSERT INTO "WhatsappConversacion" ("telefono", "nombre", "ultimoMensaje") VALUES (${tel}, ${c.nombre}, now())
         ON CONFLICT ("telefono") DO UPDATE SET "ultimoMensaje" = now()`;
       await prisma.$executeRaw`INSERT INTO "WhatsappMensaje" ("id", "telefono", "de", "texto") VALUES (${`regalo.${tel}.${Date.now()}`}, ${tel}, 'bot', ${textoRegalo(nombre)})`;
-      enviados.push(c.nombre);
+      enviados.push(primerNombre(c.nombre) || "cliente");
     } else fallidos++;
     await new Promise((r) => setTimeout(r, 500));
   }
-  return { simulado: false, destinatarios, enviados, fallidos };
+  console.log("regalo: tanda enviada", { enviados: enviados.length, fallidos, pendientes });
+  return { simulado: false, destinatarios, enviados, fallidos, pendientes };
 }
 
 export async function crearPlantillaRegalo(): Promise<unknown> {
