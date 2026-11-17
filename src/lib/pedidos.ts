@@ -103,9 +103,10 @@ export async function prepararEnvio(entrada: unknown, cpCrudo: string, provincia
   };
 }
 
-export function totales(subtotal: number, envio: number, medioPago: MedioPago, cfg: Config, extraPct = 0, envioFijo = false) {
+/** `transferible`: la parte del subtotal que lleva descuento por transferencia (todo menos los combos de precio único). */
+export function totales(subtotal: number, envio: number, medioPago: MedioPago, cfg: Config, extraPct = 0, envioFijo = false, transferible = subtotal) {
   // El extra es el beneficio por recomendación: se suma al de transferencia, sobre los productos.
-  const descuentoExacto = redondear2((medioPago === "TRANSFERENCIA" ? (subtotal * cfg.descuentoTransferenciaPct) / 100 : 0) + (subtotal * extraPct) / 100);
+  const descuentoExacto = redondear2((medioPago === "TRANSFERENCIA" ? (transferible * cfg.descuentoTransferenciaPct) / 100 : 0) + (subtotal * extraPct) / 100);
   // Con tarjeta el envío va con la comisión adentro; por transferencia sale lo que cuesta.
   const envioCobrado = envioQueSeCobra(envio, medioPago, cfg.comisionPagoPct, envioFijo);
   // Total redondo (a $100, para abajo: la diferencia va como descuento): «$33.200», no «$33.258».
@@ -137,7 +138,7 @@ export async function crearPedido(args: { lineas?: unknown; cliente?: unknown; e
   const subtotal = prep.cotizacion.subtotal;
   const origenCrudo = typeof args.origen === "string" ? args.origen : "";
   const beneficio = await beneficioRecomendacion({ telefono: cliente.telefono, email: cliente.email, origen: origenCrudo }).catch(() => null);
-  const { descuento, envioCobrado, total, comisionPago } = totales(subtotal, opcion.precio, medioPago, cfg, beneficio?.pct ?? 0, opcion.modalidad === "propia");
+  const { descuento, envioCobrado, total, comisionPago } = totales(subtotal, opcion.precio, medioPago, cfg, beneficio?.pct ?? 0, opcion.modalidad === "propia", prep.cotizacion.subtotalTransferible);
   const pedido = await prisma.order.create({
     data: {
       token: randomBytes(18).toString("base64url"),
@@ -343,7 +344,7 @@ export async function crearPedidoWhatsapp(a: {
   // El envío propio se cobra tal cual, sin recargo por comisión; y a nosotros nos cuesta $0 (lo llevamos nosotros).
   const { descuento, envioCobrado, total, comisionPago } = mayoristaPct
     ? totales(cotizacion.subtotal, envio, a.medioPago, { ...cfg, descuentoTransferenciaPct: 0 }, mayoristaPct, propia)
-    : totales(cotizacion.subtotal, envio, a.medioPago, cfg, 0, propia);
+    : totales(cotizacion.subtotal, envio, a.medioPago, cfg, 0, propia, cotizacion.subtotalTransferible);
   const charla = await prisma.$queryRaw<{ anuncioTitulo: string | null; prospecto: string | null }[]>`SELECT "anuncioTitulo", "prospecto" FROM "WhatsappConversacion" WHERE "telefono" = ${a.telefono}`;
   // Si vino de la web con un link con utm (consultorio, alianza) y tocó «Pedir por WhatsApp», el mensaje trae «Vengo de: …».
   const campania = charla[0]?.prospecto || charla[0]?.anuncioTitulo ? null : campaniaEnMensajes(

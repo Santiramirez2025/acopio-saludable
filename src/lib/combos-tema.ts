@@ -6,6 +6,8 @@
 //
 // Puro (sin base): se prueba sin gastar nada.
 
+import { pctTransferenciaCombo } from "./precio-fijo";
+
 export type Tema = { id: string; nombre: string; patron: RegExp; slugs: string[] };
 
 /** El orden importa: gana el primero que coincide. Sin TACC va antes que todo lo demás. */
@@ -50,7 +52,7 @@ export function totalTransferencia(precio: number, pct: number): number {
  * sí mueven el precio por kilo (si todo se vende por peso) y el precio por transferencia.
  */
 export function argumentoCombo(
-  c: { precio: number; items: { cantidad: number; producto: { contenido: number | null; unidad: string | null } }[] },
+  c: { slug?: string; precio: number; items: { cantidad: number; producto: { contenido: number | null; unidad: string | null } }[] },
   descuentoTransferenciaPct: number,
   pesos: (n: number) => string,
 ): { porKilo: string | null; transferencia: string | null; corto: string } {
@@ -65,6 +67,7 @@ export function argumentoCombo(
     gramos += producto.contenido * (u === "kg" ? 1000 : 1) * cantidad;
   }
   const porKilo = todoPorPeso && gramos >= 1000 ? `${pesos(Math.round(c.precio / (gramos / 1000)))} el kilo` : null;
-  const transferencia = descuentoTransferenciaPct > 0 ? `${pesos(totalTransferencia(c.precio, descuentoTransferenciaPct))} por transferencia` : null;
+  const pctT = pctTransferenciaCombo(c.slug, descuentoTransferenciaPct);
+  const transferencia = pctT > 0 ? `${pesos(totalTransferencia(c.precio, pctT))} por transferencia` : null;
   return { porKilo, transferencia, corto: porKilo ?? transferencia ?? "" };
 }

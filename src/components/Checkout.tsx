@@ -102,7 +102,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
 
   const opcion = envio?.opciones.find((o) => o.id === opcionId);
   const subtotal = cotizacion.subtotal;
-  const descuento = medio === "TRANSFERENCIA" ? Math.round(subtotal * descuentoTransferenciaPct) / 100 : 0;
+  const descuento = medio === "TRANSFERENCIA" ? Math.round((cotizacion.subtotalTransferible ?? subtotal) * descuentoTransferenciaPct) / 100 : 0;
   const descuentoAmigo = beneficio.pct > 0 ? Math.round(subtotal * beneficio.pct) / 100 : 0;
   // Mismo cálculo que el servidor: con tarjeta el envío lleva la comisión adentro.
   const precioEnvio = (p: number, fijo = false) => envioQueSeCobra(p, medio === "MERCADOPAGO" ? "MERCADOPAGO" : "TRANSFERENCIA", comisionPagoPct, fijo);

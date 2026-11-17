@@ -27,6 +27,7 @@ import { catalogo } from "./asistente-catalogo";
 import { leerConfig } from "./config";
 import { MINIMO_ZONA_PAGA } from "./envios/tabla";
 import { pesos, precioTransferencia, renglonCombo } from "./precios";
+import { baseTransferencia, pctTransferenciaCombo, PRECIO_FIJO_DESDE } from "./precio-fijo";
 import { sinLoEnEspera } from "./recompra-reglas";
 import { zonaSinMinimo } from "./minimo-zona";
 
@@ -533,12 +534,15 @@ export async function atender(e: Entrada): Promise<void> {
     const previo = [...(await historialDe(e.clave, 9)).slice(0, -1)].reverse().find((h) => h.de === "acopio")?.texto ?? "";
     if (vaATransferir(texto) || pideDatosTransferencia(texto, previo)) {
       const cfg = await leerConfig();
-      const orden = await prisma.order.findUnique({ where: { id: Number(guardado.slice(6)) || 0 } }).catch(() => null);
+      const orden = await prisma.order.findUnique({ where: { id: Number(guardado.slice(6)) || 0 }, include: { items: true } }).catch(() => null);
       if (orden && orden.estado === "PENDIENTE_PAGO" && cfg.transferenciaDatos) {
+        // Combos de precio único (Trío, 16/11): sin descuento por transferencia. A los pedidos anteriores se les respeta lo prometido.
+        const sub = Number(orden.subtotal);
+        const base = orden.createdAt >= PRECIO_FIJO_DESDE ? baseTransferencia(orden.items.map((i) => ({ comboSlug: i.comboSlug, importe: Number(i.precioUnitario) * i.cantidad }))) : sub;
         const monto =
           orden.medioPago === "TRANSFERENCIA"
             ? Number(orden.total)
-            : (precioTransferencia(Number(orden.subtotal), cfg.descuentoTransferenciaPct) ?? Number(orden.subtotal)) + Number(orden.envioCobrado);
+            : sub - base + (precioTransferencia(base, cfg.descuentoTransferenciaPct) ?? base) + Number(orden.envioCobrado);
         const quien = e.nombre ? `, ${primerNombre(e.nombre)}` : "";
         console.log("chat: va a transferir con pedido hecho, monto y alias directo", cola(e.clave), orden.id);
         await responder(
@@ -799,7 +803,7 @@ export async function pensar(c: {
       const elegido = combo ?? (await combosTienda({ slug: "trio-de-frutos-secos" })).find((d) => d.disponible) ?? null;
       if (elegido && !c.historial.some((h) => h.de === "acopio" && h.texto.includes(`c-${elegido.slug}*`))) {
         const cfg = await leerConfig();
-        const pct = cfg.descuentoTransferenciaPct;
+        const pct = pctTransferenciaCombo(elegido.slug, cfg.descuentoTransferenciaPct);
         const texto = textoComboSinIA({
           combo: elegido,
           conTransferencia: pct > 0 ? Math.floor((elegido.precio * (1 - pct / 100)) / 100) * 100 : null,

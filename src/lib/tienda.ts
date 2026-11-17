@@ -11,6 +11,7 @@ import type { Combo, ComboItem, Prisma, Product } from "@prisma/client";
 import { prisma } from "./prisma";
 import { leerConfig } from "./config";
 import { proximoCorte } from "./corte";
+import { baseTransferencia } from "./precio-fijo";
 import { calcularCombo, contenidoNeto, renglonCombo, precioRedondo, precioSugerido, precioTransferencia, precioVenta, redondear2 } from "./precios";
 import { wherePublicado, esSinTacc, textosSeguros } from "./filtros-producto";
 import { prolijo } from "./nombres";
@@ -183,6 +184,8 @@ export type Cotizacion = {
   envioBajoMinimo: number;
   /** Total con el descuento por transferencia; null si no hay descuento. */
   conTransferencia: number | null;
+  /** Parte del subtotal con descuento por transferencia (los combos de precio único quedan afuera). */
+  subtotalTransferible: number;
   /** Lo que ganaría revendiendo todo al precio sugerido; 0 si el sugerido está apagado. */
   gananciaReventa: number;
   /** Próximo corte de compra (ISO) o null. */
@@ -247,6 +250,7 @@ export async function cotizarCarrito(entrada: unknown, minimo?: number): Promise
   }
   const subtotal = redondear2(lineas.reduce((s, l) => s + l.subtotal, 0));
   const falta = Math.max(0, redondear2(compraMinima - subtotal));
+  const subtotalTransferible = baseTransferencia(lineas.map((l) => ({ comboSlug: l.tipo === "combo" ? l.id : null, importe: l.subtotal })));
   return {
     lineas,
     subtotal,
@@ -260,7 +264,8 @@ export async function cotizarCarrito(entrada: unknown, minimo?: number): Promise
     puedePagarEnZona: subtotal > 0 && (subtotal >= minimoPropia || cfg.envioBajoMinimo > 0),
     envioBajoMinimo: cfg.envioBajoMinimo,
     // Igual que el total del pedido: a $100 para abajo (lo que se dice en el chat es lo que se cobra).
-    conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotal > 0 ? Math.floor((subtotal * (1 - cfg.descuentoTransferenciaPct / 100)) / 100) * 100 : null,
+    conTransferencia: cfg.descuentoTransferenciaPct > 0 && subtotalTransferible > 0 ? Math.floor((subtotal - (subtotalTransferible * cfg.descuentoTransferenciaPct) / 100) / 100) * 100 : null,
+    subtotalTransferible,
     gananciaReventa: redondear2(gananciaReventa),
     corte: proximoCorte(new Date(), cfg.corteDias, cfg.corteHora)?.toISOString() ?? null,
   };

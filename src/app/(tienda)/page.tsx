@@ -15,6 +15,7 @@ import { BotonCargarPedido } from "@/components/Carrito";
 import { DestacadoComboInicio, DestacadoInicio } from "@/components/DestacadoInicio";
 import { DESTACADO_PRODUCTO, DESTACADO_SI_FALTA, elegirDestacado } from "@/lib/destacado-inicio";
 import { totalTransferencia } from "@/lib/combos-tema";
+import { pctTransferenciaCombo } from "@/lib/precio-fijo";
 import { DibujoNutri } from "@/components/Nutri";
 import { ListaCombo, RielOfertas, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
 import { ofertasDelProveedor } from "@/lib/ofertas";
@@ -95,7 +96,7 @@ export default async function Home() {
               <DestacadoComboInicio
                 c={destacado.c}
                 etiqueta={destacado.c.slug === "kit-semanal" ? "Para toda la semana" : zonaSinMinimo(cfg) && destacado.c.precio >= umbralZona(cfg) ? "Combo · sin cargo en Carlos Paz" : "Combo de la semana"}
-                transferencia={cfg.descuentoTransferenciaPct > 0 ? totalTransferencia(destacado.c.precio, cfg.descuentoTransferenciaPct) : null}
+                transferencia={pctTransferenciaCombo(destacado.c.slug, cfg.descuentoTransferenciaPct) > 0 ? totalTransferencia(destacado.c.precio, cfg.descuentoTransferenciaPct) : null}
               />
             )}
             <Link href="/catalogo" className="mt-4 inline-flex min-h-[48px] items-center gap-2 text-sm font-semibold text-white underline-offset-4 hover:underline">
