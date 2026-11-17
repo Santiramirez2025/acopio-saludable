@@ -10,7 +10,7 @@ export type Rubro = "hotel" | "cabañas / complejo" | "departamentos / alquiler 
 type Plantilla = { nombre: string; cuerpo: string; botones: [string, string]; contexto: string };
 
 /** Qué plantilla le toca a cada rubro y qué tiene que saber el vendedor cuando contestan. */
-export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" | "dietetica", Plantilla> = {
+export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" | "dietetica" | "regalos", Plantilla> = {
   desayuno: {
     // v3 (Martín 11/11): sin «sin TACC» (la v2 lo prometía y por eso estaba frenada) y cierra con la
     // pregunta de precio de la venta en frío (política 3/11, punto 6).
@@ -82,6 +82,23 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "Entrega sin cargo en Carlos Paz y la zona; Córdoba Capital $15.000, sin cargo desde $150.000. " +
       "Si confirma, anotá qué lleva, cuántos y la dirección del local, y decile que Leo le confirma el total y que sale apenas se acredite el pago.",
   },
+  regalos: {
+    // 16/11 (Santiago: «no puede pasar otro día sin recibir nada; buscá en mejores lugares con mejores ofertas»).
+    // Las plantillas de abastecimiento preguntaban el precio que paga hoy y nadie contestó (0 respuestas).
+    // Esta va a empresas en el mes en que deciden el regalo de fin de año: oferta concreta, de temporada,
+    // y una pregunta que se contesta con un número.
+    nombre: "acopio_empresas_regalos_v1",
+    cuerpo:
+      "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
+      "Armamos las cajas de fin de año para equipos y clientes: frutos secos, garrapiñadas, pan dulce y chocolates, con la tarjeta de su empresa y entrega sin cargo en Carlos Paz.\n\n" +
+      "Usted me dice para cuántas personas y cuánto quiere gastar por caja, y hoy mismo le mando 3 opciones con foto. ¿Para cuántas personas sería?",
+    botones: ["Pasame opciones", "No, gracias"],
+    contexto:
+      "le escribimos nosotros ofreciendo las cajas de fin de año para su equipo o sus clientes y le preguntamos para cuántas personas. " +
+      "PRIMERO anotá cuántas cajas quiere, el presupuesto por caja y para qué fecha. Con eso proponé 3 opciones reales de menor a mayor con precio de buscar_productos (los combos de Navidad: Mesa navideña, Regalo navideño, Pan dulce casero, y cajas a medida con frutos secos, garrapiñadas y chocolates) y mandá la foto con mandar_fotos. " +
+      "Cada caja va con bolsa de regalo y una tarjeta con el nombre de la empresa. No calcules descuentos de tu cuenta: desde 10 cajas, decile que Leo, de ventas a empresas, le confirma el precio por cantidad por este chat. " +
+      "Se paga antes de entregar, por transferencia (con factura) o Mercado Pago. Entrega sin cargo en Carlos Paz; a Córdoba Capital, el envío que dé costo_envio. Atendelo como cliente de negocio: usá pedido_para_negocio con «empresa».",
+  },
 };
 
 /**
@@ -107,6 +124,7 @@ export function rubroHabilitado(rubro: string): boolean {
 }
 
 export function plantillaDe(rubro: string): keyof typeof PLANTILLAS {
+  if (/empresa|estudio|inmobili|concesion|cl[ií]nica|consultor|constructora|seguros|oficina|f[aá]brica|industria|colegio|instituto|sanatorio|banco|mutual|cooperativa|regalo/i.test(rubro)) return "regalos";
   if (rubro === "hotel" || rubro === "hostel") return "desayuno";
   if (/gimnas|yoga|pilates|crossfit|funcional/i.test(rubro)) return "gimnasio";
   if (/diet|almac[eé]n natural|naturista|granel|herbor/i.test(rubro)) return "dietetica";
