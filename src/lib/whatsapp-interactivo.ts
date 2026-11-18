@@ -731,6 +731,9 @@ export function listaDeProductos(texto: string): string[] {
   // (a Vanesa, 31/10, su audio transcripto se contestó «Hola — no lo tenemos… Total $0»).
   const sinEtiquetas = texto.replace(/<(\w+)>[\s\S]*?<\/\1>/g, "");
   if (/^\s*\[Mandó/.test(sinEtiquetas) || /\[Mandó (un audio|una foto|un archivo|el comprobante|un comprobante)/.test(texto)) return [];
+  // El botón «Pedir por WhatsApp» de la web manda «Hola! Quiero pedir: • 1 × Kit semanal…: $ 25.000 (…) ¿Me ayudás con el
+  // pedido?». Es un pedido armado, no una lista para cotizar: a Carla (18/11) el Kit semanal se le contestó «— no lo tenemos».
+  if (/quiero pedir:\s*[\s\S]*?\d+\s*[×x]\s/i.test(sinEtiquetas) && /me ayud[aá]s con el pedido/i.test(sinEtiquetas)) return [];
   const limpio = sinEtiquetas
     .replace(/^[\s\S]*?(precios?|cu[aá]nto sale[n]?|cotiz[aá]me|necesito|quiero|busco)( saber)?( el| los)?( precios?)?( de| del)?\s*[:\-]?/i, (m) => (m.length < 80 ? "" : m))
     .replace(/\b(por|x)\s*(kg|kilo)\b/gi, "");

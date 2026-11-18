@@ -1684,6 +1684,15 @@ test("vendedor: detecta una lista de productos para contestar cada uno", async (
   assert.deepEqual(listaDeProductos("[Mandó una foto: comprobante de transferencia\n- Al alias acopio.saludable\n- Con motivo Cuotas\n- Sin producto ni combo identificable.]"), []);
 });
 
+test("vendedor: el mensaje del botón de la web («Quiero pedir: • 1 × Kit semanal…») no es una lista a cotizar (Carla 18/11)", async () => {
+  const { listaDeProductos } = await import("./whatsapp-interactivo");
+  const carla = "Hola! Quiero pedir:\n• 1 × Kit semanal · desayuno y colación: $ 25.000\n  (Dátiles con carozo x 500 g, Granola tradicional x 1 kg, Mix de semillas (lino, chía y sésamo) x 500 g, Mix Clásico con cajú y girasol x 500 g)\n¿Me ayudás con el pedido?";
+  assert.deepEqual(listaDeProductos(carla), []);
+  assert.deepEqual(listaDeProductos("Hola! Quiero pedir:\n• 1 × Nuez Mariposa blanca light x 1 kg: $ 20.500\n¿Me ayudás con el pedido?"), []);
+  // Una lista escrita por la persona se sigue cotizando renglón por renglón.
+  assert.equal(listaDeProductos("Quiero pedir: nueces, almendras y pasas").length, 3);
+});
+
 
 test("vendedor: una «lista» sin productos no reemplaza la respuesta (Graciela 31/10)", async () => {
   const { listaDeVerdad } = await import("./whatsapp-interactivo");
