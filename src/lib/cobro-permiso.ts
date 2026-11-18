@@ -21,3 +21,14 @@ export function alRecibirBloqueo(
   if (zona !== "propia" && zona !== "capital") return "fuera de la zona de reparto propio se cobra antes (o falta la ciudad): lo decide Santiago desde el panel";
   return null;
 }
+
+// 17/11 (Martín, experimento B): el bot le dice «sí, lo pagás cuando te lo llevo» a quien ya tiene un pedido por
+// transferencia (regla del 16/11), pero el pedido seguía TRANSFERENCIA (AS-86, 92 y 105): Gonza cobraba con el dato
+// equivocado y el experimento contaba mal el modo. El bot lo pasa solo en el caso más estrecho: pedido por
+// transferencia, esperando el pago, sin pagar y con ciudad de la zona de reparto propio (no Córdoba capital).
+export function botPasaAlRecibir(
+  pedido: { estado: string; medioPago: string; pagado: boolean },
+  zona: "propia" | "capital" | "correo" | null,
+): boolean {
+  return pedido.medioPago === "TRANSFERENCIA" && zona === "propia" && alRecibirBloqueo(pedido, zona) === null;
+}
