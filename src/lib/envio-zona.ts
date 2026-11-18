@@ -77,6 +77,17 @@ export function envioZonaPropia(cfg: ReglaMinimo & { plazoEntregaPropia: string 
 }
 
 /**
+ * Lo que se cobra de envío al crear un pedido del chat en la zona de reparto propio: el cargo de la vecina
+ * (Icho Cruz $4.000, Tanti/Bialet $5.000) o, en Carlos Paz, la regla del umbral. Es el mismo número que el chat
+ * le cotizó con envioZonaPropia. El 18/11 AS-127 (Icho Cruz, $28.000 al cliente) quedó en el panel en $24.000
+ * «sin cargo», porque el pedido usaba solo el umbral de Carlos Paz.
+ */
+export function envioPedidoZonaPropia(cfg: ReglaMinimo, lugar: string, subtotal: number): number {
+  const cargo = cargoVecinaPorLugar(lugar);
+  return cargo > 0 ? envioVecina(cargo, subtotal) : envioPropioPara(cfg, subtotal);
+}
+
+/**
  * Fuera de la zona propia (Córdoba Capital, correo) rige la compra mínima general. El 12 y 13/11 el bot le dijo
  * «envío $15.000» a Luis (Urca) y a Graciela (Córdoba) sin el mínimo de $60.000, y el checkout después no los
  * dejaba pagar: Nico los rearmó a mano. Se dice en el mismo mensaje del costo, antes del checkout.

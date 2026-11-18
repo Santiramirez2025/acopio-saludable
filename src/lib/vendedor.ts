@@ -9,6 +9,7 @@
 // 3) Las instrucciones y las herramientas van con cache_control: son idénticas en cada mensaje,
 //    así que se cobran una vez cada cinco minutos en lugar de una vez por mensaje.
 
+import { sinFrasesDeCobroProhibidas } from "./frases-cobro";
 import { claves, palabrasDeRespaldo } from "./lista-palabras";
 import { bloqueLeccionesVendedor } from "./organico";
 import { bloqueTemporada } from "./temporada";
@@ -946,6 +947,7 @@ export async function responderComoVendedor(
           }
           fichas = [];
         }
+        texto = sinFrasesDeCobroProhibidas(texto);
         const mostradas = sep.texto ? fichasNombradas(fichas, texto) : fichas.slice(0, 4);
         return {
           texto,
