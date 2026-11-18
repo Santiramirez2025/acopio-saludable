@@ -920,6 +920,9 @@ import { pagaAlRecibir, tieneDireccion } from "./whatsapp-interactivo";
 test("pago aquí y dirección", () => {
   for (const t of ["Pago aquí.", "pago cuando me lo traes", "Lo pago al recibir", "en efectivo", "contra entrega", "te pago aca"]) assert.ok(pagaAlRecibir(t), t);
   for (const t of ["¿puedo pagar al recibir?", "Mi nombre es Juan.", "quiero la despensa", "transferencia"]) assert.ok(!pagaAlRecibir(t), t);
+  // 18/11 (seguridad): una negación no es «paga al recibir» (crearía o pasaría el pedido a cobrar al entregar).
+  for (const t of ["no lo pago al recibir, te transfiero ahora", "prefiero transferir, no al recibir", "al recibir no puedo, transfiero", "No, contra entrega no", "efectivo no tengo", "no tengo efectivo, te transfiero", "sin pago al recibir, transfiero ya"]) assert.ok(!pagaAlRecibir(t), t);
+  for (const t of ["no hay problema, lo pago al recibir", "no tengo mercado pago, pago en efectivo", "dale, pago en efectivo cuando llegue", "No, mejor al recibir"]) assert.ok(pagaAlRecibir(t), t);
   for (const t of ["La dirección es Cartago 100, esquina Rosario casa blanca", "Río Salado 451 Barrio El Fantasio", "Av. San Martín 1200"]) assert.ok(tieneDireccion(t), t);
   for (const t of ["Pago aquí.", "gracias", "quiero 2 kilos"]) assert.ok(!tieneDireccion(t), t);
 });
