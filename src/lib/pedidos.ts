@@ -11,8 +11,7 @@ import { cotizarEnvio } from "./envios/cotizar";
 import { cpEnLista, normalizarCp, zonaDeProvincia } from "./envios/geo";
 import { MINIMO_ZONA_PAGA } from "./envios/tabla";
 import { cargoVecinaPorCp } from "./envios/vecinas";
-import { zonaDeLugar } from "./envio-zona";
-import { envioPropioPara } from "./minimo-zona";
+import { envioPedidoZonaPropia, zonaDeLugar } from "./envio-zona";
 import type { Bulto, OpcionEnvio } from "./envios/tipos";
 import { enviarEmail, escaparHtml } from "./email";
 import { SITIO, urlSitio } from "./sitio";
@@ -339,7 +338,7 @@ export async function crearPedidoWhatsapp(a: {
   // En la zona de reparto propio el envío lo decide el subtotal real (sin cargo desde el umbral; abajo, el fijo),
   // no lo que traía el botón: el pedido pudo cambiar entre que se cotizó el lugar y que tocó pagar.
   const zonaPropia = cfg.entregaPropiaActiva && zonaDeLugar(a.envio.lugar, null)?.tipo === "propia";
-  const envio = zonaPropia ? envioPropioPara(cfg, cotizacion.subtotal) : (a.envio.costo ?? 0);
+  const envio = zonaPropia ? envioPedidoZonaPropia(cfg, a.envio.lugar, cotizacion.subtotal) : (a.envio.costo ?? 0);
   const propia = zonaPropia || (a.envio.costo !== null && (a.envio.costo === 0 || a.medioPago === "AL_RECIBIR"));
   // El envío propio se cobra tal cual, sin recargo por comisión; y a nosotros nos cuesta $0 (lo llevamos nosotros).
   const { descuento, envioCobrado, total, comisionPago } = mayoristaPct
