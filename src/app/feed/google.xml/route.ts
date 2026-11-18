@@ -7,6 +7,7 @@ import { medida } from "@/lib/precios";
 import { SITIO, urlSitio } from "@/lib/sitio";
 import { descripcionFeed, tituloLimpio } from "@/lib/producto-ld";
 import { PRODUCTOS_PROVEEDORES } from "@/lib/catalogo-proveedores";
+import { fotoFeed } from "@/lib/foto-feed";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +16,16 @@ const x = (t: string) => t.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;
 // Google rechaza como «drogas ilegales» todo lo que nombre cannabis o cáñamo, aunque sea harina o semilla: no se manda.
 const NO_ENVIAR = /can+abis|c[aá]ñamo|hemp/i;
 
-/** Catálogo para Google Merchant Center (fichas gratuitas de Shopping). Solo productos publicados y con foto. */
+/** Catálogo para Google Merchant Center (fichas gratuitas de Shopping). Solo productos publicados y con foto del producto (no las tarjetas ilustradas: ver foto-feed.ts). */
 export async function GET() {
   const cfg = await leerConfig();
   const base = urlSitio();
   const filas = await prisma.product.findMany({ where: { AND: [wherePublicado(cfg.margenMinimoPct), { fotoUrl: { not: null } }, { categoria: { not: "Congelados" } }] }, orderBy: { codigo: "asc" } });
-  const items = filas.filter((f) => !NO_ENVIAR.test(`${f.producto} ${f.presentacion}`)).map((f) => {
+  const items = filas.filter((f) => !NO_ENVIAR.test(`${f.producto} ${f.presentacion}`)).flatMap((f) => {
     const p = aTienda(f, cfg);
-    const foto = p.fotoUrl!.startsWith("/") ? `${base}${p.fotoUrl}` : p.fotoUrl!;
+    const img = fotoFeed(p.codigo, p.fotoUrl);
+    if (!img) return [];
+    const foto = img.startsWith("/") ? `${base}${img}` : img;
     const titulo = tituloLimpio(`${p.producto} ${p.presentacion}`).slice(0, 150);
     // Misma descripción que la ficha (y que su JSON-LD): el «por qué lo elegimos» si existe.
     const porQue = f.porQueLoElegimos ?? PRODUCTOS_PROVEEDORES.find((q) => q.codigo === f.codigo)?.porQueLoElegimos ?? null;
