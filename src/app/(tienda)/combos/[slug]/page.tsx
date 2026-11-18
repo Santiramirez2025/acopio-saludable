@@ -117,7 +117,7 @@ export default async function ComboPagina({ params }: Props) {
           {faltaParaMinimo > 0 && (
             <p className="text-xs text-stone-600">
               {zonaSinMinimo(cfg)
-                ? `En Villa Carlos Paz y la zona lo podés pedir así${c.precio >= umbralZona(cfg) ? " con entrega sin cargo" : ` (entrega ${pesos(cfg.envioBajoMinimo)}; sin cargo desde ${pesos(umbralZona(cfg))})`}. Para envíos al resto del país la compra mínima es ${pesos(cfg.compraMinima)}: sumá ${pesos(faltaParaMinimo)} más y ya podés comprar: `
+                ? `En Villa Carlos Paz lo podés pedir así${c.precio >= umbralZona(cfg) ? " con entrega sin cargo" : ` (entrega ${pesos(cfg.envioBajoMinimo)}; sin cargo desde ${pesos(umbralZona(cfg))})`}; al resto de la zona te lo llevamos con un costo según la localidad. Para envíos al resto del país la compra mínima es ${pesos(cfg.compraMinima)}: sumá ${pesos(faltaParaMinimo)} más y ya podés comprar: `
                 : `La compra mínima es ${pesos(cfg.compraMinima)}${c.precio >= cfg.compraMinimaPropia && cfg.compraMinimaPropia < cfg.compraMinima ? " (en Villa Carlos Paz y el sur de Punilla ya llega: ahí el mínimo es " + pesos(cfg.compraMinimaPropia) + ")" : ""}. Sumá ${pesos(faltaParaMinimo)} más y ya podés comprar: `}<Link href="/catalogo" className="font-semibold text-acopio-700 underline underline-offset-2">elegí del catálogo</Link> o <Link href="/combos" className="font-semibold text-acopio-700 underline underline-offset-2">mirá otro combo</Link>.
             </p>
           )}

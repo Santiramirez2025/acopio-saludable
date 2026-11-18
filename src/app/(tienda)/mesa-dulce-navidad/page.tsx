@@ -3,7 +3,7 @@ import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
-import { umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { textoEntregaZona, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { GRUPOS, MESA_DULCE, presupuestoMesa } from "@/lib/mesa-dulce";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
@@ -43,7 +43,7 @@ export default async function MesaDulceNavidad() {
     ...(p8 ? [["¿Cuánto sale armar una mesa dulce para 8 personas?", `Con nuestros precios de hoy, unos ${pesos(p8.total)} (${pesos(p8.porPersona)} por persona), contando envases enteros. El precio exacto lo ves en el carrito.`] as [string, string]] : []),
     ...(mesa ? [["¿Qué trae el combo Mesa navideña?", `${mesa.items.map((i) => i.producto.producto).join(", ")}. Sale ${pesos(mesa.precio)}.`] as [string, string]] : []),
     ["¿Cuánto antes conviene comprar?", "Los frutos secos y las garrapiñadas en frasco hermético se mantienen bien varias semanas, así que podés comprar a principios de diciembre y evitar las corridas de la última semana."],
-    ["¿Hacen entrega en Carlos Paz?", `Sí. Entregamos en Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca, en ${cfg.plazoEntregaPropia}, ${sinMinimo ? `sin compra mínima (sin cargo desde ${minimo}; si no, el envío cuesta ${pesos(cfg.envioBajoMinimo)})` : `con compra mínima de ${minimo}`}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
+    ["¿Hacen entrega en Carlos Paz?", `Sí, en ${cfg.plazoEntregaPropia}${sinMinimo ? ", sin compra mínima" : `, con compra mínima de ${minimo}`}. ${textoEntregaZona(cfg)} A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
     ["¿Cómo pago?", "Por transferencia, con descuento, o con Mercado Pago. El pedido sale cuando el pago está acreditado."],
   ];
 
@@ -118,7 +118,7 @@ export default async function MesaDulceNavidad() {
               </tbody>
             </table>
           </div>
-          <p className="mt-2 text-xs text-stone-600">En Carlos Paz y la zona la entrega es sin cargo desde {minimo}. Pagando por transferencia sale menos.</p>
+          <p className="mt-2 text-xs text-stone-600">En Villa Carlos Paz la entrega es sin cargo desde {minimo}; al resto de la zona, con costo según la localidad. Pagando por transferencia sale menos.</p>
         </section>
       )}
 

@@ -231,14 +231,18 @@ async function cerrarVenta(
     return;
   }
   const total = pesos(Number(pedido.total));
-  const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "más el envío, que te confirmo";
+  const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "con envío sin cargo si es en Carlos Paz (si es en otra localidad, te confirmo el costo)";
+  // 18/11: a Cris (Av. Cárcano, Carlos Paz) le llegó «$22.000 más el envío, que te confirmo» después de que el bot le dijo «sin cargo».
+  // 17/11 (Santiago): dos precios según CUÁNDO paga. Al recibir, el de lista; pagando antes por transferencia, con descuento.
+  const antes = medio === "AL_RECIBIR" ? precioTransferencia(Number(pedido.subtotal), cfg.descuentoTransferenciaPct) : null;
+  const ahorroAntes = antes && antes < Number(pedido.subtotal) ? `. Si preferís pagarlo antes por transferencia, te queda en ${pesos(antes + Number(pedido.envioCobrado))}: decime y te paso el alias` : "";
   // Ya pasó la dirección: no se le vuelve a pedir nada. Se confirma y listo.
   if (direccion) await completarEntrega(pedido.id, { direccion });
   const partes = direccion
     ? [
         medio === "TRANSFERENCIA"
           ? `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}${cfg.descuentoTransferenciaPct > 0 ? `, ya con el ${cfg.descuentoTransferenciaPct}% de descuento por transferencia` : ""}. Va a ${direccion.slice(0, 120)}: apenas se acredita la transferencia, sale en el próximo reparto 🙌`
-          : `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Va a ${direccion.slice(0, 120)}: ${textoSalidaReparto(Date.now())} y lo pagás ahí, en efectivo o por transferencia 🙌`,
+          : `¡Listo${nombre ? `, ${nombre.split(/\s+/)[0]}` : ""}! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Va a ${direccion.slice(0, 120)}: ${textoSalidaReparto(Date.now())} y lo pagás ahí, en efectivo o por transferencia${ahorroAntes} 🙌`,
         medio === "TRANSFERENCIA" && cfg.transferenciaDatos ? `Los datos para transferir:\n${cfg.transferenciaDatos}\nMandame el comprobante por acá.` : "Si tenés un horario que te quede mejor, decime y lo anoto.",
       ]
     : medio === "TRANSFERENCIA"
@@ -248,7 +252,7 @@ async function cerrarVenta(
           "Para mandártelo pasame en un mensaje: nombre y apellido, dirección (calle, número y barrio) y en qué horario te queda bien recibirlo. Cuando transfieras, mandame el comprobante por acá 🙌",
         ]
       : [
-          `¡Listo! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Lo pagás cuando lo recibís, en efectivo o por transferencia.`,
+          `¡Listo! Tu pedido es el ${numeroPedido(pedido.id)}: ${total} ${envioTxt}. Lo pagás cuando lo recibís, en efectivo o por transferencia${ahorroAntes}.`,
           "Para llevártelo pasame en un mensaje: nombre y apellido, dirección (calle, número y barrio) y en qué horario te queda bien recibirlo 🙌",
         ];
   await responderWhatsapp(clave, [{ tipo: "texto", texto: partes.filter(Boolean).join("\n\n") }]);
@@ -560,7 +564,8 @@ export async function atender(e: Entrada): Promise<void> {
           orden.medioPago === "TRANSFERENCIA"
             ? Number(orden.total)
             : sub - base + (precioTransferencia(base, cfg.descuentoTransferenciaPct) ?? base) + Number(orden.envioCobrado);
-        const quien = e.nombre ? `, ${primerNombre(e.nombre)}` : "";
+        const pn = e.nombre ? primerNombre(e.nombre) : null;
+        const quien = pn ? `, ${pn}` : "";
         console.log("chat: va a transferir con pedido hecho, monto y alias directo", cola(e.clave), orden.id);
         await responder(
           e.clave,
@@ -746,7 +751,7 @@ export async function pensar(c: {
             : ""
       } Si su mensaje es una pregunta (dirección, envío, pago, un producto), contestala PRIMERO en una frase y recién después ofrecé lo del anuncio. Si no pregunta nada concreto, arrancá por el anuncio: qué trae y por qué conviene, y ofrecé dejárselo listo.</anuncio>\n\n`
     : "";
-  const cliente = c.nombre ? `<cliente>${primerNombre(c.nombre) ? `Se llama ${primerNombre(c.nombre)}` : `Su perfil de WhatsApp dice «${c.nombre.slice(0, 40)}» (no es un nombre de persona: no lo llames así)`}${c.historial.length ? " (ya lo saludaste: no lo saludes de nuevo)" : ""}.</cliente>\n` : "";
+  const cliente = c.nombre ? `<cliente>${primerNombre(c.nombre) ? `Se llama ${primerNombre(c.nombre)}` : `Su perfil de WhatsApp dice «${c.nombre.slice(0, 40)}», que puede ser un apodo o un alias: NO lo llames por ningún nombre hasta que te diga cómo se llama (al cerrar el pedido, preguntá «¿A nombre de quién lo dejo?»)`}${c.historial.length ? " (ya lo saludaste: no lo saludes de nuevo)" : ""}.</cliente>\n` : "";
   const eligio =
     c.toque?.tipo === "quiero"
       ? `<eligio>Tocó «Lo quiero» en el ${c.toque.clase} ${c.toque.clase === "combo" ? "slug" : "codigo"} ${c.toque.id}. Agregalo YA con agregar_al_pedido (junto con lo que ya había elegido antes) y en una frase ofrecé sumar algo chico o dejarlo listo para pagar.</eligio>\n`
@@ -773,8 +778,12 @@ export async function pensar(c: {
         : estadoOrden === "PENDIENTE_PAGO"
           ? notaPedidoSinPagar(orden?.medioPago, yaMandoComprobante(eventosComprobante.map((x) => x.nota)))
           : "";
+  // 17/11: Myriam dijo «Lo recibí ayer» y el bot le contestó que su pedido iba en el reparto de hoy. Lo que dice ella manda.
+  const RECIBIO = /\b(lo|la|los|las)? ?(recib[ií]|tengo)\b|ya (me )?(lleg[oó]|lo tengo|est[aá] ac[aá])|me lleg[oó]|lleg[oó] (todo|bien|perfecto)/i;
+  const diceQueLoRecibio = [c.texto, ...c.historial.filter((h) => h.de !== "acopio").slice(-3).map((h) => h.texto)].some((t) => RECIBIO.test(t) && !/no (lo |me )?(recib|lleg)/i.test(t));
+  const yaLoTiene = diceQueLoRecibio && estadoOrden !== "ENTREGADO" ? " Ella/él acaba de decir que YA LO RECIBIÓ: creele. No digas que está en el reparto, que sale hoy ni mañana. Agradecé corto y nada más." : "";
   const cerrado = ordenId
-    ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
+    ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaLoTiene}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";
   // El carrito de la web llega armado: se carga exacto, sin IA y sin ofrecer otra cosa.
   const web = esPedidoWeb(c.texto) && !ordenId ? await armarPedidoWeb(c.texto, Boolean(c.historial.some((h) => h.de === "acopio"))) : null;
@@ -1010,4 +1019,42 @@ export async function retomarCharla(clave: string): Promise<boolean> {
     if (salida) await responder(clave, salida);
   }
   return true;
+}
+
+/**
+ * 17/11 (Santiago, por Virginia: «hay mensajes sin contestar, eso no puede pasar»). Virginia pidió hablar con una
+ * persona, la charla quedó «en manos de una persona» y cuando pasó la dirección y pidió el alias nadie le contestó
+ * en dos horas: el bot estaba callado y ninguna persona la miraba.
+ *
+ * Red de seguridad: cada 15 minutos, toda charla de WhatsApp en manos de una persona cuyo último mensaje es del
+ * cliente y lleva más de 20 minutos sin respuesta vuelve al vendedor, que contesta en el acto. De 8 a 21 y con la
+ * ventana de 24 h abierta. Un «gracias», un «ok» o un emoji no se contestan: solo vuelve al vendedor.
+ */
+export async function rescatarCharlasMudas(ahora = new Date()): Promise<{ revisadas: number; contestadas: number }> {
+  const hora = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Argentina/Cordoba", hour: "numeric", hour12: false }).format(ahora)) % 24;
+  if (hora < 8 || hora >= 21) return { revisadas: 0, contestadas: 0 };
+  const mudas = await prisma.$queryRaw<{ telefono: string; texto: string }[]>`
+    SELECT c."telefono", m."texto"
+    FROM "WhatsappConversacion" c
+    JOIN LATERAL (
+      SELECT "de", "texto", "fecha" FROM "WhatsappMensaje"
+      WHERE "telefono" = c."telefono" AND "texto" NOT LIKE '[reacción%'
+      ORDER BY "fecha" DESC LIMIT 1
+    ) m ON true
+    WHERE c."estado" = 'persona' AND c."telefono" NOT LIKE 'fb.%' AND c."telefono" NOT LIKE 'ig.%'
+      AND m."de" = 'cliente' AND m."fecha" < now() - interval '20 minutes' AND m."fecha" > now() - interval '20 hours'
+    LIMIT 15`;
+  let contestadas = 0;
+  for (const c of mudas) {
+    if (soloAgradece(c.texto) || c.texto.trim().length < 3) {
+      await cambiarEstado(c.telefono, "bot");
+      continue;
+    }
+    const ok = await retomarCharla(c.telefono).catch((e) => {
+      console.error("rescate de charla muda falló", cola(c.telefono), e);
+      return false;
+    });
+    if (ok) contestadas++;
+  }
+  return { revisadas: mudas.length, contestadas };
 }

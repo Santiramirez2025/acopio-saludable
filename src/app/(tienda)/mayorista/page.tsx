@@ -35,7 +35,7 @@ export default async function Mayorista() {
             <div key={a} className="rounded-2xl bg-white/10 p-4"><div className="text-3xl font-black text-amber-300">{a}</div><div className="text-white/80">{b}</div></div>
           ))}
         </div>
-        <p className="mt-4 text-sm text-white/70">Pedido mínimo mayorista $60.000. Se paga antes de entregar (transferencia o Mercado Pago). Entrega sin cargo en Carlos Paz y la zona; Córdoba Capital $15.000 o sin cargo desde $150.000. Te sugerimos el precio de góndola para que sepas cuánto ganás.</p>
+        <p className="mt-4 text-sm text-white/70">Pedido mínimo mayorista $60.000. Se paga antes de entregar (transferencia o Mercado Pago). Entrega sin cargo en Villa Carlos Paz; al resto de la zona, con costo según la localidad; Córdoba Capital $15.000 o sin cargo desde $150.000. Te sugerimos el precio de góndola para que sepas cuánto ganás.</p>
         <a href={WA} className="mt-5 inline-block rounded-full bg-amber-400 px-6 py-3 font-bold text-black">Pedir por WhatsApp</a>
       </section>
       {grupos.map((g) => (

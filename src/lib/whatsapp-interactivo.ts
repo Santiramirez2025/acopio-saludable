@@ -9,6 +9,7 @@
 // venta (lo quiero, la zona del envío, cómo paga). Una pregunta para conocer al cliente («¿para tu casa o
 // para un negocio?») va en texto, sin botones: con botones en cada mensaje la charla parecía un menú.
 
+import { esNombreDePila } from "./nombres-comunes";
 import { PAGO_AL_RECIBIR } from "./politica";
 import { pesos } from "./precios";
 import { urlSitio } from "./sitio";
@@ -136,14 +137,17 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
 
   if (pedido) {
     const lineas = [texto, "", ...pedido.renglones.map((l) => `• ${l}`), `Total: ${pedido.total}`];
-    if (pedido.conTransferencia) lineas.push(`Por transferencia: ${pedido.conTransferencia}`);
+    if (pedido.conTransferencia) lineas.push(`Pagando antes por transferencia: ${pedido.conTransferencia}`);
     if (pedido.falta) {
       lineas.push(`Te faltan ${pedido.falta} para la compra mínima.`);
       return [{ tipo: "texto", texto: corte(lineas.join("\n"), 4000) }];
     }
     // Primero la zona: sin saber cuánto sale el envío, la gente no paga (pasó: dijeron «lo quiero» y se frenaron).
     if (!pedido.envio) {
-      if (!/\?\s*$/.test(texto)) lineas.push("", "¿De qué barrio o ciudad sos? Así te digo el envío.");
+      // 17/11 (Santiago: «sin molestar con tanto texto»): con un solo producto el texto ya lo nombra con su precio,
+      // así que no se repite el resumen; y si el texto ya pregunta la ciudad, no se pregunta dos veces.
+      if (pedido.renglones.length === 1 && /\$\s?\d/.test(texto)) lineas.splice(1);
+      if (!/\?/.test(texto) || !/(ciudad|barrio|zona|de d[oó]nde)/i.test(texto)) lineas.push("", "¿De qué barrio o ciudad sos? Así te digo el envío.");
       return [
         {
           tipo: "botones",
@@ -157,7 +161,7 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
       ];
     }
     // Con el envío ya cotizado, el «por transferencia» de arriba se reemplaza por el que lo incluye.
-    const iTransf = lineas.findIndex((l) => l.startsWith("Por transferencia"));
+    const iTransf = lineas.findIndex((l) => l.startsWith("Pagando antes por transferencia"));
     if (iTransf >= 0) lineas.splice(iTransf, 1);
     lineas.push(
       pedido.envio.costo === 0
@@ -167,7 +171,7 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
           : `Envío: ${pesos(pedido.envio.costo)}${pedido.envio.sinCargoDesde ? ` (sin cargo desde ${pesos(pedido.envio.sinCargoDesde)})` : ""}`,
     );
     if (pedido.envio.totalConEnvio) lineas.push(`Total con envío: ${pedido.envio.totalConEnvio}`);
-    if (pedido.envio.transferenciaConEnvio) lineas.push(`Por transferencia: ${pedido.envio.transferenciaConEnvio}`);
+    if (pedido.envio.transferenciaConEnvio) lineas.push(`Pagando antes por transferencia: ${pedido.envio.transferenciaConEnvio}`);
     // 9/11 (Santiago): la venta se cierra EN LA WEB. Un solo botón que abre el carrito ya armado; ahí elige
     // Mercado Pago o transferencia (con su 8%), queda registrado y se puede comprar a cualquier hora.
     // Si escribe «transferencia» en el chat igual se le dan los datos (lo resuelve atencion.ts).
@@ -429,12 +433,27 @@ export function textoPrimeraListaPorKilo(
 const limpio = (texto: string) => texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
 
 /**
+ * 18/11 (Rodri, seguridad): «no lo pago al recibir, te transfiero», «al recibir no puedo», «efectivo no tengo»
+ * contaban como «paga al recibir» porque bastaba con que apareciera la frase. Con eso el bot crea un pedido
+ * «Cobrar al entregar» (o, con el PR #557, pasa a cobrar al entregar uno por transferencia) cuando el cliente
+ * dijo lo contrario. Solo se descartan negaciones pegadas a la frase: «no hay problema, lo pago al recibir» sigue valiendo.
+ */
+function niegaPagoAlRecibir(t: string): boolean {
+  return (
+    /\bno (lo |te |se )?(pago|abono|pagamos|puedo pagar|voy a pagar|quiero pagar|podemos pagar|al recibir|contra ?entrega|contraentrega|en efectivo|efectivo|tengo efectivo|cuento con efectivo|manejo efectivo)\b/.test(t) ||
+    /\b(al recibir|al recibirlo|contra ?entrega|contraentrega|efectivo)( no\b| tampoco\b| imposible\b)/.test(t) ||
+    /\bsin (efectivo|pago al recibir|pagar al recibir)\b/.test(t)
+  );
+}
+
+/**
  * «Pago aquí», «pago cuando me lo traés», «al recibir», «en efectivo cuando llegue»: está cerrando,
  * y pagar al recibir solo existe en la entrega propia. No hay que preguntarle la zona ni nada más.
  */
 export function pagaAlRecibir(texto: string): boolean {
   const t = limpio(texto);
   if (t.includes("?")) return false;
+  if (niegaPagoAlRecibir(t)) return false;
   return /\b(pago|abono|te pago|lo pago|pagamos) (aqui|aca|ahi|al recibir|al recibirlo|contra ?entrega|en (mano|efectivo|casa)|cuando (llegue|lo reciba|me lo traigas|lo traigas|venga|vengas|me lo traes|lo traes))\b|\b(al recibir|contra ?entrega|contraentrega)\b|\bpago (en )?efectivo\b|^(efectivo|en efectivo|al recibir|pago al recibir)$/.test(t);
 }
 
@@ -473,7 +492,13 @@ export function tieneDireccion(texto: string): boolean {
   // y el bot le contestó «Te llega a Pásame la dirección y voy yo a comprar.». Quien pregunta dónde estamos
   // o quiere retirar no nos está dando su domicilio.
   if (preguntaDondeEstan(texto)) return false;
-  const t = limpio(texto);
+  // 17/11 (Al Meyui, AS-114): «Seguro estoy 18 :30» es un horario, no un domicilio. Contaba como «palabra + número»
+  // y pisó la dirección que ya había dado (Atahualpa 513): el pedido salió «Va a Seguro estoy 18 :30».
+  // Las horas se sacan antes de buscar calle y número.
+  const t = limpio(texto)
+    .replace(/\b\d{1,2} ?[:.] ?\d{2}\b( ?hs?\b)?/g, " ")
+    .replace(/\b(a|hasta|desde|despues de|antes de|tipo|como a|entre|y|estoy|estare|llego|vuelvo|salgo|seguro|exacto)( (la|las))? \d{1,2}\b( ?(hs?|horas?|y media|y cuarto|en punto)\b)?/g, " ")
+    .replace(/\b\d{1,2} ?(hs|horas?)\b/g, " ");
   return /\b(direccion|calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?))/.test(t);
 }
 
@@ -532,9 +557,13 @@ export function soloAgradece(texto: string): boolean {
 export function primerNombre(nombre: string | null | undefined): string | null {
   const crudo = (nombre ?? "").trim();
   if (/@|gmail|hotmail|yahoo|outlook/i.test(crudo)) return null;
-  const p = crudo.split(/\s+/)[0]?.replace(/[^\p{L}]/gu, "") ?? "";
+  // «Lic. María Elena», «Dra. Laura»: el título se saltea.
+  const palabras = crudo.split(/\s+/).map((w) => w.replace(/[^\p{L}]/gu, "")).filter(Boolean);
+  const p = (/^(lic|licenciada|licenciado|dr|dra|prof|profe|sra|sr|ing|arq|cra|cr)$/i.test(palabras[0] ?? "") ? palabras[1] : palabras[0]) ?? "";
   if (p.length < 2 || p.length > 20) return null;
   if (/^(casa|hotel|cabañas?|cabanas?|complejo|depto|departamentos?|apart|hostel|hosteria|hostería|posada|resort|spa|kiosco|almacen|almacén|dietetica|dietética|tienda|negocio|empresa|distribuidora|gym|gimnasio|lic|dr|dra|la|el|los|las|mi|mis|info|ventas|administracion|administración|dios|bazar|trabajos|taller|estudio|optica|óptica|farmacia|libreria|librería|panaderia|panadería|cafe|café|bar|club|centro|grupo|familia|mundo|vida|amor|sabor|sabores|sabory)$/i.test(p)) return null;
+  // 17/11: el perfil suele ser un alias («Gustavobrasentino», «Paton», «Guada bienestar»): solo nombres de pila conocidos.
+  if (!esNombreDePila(p)) return null;
   // 15/11: «¡De nada, MARIA!» gritaba; el nombre va con la primera en mayúscula y el resto en minúscula si vino todo en mayúsculas.
   const resto = p.slice(1);
   return p[0].toUpperCase() + (resto === resto.toUpperCase() ? resto.toLowerCase() : resto);
@@ -752,8 +781,8 @@ export function textoComboSinIA(c: {
     })
     .filter(Boolean);
   const listaTrae = trae.length > 1 ? `${trae.slice(0, -1).join(", ")} y ${trae[trae.length - 1]}` : trae[0] ?? "";
-  const precio = `${c.pesos(combo.precio)}${c.conTransferencia ? `, o ${c.pesos(c.conTransferencia)} por transferencia` : ""}`;
-  const zona = combo.precio >= c.sinCargoDesde ? "En Carlos Paz y la zona te lo llevamos sin cargo." : "En Carlos Paz y la zona te lo llevamos nosotros.";
+  const precio = c.conTransferencia ? `${c.pesos(c.conTransferencia)} pagando antes por transferencia, o ${c.pesos(combo.precio)} al recibir` : c.pesos(combo.precio);
+  const zona = combo.precio >= c.sinCargoDesde ? "En Carlos Paz te lo llevamos sin cargo." : "En Carlos Paz te lo llevamos nosotros.";
   return [
     `¡Hola${c.nombre ? ` ${c.nombre}` : ""}! El ${nombreCombo}${listaTrae ? ` trae ${listaTrae}` : ""}: ${precio}.`,
     `Lo dejás pedido acá 👉 ${c.sitio}/carrito?p=c-${combo.slug}*1&utm_source=whatsapp&utm_campaign=combo-sin-ia`,

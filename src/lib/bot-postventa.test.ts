@@ -50,7 +50,7 @@ test("reventa solo a quien revende", () => {
 });
 
 test("el pie de la foto del combo lleva el precio", () => {
-  assert.equal(pieFotoCombo("Despensa de 4 kilos", "$28.500", "$26.200"), "Despensa de 4 kilos: $28.500, o $26.200 por transferencia");
+  assert.equal(pieFotoCombo("Despensa de 4 kilos", "$28.500", "$26.200"), "Despensa de 4 kilos: $26.200 pagando antes por transferencia, o $28.500 al recibir");
   assert.equal(pieFotoCombo("Despensa", "$28.500", null), "Despensa: $28.500");
 });
 

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { avisoReparto, notaPedidoEnCamino, notaRepartoDeHoy, proximoRepartoTrasHoy, textoResta, textoSalidaReparto } from "./salida-reparto";
+import { avisoReparto, horaSalidaPactada, notaPedidoEnCamino, notaRepartoDeHoy, proximoRepartoTrasHoy, textoResta, textoSalidaReparto } from "./salida-reparto";
 
 // Horas en Argentina (UTC−3) → instante.
 const ar = (iso: string) => new Date(`${iso}-03:00`).getTime();
@@ -52,11 +52,42 @@ test("lo por encargo llega en el próximo reparto después de hoy: el sábado es
 });
 
 test("pedido ENVIADO: el bot no lo pasa a mañana ni pregunta si llegó (Graciela AS-85, 16/11)", () => {
-  const n = notaPedidoEnCamino("ENVIADO", "AS-00085");
+  const n = notaPedidoEnCamino("ENVIADO", "AS-00085", ar("2026-11-16T16:01:00"));
   assert.match(n, /AS-00085 de este cliente ya salió en el reparto de hoy/);
   assert.match(n, /no le digas que sale mañana/);
   assert.match(n, /no le preguntes si le llegó/);
   assert.equal(notaPedidoEnCamino("PENDIENTE_PAGO", "AS-00090"), "");
   assert.equal(notaPedidoEnCamino("ENTREGADO", "AS-00089"), "");
   assert.equal(notaPedidoEnCamino(null, "AS-00001"), "");
+});
+
+test("ENVIADO a la mañana: está en el reparto de hoy, todavía no va en camino (Lidia AS-92 y Quique AS-105, 17/11)", () => {
+  const lidia = notaPedidoEnCamino("ENVIADO", "AS-00092", ar("2026-11-17T08:40:00"), "PAGA AL RECIBIR $22.000/$24.000");
+  assert.match(lidia, /está en el reparto de hoy, que sale desde las 16/);
+  assert.match(lidia, /Todavía NO va en camino/);
+  assert.doesNotMatch(lidia, /Decile que el cadete va en camino/);
+  assert.doesNotMatch(lidia, /Santiago/);
+  const quique = notaPedidoEnCamino("ENVIADO", "AS-00105", ar("2026-11-17T16:30:00"), "Entrega a las 19. PAGA AL RECIBIR $22.000/$24.000");
+  assert.match(quique, /sale desde las 19/);
+  assert.match(quique, /Todavía NO va en camino/);
+});
+
+test("ENVIADO después de la hora del reparto: va en camino, sin nombrar a Santiago", () => {
+  const n = notaPedidoEnCamino("ENVIADO", "AS-00092", ar("2026-11-17T16:30:00"), "PAGA AL RECIBIR $22.000/$24.000");
+  assert.match(n, /el cadete va en camino/);
+  assert.match(n, /se lo avisás al equipo/);
+  assert.doesNotMatch(n, /Santiago/);
+  assert.match(notaPedidoEnCamino("ENVIADO", "AS-00105", ar("2026-11-17T19:05:00"), "a las 19"), /PEDIDO EN CAMINO/);
+});
+
+test("hora pactada en las notas", () => {
+  assert.equal(horaSalidaPactada("Entrega a las 19"), 19);
+  assert.equal(horaSalidaPactada("19:30 hs"), 19.5);
+  assert.equal(horaSalidaPactada("PAGA AL RECIBIR $22.000/$24.000"), 16);
+  assert.equal(horaSalidaPactada(null), 16);
+  assert.equal(horaSalidaPactada("a las 3"), 16);
+  assert.equal(horaSalidaPactada("Horario: A partir de las 16:30 · Referencia: Al lado"), 16.5);
+  assert.equal(horaSalidaPactada("Horario: después de las 18 hs · Venta por WhatsApp"), 18);
+  assert.equal(horaSalidaPactada("Horario: Lunes 16/11 desde las 16"), 16);
+  assert.equal(horaSalidaPactada("Horario: Martes 17, tipo 15:30 hs (preferencia)"), 15.5);
 });

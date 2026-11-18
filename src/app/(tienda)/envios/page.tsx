@@ -3,7 +3,7 @@ import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { zonaPagaDe } from "@/lib/envios/tabla";
 import { pesos } from "@/lib/precios";
-import { costoEntregaZona, textoCompraMinima } from "@/lib/minimo-zona";
+import { textoEntregaZona, textoCompraMinima } from "@/lib/minimo-zona";
 import { Prosa } from "@/components/Prosa";
 import { DatosContacto } from "@/components/Contacto";
 import { Titulo } from "@/components/Tienda";
@@ -19,7 +19,7 @@ export default async function Pagina() {
       <Titulo sobre="Envíos" bajada="Compramos la mercadería para cada pedido, por eso siempre hay un plazo de preparación antes de la entrega.">Envíos y entregas</Titulo>
       <Prosa>
         <h2>Entrega propia en Carlos Paz y el sur de Punilla</h2>
-        <p>Llevamos el pedido a tu casa o a tu negocio en Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca: {costoEntregaZona(cfg)}. El plazo es de {cfg.plazoEntregaPropia} desde que se confirma el pago, y coordinamos el horario por WhatsApp. Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.</p>
+        <p>Llevamos el pedido a tu casa o a tu negocio en Villa Carlos Paz y el sur de Punilla. {textoEntregaZona(cfg)} El plazo es de {cfg.plazoEntregaPropia} desde que se confirma el pago, y coordinamos el horario por WhatsApp. Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.</p>
         {zonaPaga && (
           <>
             <h2>{zonaPaga.nombre}, con cargo</h2>

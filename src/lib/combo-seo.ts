@@ -22,13 +22,15 @@ export function seoCombo(c: Combo, minimoEntregaPropia: number): { title: string
   // El nombre a veces ya dice el peso («Despensa de 4 kilos»): no se repite.
   const conPeso = peso && !/kilo|kg/i.test(c.nombre) ? ` (${peso})` : "";
   const cuerpo = `${peso ? `${peso} por ` : ""}${precio}${c.ahorro > 0 ? `, ahorrás ${sinEspacioDuro(pesos(c.ahorro))}` : ""}.`;
-  const entrega = `Entrega${c.precio >= minimoEntregaPropia ? " sin cargo" : ""} en Carlos Paz y sur de Punilla. Envíos al país.`;
+  // Sin cargo solo en Villa Carlos Paz (regla del 16/11); el resto de la zona paga según la localidad.
+  const entrega = c.precio >= minimoEntregaPropia ? "Sin cargo en Villa Carlos Paz; resto de la zona con costo. Envíos al país." : "Entrega en Carlos Paz y la zona. Envíos al país.";
   const fijo = ` ${cuerpo} ${entrega}`;
   // Entran los productos que quepan: el precio y la entrega nunca se cortan.
   const nombres: string[] = [];
   for (const i of c.items) {
     const n = nombreCorto(i.producto.producto);
-    if ([...nombres, n].join(", ").length + fijo.length + 1 > MAX_DESCRIPCION) break;
+    // +7: el « y más.» que se agrega si no entran todos.
+    if ([...nombres, n].join(", ").length + fijo.length + 7 > MAX_DESCRIPCION) break;
     nombres.push(n);
   }
   const lista = nombres.length ? `${nombres.join(", ")}${nombres.length < c.items.length ? " y más" : ""}.` : "";

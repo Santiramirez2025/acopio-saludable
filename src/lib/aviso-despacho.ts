@@ -34,6 +34,7 @@ export async function avisarDespachoWhatsapp(p: Order): Promise<"texto" | "plant
     }
     return null;
   }
+  // 17/11 (Santiago, en plena entrega): en la puerta se cobra el precio al recibir, sin ofrecer otro precio.
   const texto = mensajeDespacho(p);
   if ((await ventanaAbierta(tel).catch(() => false)) && (await enviarTexto(tel, texto))) {
     await registrarSalida(tel, "persona", texto).catch(() => undefined);

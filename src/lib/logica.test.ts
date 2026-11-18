@@ -618,7 +618,7 @@ test("prospección: bajas, plantilla por rubro y texto guardado", () => {
   assert.equal(plantillaDe("cabañas / complejo"), "kit");
   assert.equal(plantillaDe("departamentos / alquiler temporario"), "kit");
   const t = textoPlantilla("desayuno", "Hotel Capri");
-  assert.ok(t.startsWith("Hola, Hotel Capri."));
+  assert.ok(t.startsWith("Hola, Hotel Capri 👋"));
   assert.ok(!t.includes("{{1}}"));
 });
 
@@ -716,7 +716,7 @@ test("whatsapp: productos van en lista para tocar, pedido con botón a la web, s
   const cta = pedido[0] as Extract<(typeof pedido)[number], { tipo: "cta" }>;
   assert.equal(cta.texto, "Terminar mi pedido");
   assert.match(cta.url, /\/carrito\?p=c-despensa\*1$/);
-  assert.match(cta.cuerpo, /Envío: \$\s15\.000\nTotal con envío: \$ 50\.268\nPor transferencia: \$ 47\.447/);
+  assert.match(cta.cuerpo, /Envío: \$\s15\.000\nTotal con envío: \$ 50\.268\nPagando antes por transferencia: \$ 47\.447/);
   assert.match(cta.cuerpo, /Mercado Pago o transferencia/);
   const cp = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=c-despensa*1", renglones: ["Despensa — $ 35.268"], total: "$ 35.268", conTransferencia: "$ 32.447", falta: null, envio: { lugar: "Carlos Paz", costo: 0, detalle: "x", propia: true, alRecibir: true, totalConEnvio: "$ 35.268", transferenciaConEnvio: "$ 32.447" } });
   // Tampoco en Carlos Paz hay pago al recibir ni botones de pago en el chat: mismo botón a la web.
@@ -920,6 +920,9 @@ import { pagaAlRecibir, tieneDireccion } from "./whatsapp-interactivo";
 test("pago aquí y dirección", () => {
   for (const t of ["Pago aquí.", "pago cuando me lo traes", "Lo pago al recibir", "en efectivo", "contra entrega", "te pago aca"]) assert.ok(pagaAlRecibir(t), t);
   for (const t of ["¿puedo pagar al recibir?", "Mi nombre es Juan.", "quiero la despensa", "transferencia"]) assert.ok(!pagaAlRecibir(t), t);
+  // 18/11 (seguridad): una negación no es «paga al recibir» (crearía o pasaría el pedido a cobrar al entregar).
+  for (const t of ["no lo pago al recibir, te transfiero ahora", "prefiero transferir, no al recibir", "al recibir no puedo, transfiero", "No, contra entrega no", "efectivo no tengo", "no tengo efectivo, te transfiero", "sin pago al recibir, transfiero ya"]) assert.ok(!pagaAlRecibir(t), t);
+  for (const t of ["no hay problema, lo pago al recibir", "no tengo mercado pago, pago en efectivo", "dale, pago en efectivo cuando llegue", "No, mejor al recibir"]) assert.ok(pagaAlRecibir(t), t);
   for (const t of ["La dirección es Cartago 100, esquina Rosario casa blanca", "Río Salado 451 Barrio El Fantasio", "Av. San Martín 1200"]) assert.ok(tieneDireccion(t), t);
   for (const t of ["Pago aquí.", "gracias", "quiero 2 kilos"]) assert.ok(!tieneDireccion(t), t);
 });
@@ -992,7 +995,19 @@ test("bandeja: etapa de venta de cada charla", () => {
   assert.equal(teEspera({ ...base, estado: "persona", ultimoDe: "persona" }), false);
 });
 
-import { comentariosDe, mensajePrivado, tieneIntencion } from "./comentarios";
+import { comentariosDe, mensajePrivado, respuestaPublica, tieneIntencion, tipoComentario } from "./comentarios";
+
+test("comentarios: una queja no se agradece, una pregunta trae el dato y el WhatsApp (17/11)", () => {
+  assert.equal(tipoComentario("Y a mí me cobraron 32 mil pesos"), "queja");
+  assert.equal(tipoComentario("será publicidad engañosa?"), "queja");
+  assert.equal(tipoComentario("Dirección en carlos paz"), "donde");
+  assert.equal(tipoComentario("Que trae el combo ..?"), "compra");
+  assert.equal(tipoComentario("M interesa"), "compra");
+  assert.equal(tipoComentario("Qué rico 😍"), "gracias");
+  const c = (texto: string) => ({ canal: "facebook" as const, id: "1_2", texto, autorId: "9", autorNombre: null, esRespuesta: false });
+  assert.match(respuestaPublica(c("Quisiera dirección"), false), /No tenemos local.*3541 51-9630/);
+  assert.match(respuestaPublica(c("Que trae el combo"), true, "El Trío son 3 kg: $22.000."), /Trío son 3 kg.*3541 51-9630/);
+});
 
 test("comentarios: intención de compra y lectura del webhook", () => {
   assert.equal(tieneIntencion("Precio?"), true);
@@ -1005,7 +1020,7 @@ test("comentarios: intención de compra y lectura del webhook", () => {
   const fb = comentariosDe("page", [{ changes: [{ field: "feed", value: { item: "comment", verb: "add", comment_id: "2_3", post_id: "2", parent_id: "2", message: "info", from: { id: "7", name: "Juan" } } }] }]);
   assert.equal(fb.length, 1);
   assert.equal(fb[0].esRespuesta, false);
-  assert.match(mensajePrivado("$ 35.232"), /35\.232.*\?$/);
+  assert.match(mensajePrivado("El Trío son 3 kg: $22.000."), /22\.000.*wa\.me\/5493541519630.*\?$/);
 });
 
 import { nuevas, textoAviso, type Publicacion } from "./radar";
@@ -1330,17 +1345,17 @@ test("canales: el precio de Mercado Libre y PedidosYa deja al menos lo mismo que
   assert.ok(despensa > 48000 && despensa < 56000, String(despensa));
 });
 
-test("la primera respuesta se presenta como asistente con IA, una sola vez", async () => {
+test("la primera respuesta se presenta como asistente, en media línea y una sola vez", async () => {
   const { conPresentacion } = await import("./whatsapp-saludo");
   const a = conPresentacion("¡Hola Quique! El mix sale $15.400 el kilo. ¿Para tu casa o un negocio?");
-  assert.ok(a.startsWith("¡Hola Quique! Soy el asistente con IA de Acopio"));
+  assert.ok(a.startsWith("¡Hola Quique! Te atiende el asistente de Acopio"), a);
   assert.ok(a.endsWith("¿Para tu casa o un negocio?"));
-  assert.ok(conPresentacion("El mix sale $15.400. ¿Te lo separo?").startsWith("¡Hola! Soy el asistente con IA"));
+  assert.ok(conPresentacion("El mix sale $15.400. ¿Te lo separo?").startsWith("¡Hola! Te atiende el asistente de Acopio"));
   assert.equal(conPresentacion(a), a);
   // Un precio con punto de miles no se parte (caso real, Graciela 13/11: «sale $28. Soy el asistente… 500»).
   const b = conPresentacion("Hola Graciela, la Despensa de 4 kilos sale $28.500, o $26.200 por transferencia.");
   assert.ok(b.includes("$28.500"), b);
-  assert.ok(b.startsWith("Hola Graciela! Soy el asistente con IA de Acopio"), b);
+  assert.ok(b.startsWith("Hola Graciela! Te atiende el asistente de Acopio"), b);
   assert.ok(b.endsWith("La Despensa de 4 kilos sale $28.500, o $26.200 por transferencia."), b);
 });
 
@@ -1889,19 +1904,18 @@ test("captación: cabañas frenadas por «sin TACC» y budines; hoteles vuelven 
   assert.match(contextoProspecto("cabañas / complejo", "X"), /Budines no tenemos/);
 });
 
-test("captación 11/11: hoteles y gastronomía cierran con la pregunta de precio y sin «sin TACC»", async () => {
+test("captación 17/11: las plantillas activas son una pregunta corta, sin pitch largo, sin «sin TACC» ni el nombre del dueño", async () => {
   const { PLANTILLAS } = await import("./whatsapp-plantillas");
-  for (const k of ["desayuno", "gastronomia"] as const) {
+  for (const k of ["desayuno", "gastronomia", "gimnasio", "regalos"] as const) {
     const p = PLANTILLAS[k];
-    assert.match(p.cuerpo, /¿A cuánto está pagando hoy el kilo de [^?]+\?/, k);
-    assert.doesNotMatch(p.cuerpo, /TACC|al recibir/i, k);
-    assert.ok(p.cuerpo.length <= 1024, k);
+    assert.ok(p.cuerpo.length <= 220, k);
+    assert.equal((p.cuerpo.match(/\?/g) ?? []).length, 1, k);
+    assert.doesNotMatch(p.cuerpo, /TACC|al recibir|Santiago/i, k);
     assert.ok(p.botones.every((b) => b.length <= 25), k);
-    assert.match(p.contexto, /se registra siempre/, k);
     assert.doesNotMatch(p.contexto, /ofrecé[^.]*sin TACC/i, k);
   }
-  assert.equal(PLANTILLAS.desayuno.nombre, "acopio_alojamientos_desayuno_v3");
-  assert.equal(PLANTILLAS.gastronomia.nombre, "acopio_negocios_gastronomia_v2");
+  assert.match(PLANTILLAS.desayuno.contexto, /se registra siempre/);
+  assert.match(PLANTILLAS.gastronomia.contexto, /se registra siempre/);
 });
 
 test("captación 6/11: dietéticas y afines afuera por decisión (aunque se apruebe la v3) y 10 por día", async () => {
@@ -2016,5 +2030,5 @@ test("lista: «pero NECESITO nueces» cuenta y «cuánto me sale / dónde retiro
 test("vendedor: el bot sabe que el mix del Trío trae nueces y almendras (Ofelia 16/11)", () => {
   const txt = readFileSync("src/lib/vendedor.ts", "utf8");
   assert.ok(txt.includes("QUÉ TRAE EL MIX"));
-  assert.ok(txt.includes("w === \"nueces\" ? \"nuez\""));
+  assert.ok(readFileSync("src/lib/lista-palabras.ts", "utf8").includes("w === \"nueces\" ? \"nuez\""));
 });

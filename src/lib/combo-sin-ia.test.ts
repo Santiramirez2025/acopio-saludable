@@ -23,10 +23,10 @@ test("el texto precargado del anuncio nombra el Trío", () => {
 
 test("sin IA, el Trío sale con precio, transferencia, link y la ciudad", () => {
   const t = textoComboSinIA({ combo: trio, conTransferencia: 22000, nombre: "Elizabeth", sinCargoDesde: 20000, sitio: "https://www.acopiosaludable.com", pesos })!;
-  assert.match(t, /^¡Hola Elizabeth! El Trío de frutos secos trae 1 kg de mix Clásico con cajú y girasol, 1 kg de dátiles con carozo y 1 kg de pasas de uva negras sin semilla: \$24\.000, o \$22\.000 por transferencia\./);
+  assert.match(t, /^¡Hola Elizabeth! El Trío de frutos secos trae 1 kg de mix Clásico con cajú y girasol, 1 kg de dátiles con carozo y 1 kg de pasas de uva negras sin semilla: \$22\.000 pagando antes por transferencia, o \$24\.000 al recibir\./);
   assert.match(t, /carrito\?p=c-trio-de-frutos-secos\*1&utm_source=whatsapp/);
-  assert.match(t, /¿De qué ciudad sos\? En Carlos Paz y la zona te lo llevamos sin cargo\./);
-  assert.doesNotMatch(t, /perfecto|al recibir|antes de pagar|Santiago/i);
+  assert.match(t, /¿De qué ciudad sos\? En Carlos Paz te lo llevamos sin cargo\./);
+  assert.doesNotMatch(t, /perfecto|antes de pagar|Santiago/i);
 });
 
 test("un combo chico no promete envío sin cargo, y sin precio no hay texto", () => {

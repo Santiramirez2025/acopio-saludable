@@ -3,7 +3,7 @@ import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda, type ComboTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
-import { costoEntregaZona, textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { textoEntregaZona, textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { GrillaProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
@@ -49,7 +49,7 @@ export default async function RegalosNavidenosCordoba() {
     ...(kit ? [["¿Qué trae el Kit Pan Dulce casero?", `${queTrae(kit)}: lo que va adentro del pan dulce o del budín, en una sola bolsa. Sale ${pesos(kit.precio)}.`] as [string, string]] : []),
     [
       "¿Cobran el envío?",
-      `En Villa Carlos Paz, San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca la entrega es sin cargo, en ${cfg.plazoEntregaPropia}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`,
+      `${textoEntregaZona(cfg)} Te lo llevamos en ${cfg.plazoEntregaPropia}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`,
     ],
     ["¿Hay compra mínima?", sinMinimo ? `No. ${textoZonaSinMinimo(cfg)} Sumás combos y cualquier otro producto de la tienda.` : `Sí, ${minimo} por pedido en la zona de entrega, sumando combos y cualquier otro producto de la tienda.`],
     ["¿Puedo armar mi propio regalo?", "Sí. Elegí los frutos secos y las frutas desecadas que quieras en el catálogo, o usá el armador de pedidos. Si es para regalar, avisanos por WhatsApp y lo separamos por persona."],
@@ -83,7 +83,7 @@ export default async function RegalosNavidenosCordoba() {
         {[
           ["Para regalar", "Frutos secos, dátiles y nuestros mixes armados en casa, en bolsas de 500 g y 1 kg. Un regalo rico que se usa."],
           ["Para empresas", "Decinos cuántos regalos, presupuesto por persona y fecha. Te pasamos una propuesta por WhatsApp."],
-          ["Entrega en la zona", `En Carlos Paz y el sur de Punilla, ${costoEntregaZona(cfg)}, en ${cfg.plazoEntregaPropia}. A Córdoba Capital, con envío pago.`],
+          ["Entrega en la zona", `${textoEntregaZona(cfg)} A Córdoba Capital, con envío pago.`],
         ].map(([t, d]) => (
           <div key={t} className="rounded-2xl bg-white p-4 shadow-ficha">
             <h2 className="font-display text-lg font-bold">{t}</h2>

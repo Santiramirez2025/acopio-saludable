@@ -12,16 +12,14 @@ type Plantilla = { nombre: string; cuerpo: string; botones: [string, string]; co
 /** Qué plantilla le toca a cada rubro y qué tiene que saber el vendedor cuando contestan. */
 export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" | "dietetica" | "regalos", Plantilla> = {
   desayuno: {
-    // v3 (Martín 11/11): sin «sin TACC» (la v2 lo prometía y por eso estaba frenada) y cierra con la
-    // pregunta de precio de la venta en frío (política 3/11, punto 6).
-    nombre: "acopio_alojamientos_desayuno_v3",
+    // 17/11 (Santiago: «tenemos que ser campeones en mensajes en frío»): 0 respuestas con el pitch largo.
+    // Ahora una sola pregunta corta que se contesta sin pensar; la oferta va recién cuando contesta. Sin el nombre del dueño.
+    nombre: "acopio_alojamientos_desayuno_v4",
     cuerpo:
-      "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
-      "Para la temporada abastecemos el desayuno de hoteles y hosterías de la zona: granola, frutos secos, dátiles y semillas, fraccionados frescos y por volumen, con entrega sin costo en Carlos Paz y alrededores.\n\n" +
-      "¿A cuánto está pagando hoy el kilo de granola? Si podemos mejorarlo, le paso nuestro precio.",
-    botones: ["Le paso mi precio", "No, gracias"],
+      "Hola, {{1}} 👋 ¿Quién se encarga de las compras del desayuno? Tenemos granola, frutos secos y dátiles por kilo a precio mayorista, con entrega sin cargo en Carlos Paz.",
+    botones: ["Soy yo, pasame precios", "No, gracias"],
     contexto:
-      "le escribimos nosotros ofreciendo abastecer el desayuno (granola, frutos secos, dátiles, semillas) y le preguntamos a cuánto paga hoy el kilo de granola. " +
+      "le escribimos nosotros ofreciendo abastecer el desayuno (granola, frutos secos, dátiles, semillas) y le preguntamos quién hace esas compras. " +
       "PRIMERO preguntá (o anotá, si ya lo dijo) qué producto compra hoy, a cuánto el kilo y cuántos kilos por semana: ese precio se registra siempre, escribilo textual en tu respuesta para que Leo lo vea. " +
       "Después compará con el precio real de buscar_productos: si el nuestro es menor, decilo con el número; si no, no bajes nada de tu cuenta y ofrecé lo que sí tenemos (fraccionado fresco, entrega sin costo en la zona) y que Leo, de ventas mayoristas, le confirma el precio por volumen por este chat. " +
       "No ofrezcas ni prometas nada «sin TACC». Se paga antes de entregar, por transferencia o Mercado Pago. Atendelo como cliente de negocio: usá pedido_para_negocio con «hotel».",
@@ -38,26 +36,24 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "usá pedido_para_negocio con «cabañas», proponé un kit concreto con precios reales y preguntá cuántas unidades tiene para calcular el costo por kit.",
   },
   gastronomia: {
-    // v2 (Martín 11/11): la v1 («¿Le paso la lista de precios?») tuvo 0 respuestas en 37 envíos (4-10/11).
-    // Una sola variable: el cierre pasa a la pregunta de precio de la venta en frío (política 3/11, punto 6).
-    nombre: "acopio_negocios_gastronomia_v2",
+    // 17/11 (Santiago: «tenemos que ser campeones en mensajes en frío»): 0 respuestas con el pitch largo.
+    // Ahora una sola pregunta corta que se contesta sin pensar; la oferta va recién cuando contesta. Sin el nombre del dueño.
+    nombre: "acopio_negocios_gastronomia_v3",
     cuerpo:
-      "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
-      "Abastecemos heladerías, cafeterías y panaderías con frutos secos, granola, semillas y dátiles para bowls, toppings y pastelería. Por volumen, con entrega sin costo en Carlos Paz y alrededores y envíos a todo Córdoba.\n\n" +
-      "¿A cuánto está pagando hoy el kilo de nuez o de dátiles? Si podemos mejorarlo, le paso nuestro precio.",
-    botones: ["Le paso mi precio", "No, gracias"],
+      "Hola, {{1}} 👋 ¿Quién se encarga de comprar los frutos secos y la granola del local? Tenemos precio mayorista en Carlos Paz y se lo queremos pasar a la persona indicada.",
+    botones: ["Soy yo, pasame precios", "No, gracias"],
     contexto:
-      "le escribimos nosotros ofreciendo abastecer su cocina (frutos secos, granola, semillas, dátiles, cacao) y le preguntamos a cuánto paga hoy el kilo de nuez o de dátiles. " +
+      "le escribimos nosotros ofreciendo abastecer su cocina (frutos secos, granola, semillas, dátiles, cacao) y le preguntamos quién hace esas compras. " +
       "PRIMERO preguntá (o anotá, si ya lo dijo) qué producto compra hoy, a cuánto el kilo y cuántos kilos por semana: ese precio se registra siempre, escribilo textual en tu respuesta para que Leo lo vea. " +
       "Después compará con el precio real de buscar_productos: si el nuestro es menor, decilo con el número; si no, no bajes nada de tu cuenta y ofrecé lo que sí tenemos (fraccionado fresco, entrega sin costo en la zona) y que Leo, de ventas mayoristas, le confirma el precio por volumen por este chat. " +
       "Se paga antes de entregar, por transferencia o Mercado Pago. Atendelo como cliente de negocio: usá pedido_para_negocio con «cafeterías».",
   },
   gimnasio: {
-    nombre: "acopio_negocios_gimnasio_v1",
+    // 17/11 (Santiago: «tenemos que ser campeones en mensajes en frío»): 0 respuestas con el pitch largo.
+    // Ahora una sola pregunta corta que se contesta sin pensar; la oferta va recién cuando contesta. Sin el nombre del dueño.
+    nombre: "acopio_negocios_gimnasio_v2",
     cuerpo:
-      "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
-      "Armamos un pack para que los gimnasios vendan en el mostrador: granola proteica, barras, frutos secos y mixes, con precio de reventa y buen margen por unidad. Entrega sin costo en Carlos Paz y alrededores y envíos a todo Córdoba.\n\n" +
-      "¿Le paso precios y cuánto le queda de ganancia?",
+      "Hola, {{1}} 👋 ¿Venden algo en el mostrador para después de entrenar? Tenemos barras, granola proteica y mixes con precio de reventa para gimnasios de Carlos Paz.",
     botones: ["Sí, pasame precios", "No, gracias"],
     contexto:
       "le escribimos nosotros ofreciendo productos para que revenda en el mostrador (granola proteica, barras, frutos secos). Atendelo como cliente de negocio: " +
@@ -83,18 +79,14 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "Si confirma, anotá qué lleva, cuántos y la dirección del local, y decile que Leo le confirma el total y que sale apenas se acredite el pago.",
   },
   regalos: {
-    // 16/11 (Santiago: «no puede pasar otro día sin recibir nada; buscá en mejores lugares con mejores ofertas»).
-    // Las plantillas de abastecimiento preguntaban el precio que paga hoy y nadie contestó (0 respuestas).
-    // Esta va a empresas en el mes en que deciden el regalo de fin de año: oferta concreta, de temporada,
-    // y una pregunta que se contesta con un número. v2: sin el nombre de Santiago (16/11: no se nombra más al dueño).
-    nombre: "acopio_empresas_regalos_v2",
+    // 17/11 (Santiago: «tenemos que ser campeones en mensajes en frío»): 0 respuestas con el pitch largo.
+    // Ahora una sola pregunta corta que se contesta sin pensar; la oferta va recién cuando contesta. Sin el nombre del dueño.
+    nombre: "acopio_empresas_regalos_v3",
     cuerpo:
-      "Hola, {{1}}. Le escribo de Acopio Saludable, de Villa Carlos Paz.\n\n" +
-      "Armamos las cajas de fin de año para equipos y clientes: frutos secos, garrapiñadas, pan dulce y chocolates, con la tarjeta de su empresa y entrega sin cargo en Carlos Paz.\n\n" +
-      "Usted me dice para cuántas personas y cuánto quiere gastar por caja, y hoy mismo le mando 3 opciones con foto. ¿Para cuántas personas sería?",
-    botones: ["Pasame opciones", "No, gracias"],
+      "Hola, {{1}} 👋 Una consulta corta: ¿este año hacen regalo de fin de año para el equipo o los clientes? Armamos cajas de frutos secos y pan dulce con la tarjeta de la empresa.",
+    botones: ["Sí, mostrame opciones", "No, gracias"],
     contexto:
-      "le escribimos nosotros ofreciendo las cajas de fin de año para su equipo o sus clientes y le preguntamos para cuántas personas. " +
+      "le escribimos nosotros ofreciendo las cajas de fin de año para su equipo o sus clientes y le preguntamos si este año hacen regalo. " +
       "PRIMERO anotá cuántas cajas quiere, el presupuesto por caja y para qué fecha. Con eso proponé 3 opciones reales de menor a mayor con precio de buscar_productos (los combos de Navidad: Mesa navideña, Regalo navideño, Pan dulce casero, y cajas a medida con frutos secos, garrapiñadas y chocolates) y mandá la foto con mandar_fotos. " +
       "Cada caja va con bolsa de regalo y una tarjeta con el nombre de la empresa. No calcules descuentos de tu cuenta: desde 10 cajas, decile que Leo, de ventas a empresas, le confirma el precio por cantidad por este chat. " +
       "Se paga antes de entregar, por transferencia (con factura) o Mercado Pago. Entrega sin cargo en Carlos Paz; a Córdoba Capital, el envío que dé costo_envio. Atendelo como cliente de negocio: usá pedido_para_negocio con «empresa».",

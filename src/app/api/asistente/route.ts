@@ -5,7 +5,7 @@ import { detectar, palabrasClave } from "@/lib/asistente";
 import { buscarEnCatalogo, type Enlace, type Respuesta } from "@/lib/asistente-catalogo";
 import { linkWhatsapp } from "@/lib/pedidos";
 import { pesos } from "@/lib/precios";
-import { textoZonaSinMinimo, zonaSinMinimo } from "@/lib/minimo-zona";
+import { textoEntregaZona, textoZonaSinMinimo, zonaSinMinimo } from "@/lib/minimo-zona";
 import { zonaPagaDe } from "@/lib/envios/tabla";
 import { AVISO_SUPLEMENTOS } from "@/lib/sitio";
 import { cotizarCarrito } from "@/lib/tienda";
@@ -97,7 +97,7 @@ export async function POST(req: Request) {
     case "envio":
       r = {
         texto: [
-          propia ? `En Villa Carlos Paz y sur de Punilla (San Antonio de Arredondo, Mayu Sumaj, Icho Cruz y Cuesta Blanca) te lo llevamos nosotros en ${cfg.plazoEntregaPropia}, sin cargo. Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.${zonaPaga ? ` A ${zonaPaga.nombre} también te lo llevamos nosotros, por ${pesos(zonaPaga.precio)}.` : ""}` : "",
+          propia ? `En Villa Carlos Paz y el sur de Punilla te lo llevamos nosotros en ${cfg.plazoEntregaPropia}. ${textoEntregaZona(cfg)} Los domingos no entregamos: lo que pidas el domingo se entrega a partir del lunes.${zonaPaga ? ` A ${zonaPaga.nombre} también te lo llevamos nosotros, por ${pesos(zonaPaga.precio)}.` : ""}` : "",
           `${propia ? "Al resto del país" : "A todo el país"} enviamos por correo: despacho en 24 a 48 hs hábiles y de 2 a 7 días hábiles de correo según la zona. El costo lo ves en el carrito con tu código postal, antes de pagar.`,
           cfg.envioGratisDesde ? `Desde ${pesos(cfg.envioGratisDesde)} el envío es gratis.` : "",
         ].filter(Boolean).join("\n\n"),

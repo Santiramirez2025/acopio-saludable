@@ -15,7 +15,7 @@ export function politicasNegocio(urlBase: string, corteHora: number) {
     hasShippingService: {
       "@type": "ShippingService",
       name: "Entrega propia en Villa Carlos Paz y sur de Punilla, y envíos por correo a todo el país",
-      description: "Entrega propia en Villa Carlos Paz y el sur de Punilla; Córdoba capital con cargo; resto del país por correo con costo calculado en el carrito.",
+      description: "Entrega propia sin cargo en Villa Carlos Paz, San Antonio de Arredondo y Mayu Sumaj desde la compra indicada en el carrito; resto del sur de Punilla con un costo fijo según la localidad; Córdoba capital con cargo; resto del país por correo con costo calculado en el carrito.",
       fulfillmentType: "https://schema.org/FulfillmentTypeDelivery",
       handlingTime: {
         "@type": "ServicePeriod",

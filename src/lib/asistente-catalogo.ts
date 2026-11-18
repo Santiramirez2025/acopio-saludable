@@ -6,6 +6,7 @@ import { combosTienda, productosTienda, type ComboTienda, type ProductoTienda } 
 import { pesos, renglonCombo } from "./precios";
 import { AVISO_SUPLEMENTOS } from "./sitio";
 import { comboAgotadoPedido, comboParecido } from "./anuncio-reemplazo";
+import { ordenarHallados } from "./orden-hallados";
 
 export type Enlace = { href: string; texto: string; externo?: boolean };
 export type Ficha = { href: string; nombre: string; detalle: string; precio: string; foto: string | null };
@@ -73,10 +74,7 @@ export async function hallarProductos(texto: string, soloSinTacc = false): Promi
   const coincide = (indice: string) => grupos.every((g) => g.some((v) => indice.includes(v)));
   let hallados = productos.filter((p) => coincide(p.indice));
   if (!hallados.length && grupos.length > 1) hallados = productos.filter((p) => puntosDe(p) > 0);
-  return hallados
-    .map((p, i) => ({ p, i, s: puntosDe(p) }))
-    .sort((a, b) => b.s - a.s || propio(b.p) - propio(a.p) || (propio(a.p) && propio(b.p) ? a.p.precio - b.p.precio : 0) || a.i - b.i)
-    .map((x) => x.p);
+  return ordenarHallados(hallados.map((p, i) => ({ p, i, s: puntosDe(p) })));
 }
 
 /**
@@ -101,9 +99,6 @@ export async function hallarSinStock(texto: string): Promise<{ codigo: string; p
     .slice(0, 3)
     .map((f) => ({ codigo: f.codigo, producto: f.producto, presentacion: f.presentacion, precio: Number(f.precioPublico) }));
 }
-
-/** Lo propio (Todo Granolas, La Granja) va antes, y entre lo propio, del más barato al más caro: es lo que promete el anuncio. */
-const propio = (p: { codigo: string }) => (/^(TG|LG)-/.test(p.codigo) ? 1 : 0);
 
 /**
  * Los combos que coinciden con lo que se busca, por su nombre o por lo que traen.
