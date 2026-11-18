@@ -84,7 +84,9 @@ export type ResultadoEnvio = { telefono: string; negocio: string; ok: boolean; m
 /** Manda la plantilla a un número y deja la charla registrada como prospecto. */
 export async function enviarProspecto(telefono: string, negocio: string, rubro: string, forzar = false): Promise<ResultadoEnvio> {
   const tel = telefono.replace(/\D/g, "");
-  const nombre = negocio.trim().slice(0, 60) || "¿cómo están?";
+  // 18/11: «Hola, Estudio Contable Pérez Rodríguez (San José de Calasanz 273) 👋»: la dirección que el captador
+  // anota entre paréntesis no va en el saludo.
+  const nombre = negocio.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "¿cómo están?";
   if (!/^549\d{10}$/.test(tel)) return { telefono: tel, negocio, ok: false, motivo: "no es un celular argentino" };
 
   const previa = await prisma.$queryRaw<{ baja: boolean; contactado: Date | null }[]>`

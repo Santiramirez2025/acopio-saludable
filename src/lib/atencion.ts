@@ -230,7 +230,8 @@ async function cerrarVenta(
     return;
   }
   const total = pesos(Number(pedido.total));
-  const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "más el envío, que te confirmo";
+  const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "con envío sin cargo si es en Carlos Paz (si es en otra localidad, te confirmo el costo)";
+  // 18/11: a Cris (Av. Cárcano, Carlos Paz) le llegó «$22.000 más el envío, que te confirmo» después de que el bot le dijo «sin cargo».
   // 17/11 (Santiago): dos precios según CUÁNDO paga. Al recibir, el de lista; pagando antes por transferencia, con descuento.
   const antes = medio === "AL_RECIBIR" ? precioTransferencia(Number(pedido.subtotal), cfg.descuentoTransferenciaPct) : null;
   const ahorroAntes = antes && antes < Number(pedido.subtotal) ? `. Si preferís pagarlo antes por transferencia, te queda en ${pesos(antes + Number(pedido.envioCobrado))}: decime y te paso el alias` : "";
