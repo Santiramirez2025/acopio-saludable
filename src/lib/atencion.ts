@@ -597,6 +597,7 @@ export async function atender(e: Entrada): Promise<void> {
   const historial = (await historialDe(e.clave, 9)).slice(0, -1);
   const inicio = Date.now();
   const p = await pensar({
+    telefono: e.clave,
     pedidoGuardado: guardado,
     canal,
     texto,
@@ -683,6 +684,7 @@ export async function pensar(c: {
   nombre: string | null;
   negocio: string;
   pedidoGuardado?: string | null;
+  telefono?: string;
 }): Promise<Pensado> {
   // Tocó su zona (Carlos Paz, Córdoba Capital) con el pedido ya armado: envío y botones de pago, sin modelo.
   if (c.toque?.tipo === "zona" && c.pedidoGuardado) {
@@ -782,8 +784,19 @@ export async function pensar(c: {
   const RECIBIO = /\b(lo|la|los|las)? ?(recib[ií]|tengo)\b|ya (me )?(lleg[oó]|lo tengo|est[aá] ac[aá])|me lleg[oó]|lleg[oó] (todo|bien|perfecto)/i;
   const diceQueLoRecibio = [c.texto, ...c.historial.filter((h) => h.de !== "acopio").slice(-3).map((h) => h.texto)].some((t) => RECIBIO.test(t) && !/no (lo |me )?(recib|lleg)/i.test(t));
   const yaLoTiene = diceQueLoRecibio && estadoOrden !== "ENTREGADO" ? " Ella/él acaba de decir que YA LO RECIBIÓ: creele. No digas que está en el reparto, que sale hoy ni mañana. Agradecé corto y nada más." : "";
+  // 18/11 (Darío): el equipo le dijo «va hoy, antes de las 17» y el bot, por la regla de las 15 h, le contestó tres
+  // veces «mañana jueves» mientras el cadete lo llamaba en camino. Lo que escribió una persona del equipo en las
+  // últimas 8 h manda sobre el día y el horario: el bot no lo contradice.
+  const dichoPorElEquipo = c.telefono
+    ? await prisma.whatsappMensaje
+        .findFirst({ where: { telefono: c.telefono, de: "persona", fecha: { gte: new Date(Date.now() - 8 * 3600_000) } }, orderBy: { fecha: "desc" }, select: { texto: true } })
+        .catch(() => null)
+    : null;
+  const loQueDijoElEquipo = dichoPorElEquipo
+    ? ` LO QUE YA LE DIJO EL EQUIPO (manda sobre cualquier regla de horario): «${dichoPorElEquipo.texto.slice(0, 400)}». No le cambies el día, el horario ni el precio que dice ahí; si pregunta, repetí eso. Si solo dice «ok», «gracias» o que espera, agradecé corto y no preguntes nada.`
+    : "";
   const cerrado = ordenId
-    ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaLoTiene}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
+    ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaLoTiene}${loQueDijoElEquipo}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";
   // El carrito de la web llega armado: se carga exacto, sin IA y sin ofrecer otra cosa.
   const web = esPedidoWeb(c.texto) && !ordenId ? await armarPedidoWeb(c.texto, Boolean(c.historial.some((h) => h.de === "acopio"))) : null;
@@ -1009,7 +1022,7 @@ export async function retomarCharla(clave: string): Promise<boolean> {
   const guardado = await pedidoGuardado(clave);
   const historial = (await historialDe(clave, 10)).slice(0, -1);
   const conv = await prisma.$queryRaw<{ nombre: string | null; anuncioTitulo: string | null }[]>`SELECT "nombre", "anuncioTitulo" FROM "WhatsappConversacion" WHERE "telefono" = ${clave}`;
-  const p = await pensar({ canal: canalDe(clave), texto, toque: null, historial, anuncio: conv[0]?.anuncioTitulo ? { titulo: conv[0].anuncioTitulo, texto: null } : null, nombre: conv[0]?.nombre ?? null, negocio: "", pedidoGuardado: guardado });
+  const p = await pensar({ canal: canalDe(clave), texto, toque: null, historial, anuncio: conv[0]?.anuncioTitulo ? { titulo: conv[0].anuncioTitulo, texto: null } : null, nombre: conv[0]?.nombre ?? null, negocio: "", pedidoGuardado: guardado, telefono: clave });
   if (p.derivar) return false;
   if (canalDe(clave) === "whatsapp") {
     await responderWhatsapp(clave, p.salientes);
