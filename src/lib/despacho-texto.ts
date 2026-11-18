@@ -5,9 +5,13 @@ import { numeroPedido } from "./pedido-calculos";
 import { pesos } from "./precios";
 import { codigoAmigo } from "./repetir";
 
+// 18/11: «¡Gracias por tu compra, Poretti!» (el pedido estaba a nombre «Poretti María Cristina»). Solo un nombre de
+// pila que reconocemos; si no, sin nombre.
+import { esNombreDePila } from "./nombres-comunes";
 function primerNombre(nombre: string): string {
-  const n = nombre.trim().split(/\s+/)[0] ?? "";
-  return n && !/cliente/i.test(n) ? n : "";
+  const n = (nombre.trim().split(/\s+/)[0] ?? "").replace(/[^\p{L}]/gu, "");
+  if (!n || !esNombreDePila(n)) return "";
+  return n[0].toUpperCase() + n.slice(1).toLowerCase();
 }
 
 /** «Ya salió»: solo el aviso y cómo paga. Nada de referidos: no se mezcla con la venta en curso. */

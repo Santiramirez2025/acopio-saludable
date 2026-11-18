@@ -1179,13 +1179,13 @@ test("imágenes oportunas: el primer «precios por kilo» va con la imagen del m
 import { mensajeDespacho, mensajesGracias } from "./despacho-texto";
 
 test("despacho sin referidos; gracias con referidos", () => {
-  const base = { id: 17, nombre: "Lilita", medioPago: "AL_RECIBIR" as const, pagadoAt: null, total: 15400 as unknown as never, token: "abc123" };
+  const base = { id: 17, nombre: "Lidia Charra", medioPago: "AL_RECIBIR" as const, pagadoAt: null, total: 15400 as unknown as never, token: "abc123" };
   const d = mensajeDespacho(base);
-  assert.match(d, /Hola Lilita! 😊 Tu pedido AS-00017 ya está en el reparto de hoy/);
+  assert.match(d, /Hola Lidia! 😊 Tu pedido AS-00017 ya está en el reparto de hoy/);
   assert.match(d, /Lo pagás cuando te llega/);
   assert.doesNotMatch(d, /5%|recomend/i);
   const [g, link] = mensajesGracias(base, "https://www.acopiosaludable.com");
-  assert.match(g, /Gracias por tu compra, Lilita/);
+  assert.match(g, /Gracias por tu compra, Lidia/);
   assert.match(g, /5%/);
   assert.match(link, /\?ref=amigo-/);
 });

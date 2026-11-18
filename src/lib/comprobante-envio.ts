@@ -1,3 +1,4 @@
+import { esNombreDePila } from "./nombres-comunes";
 // Manda el comprobante de pago por el WhatsApp del negocio. Si la charla está abierta (el cliente
 // escribió en las últimas 24 horas) va como texto; si no, con la plantilla de utilidad
 // acopio_comprobante_pago_v1, que Meta deja mandar siempre.
@@ -21,9 +22,11 @@ function telefonoDe(p: Order): string | null {
   return telefonoWa(d);
 }
 
+// 18/11: solo un nombre de pila que reconocemos («Poretti», «edithcaceres1958» no).
 function primerNombre(p: Order): string {
-  const n = p.nombre.trim().split(/\s+/)[0] ?? "";
-  return n && !/cliente/i.test(n) ? n : "";
+  const n = (p.nombre.trim().split(/\s+/)[0] ?? "").replace(/[^\p{L}]/gu, "");
+  if (!n || !esNombreDePila(n)) return "";
+  return n[0].toUpperCase() + n.slice(1).toLowerCase();
 }
 
 async function plantilla(tel: string, p: Order, url: string): Promise<boolean> {
