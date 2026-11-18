@@ -2,6 +2,8 @@
 // publicados, en CSV. Es la base para cargar las publicaciones: nunca se vende por debajo de lo que queda
 // en la web, porque el precio de cada canal ya suma comisión, cargos, IVA de la comisión, IIBB y envío.
 // Lo usan el panel (/admin/canales.csv) y los agentes (Diego y Cami, por /api/admin/canales).
+// Van TODOS los productos publicados: con el tope de 400 quedaban afuera algunos de los más vendidos
+// (el mix de semillas, #4 en ventas, no figuraba y Ana/Diego no podían calcular su piso).
 import { combosTienda, productosTienda } from "./tienda";
 import { precioCanal } from "./canales";
 
@@ -11,7 +13,7 @@ const celda = (v: string | number) => {
 };
 
 export async function csvCanales(): Promise<string> {
-  const [combos, productos] = await Promise.all([combosTienda({ activo: true, tipo: "COMBO" }), productosTienda({ take: 400 })]);
+  const [combos, productos] = await Promise.all([combosTienda({ activo: true, tipo: "COMBO" }), productosTienda({ take: 3000 })]);
   const filas: (string | number)[][] = [["Tipo", "Código/slug", "Nombre", "Precio web", "Mercado Libre Clásica", "Mercado Libre Premium", "PedidosYa", "Rappi"]];
   for (const c of combos.filter((x) => x.disponible)) {
     const w = Math.round(c.precio);
