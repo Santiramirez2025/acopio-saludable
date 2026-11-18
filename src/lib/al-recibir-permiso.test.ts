@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { alRecibirBloqueo } from "./cobro-permiso";
+import { alRecibirBloqueo, botPasaAlRecibir } from "./cobro-permiso";
 import { zonaDeLugar } from "./envio-zona";
 
 const pend = { estado: "PENDIENTE_PAGO", medioPago: "TRANSFERENCIA", pagado: false };
@@ -32,4 +32,22 @@ test("la ruta /pedidos/entrega aplica el control antes de cambiar el medio de pa
   assert.match(src, /alRecibirBloqueo\(/);
   assert.match(src, /esSesionAdmin\(\)/);
   assert.ok(src.indexOf("alRecibirBloqueo(") < src.indexOf('data.medioPago = "AL_RECIBIR"'));
+});
+
+test("el bot pasa a cobrar al entregar solo un pedido por transferencia, sin pagar, en la zona propia (AS-86, 17/11)", () => {
+  assert.equal(botPasaAlRecibir(pend, z("Villa Carlos Paz")), true);
+  assert.equal(botPasaAlRecibir(pend, z("San Antonio de Arredondo")), true);
+  assert.equal(botPasaAlRecibir(pend, z("Córdoba capital")), false);
+  assert.equal(botPasaAlRecibir(pend, z("A confirmar")), false);
+  assert.equal(botPasaAlRecibir({ ...pend, pagado: true }, z("Villa Carlos Paz")), false);
+  assert.equal(botPasaAlRecibir({ ...pend, estado: "ENVIADO" }, z("Villa Carlos Paz")), false);
+  assert.equal(botPasaAlRecibir({ ...pend, medioPago: "MERCADOPAGO" }, z("Villa Carlos Paz")), false);
+  assert.equal(botPasaAlRecibir({ ...pend, medioPago: "AL_RECIBIR" }, z("Villa Carlos Paz")), false);
+});
+
+test("atencion.ts: el cambio a cobrar al entregar pasa por botPasaAlRecibir y deja un evento", () => {
+  const src = readFileSync(new URL("./atencion.ts", import.meta.url), "utf8");
+  assert.match(src, /pagaAlRecibir\(texto\)\) \{\n\s+const id = Number\(guardado\.slice\(6\)\)/);
+  assert.match(src, /botPasaAlRecibir\(\{ estado: o\.estado/);
+  assert.match(src, /Pasa a cobrar al entregar \(bot, el cliente dijo/);
 });
