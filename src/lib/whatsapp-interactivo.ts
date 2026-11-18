@@ -466,6 +466,9 @@ export function pagaAlRecibir(texto: string): boolean {
 export function pideDatosTransferencia(texto: string, ultimoNuestro = ""): boolean {
   const t = limpio(texto);
   if (/\b(ya )?(te )?(transferi|pague|deposite)\b|\btransferid[oa]\b|\bhice (la |una )?transferencia\b|\b(esta|ya esta) (hecha|hecho|pagado|transferido)\b|\b(mande|envie|pase|deposite) (la plata|el dinero|el pago|la transferencia|lo)\b|comprobante|se puede (pagar|transferir)|aceptan|puedo (pagar|transferir)|tenes mercado pago/.test(t)) return false;
+  // 18/11 (Virginia): le preguntamos «¿a qué alias te devolvemos?» y contestó con SU alias; el bot le mandó los
+  // nuestros para pagar $71.100. Si el alias es de ella para una devolución, no son datos para pagar.
+  if (/devol|reintegr|reembols|a que alias|a que cbu/.test(limpio(ultimoNuestro)) || /\b(es mi|mi) (alias|cbu|cvu)\b|\b(alias|cbu|cvu) es\b/.test(t)) return false;
   if (/\b(alias|cbu|cvu)\b/.test(t)) return true;
   if (/\b(pasame|pasa|mandame|manda|enviame|dame|pasan|mandan|necesito) (los |tus |sus )?datos( (para|de) (la )?(transferir|transferencia|pago|pagar))?\b/.test(t)) return true;
   if (/\b(quiero|prefiero|voy a|lo|te) (pagar |pago |hago )?(por |con |una )?transferencia\b/.test(t) && /\b(pasame|mandame|dame|datos|cuenta|ya)\b/.test(t)) return true;

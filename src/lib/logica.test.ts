@@ -2041,3 +2041,9 @@ test("vendedor: el bot sabe que el mix del Trío trae nueces y almendras (Ofelia
   assert.ok(txt.includes("QUÉ TRAE EL MIX"));
   assert.ok(readFileSync("src/lib/lista-palabras.ts", "utf8").includes("w === \"nueces\" ? \"nuez\""));
 });
+
+test("transferencia 18/11: el alias que da el cliente para una devolución no dispara nuestros datos", async () => {
+  const { pideDatosTransferencia } = await import("./whatsapp-interactivo");
+  assert.equal(pideDatosTransferencia("FARMACIA.CARLOS.PAZ es el alias", "Dale Virginia, te devolvemos los $12.250 por transferencia. ¿A qué alias o CBU te lo hacemos?"), false);
+  assert.equal(pideDatosTransferencia("pasame el alias", "¿Te lo dejo listo?"), true);
+});
