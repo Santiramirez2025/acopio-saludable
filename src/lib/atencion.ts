@@ -546,7 +546,8 @@ export async function atender(e: Entrada): Promise<void> {
           orden.medioPago === "TRANSFERENCIA"
             ? Number(orden.total)
             : sub - base + (precioTransferencia(base, cfg.descuentoTransferenciaPct) ?? base) + Number(orden.envioCobrado);
-        const quien = e.nombre ? `, ${primerNombre(e.nombre)}` : "";
+        const pn = e.nombre ? primerNombre(e.nombre) : null;
+        const quien = pn ? `, ${pn}` : "";
         console.log("chat: va a transferir con pedido hecho, monto y alias directo", cola(e.clave), orden.id);
         await responder(
           e.clave,
