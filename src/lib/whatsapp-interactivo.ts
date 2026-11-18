@@ -433,12 +433,27 @@ export function textoPrimeraListaPorKilo(
 const limpio = (texto: string) => texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
 
 /**
+ * 18/11 (Rodri, seguridad): «no lo pago al recibir, te transfiero», «al recibir no puedo», «efectivo no tengo»
+ * contaban como «paga al recibir» porque bastaba con que apareciera la frase. Con eso el bot crea un pedido
+ * «Cobrar al entregar» (o, con el PR #557, pasa a cobrar al entregar uno por transferencia) cuando el cliente
+ * dijo lo contrario. Solo se descartan negaciones pegadas a la frase: «no hay problema, lo pago al recibir» sigue valiendo.
+ */
+function niegaPagoAlRecibir(t: string): boolean {
+  return (
+    /\bno (lo |te |se )?(pago|abono|pagamos|puedo pagar|voy a pagar|quiero pagar|podemos pagar|al recibir|contra ?entrega|contraentrega|en efectivo|efectivo|tengo efectivo|cuento con efectivo|manejo efectivo)\b/.test(t) ||
+    /\b(al recibir|al recibirlo|contra ?entrega|contraentrega|efectivo)( no\b| tampoco\b| imposible\b)/.test(t) ||
+    /\bsin (efectivo|pago al recibir|pagar al recibir)\b/.test(t)
+  );
+}
+
+/**
  * «Pago aquí», «pago cuando me lo traés», «al recibir», «en efectivo cuando llegue»: está cerrando,
  * y pagar al recibir solo existe en la entrega propia. No hay que preguntarle la zona ni nada más.
  */
 export function pagaAlRecibir(texto: string): boolean {
   const t = limpio(texto);
   if (t.includes("?")) return false;
+  if (niegaPagoAlRecibir(t)) return false;
   return /\b(pago|abono|te pago|lo pago|pagamos) (aqui|aca|ahi|al recibir|al recibirlo|contra ?entrega|en (mano|efectivo|casa)|cuando (llegue|lo reciba|me lo traigas|lo traigas|venga|vengas|me lo traes|lo traes))\b|\b(al recibir|contra ?entrega|contraentrega)\b|\bpago (en )?efectivo\b|^(efectivo|en efectivo|al recibir|pago al recibir)$/.test(t);
 }
 
