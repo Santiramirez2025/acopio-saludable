@@ -758,7 +758,11 @@ export function listaDeVerdad(encontrados: number, pedidos: number): boolean {
  */
 export function nombraElTrio(texto: string): boolean {
   const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  return /\btrio\b/.test(t);
+  if (/\btrio\b/.test(t)) return true;
+  // «el acopio x 3», «el de 3», «los 3 kilos» (Marta 18/11, anuncio «3 kilos, 3 recetas»: el bot le dijo «no lo tenemos»).
+  // No cuenta si nombra un producto: «3 kilos de nuez», «x 3 kg de pasas».
+  if (/\b(kilos?|kg)\s+de\b|cuotas?/.test(t)) return false;
+  return /(\b(x|por)\s*3\b|\bel de (los )?3\b|\blos 3 (kilos|kg)\b|\b3 kilos,? 3 recetas\b)/.test(t);
 }
 
 export function textoComboSinIA(c: {

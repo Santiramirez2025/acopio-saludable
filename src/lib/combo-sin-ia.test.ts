@@ -36,3 +36,14 @@ test("un combo chico no promete envío sin cargo, y sin precio no hay texto", ()
   assert.doesNotMatch(t, /sin cargo|transferencia/);
   assert.equal(textoComboSinIA({ combo: { ...trio, precio: 0 }, conTransferencia: null, nombre: null, sinCargoDesde: 20000, sitio: "https://x", pesos }), null);
 });
+
+test("trío: «el acopio x 3» y parecidos nombran el Trío; «3 kilos de nuez» no", () => {
+  for (const t of ["Me interesó el aviso por facebook, el acopio x 3", "quiero el de 3", "los 3 kilos", "el combo por 3", "vi lo de 3 kilos, 3 recetas"]) assert.equal(nombraElTrio(t), true, t);
+  for (const t of ["quiero 3 kilos de nuez", "x 3 kg de pasas", "somos 3", "a las 3", "se puede pagar x 3 cuotas?", "son 30 mil?"]) assert.equal(nombraElTrio(t), false, t);
+});
+
+test("vendedor: lo que se vio en el aviso nunca es «no lo tenemos»", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("./vendedor.ts", import.meta.url), "utf8");
+  assert.match(src, /LO DEL AVISO EXISTE/);
+});
