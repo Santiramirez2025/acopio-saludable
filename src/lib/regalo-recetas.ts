@@ -10,7 +10,7 @@ import { REGALO_TOPE_DEFECTO } from "./regalo-tope";
 export { topeRegalo } from "./regalo-tope";
 
 // v2: la v1 decía «26 recetas» y son 25; sin número no queda vieja cuando se sumen más.
-export const PLANTILLA_REGALO = "acopio_regalo_recetas_v2";
+export const PLANTILLA_REGALO = "acopio_regalo_recetas_v3";
 export const URL_REGALO = "https://www.acopiosaludable.com/regalo";
 const GRAPH = "https://graph.facebook.com/v21.0";
 
@@ -27,7 +27,7 @@ async function candidatos(): Promise<Candidato[]> {
 }
 
 export const textoRegalo = (nombre: string) =>
-  `Hola ${nombre}, soy Santiago, de Acopio Saludable. Gracias por tu compra 💚 Te dejo un regalo: nuestro recetario, con recetas fáciles para hacer con frutos secos, semillas y dátiles. ${URL_REGALO}`;
+  `Hola ${nombre}, te escribimos de Acopio Saludable. Gracias por tu compra 💚 Te dejo un regalo: nuestro recetario, con recetas fáciles para hacer con frutos secos, semillas y dátiles. ${URL_REGALO}`;
 
 async function plantilla(tel: string, nombre: string): Promise<boolean> {
   const token = process.env.WHATSAPP_TOKEN;
@@ -84,7 +84,7 @@ export async function crearPlantillaRegalo(): Promise<unknown> {
       components: [
         {
           type: "BODY",
-          text: "Hola {{1}}, soy Santiago, de Acopio Saludable. Gracias por tu compra 💚 Te dejo un regalo: nuestro recetario, con recetas fáciles para hacer con los frutos secos, las semillas y los dátiles que ya tenés en casa.",
+          text: "Hola {{1}}, te escribimos de Acopio Saludable. Gracias por tu compra 💚 Te dejo un regalo: nuestro recetario, con recetas fáciles para hacer con los frutos secos, las semillas y los dátiles que ya tenés en casa.",
           example: { body_text: [["Ana"]] },
         },
         { type: "BUTTONS", buttons: [{ type: "URL", text: "Ver mis recetas", url: URL_REGALO }] },

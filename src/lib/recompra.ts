@@ -13,7 +13,7 @@ import { textoRecompra, resumenPedido, recompraEnEspera, type ItemRecompra } fro
 import { telefonoWa } from "./telefono";
 
 // v2 (29/10): la v1 decía «pagás al recibir»; se cobra antes de entregar.
-export const PLANTILLA_RECOMPRA = "acopio_recompra_v2";
+export const PLANTILLA_RECOMPRA = "acopio_recompra_v3";
 const GRAPH = "https://graph.facebook.com/v21.0";
 const TOPE = 40;
 
@@ -92,7 +92,7 @@ export async function crearPlantillaRecompra(): Promise<unknown> {
       components: [
         {
           type: "BODY",
-          text: "Hola {{1}}, soy Santiago, de Acopio Saludable. Hace unas semanas te llevamos {{2}}. ¿Te armo lo mismo para este mes? Te lo llevamos a tu casa como la otra vez.",
+          text: "Hola {{1}}, te escribimos de Acopio Saludable. Hace unas semanas te llevamos {{2}}. ¿Te armo lo mismo para este mes? Te lo llevamos a tu casa como la otra vez.",
           example: { body_text: [["Ana", "la Despensa de 4 kilos"]] },
         },
         { type: "BUTTONS", buttons: [{ type: "QUICK_REPLY", text: "Sí, lo mismo" }, { type: "QUICK_REPLY", text: "Quiero cambiar algo" }, { type: "QUICK_REPLY", text: "Ahora no" }] },

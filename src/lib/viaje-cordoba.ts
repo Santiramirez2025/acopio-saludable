@@ -6,13 +6,13 @@ import { prisma } from "./prisma";
 import { primerNombre } from "./whatsapp-interactivo";
 import { telefonoWa } from "./telefono";
 
-export const PLANTILLA_VIAJE = "acopio_viaje_cordoba_v1";
+export const PLANTILLA_VIAJE = "acopio_viaje_cordoba_v2";
 export { ENVIO_PLANTILLA_VIAJE, plantillaViajeVigente } from "./viaje-cordoba-precio";
 import { plantillaViajeVigente } from "./viaje-cordoba-precio";
 const GRAPH = "https://graph.facebook.com/v21.0";
 
 export const textoViaje = (nombre: string, cuando: string) =>
-  `Hola ${nombre}, soy Santiago, de Acopio Saludable. Te escribo por tu pedido: ${cuando} viajamos a Córdoba y te lo podemos llevar nosotros. Ahora la compra mínima es de $20.000 y el envío sale $5.000. ¿Te lo dejo listo? [Botones: Sí, armalo · Ahora no]`;
+  `Hola ${nombre}, te escribimos de Acopio Saludable. Es por tu pedido: ${cuando} viajamos a Córdoba y te lo podemos llevar nosotros. Ahora la compra mínima es de $20.000 y el envío sale $5.000. ¿Te lo dejo listo? [Botones: Sí, armalo · Ahora no]`;
 
 /** Manda el aviso a esos teléfonos. Nunca dos veces al mismo número ni a quien pidió la baja. */
 export async function avisarViajeCordoba(telefonos: string[], cuando: string, precioZonaPaga?: number | null): Promise<{ enviados: string[]; salteados: string[]; fallidos: string[]; error?: string }> {
@@ -61,7 +61,7 @@ export async function crearPlantillaViaje(): Promise<unknown> {
       components: [
         {
           type: "BODY",
-          text: "Hola {{1}}, soy Santiago, de Acopio Saludable. Te escribo por tu pedido: {{2}} viajamos a Córdoba y te lo podemos llevar nosotros. Ahora la compra mínima es de $20.000 y el envío sale $5.000. ¿Te lo dejo listo?",
+          text: "Hola {{1}}, te escribimos de Acopio Saludable. Es por tu pedido: {{2}} viajamos a Córdoba y te lo podemos llevar nosotros. Ahora la compra mínima es de $20.000 y el envío sale $5.000. ¿Te lo dejo listo?",
           example: { body_text: [["Ana", "hoy lunes"]] },
         },
         { type: "BUTTONS", buttons: [{ type: "QUICK_REPLY", text: "Sí, armalo" }, { type: "QUICK_REPLY", text: "Ahora no" }] },

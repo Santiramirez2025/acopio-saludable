@@ -38,7 +38,7 @@ export function textoRecompra(o: { numero: string; id: number; nombre: string; i
     ...sueltos.map((i) => `codigo ${i.codigo} · ${nombreVigente(i.producto)} ${i.presentacion} x ${i.cantidad}`),
   ];
   return (
-    `[Recompra pedido ${o.numero} (id ${o.id})] Hola ${o.nombre}, soy Santiago, de Acopio Saludable. Hace unas semanas te llevamos ${resumenPedido(o.items)}. ¿Te armo lo mismo para este mes? ` +
+    `[Recompra pedido ${o.numero} (id ${o.id})] Hola ${o.nombre}, te escribimos de Acopio Saludable. Hace unas semanas te llevamos ${resumenPedido(o.items)}. ¿Te armo lo mismo para este mes? ` +
     `[Botones: Sí, lo mismo · Quiero cambiar algo · Ahora no] ` +
     `[Para el vendedor: pedido anterior (total ${o.total}): ${lineas.join("; ")}. Dirección anterior: ${o.direccion}.]`
   );
