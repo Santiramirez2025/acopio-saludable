@@ -17,10 +17,18 @@ type Hit = { id: string; url: string; thumbnail?: string; width?: number; height
 
 async function buscar(q: string, page = 1): Promise<Hit[]> {
   const u = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license=cc0,pdm&page_size=20&page=${page}&mature=false`;
-  const r = await fetch(u, { headers: { "user-agent": "AcopioSaludable/1.0 (acopiosaludable.com)" }, signal: AbortSignal.timeout(20_000) }).catch(() => null);
+  let r: Response | null = null;
+  for (let i = 0; i < 3; i++) {
+    r = await fetch(u, { headers: { "user-agent": "AcopioSaludable/1.0 (acopiosaludable.com)" }, signal: AbortSignal.timeout(20_000) }).catch(() => null);
+    if (r?.status !== 429) break;
+    await new Promise((ok) => setTimeout(ok, 4000 * (i + 1)));
+  }
   if (!r?.ok) return [];
   const j = (await r.json().catch(() => ({}))) as { results?: Hit[] };
-  return (j.results ?? []).filter((h) => (h.width ?? 0) >= 500 && (h.height ?? 0) >= 400);
+  // Primero las que nombran lo buscado en el título (más representativas).
+  const palabras = q.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+  const pts = (h: Hit) => palabras.filter((w) => (h.title ?? "").toLowerCase().includes(w)).length;
+  return (j.results ?? []).filter((h) => (h.width ?? 0) >= 500 && (h.height ?? 0) >= 400).sort((a, b) => pts(b) - pts(a));
 }
 
 async function bajar(url: string): Promise<Buffer | null> {
@@ -37,9 +45,12 @@ export async function POST(req: Request) {
   // Fotos ya usadas: cada producto con una distinta.
   const usadas = new Set((await prisma.product.findMany({ where: { fotoUrl: { contains: "openverse-" } }, select: { fotoUrl: true } })).map((p) => (p.fotoUrl ?? "").split("openverse-")[1]?.split("-")[0]));
   const out: Record<string, string> = {};
+  const cache = new Map<string, Hit[]>(); // una búsqueda por consulta: Openverse limita las anónimas
   for (const it of items) {
     try {
-      const hits = await buscar(it.q, it.page ?? 1);
+      const k = `${it.q}|${it.page ?? 1}`;
+      if (!cache.has(k)) cache.set(k, await buscar(it.q, it.page ?? 1));
+      const hits = cache.get(k)!;
       const hit = hits.find((h) => !usadas.has(h.id.slice(0, 8)));
       if (!hit) { out[it.codigo] = `sin foto para «${it.q}»`; continue; }
       const crudo = (await bajar(hit.url)) ?? (hit.thumbnail ? await bajar(hit.thumbnail) : null);
