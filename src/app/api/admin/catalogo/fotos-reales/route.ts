@@ -16,7 +16,7 @@ export const maxDuration = 300;
 type Hit = { id: string; url: string; thumbnail?: string; width?: number; height?: number; title?: string; license?: string };
 
 async function buscar(q: string, page = 1): Promise<Hit[]> {
-  const u = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license=cc0,pdm&page_size=20&page=${page}&mature=false`;
+  const u = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license=cc0,pdm&category=photograph&page_size=20&page=${page}&mature=false`;
   let r: Response | null = null;
   for (let i = 0; i < 3; i++) {
     r = await fetch(u, { headers: { "user-agent": "AcopioSaludable/1.0 (acopiosaludable.com)" }, signal: AbortSignal.timeout(20_000) }).catch(() => null);
@@ -28,7 +28,8 @@ async function buscar(q: string, page = 1): Promise<Hit[]> {
   // Primero las que nombran lo buscado en el título (más representativas).
   const palabras = q.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
   const pts = (h: Hit) => palabras.filter((w) => (h.title ?? "").toLowerCase().includes(w)).length;
-  return (j.results ?? []).filter((h) => (h.width ?? 0) >= 500 && (h.height ?? 0) >= 400).sort((a, b) => pts(b) - pts(a));
+  // Solo las que nombran lo buscado: una foto cualquiera es peor que el ícono.
+  return (j.results ?? []).filter((h) => (h.width ?? 0) >= 500 && (h.height ?? 0) >= 400 && pts(h) > 0).sort((a, b) => pts(b) - pts(a));
 }
 
 async function bajar(url: string): Promise<Buffer | null> {
@@ -40,7 +41,7 @@ async function bajar(url: string): Promise<Buffer | null> {
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { items?: { codigo: string; q: string; page?: number }[]; aplicar?: boolean };
+  const b = (await req.json().catch(() => ({}))) as { items?: { codigo: string; q: string; page?: number; id?: string }[]; aplicar?: boolean };
   const items = (b.items ?? []).slice(0, 25);
   // Fotos ya usadas: cada producto con una distinta.
   const usadas = new Set((await prisma.product.findMany({ where: { fotoUrl: { contains: "openverse-" } }, select: { fotoUrl: true } })).map((p) => (p.fotoUrl ?? "").split("openverse-")[1]?.split("-")[0]));
@@ -51,13 +52,18 @@ export async function POST(req: Request) {
       const k = `${it.q}|${it.page ?? 1}`;
       if (!cache.has(k)) cache.set(k, await buscar(it.q, it.page ?? 1));
       const hits = cache.get(k)!;
-      const hit = hits.find((h) => !usadas.has(h.id.slice(0, 8)));
+      const hit = it.id ? hits.find((h) => h.id === it.id) : hits.find((h) => !usadas.has(h.id.slice(0, 8)));
       if (!hit) { out[it.codigo] = `sin foto para «${it.q}»`; continue; }
       const crudo = (await bajar(hit.url)) ?? (hit.thumbnail ? await bajar(hit.thumbnail) : null);
       if (!crudo) { out[it.codigo] = "no se pudo bajar"; continue; }
       const img = await sharp(crudo).rotate().resize(900, 900, { fit: "cover", position: "attention" }).modulate({ saturation: 1.08 }).webp({ quality: 80 }).toBuffer();
       usadas.add(hit.id.slice(0, 8));
-      if (!b.aplicar) { out[it.codigo] = `ok (prueba): ${hit.title ?? ""} ${hit.url}`; continue; }
+      if (!b.aplicar) {
+        // Prueba: devuelve una miniatura para revisarla antes de aplicar.
+        const mini = await sharp(img).resize(200, 200).jpeg({ quality: 60 }).toBuffer();
+        out[it.codigo] = `ok (prueba): ${(hit.title ?? "").slice(0, 60)} | ${hit.id} | data:image/jpeg;base64,${mini.toString("base64")}`;
+        continue;
+      }
       const r = await put(`productos/openverse-${hit.id.slice(0, 8)}-${it.codigo.toLowerCase()}.webp`, img, { access: "public", contentType: "image/webp", addRandomSuffix: false, allowOverwrite: true });
       const p = await prisma.product.findUnique({ where: { codigo: it.codigo }, select: { fotos: true } });
       if (!p) { out[it.codigo] = "no existe"; continue; }
