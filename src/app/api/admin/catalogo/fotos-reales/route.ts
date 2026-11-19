@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       if (!h?.url) { out[it.codigo] = "no encontré la foto"; continue; }
       const img = await imagen(h);
       if (!img) { out[it.codigo] = "no se pudo bajar"; continue; }
-      const p = await prisma.product.findUnique({ where: { codigo: it.codigo }, select: { fotos: true, nombre: true } });
+      const p = await prisma.product.findUnique({ where: { codigo: it.codigo }, select: { fotos: true, producto: true, presentacion: true } });
       if (!p) { out[it.codigo] = "no existe"; continue; }
       const subida = await put(`productos/openverse-${h.id.slice(0, 8)}-${it.codigo.toLowerCase()}.webp`, img, {
         access: "public", contentType: "image/webp", addRandomSuffix: false, allowOverwrite: true,
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
         data: { fotoUrl: subida.url, fotos: [subida.url, ...p.fotos.filter((f: string) => f !== subida.url)].slice(0, 4) },
       });
       if (h.license !== "cc0" && h.license !== "pdm") {
-        nuevos.push({ producto: p.nombre, titulo: h.title ?? "", autor: h.creator ?? "", licencia: `CC ${(h.license ?? "").toUpperCase()} ${h.license_version ?? ""}`.trim(), fuente: h.foreign_landing_url ?? "" });
+        nuevos.push({ producto: `${p.producto} ${p.presentacion}`.trim(), titulo: h.title ?? "", autor: h.creator ?? "", licencia: `CC ${(h.license ?? "").toUpperCase()} ${h.license_version ?? ""}`.trim(), fuente: h.foreign_landing_url ?? "" });
       }
       out[it.codigo] = subida.url;
     } catch (e) {
