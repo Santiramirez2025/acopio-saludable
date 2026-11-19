@@ -3,13 +3,19 @@
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { cruzarConWebGranja } from "@/lib/granja-web";
+import { cruzarConWebGranja, leerCajas } from "@/lib/granja-web";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-export async function GET() {
+export async function GET(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const qs = new URL(req.url).searchParams.get("qs");
+  if (qs) {
+    const html = await fetch(`https://lagranjadelcentro.com.ar/productos.php?${qs}`, { signal: AbortSignal.timeout(25_000) }).then((r) => r.text());
+    const i = html.indexOf(new URL(req.url).searchParams.get("busco") ?? "box-content-1");
+    return NextResponse.json({ cajas: leerCajas(html).slice(0, 60), trozo: html.slice(Math.max(0, i - 200), i + 2500) });
+  }
   return NextResponse.json(await cruzarConWebGranja(false));
 }
 
