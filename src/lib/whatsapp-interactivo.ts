@@ -10,6 +10,7 @@
 // para un negocio?») va en texto, sin botones: con botones en cada mensaje la charla parecía un menú.
 
 import { esNombreDePila } from "./nombres-comunes";
+import { claves, palabrasDeRespaldo } from "./lista-palabras";
 import { PAGO_AL_RECIBIR } from "./politica";
 import { pesos } from "./precios";
 import { urlSitio } from "./sitio";
@@ -741,6 +742,9 @@ export function listaDeProductos(texto: string): string[] {
   // El botón «Pedir por WhatsApp» de la web manda «Hola! Quiero pedir: • 1 × Kit semanal…: $ 25.000 (…) ¿Me ayudás con el
   // pedido?». Es un pedido armado, no una lista para cotizar: a Carla (18/11) el Kit semanal se le contestó «— no lo tenemos».
   if (/quiero pedir:\s*[\s\S]*?\d+\s*[×x]\s/i.test(sinEtiquetas) && /me ayud[aá]s con el pedido/i.test(sinEtiquetas)) return [];
+  // «Consumo un mix de frutos secos que trae nuez, avellanas, almendras y cajú» describe UN mix hecho, no es una lista
+  // (Cristian 18/11: se le cotizaron 4 kilos sueltos + mix de semillas y contestó «no me interesa si no es hecho el mix»).
+  if (/\bm[ií]x(es)?\b[^\n.]{0,40}?\b(que|q|con)\s+(trae|tiene|tenga|lleva|viene)\b/i.test(sinEtiquetas)) return [];
   const limpio = sinEtiquetas
     .replace(/^[\s\S]*?(precios?|cu[aá]nto sale[n]?|cotiz[aá]me|necesito|quiero|busco)( saber)?( el| los)?( precios?)?( de| del)?\s*[:\-]?/i, (m) => (m.length < 80 ? "" : m))
     .replace(/\b(por|x)\s*(kg|kilo)\b/gi, "");
@@ -751,7 +755,9 @@ export function listaDeProductos(texto: string): string[] {
     .map((p) => p.replace(/^(pero|y|tambi[eé]n)\s+/i, "").replace(/^(necesito|quiero|busco)\s+/i, "").trim())
     // «cuánto me sale», «dónde retiro» son preguntas, no productos (se contestaban «— no lo tenemos»).
     .filter((p) => p.length >= 3 && p.length <= 60 && !/^(hola|buen[oa]s?|gracias|sii?|pero|por ejemplo)\b/i.test(p))
-    .filter((p) => !/^¿?\s*(cu[aá]nto|cu[aá]ndo|d[oó]nde|c[oó]mo|qu[eé]|hacen|tienen|env[ií]an)\b/i.test(p));
+    .filter((p) => !/^¿?\s*(cu[aá]nto|cu[aá]ndo|d[oó]nde|c[oó]mo|qu[eé]|hacen|tienen|env[ií]an)\b/i.test(p))
+    // «Precio por favor.....gracias» es cortesía, no un producto (Cristian 18/11: salió «— no lo tenemos»).
+    .filter((p) => !(claves(p).length > 0 && palabrasDeRespaldo(p).length === 0));
   return partes.length >= 3 ? partes.slice(0, 15) : [];
 }
 
