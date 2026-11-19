@@ -1,17 +1,22 @@
-// Diagnóstico: cómo lista productos la web de La Granja (para cruzar disponibilidad con nuestro catálogo).
+// Cruza el catálogo con la disponibilidad real de la web de La Granja (ver lib/granja-web.ts).
+// GET: el plan sin tocar nada. POST ?aplicar=1: pausa lo que La Granja no tiene y reactiva lo que volvió.
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import { cruzarConWebGranja } from "@/lib/granja-web";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
-export async function GET(req: Request) {
+export async function GET() {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const q = new URL(req.url).searchParams;
-  const url = `https://lagranjadelcentro.com.ar/productos.php?${q.get("qs") ?? "id_cat=4"}`;
-  const html = await fetch(url, { signal: AbortSignal.timeout(30_000) }).then((r) => r.text()).catch((e) => `ERR ${e}`);
-  const cajas = html.split('class="box-content-1"').length - 1;
-  const noDisp = html.split("No disponible").length - 1;
-  const links = [...html.matchAll(/href="([^"]*(?:pag|page|pg)[^"]*)"/gi)].map((m) => m[1]).slice(0, 20);
-  return NextResponse.json({ url, largo: html.length, cajas, noDisp, links, muestra: html.slice(html.indexOf('class="box-content-1"'), html.indexOf('class="box-content-1"') + 1500) });
+  return NextResponse.json(await cruzarConWebGranja(false));
+}
+
+export async function POST(req: Request) {
+  if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const aplicar = new URL(req.url).searchParams.get("aplicar") === "1";
+  const r = await cruzarConWebGranja(aplicar);
+  if (r.aplicado) revalidatePath("/", "layout");
+  return NextResponse.json(r);
 }

@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 import { cronAutorizado } from "@/lib/cron-acceso";
 import { conRegistro } from "@/lib/salud";
 import { actualizarDesdeLaGranja, avisarResultadoLista } from "@/lib/listas-aplicar";
+import { cruzarConWebGranja } from "@/lib/granja-web";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 export async function GET(req: Request) {
   if (!cronAutorizado(req)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -15,5 +16,7 @@ export async function GET(req: Request) {
     return x;
   })).catch((e) => ({ error: String(e) }));
   await avisarResultadoLista(r);
-  return NextResponse.json(r);
+  // 19/11: después de la lista PDF, la disponibilidad real de la web (lo «No disponible» no se vende).
+  const web = await conRegistro("granja-web", () => cruzarConWebGranja(true)).catch((e) => ({ error: String(e) }));
+  return NextResponse.json({ lista: r, web });
 }

@@ -2053,3 +2053,14 @@ test("aviso 18/11: el resumen con botón («queda confirmado al toque») no es v
   assert.equal(dioPorCerrada("Te lo dejo armado en la web: ahí elegís Mercado Pago o transferencia (8% menos) y queda confirmado al toque."), false);
   assert.equal(dioPorCerrada("Listo, tu pedido queda agendado para mañana."), true);
 });
+
+test("granja web 19/11: lee cajas, «No disponible» y el código sin prefijo", async () => {
+  const { leerCajas, claveGranja } = await import("./granja-web");
+  const html = `<div class="box-content-1" data-product-id="1" data-product-name="Maiz Frito Salado x 1 kg"><p class="p-cod-content-1">9-986-004</p><span itemprop="price" content="0">0,00</span><button>No disponible</button></div><div class="box-content-1" data-product-id="2" data-product-name="PROVENZAL X 1 KG"><p class="p-cod-content-1">9-977-021</p><span itemprop="price" content="7216.21">7.216,21</span><form class="carro"></form></div>`;
+  const c = leerCajas(html);
+  assert.equal(c.length, 2);
+  assert.deepEqual([c[0].codigo, c[0].disponible], ["9-986-004", false]);
+  assert.deepEqual([c[1].codigo, c[1].disponible, c[1].precio], ["9-977-021", true, 7216.21]);
+  assert.equal(claveGranja("9-977-021"), "977-021");
+  assert.equal(claveGranja("9-977-021-10"), null);
+});
