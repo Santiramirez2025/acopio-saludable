@@ -46,7 +46,7 @@ import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
 import { transcribirAudio } from "./oir-audio";
 import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
-import { esDudaDeConfianza, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, yaMandoComprobante } from "./atencion-reglas";
+import { clienteDiceQuePago, equipoDijoQueVa, esDudaDeConfianza, esperaElPedido, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, soloAcuse, yaMandoComprobante } from "./atencion-reglas";
 import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from "./direccion-cliente";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
@@ -59,7 +59,7 @@ const SALUD =
   "Entiendo, y qué bueno que te estés cuidando 💚 Sobre salud no te puedo aconsejar, eso lo ve mejor tu médico o nutricionista. " +
   "Lo que sí puedo es contarte qué productos son sin azúcar agregada y pasarte precios. ¿Querés que te los pase?";
 
-const DERIVADO = "Dale, en un rato te escribe alguien del equipo por acá para coordinarlo. Atendemos de lunes a sábado, de 8 a 20 h.";
+const DERIVADO = "Dale, ya le paso tu mensaje al equipo y te escribimos por acá en un rato 🙌";
 
 // Un identificador no va entero a los logs: con los últimos cuatro alcanza para seguir una charla.
 const ESPERA_RAFAGA_MS = 4000;
@@ -713,6 +713,19 @@ export async function pensar(c: {
   for (let i = c.historial.length - 1; i >= 0 && c.historial[i].de === "yo"; i--) rafaga.unshift(c.historial[i].texto);
   const todoGracias = [...rafaga, c.texto].every((t) => soloAgradece(t));
   const preguntaAbierta = rafaga.some((t) => t.includes("?") || /^(con quien|cuando|donde|como|cuanto|que|cual)\b/i.test(t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/^[¿¡\s]+/, "")));
+  // 19/11 (Marina: «No vino el cadete», «¿Entonces viene o no?»; Mónica: «estará lejos?»): alguien espera en la
+  // puerta. Se le contesta cálido, sin horarios de atención, y se avisa a Santiago al toque.
+  if (!c.toque && c.canal === "whatsapp" && esperaElPedido(c.texto)) {
+    const pn = primerNombre(c.nombre);
+    const texto = `¡Perdón por la espera${pn ? `, ${pn}` : ""}! Ya le aviso al cadete y te escribimos enseguida por acá 🙏`;
+    await avisarSantiago("Cliente esperando el pedido", `${c.nombre ?? c.telefono ?? ""} (${c.telefono ?? ""}) escribió: «${c.texto.slice(0, 160)}». Escribile o avisale cuánto falta.`).catch(() => null);
+    return { salientes: [{ tipo: "texto" as const, texto }], respuesta: { texto }, derivar: false, conIA: false };
+  }
+  // 19/11 (Móni): «Dale», «Si dale», «Bueno dale» después de un mensaje nuestro que no pregunta nada: no se contesta.
+  const ultimoNuestroAcuse = [...c.historial].reverse().find((h) => h.de === "acopio")?.texto ?? "";
+  if (!c.toque && c.historial.length && [...rafaga, c.texto].every((t) => soloAcuse(t)) && !ultimoNuestroAcuse.includes("?") && !/\bOPCIONES:|\[Botones/.test(ultimoNuestroAcuse)) {
+    return { salientes: [], respuesta: { texto: "" }, derivar: false, conIA: false };
+  }
   if (!c.toque && c.historial.length && todoGracias) {
     // Si ya le dijimos «de nada» y vuelve a agradecer (o reacciona), no se contesta otra vez lo mismo.
     const ultimoNuestro = [...c.historial].reverse().find((h) => h.de === "acopio")?.texto ?? "";
@@ -776,17 +789,20 @@ export async function pensar(c: {
   // Lo que ya nos dio: no se le vuelve a pedir (a Nancy se le pidió el nombre dos veces el 26/10).
   const tieneCalle = Boolean(orden?.calle && orden.calle.trim().length > 4 && !/a confirmar/i.test(orden.calle));
   const horario = orden?.notas?.match(/Horario:\s*([^·]+)/i)?.[1]?.trim();
-  const yaTenemos = orden
+  let yaTenemos = orden
     ? ` Datos que YA tenemos: nombre ${orden.nombre}${tieneCalle ? `, dirección ${orden.calle}, ${orden.ciudad}` : ", FALTA la dirección"}${horario ? `, horario ${horario}` : ""}. No vuelvas a pedir lo que ya está; si falta algo, pedí solo eso y una sola vez.${notaPlazoEntrega(estadoOrden, orden.ciudad)}`
     : "";
   const eventosComprobante = ordenId && estadoOrden === "PENDIENTE_PAGO" ? await prisma.orderEvent.findMany({ where: { orderId: ordenId }, select: { nota: true } }).catch(() => []) : [];
-  const enQueAnda =
+  let enQueAnda =
     estadoOrden === "ENTREGADO" || estadoOrden === "ENVIADO"
       ? notaPedidoQueSalio(estadoOrden)
       : estadoOrden === "CANCELADO"
         ? " Ese pedido se canceló."
         : estadoOrden === "PENDIENTE_PAGO"
-          ? notaPedidoSinPagar(orden?.medioPago, yaMandoComprobante(eventosComprobante.map((x) => x.nota)))
+          ? notaPedidoSinPagar(
+              orden?.medioPago,
+              yaMandoComprobante(eventosComprobante.map((x) => x.nota)) || clienteDiceQuePago([c.texto, ...c.historial.filter((h) => h.de !== "acopio").map((h) => h.texto)]),
+            )
           : "";
   // 17/11: Myriam dijo «Lo recibí ayer» y el bot le contestó que su pedido iba en el reparto de hoy. Lo que dice ella manda.
   const RECIBIO = /\b(lo|la|los|las)? ?(recib[ií]|tengo)\b|ya (me )?(lleg[oó]|lo tengo|est[aá] ac[aá])|me lleg[oó]|lleg[oó] (todo|bien|perfecto)/i;
@@ -803,6 +819,12 @@ export async function pensar(c: {
   // 19/11 (Rodri): «persona» también lo registran los agentes con la clave compartida: entra como dato, sin
   // etiquetas ni datos de cobro (dicho-equipo.ts).
   const loQueDijoElEquipo = avisoDelEquipo(dichoPorElEquipo?.texto);
+  // 19/11 (Sandra): el equipo dijo «el cadete va para allá» y el bot, por la regla del pago, le contestó «si lo
+  // pagás ahora, te lo llevamos mañana». Si el equipo ya lo mandó, no se habla de pago, días ni reparto.
+  if (equipoDijoQueVa(dichoPorElEquipo?.texto) && estadoOrden !== "ENTREGADO" && estadoOrden !== "CANCELADO") {
+    enQueAnda = " EL EQUIPO YA LO DESPACHÓ (va en camino o llega hoy): no hables de pago, transferencia, alias ni de mañana. Si pregunta, decile que va en camino y que el cadete le escribe al llegar. Si solo saluda o agradece, agradecé corto sin preguntar nada.";
+    yaTenemos = yaTenemos.replace(/ Si pregunta cuándo se lo llevan[\s\S]*$/, "");
+  }
   const cerrado = ordenId
     ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaLoTiene}${loQueDijoElEquipo}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";

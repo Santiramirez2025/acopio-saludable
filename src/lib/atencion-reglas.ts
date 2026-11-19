@@ -108,3 +108,31 @@ export function esDudaDeConfianza(texto: string): boolean {
     /\bmiedo (a|de) (pagar|que no)|\bdesconf/.test(t)
   );
 }
+
+// 19/11 (Sandra): mandó la foto del comprobante («monto sin leer», sin evento) y escribió «Ya te transferí» y
+// «Ya lo pagué», y el bot le preguntó tres veces más si había transferido y le cambió el día. Lo que dice
+// el cliente sobre su pago vale como comprobante: no se le vuelve a pedir.
+const DICE_QUE_PAGO = /\b(ya (te |le |les )?(lo |la )?(transf[ei]r[ií]|pagu[eé]|pag[oó]|abon[eé]|deposit[eé])|ac[aá] (est[aá]|va|te paso) (la |el )?(trans?ferencia|comprobante)|te (mand[eé]|pas[eé]) (el )?comprobante|trans?ferencia (hecha|realizada|lista))/i;
+export function clienteDiceQuePago(textos: string[]): boolean {
+  return textos.some((t) => DICE_QUE_PAGO.test(t) || /parece comprobante/i.test(t));
+}
+
+// 19/11 (Sandra, Marina): el equipo le escribió «el cadete va para allá» y una hora después el bot le dijo
+// «si lo pagás ahora, te lo llevamos mañana». Si el equipo dijo que va en camino o que llega hoy, las reglas
+// del reparto y del pago no corren: se habla solo de eso.
+export function equipoDijoQueVa(texto: string | null | undefined): boolean {
+  return /(^|[^a-z])(va para all[aá]|va en camino|en camino|llegando|ya sale|sale hoy|hoy (sale|pasa|te lo llev)|(el )?cadete (ya )?(pasa|va|llega))(?![a-z])/i.test(texto ?? "");
+}
+
+// «Dale», «Si dale», «Bueno dale», «Ok», «👍», «🩷»: acuse de recibo. Después de un mensaje nuestro que no
+// pregunta nada, no se contesta (19/11, Móni recibió cuatro «Cualquier cosa nos escribís por acá» seguidos).
+export function soloAcuse(texto: string): boolean {
+  if (/\?|\d/.test(texto)) return false;
+  const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  return t === "" || /^((si|sii+|bueno|ok|oka|okey|okis|dale|listo|joya|genial|perfecto|barbaro|buenisimo|de una)\s?){1,3}$/.test(t);
+}
+
+// «No vino el cadete», «¿viene o no?», «estará lejos?», «sigo esperando»: alguien espera en la puerta.
+export function esperaElPedido(texto: string): boolean {
+  return /\b(no (vino|lleg[oó]|pas[oó])( (el|ning[uú]n) (cadete|chico|repartidor))?|viene o no|vienen o no|estar[aá] lejos|sigo esperando|estoy esperando|lo estoy esperando|a qu[eé] hora (viene|llega)|cu[aá]nto (falta|tarda))\b/i.test(texto);
+}

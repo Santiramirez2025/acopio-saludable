@@ -2070,3 +2070,17 @@ test("19/11 (Marcos, Tanti): «Sí, dejalo» confirma el pedido", () => {
   assert.ok(confirmaPedido("dejalo así"));
   assert.ok(!confirmaPedido("dejalo para la semana que viene"));
 });
+
+test("19/11 (Sandra, Móni, Marina): pagó, acuses y espera en la puerta", async () => {
+  const r = await import("./atencion-reglas");
+  assert.ok(r.clienteDiceQuePago(["Ya te transfiri"]));
+  assert.ok(r.clienteDiceQuePago(["Ya lo pagué"]));
+  assert.ok(r.clienteDiceQuePago(["Acá está la tranferencia", "[foto·1] 🧾 «foto: parece comprobante, monto sin leer»"]));
+  assert.ok(!r.clienteDiceQuePago(["¿Te paso el alias?", "Mañana te pago"]));
+  assert.ok(r.equipoDijoQueVa("¡Hola Sandra! el cadete ya va para allá con tu pedido"));
+  assert.ok(!r.equipoDijoQueVa("¡Gracias por tu compra, Sandra!"));
+  for (const t of ["Dale", "Si dale", "Bueno dale", "🩷", "Okis"]) assert.ok(r.soloAcuse(t), t);
+  for (const t of ["Dale, ¿a qué hora?", "Dale, sumame miel"]) assert.ok(!r.soloAcuse(t), t);
+  for (const t of ["Hola. No vino el cadete.", "Entonces viene o no?", "Tengo que salir y estoy esperando el pedido, estará lejos?"]) assert.ok(r.esperaElPedido(t), t);
+  assert.ok(!r.esperaElPedido("Lo espero mañana entonces"));
+});
