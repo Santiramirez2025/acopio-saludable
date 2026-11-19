@@ -138,5 +138,8 @@ export function planRecordatorio(c: Charla, carrito?: CarritoCotizado | null, of
  * dirección y el horario anotados y el pedido nunca llegó al panel.
  */
 export function dioPorCerrada(dicho: string): boolean {
+  // 18/11: el resumen con el botón dice «…y queda confirmado al toque» (todavía no eligió nada) y disparaba el
+  // aviso «Venta por cerrar» a Santiago en cada consulta nueva. Esa frase no es una venta cerrada.
+  dicho = dicho.replace(/y queda confirmad[oa] al toque/gi, "");
   return /agendad|confirmad|gracias por (la|tu) compra|\bqued[oó] (la|el|tu) (pedido|despensa|alacena|combo|mix|kit)/i.test(dicho);
 }

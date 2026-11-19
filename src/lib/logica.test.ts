@@ -2047,3 +2047,9 @@ test("transferencia 18/11: el alias que da el cliente para una devolución no di
   assert.equal(pideDatosTransferencia("FARMACIA.CARLOS.PAZ es el alias", "Dale Virginia, te devolvemos los $12.250 por transferencia. ¿A qué alias o CBU te lo hacemos?"), false);
   assert.equal(pideDatosTransferencia("pasame el alias", "¿Te lo dejo listo?"), true);
 });
+
+test("aviso 18/11: el resumen con botón («queda confirmado al toque») no es venta cerrada", async () => {
+  const { dioPorCerrada } = await import("./whatsapp-recordatorio");
+  assert.equal(dioPorCerrada("Te lo dejo armado en la web: ahí elegís Mercado Pago o transferencia (8% menos) y queda confirmado al toque."), false);
+  assert.equal(dioPorCerrada("Listo, tu pedido queda agendado para mañana."), true);
+});
