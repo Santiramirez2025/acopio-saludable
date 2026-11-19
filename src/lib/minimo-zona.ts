@@ -35,7 +35,7 @@ export function costoEntregaZona(c: ReglaMinimo): string {
 }
 
 /** Donde la entrega propia va sin cargo desde el umbral (Santiago, 16/11: «solo Carlos Paz es gratis, y San Antonio de Arredondo y por acá cerca»). */
-export const ZONA_SIN_CARGO = "Villa Carlos Paz, San Antonio de Arredondo y Mayu Sumaj";
+export const ZONA_SIN_CARGO = "Villa Carlos Paz y San Antonio de Arredondo (hasta 8 km del centro)";
 
 const enumerar = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} y ${xs[xs.length - 1]}` : xs[0] ?? "");
 

@@ -14,9 +14,9 @@ test("frases de cobro: «ver antes de pagar» y «lo ves en tu puerta» no salen
 
 test("pedido del chat en la zona: la vecina paga su cargo; Carlos Paz, la regla del umbral (AS-127, AS-123)", () => {
   const cfg = { compraMinima: 60000, compraMinimaPropia: 20000, envioBajoMinimo: 3000, entregaPropiaActiva: true };
-  assert.equal(envioPedidoZonaPropia(cfg as never, "Solares de Icho Cruz", 24000), 4000);
-  assert.equal(envioPedidoZonaPropia(cfg as never, "Bialet Massé", 22000), 5000);
-  assert.equal(envioPedidoZonaPropia(cfg as never, "Tanti", 61000), 5000);
+  assert.equal(envioPedidoZonaPropia(cfg as never, "Solares de Icho Cruz", 24000), 3000);
+  assert.equal(envioPedidoZonaPropia(cfg as never, "Bialet Massé", 22000), 3000);
+  assert.equal(envioPedidoZonaPropia(cfg as never, "Tanti", 61000), 4000);
   assert.equal(envioPedidoZonaPropia(cfg as never, "Villa Carlos Paz", 24000), 0);
   assert.equal(envioPedidoZonaPropia(cfg as never, "Villa Carlos Paz", 12000), 3000);
 });

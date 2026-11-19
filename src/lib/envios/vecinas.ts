@@ -10,17 +10,28 @@
 // Icho Cruz, Cuesta Blanca y Tala Huasi (que por nombre pagan); 5155 Tanti y Cabalango; 5158 Bialet Massé y Parque Siquiman.
 // Santa Cruz del Lago y Estancia Vieja comparten el 5152 con Carlos Paz y están pegadas: van como Carlos Paz.
 
-const POR_CP: Record<string, number> = { "5155": 5000, "5158": 5000 };
+// 19/11 (Santiago, repartiendo): «el centro y 8 km a la redonda es sin cargo; todos los otros lugares tenemos que
+// cobrar $3.000 o algo que no me haga caer la venta, pero que cobre: me mandaron de una punta a la otra, a lugares
+// donde te metés y rompés el vehículo, y no le cobramos nada». Distancias en ruta desde el centro de Carlos Paz:
+//   hasta ~8 km, sin cargo: Carlos Paz y sus barrios, Santa Cruz del Lago, Estancia Vieja, San Antonio de Arredondo
+//     (ahí arranca el reparto).
+//   8 a 14 km, $3.000: Mayu Sumaj, Icho Cruz, Tala Huasi, Bialet Massé, Cabalango.
+//   más de 14 km, $4.000: Tanti, Cuesta Blanca.
+//   Parque Siquiman: no se reparte (19/11); el vendedor ofrece un punto en Carlos Paz.
+export const CARGO_CERCA = 3000;
+export const CARGO_LEJOS = 4000;
+
+const POR_CP: Record<string, number> = { "5155": CARGO_LEJOS, "5158": CARGO_CERCA };
 
 const POR_NOMBRE: [RegExp, number][] = [
-  [/\b(icho cruz|villa rio icho cruz|cuesta blanca|tala huasi)\b/, 4000],
-  [/\b(tanti|cabalango|bialet masse|villa parque siquiman|parque siquiman|siquiman)\b/, 5000],
+  [/\b(tanti|cuesta blanca)\b/, CARGO_LEJOS],
+  [/\b(mayu sumaj|icho cruz|villa rio icho cruz|tala huasi|bialet masse|cabalango|villa parque siquiman|parque siquiman|siquiman)\b/, CARGO_CERCA],
 ];
 
 /** Las vecinas con cargo, como se las nombra en la tienda (mismo cargo que POR_NOMBRE; lo controla vecinas.test.ts). */
 export const VECINAS_CON_CARGO: { lugares: string[]; cargo: number }[] = [
-  { lugares: ["Icho Cruz", "Cuesta Blanca", "Tala Huasi"], cargo: 4000 },
-  { lugares: ["Tanti", "Cabalango", "Bialet Massé", "Parque Siquiman"], cargo: 5000 },
+  { lugares: ["Mayu Sumaj", "Icho Cruz", "Tala Huasi", "Bialet Massé", "Cabalango"], cargo: CARGO_CERCA },
+  { lugares: ["Tanti", "Cuesta Blanca"], cargo: CARGO_LEJOS },
 ];
 
 const sinTildes = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();

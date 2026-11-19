@@ -12,20 +12,20 @@ const sinEsp = (t: string) => t.replace(/\s/g, " ");
 
 test("zona: cada vecina con cargo de la tienda cobra lo mismo en el chat", () => {
   for (const v of VECINAS_CON_CARGO) for (const l of v.lugares) assert.equal(cargoVecinaPorLugar(l), v.cargo, l);
-  for (const l of ["Villa Carlos Paz", "San Antonio de Arredondo", "Mayu Sumaj"]) assert.equal(cargoVecinaPorLugar(l), 0, l);
+  for (const l of ["Villa Carlos Paz", "San Antonio de Arredondo"]) assert.equal(cargoVecinaPorLugar(l), 0, l);
 });
 
 test("zona: el texto de entrega no promete sin cargo a Icho Cruz ni a Cuesta Blanca", () => {
   const t = sinEsp(textoEntregaZona(regla));
   assert.ok(t.startsWith(`En ${ZONA_SIN_CARGO}, sin cargo desde $ 20.000; abajo de eso, $ 3.000.`), t);
-  assert.match(t, /Icho Cruz, Cuesta Blanca y Tala Huasi, \$ 4\.000/);
-  assert.match(t, /Tanti, Cabalango, Bialet Massé y Parque Siquiman, \$ 5\.000/);
+  assert.match(t, /Mayu Sumaj, Icho Cruz, Tala Huasi, Bialet Massé y Cabalango, \$ 3\.000/);
+  assert.match(t, /Tanti y Cuesta Blanca, \$ 4\.000/);
   assert.doesNotMatch(t.split("Al resto de la zona")[0], /Icho Cruz|Cuesta Blanca/);
   assert.equal(sinEsp(textoVecinasConCargo()).split(";").length, 2);
 });
 
 test("zona: las frases de compra mínima dicen dónde va sin cargo", () => {
-  assert.match(sinEsp(textoZonaSinMinimo(regla)), /En Villa Carlos Paz, San Antonio de Arredondo y Mayu Sumaj la entrega es sin cargo desde \$ 20\.000/);
+  assert.match(sinEsp(textoZonaSinMinimo(regla)), /En Villa Carlos Paz y San Antonio de Arredondo \(hasta 8 km del centro\) la entrega es sin cargo desde \$ 20\.000/);
   assert.match(sinEsp(textoZonaSinMinimo(regla)), /al resto de la zona, con un costo fijo según la localidad/);
   assert.match(sinEsp(lineaCompraMinima(regla)), /en Villa Carlos Paz, sin cargo desde \$ 20\.000/);
 });
