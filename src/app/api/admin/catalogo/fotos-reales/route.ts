@@ -49,6 +49,8 @@ export async function POST(req: Request) {
   const cache = new Map<string, Hit[]>(); // una búsqueda por consulta: Openverse limita las anónimas
   for (const it of items) {
     try {
+      const prod = await prisma.product.findUnique({ where: { codigo: it.codigo }, select: { estado: true, visible: true } });
+      if (!prod || prod.estado !== "ACTIVO" || !prod.visible) { out[it.codigo] = "salteado (no está a la venta)"; continue; }
       const k = `${it.q}|${it.page ?? 1}`;
       if (!cache.has(k)) cache.set(k, await buscar(it.q, it.page ?? 1));
       const hits = cache.get(k)!;
