@@ -139,6 +139,15 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
   return (
     <form onSubmit={confirmar} className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
+        {/* En el celular el resumen (y su botón de WhatsApp) queda abajo de todo el formulario, y 11 de 15 se iban
+            en «datos» sin completarlo (7 días al 19/11). Esta caja ofrece la salida a la charla antes del formulario. */}
+        {whatsapp && (
+          <div className="rounded-xl border border-acopio-100 bg-acopio-50 p-4 lg:hidden">
+            <p className="font-medium text-acopio-900">¿Preferís terminarlo por WhatsApp?</p>
+            <p className="mb-3 mt-1 text-sm text-stone-700">Te abrimos la charla con tu pedido ({pesosCliente(subtotal)}) ya escrito y ahí coordinamos la entrega y el pago.</p>
+            <PedirWhatsapp numero={whatsapp} lineas={cotizacion.lineas} subtotal={subtotal} medirComo="checkout_whatsapp" texto="Seguir por WhatsApp" />
+          </div>
+        )}
         <fieldset className="rounded-xl border border-tierra-200 bg-white p-4">
           <legend className="px-1 font-display text-lg font-semibold">1. Tus datos</legend>
           {traeAmigo && beneficio.tipo !== "premio" && (
@@ -233,7 +242,7 @@ export function Checkout({ provincias, mpDisponible, descuentoTransferenciaPct, 
         </dl>
         {error && <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         <button className="btn w-full" disabled={enviando || !opcion || cotizandoEnvio}>{enviando ? "Confirmando…" : medio === "MERCADOPAGO" ? "Confirmar y pagar" : "Confirmar pedido"}</button>
-        <PedirWhatsapp numero={whatsapp} lineas={cotizacion.lineas} subtotal={subtotal} />
+        <PedirWhatsapp numero={whatsapp} lineas={cotizacion.lineas} subtotal={subtotal} medirComo="checkout_whatsapp" />
         <Link href="/carrito" className="block text-center text-sm text-stone-600 underline">Volver al carrito</Link>
       </aside>
     </form>

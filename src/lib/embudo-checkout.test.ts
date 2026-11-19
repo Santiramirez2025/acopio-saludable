@@ -36,9 +36,23 @@ test("embudo del checkout: si se pierde el evento de un paso, el siguiente igual
   assert.deepEqual(r.seVanEn.map((x) => x.sesiones), [0, 0, 0, 1]);
 });
 
+test("embudo del checkout: cuenta quién se pasó a WhatsApp desde el checkout", () => {
+  const r = embudoCheckout([
+    s("iniciar_compra", "checkout_whatsapp"), // tocó la caja de arriba sin cargar datos
+    s("iniciar_compra", "checkout_datos", "checkout_whatsapp"),
+    s("iniciar_compra"),
+    s("checkout_whatsapp"), // sin iniciar_compra no cuenta
+  ]);
+  assert.equal(r.entraron, 3);
+  assert.equal(r.pasaronAWhatsapp, 2);
+  // El abandono por paso no cambia: quien se pasó a WhatsApp se ve aparte.
+  assert.deepEqual(r.seVanEn.map((x) => x.sesiones), [2, 1, 0, 0]);
+});
+
 test("embudo del checkout: sin sesiones, todo en cero", () => {
   const r = embudoCheckout([]);
   assert.equal(r.entraron, 0);
+  assert.equal(r.pasaronAWhatsapp, 0);
   assert.deepEqual(r.seVanEn.map((x) => x.sesiones), [0, 0, 0, 0]);
 });
 

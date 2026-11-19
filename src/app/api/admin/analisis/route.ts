@@ -162,6 +162,7 @@ async function trafico(dias: number) {
     whatsappDesdeCarrito: ses.filter((x) => x.has("whatsapp_desde_carrito")).length,
     whatsappDesdeFicha: ses.filter((x) => x.has("whatsapp_desde_ficha")).length,
     whatsappDesdeInicio: ses.filter((x) => x.has("whatsapp_desde_inicio")).length,
+    whatsappDesdeCheckout: ses.filter((x) => x.has("checkout_whatsapp")).length,
     compraron: pedidosWeb,
     carritosAbandonados: ses.filter((x) => x.has("agregar") && !x.has("iniciar_compra") && !x.has("compra") && !x.has("contacto")).length,
   };
