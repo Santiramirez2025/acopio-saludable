@@ -4,7 +4,7 @@ import { Titulo } from "@/components/Tienda";
 import { leerCreditos } from "@/lib/creditos-fotos";
 
 export const metadata: Metadata = { title: "Créditos de fotos", description: "Autores y licencias de las fotos de producto con licencia Creative Commons.", alternates: { canonical: "/creditos-fotos" }, robots: { index: false } };
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export default async function Pagina() {
   const cs = (await leerCreditos()).sort((a, b) => a.producto.localeCompare(b.producto));
