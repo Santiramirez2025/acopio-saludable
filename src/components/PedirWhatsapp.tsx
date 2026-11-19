@@ -12,12 +12,12 @@ export function mensajePedido(lineas: { nombre: string; cantidad: number; subtot
 }
 
 /** Botón «Pedir por WhatsApp» del carrito y del checkout. Lo cuenta el medidor global por `data-medir` (ver Medicion.tsx). */
-export function PedirWhatsapp({ numero, lineas, subtotal }: { numero?: string | null; lineas: { nombre: string; cantidad: number; subtotal: number; disponible: boolean }[]; subtotal: number }) {
+export function PedirWhatsapp({ numero, lineas, subtotal, medirComo = "whatsapp_desde_carrito", texto = "Pedir por WhatsApp" }: { numero?: string | null; lineas: { nombre: string; cantidad: number; subtotal: number; disponible: boolean }[]; subtotal: number; medirComo?: string; texto?: string }) {
   const href = numero ? linkWhatsapp(numero, mensajePedido(lineas.filter((l) => l.disponible), subtotal, leerOrigen())) : null;
   if (!href) return null;
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="btn-whatsapp w-full" data-medir="whatsapp_desde_carrito">
-      Pedir por WhatsApp
+    <a href={href} target="_blank" rel="noopener noreferrer" className="btn-whatsapp w-full" data-medir={medirComo}>
+      {texto}
     </a>
   );
 }

@@ -18,6 +18,7 @@ export const TRABAS_CHECKOUT = [
   "checkout_error_pedido", // el servidor rechazó el pedido al confirmar
   "checkout_a_mp", // el pedido salió hacia Mercado Pago
   "checkout_transferencia", // el pedido salió por transferencia
+  "checkout_whatsapp", // prefirió terminarlo por WhatsApp (caja de arriba o botón del resumen, 19/11)
 ] as const;
 
 export const EVENTOS_CHECKOUT: readonly string[] = [...PASOS_CHECKOUT, ...TRABAS_CHECKOUT];
@@ -40,6 +41,8 @@ export type EmbudoCheckout = {
   bajoMinimo: number;
   errorEnvio: number;
   errorAlConfirmar: number;
+  /** Se pasaron a WhatsApp desde el checkout con el pedido ya escrito (no es abandono: sigue en la charla). */
+  pasaronAWhatsapp: number;
   /** Cuántas sesiones se fueron en cada paso (entraron al paso y no pasaron al siguiente). */
   seVanEn: { paso: string; sesiones: number }[];
 };
@@ -71,6 +74,7 @@ export function embudoCheckout(sesiones: Iterable<Set<string>>): EmbudoCheckout 
     bajoMinimo: cuenta("checkout_bajo_minimo"),
     errorEnvio: cuenta("checkout_error_envio"),
     errorAlConfirmar: cuenta("checkout_error_pedido"),
+    pasaronAWhatsapp: cuenta("checkout_whatsapp"),
     seVanEn: seVanEn.map((x) => ({ paso: x.paso === "entrar" ? "datos (entró y no completó)" : `después de ${x.paso}`, sesiones: x.sesiones })),
   };
 }
