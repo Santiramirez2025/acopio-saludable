@@ -58,7 +58,26 @@ async function imagen(h: Hit, chica = false): Promise<Buffer | null> {
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { buscar?: string[]; aplicar?: { codigo: string; id: string }[] };
+  const b = (await req.json().catch(() => ({}))) as { buscar?: string[]; aplicar?: { codigo: string; id: string }[]; ver?: string[]; restaurar?: string[]; pisar?: boolean };
+
+  // Diagnóstico: la foto actual y las anteriores de cada código.
+  if (b.ver?.length) {
+    const ps = await prisma.product.findMany({ where: { codigo: { in: b.ver.slice(0, 500) } }, select: { codigo: true, fotoUrl: true, fotos: true } });
+    return NextResponse.json(Object.fromEntries(ps.map((p: { codigo: string; fotoUrl: string | null; fotos: string[] }) => [p.codigo, { fotoUrl: p.fotoUrl, fotos: p.fotos }])));
+  }
+  // Vuelve a poner como principal la primera foto propia (no de Openverse) que tenía el producto.
+  if (b.restaurar?.length) {
+    const out: Record<string, string> = {};
+    for (const codigo of b.restaurar.slice(0, 200)) {
+      const p = await prisma.product.findUnique({ where: { codigo }, select: { fotos: true } });
+      const propia = p?.fotos.find((f: string) => /^https:/.test(f) && !f.includes("openverse-"));
+      if (!p || !propia) { out[codigo] = "sin foto propia"; continue; }
+      await prisma.product.update({ where: { codigo }, data: { fotoUrl: propia, fotos: [propia, ...p.fotos.filter((f: string) => f !== propia && !f.includes("openverse-"))] } });
+      out[codigo] = propia;
+    }
+    revalidatePath("/", "layout");
+    return NextResponse.json(out);
+  }
 
   if (b.buscar?.length) {
     const out: Record<string, Cand[]> = {};
@@ -82,8 +101,10 @@ export async function POST(req: Request) {
       if (!h?.url) { out[it.codigo] = "no encontré la foto"; continue; }
       const img = await imagen(h);
       if (!img) { out[it.codigo] = "no se pudo bajar"; continue; }
-      const p = await prisma.product.findUnique({ where: { codigo: it.codigo }, select: { fotos: true, producto: true, presentacion: true } });
+      const p = await prisma.product.findUnique({ where: { codigo: it.codigo }, select: { fotos: true, fotoUrl: true, producto: true, presentacion: true } });
       if (!p) { out[it.codigo] = "no existe"; continue; }
+      // Una foto propia (subida desde el panel o del proveedor) no se pisa con una de Openverse.
+      if (!b.pisar && p.fotoUrl && /^https:/.test(p.fotoUrl) && !p.fotoUrl.includes("openverse-")) { out[it.codigo] = "tiene foto propia"; continue; }
       const subida = await put(`productos/openverse-${h.id.slice(0, 8)}-${it.codigo.toLowerCase()}.webp`, img, {
         access: "public", contentType: "image/webp", addRandomSuffix: false, allowOverwrite: true,
       });
