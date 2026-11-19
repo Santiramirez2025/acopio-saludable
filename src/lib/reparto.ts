@@ -7,10 +7,21 @@ const SITIO = "https://www.acopiosaludable.com";
 // Perezoso: así las funciones de texto se pueden probar sin base de datos.
 const avisarSantiago = async (...a: Parameters<typeof import("./avisos").avisarSantiago>) => (await import("./avisos")).avisarSantiago(...a);
 
-/** Primero Carlos Paz y la zona; Córdoba Capital al final (es el viaje largo). */
-export function ordenarParadas<T extends { zona: string }>(ps: T[]): T[] {
-  const lejos = (z: string) => Number(/c[oó]rdoba/i.test(z) && !/carlos paz/i.test(z));
-  return [...ps].sort((a, b) => lejos(a.zona) - lejos(b.zona));
+/**
+ * Orden del recorrido (18/11, Santiago: «el recorrido siempre arranca y termina en Las Jarillas, San Antonio de
+ * Arredondo»): primero el sur (San Antonio, Mayu Sumaj, Icho Cruz, Cuesta Blanca), después Carlos Paz, después el
+ * norte (Bialet, Tanti, Cabalango) y Córdoba Capital al final.
+ */
+export function ordenarParadas<T extends { zona: string; direccion?: string | null }>(ps: T[]): T[] {
+  const t = (p: T) => `${p.zona} ${p.direccion ?? ""}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const rango = (p: T) => {
+    const x = t(p);
+    if (/arredondo|mayu sumaj|icho cruz|cuesta blanca|tala huasi/.test(x)) return 0;
+    if (/bialet|tanti|cabalango|siquiman/.test(x)) return 2;
+    if (/cordoba/.test(x) && !/carlos paz/.test(x)) return 3;
+    return 1;
+  };
+  return [...ps].sort((a, b) => rango(a) - rango(b));
 }
 
 function wa(tel: string): string {
@@ -35,11 +46,16 @@ export function textoParada(p: PedidoArmado, i: number, total: number): string {
     .join("\n");
 }
 
-/** Lo que queda por entregar hoy, en el orden del recorrido. */
+/**
+ * Lo que queda por entregar HOY, en el orden del recorrido.
+ * 19/11 (Santiago): «me mete todos los pedidos juntos y no salgo con todos, salgo con una ruta específica diaria».
+ * La ruta del día son los pedidos marcados «Enviado» (los que salieron). Solo si todavía no salió ninguno
+ * (antes de arrancar) se muestran los que están para armar.
+ */
 export async function paradasPendientes(): Promise<PedidoArmado[]> {
   const { pizarraArmado } = await import("./armado");
   const pz = await pizarraArmado();
-  return ordenarParadas([...pz.paraArmar, ...pz.listos, ...pz.enCamino]);
+  return ordenarParadas(pz.enCamino.length ? pz.enCamino : [...pz.paraArmar, ...pz.listos]);
 }
 
 /** Manda todo el reparto: un resumen y un mensaje por parada. */

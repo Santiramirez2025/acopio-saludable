@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { pesos } from "@/lib/precios";
 import { ESTADOS, MARGEN_FLACO_PCT, linkWhatsapp, margenNeto, nombreEstado, numeroPedido } from "@/lib/pedidos";
-import { borrarPedido, cambiarEstadoPedido, guardarUbicacionPedido, reemplazarEnPedido, reenviarComprobante, registrarPagoPedido } from "@/lib/acciones";
+import { avisarCincoMinutos, borrarPedido, cambiarEstadoPedido, guardarUbicacionPedido, reemplazarEnPedido, reenviarComprobante, registrarPagoPedido } from "@/lib/acciones";
+import { telefonoWa } from "@/lib/telefono";
 import { leerConfig } from "@/lib/config";
 import { linkSeguimiento } from "@/lib/envios/seguimiento";
 
@@ -25,23 +26,39 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4 text-sm">
-        <Link href="/admin/pedidos" className="text-stone-600 underline">← Pedidos</Link>
-        <Link href={`/admin/pedidos/${pedido.id}/qr`} className="text-acopio-700 underline">QR de reposición para imprimir</Link>
-        {!pedido.pagadoAt && pedido.estado !== "CANCELADO" && (
-          <form action={registrarPagoPedido}>
-            <input type="hidden" name="id" value={pedido.id} />
-            <button className="rounded-md bg-acopio-700 px-3 py-1 font-medium text-white">Registrar pago</button>
-          </form>
-        )}
-        {pedido.pagadoAt && <a href={`/pedido/${pedido.token}/comprobante`} target="_blank" className="text-acopio-700 underline">Ver comprobante</a>}
-        {pedido.pagadoAt && (
-          <form action={reenviarComprobante}>
-            <input type="hidden" name="id" value={pedido.id} />
-            <button className="rounded-md bg-[#25D366] px-3 py-1 font-medium text-white">Enviar comprobante por WhatsApp</button>
-          </form>
-        )}
-      </div>
+      {/* 19/11 (Santiago, repartiendo desde el celular): arriba solo lo que se usa en la calle; el resto, en «Más opciones». */}
+      <Link href="/admin/pedidos" className="text-sm text-stone-600 underline">← Pedidos</Link>
+      {(() => {
+        const tel = telefonoWa(pedido.telefono);
+        const ir = linkMapa(pedido.calle, pedido.ciudad, pedido.provincia, pedido.cp, pedido.ubicacion);
+        const abierto = pedido.estado !== "CANCELADO" && pedido.estado !== "ENTREGADO";
+        const boton = "flex min-h-12 items-center justify-center rounded-xl px-3 py-2 text-center text-sm font-semibold";
+        return (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {tel && <Link href={`/admin/whatsapp?c=${tel}`} className={`${boton} bg-[#25D366] text-white`}>💬 Abrir chat</Link>}
+            {tel && abierto && (
+              <form action={avisarCincoMinutos} className="contents">
+                <input type="hidden" name="id" value={pedido.id} />
+                <button className={`${boton} bg-sol text-acopio-900`}>🚗 Estoy a 5 minutos</button>
+              </form>
+            )}
+            {ir && <a href={ir} target="_blank" rel="noopener noreferrer" className={`${boton} bg-acopio-700 text-white`}>📍 Cómo llegar</a>}
+            {abierto && (
+              <form action={cambiarEstadoPedido} className="contents">
+                <input type="hidden" name="id" value={pedido.id} />
+                <input type="hidden" name="estado" value="ENTREGADO" />
+                <button className={`${boton} bg-stone-900 text-white`}>✅ Entregado{!pedido.pagadoAt && pedido.medioPago === "AL_RECIBIR" ? ` · cobré ${pesos(Number(pedido.total))}` : ""}</button>
+              </form>
+            )}
+            {!pedido.pagadoAt && pedido.estado !== "CANCELADO" && pedido.medioPago !== "AL_RECIBIR" && (
+              <form action={registrarPagoPedido} className="contents">
+                <input type="hidden" name="id" value={pedido.id} />
+                <button className={`${boton} border border-acopio-700 text-acopio-700`}>💵 Registrar pago</button>
+              </form>
+            )}
+          </div>
+        );
+      })()}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">
@@ -56,13 +73,8 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
           </h1>
           <p className="text-sm text-stone-600">{pedido.createdAt.toLocaleString("es-AR", { timeZone: "America/Argentina/Cordoba" })} · {pedido.medioPago === "MERCADOPAGO" ? `Mercado Pago${pedido.mpPaymentId ? ` (pago ${pedido.mpPaymentId})` : ""}` : NOMBRE_MEDIO[pedido.medioPago]}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href={`/admin/pedidos/${pedido.id}/compra`} className="btn">Lista de compra a Distrimay</Link>
-          <Link href={`/admin/pedidos/${pedido.id}/etiqueta`} className="btn-sec">Etiqueta de envío</Link>
-          <Link href={`/pedido/${pedido.token}`} className="btn-sec">Ver como cliente</Link>
-        </div>
       </div>
-      {ok && <p className="rounded-md bg-acopio-100 px-3 py-2 text-sm text-acopio-700">{ok === "comprobante" ? "Comprobante enviado por WhatsApp ✅ (quedó en el chat)." : ok === "comprobante-plantilla" ? "Comprobante enviado por WhatsApp con la plantilla (la charla estaba cerrada) ✅" : "Pedido actualizado."}</p>}
+      {ok && <p className="rounded-md bg-acopio-100 px-3 py-2 text-sm text-acopio-700">{ok === "cinco" ? "Listo: le avisamos que estás a 5 minutos 🚗" : ok === "comprobante" ? "Comprobante enviado por WhatsApp ✅ (quedó en el chat)." : ok === "comprobante-plantilla" ? "Comprobante enviado por WhatsApp con la plantilla (la charla estaba cerrada) ✅" : "Pedido actualizado."}</p>}
       {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">No se guardó: {error}</p>}
       {sinPeso > 0 && <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">{sinPeso} producto(s) de este pedido no tienen peso cargado: el envío se calculó con 500 g por unidad.</p>}
 
@@ -81,16 +93,6 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
                 ))}
               </tbody>
             </table>
-            <details className="mt-2 text-sm">
-              <summary className="cursor-pointer text-stone-600">Reemplazar un producto (sin stock en Distrimay)</summary>
-              <form action={reemplazarEnPedido} className="mt-2 flex flex-wrap items-end gap-2">
-                <input type="hidden" name="id" value={pedido.id} />
-                <label className="text-xs">Producto<select name="viejo" className="campo">{[...new Map(pedido.items.map((i) => [i.codigo, i])).values()].map((i) => <option key={i.codigo} value={i.codigo}>{i.producto} ({i.codigo})</option>)}</select></label>
-                <label className="text-xs">Código nuevo de Distrimay<input name="nuevo" className="campo" placeholder="p. ej. 7798161290233" required /></label>
-                <button className="btn-sec">Reemplazar</button>
-              </form>
-              <p className="mt-1 text-xs text-stone-600">El cliente paga lo mismo; cambia lo que se compra y el costo.</p>
-            </details>
           </div>
           <div className="tarjeta text-sm">
             <h2 className="mb-2 text-sm font-semibold">Cliente y entrega</h2>
@@ -109,12 +111,14 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
                     {ver && <a href={ver} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-acopio-700 underline">Ver en el mapa</a>}
                     <span className="text-xs text-stone-600">{coord ? `punto exacto guardado (${coord})` : `va por dirección: ${limpiarCalle(pedido.calle) ?? "—"}`}</span>
                   </div>
+                  <details className="mt-1"><summary className="cursor-pointer text-[11px] text-stone-500">Guardar el punto exacto</summary>
                   <form action={guardarUbicacionPedido} className="mt-2 flex flex-wrap items-center gap-2">
                     <input type="hidden" name="id" value={pedido.id} />
                     <input name="ubicacion" defaultValue={coord ?? ""} placeholder="Pegá el link de Maps o -31.4201,-64.4932" className="min-w-[16rem] flex-1 rounded border border-stone-300 px-2 py-1 text-xs" />
                     <button className="rounded-full bg-stone-800 px-3 py-1 text-xs font-semibold text-white">Guardar punto exacto</button>
                   </form>
                   <p className="mt-1 text-[11px] text-stone-500">En Google Maps mantené apretado sobre la casa del cliente, copiá el «lat, lng» y pegalo acá. Queda guardado para siempre en este pedido.</p>
+                  </details>
                 </div>
               );
             })()}
@@ -126,6 +130,32 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
             )}</p>
             {pedido.notas && <p className="mt-1 rounded bg-stone-100 px-2 py-1">Nota del cliente: {pedido.notas}</p>}
           </div>
+        </div>
+      </div>
+
+      <details className="tarjeta">
+        <summary className="cursor-pointer text-sm font-semibold text-stone-700">Más opciones (estado, historial, números, comprobante, etiqueta)</summary>
+        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+          <Link href={`/pedido/${pedido.token}`} className="btn-sec">Ver como cliente</Link>
+          <Link href={`/admin/pedidos/${pedido.id}/etiqueta`} className="btn-sec">Etiqueta de envío</Link>
+          <Link href={`/admin/pedidos/${pedido.id}/qr`} className="btn-sec">QR de reposición</Link>
+          {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-sec">WhatsApp (app)</a>}
+          {pedido.pagadoAt && <a href={`/pedido/${pedido.token}/comprobante`} target="_blank" className="btn-sec">Ver comprobante</a>}
+          {pedido.pagadoAt && (
+            <form action={reenviarComprobante}>
+              <input type="hidden" name="id" value={pedido.id} />
+              <button className="btn-sec">Enviar comprobante por WhatsApp</button>
+            </form>
+          )}
+          {!pedido.pagadoAt && pedido.estado !== "CANCELADO" && pedido.medioPago === "AL_RECIBIR" && (
+            <form action={registrarPagoPedido}>
+              <input type="hidden" name="id" value={pedido.id} />
+              <button className="btn-sec">Registrar pago (sin entregar)</button>
+            </form>
+          )}
+        </div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
           <div className="tarjeta">
             <h2 className="mb-2 text-sm font-semibold">Historial</h2>
             <ul className="text-sm">
@@ -184,6 +214,7 @@ export default async function PedidoAdmin({ params, searchParams }: { params: Pr
           </dl>
         </div>
       </div>
+      </details>
     </div>
   );
 }

@@ -6,6 +6,7 @@
 
 import { esAdmin } from "@/lib/admin-acceso";
 import { NextResponse } from "next/server";
+import { MOTIVO_GRANJA_WEB } from "@/lib/granja-web";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
@@ -85,7 +86,9 @@ export async function POST(req: Request) {
     };
     const previo = await prisma.product.findUnique({ where: { codigo: p.codigo } });
     // La foto propia (generada con el estilo de los anuncios) manda; si no hay, queda la que tenía.
-    const foto = fotoProducto(p.codigo) ?? previo?.fotoUrl ?? null;
+    // 19/11: la foto real subida (Blob, https://…) manda sobre el ícono generado; el ajuste no la pisa.
+    const fotoReal = previo?.fotoUrl?.startsWith("https://") ? previo.fotoUrl : null;
+    const foto = fotoReal ?? fotoProducto(p.codigo) ?? previo?.fotoUrl ?? null;
     const oculto = OCULTOS_PROPIOS.includes(p.codigo);
     // 10/11: un SIN_STOCK puesto a mano (POST /catalogo/stock o el panel) se respeta. Antes cada ajuste
     // lo volvía a ACTIVO y la Despensa reaparecía en venta sin almendra en casa.
@@ -93,7 +96,7 @@ export async function POST(req: Request) {
     await prisma.product.upsert({
       where: { codigo: p.codigo },
       create: { codigo: p.codigo, ...datos, visible: !oculto, fotoUrl: foto, fotos: foto ? [foto] : [] },
-      update: { ...datos, estado, visible: !oculto, ocultoMotivo: oculto ? "Sin stock en el proveedor" : estado === "SIN_STOCK" && previo?.ocultoMotivo === MOTIVO_SIN_STOCK_A_MANO ? MOTIVO_SIN_STOCK_A_MANO : null, fotoUrl: foto, fotos: foto ? [foto] : previo?.fotos ?? [] },
+      update: { ...datos, estado, visible: !oculto, ocultoMotivo: oculto ? "Sin stock en el proveedor" : estado === "SIN_STOCK" && previo?.ocultoMotivo === MOTIVO_SIN_STOCK_A_MANO || previo?.ocultoMotivo === MOTIVO_GRANJA_WEB ? previo.ocultoMotivo : null, fotoUrl: foto, fotos: fotoReal ? previo?.fotos ?? [foto] : foto ? [foto] : previo?.fotos ?? [] },
     });
     if (!previo || Number(previo.costo) !== p.costo || Number(previo.precioPublico) !== precio) {
       await prisma.priceHistory.create({ data: { codigo: p.codigo, costo: p.costo, precioPublico: precio, origen: "proveedor" } });

@@ -612,3 +612,40 @@ export async function borrarPedido(fd: FormData) {
   revalidatePath("/admin/pedidos");
   redirect("/admin/pedidos?ok=1");
 }
+
+/**
+ * 19/11 (Santiago, repartiendo): «un botón que diga "estoy a 5 minutos", que le mande al cliente que estás a 5
+ * minutos de llegar». Con la charla abierta va como texto; si no, la plantilla aprobada del reparto de hoy.
+ */
+export async function avisarCincoMinutos(fd: FormData) {
+  await requireAdmin();
+  const id = Number.parseInt(String(fd.get("id")), 10);
+  let destino = `/admin/pedidos/${id}?ok=cinco`;
+  try {
+    const p = await prisma.order.findUniqueOrThrow({ where: { id } });
+    const { telefonoWa } = await import("./telefono");
+    const tel = telefonoWa(p.telefono);
+    if (!tel) throw new Error("El pedido no tiene un WhatsApp válido");
+    const { esNombreDePila } = await import("./nombres-comunes");
+    const pn = p.nombre.trim().split(/\s+/)[0] ?? "";
+    const nombre = esNombreDePila(pn) ? pn[0].toUpperCase() + pn.slice(1).toLowerCase() : "";
+    const cobrar = !p.pagadoAt && p.medioPago === "AL_RECIBIR" ? ` Son ${Number(p.total).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 })}.` : "";
+    const texto = `¡Hola${nombre ? ` ${nombre}` : ""}! Soy el cadete de Acopio: estoy a 5 minutos de llegar con tu pedido 🚗${cobrar}`;
+    const { enviarTexto } = await import("./whatsapp-cloud");
+    const { registrarSalida, ventanaAbierta } = await import("./whatsapp-memoria");
+    let ok = false;
+    if (await ventanaAbierta(tel).catch(() => false)) ok = await enviarTexto(tel, texto);
+    if (ok) await registrarSalida(tel, "persona", texto).catch(() => undefined);
+    else {
+      const { avisarReparto } = await import("./aviso-reparto");
+      const { numeroPedido } = await import("./pedido-calculos");
+      ok = Boolean(await avisarReparto(tel, nombre, numeroPedido(p.id), "ahora", texto));
+    }
+    if (!ok) throw new Error("WhatsApp no aceptó el mensaje");
+    await prisma.orderEvent.create({ data: { orderId: id, estado: p.estado, nota: "Avisado: el cadete está a 5 minutos" } }).catch(() => undefined);
+  } catch (e) {
+    destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
+  }
+  revalidatePath(`/admin/pedidos/${id}`);
+  redirect(destino);
+}
