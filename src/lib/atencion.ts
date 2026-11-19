@@ -29,7 +29,7 @@ import { catalogo } from "./asistente-catalogo";
 import { leerConfig } from "./config";
 import { MINIMO_ZONA_PAGA } from "./envios/tabla";
 import { pesos, precioTransferencia, renglonCombo } from "./precios";
-import { baseTransferencia, pctTransferenciaCombo, PRECIO_FIJO_DESDE } from "./precio-fijo";
+import { baseTransferencia, esPrecioFijo, pctTransferenciaCombo, PRECIO_FIJO_DESDE } from "./precio-fijo";
 import { sinLoEnEspera } from "./recompra-reglas";
 import { zonaSinMinimo } from "./minimo-zona";
 import { cargoVecinaPorLugar } from "./envios/vecinas";
@@ -567,7 +567,10 @@ export async function atender(e: Entrada): Promise<void> {
       if (orden && orden.estado === "PENDIENTE_PAGO" && cfg.transferenciaDatos) {
         // Combos de precio único (Trío, 16/11): sin descuento por transferencia. A los pedidos anteriores se les respeta lo prometido.
         const sub = Number(orden.subtotal);
-        const base = orden.createdAt >= PRECIO_FIJO_DESDE ? baseTransferencia(orden.items.map((i) => ({ comboSlug: i.comboSlug, importe: Number(i.precioUnitario) * i.cantidad }))) : sub;
+        // 19/11 (Miguel): los renglones del Trío no suman exacto el subtotal y salía «$22.112,50». Sin combos de
+        // precio único en el pedido, la base es el subtotal entero.
+        const hayPrecioFijo = orden.items.some((i) => esPrecioFijo(i.comboSlug));
+        const base = !hayPrecioFijo ? sub : orden.createdAt >= PRECIO_FIJO_DESDE ? baseTransferencia(orden.items.map((i) => ({ comboSlug: i.comboSlug, importe: Number(i.precioUnitario) * i.cantidad }))) : sub;
         const monto =
           orden.medioPago === "TRANSFERENCIA"
             ? Number(orden.total)
