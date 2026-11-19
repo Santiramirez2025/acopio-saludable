@@ -7,6 +7,7 @@
 
 import { PAGO_AL_RECIBIR } from "./politica";
 import { botPasaAlRecibir } from "./cobro-permiso";
+import { avisoDelEquipo } from "./dicho-equipo";
 import { conPresentacion } from "./whatsapp-saludo";
 import { hablaDeFueraDeZona, zonaDeLugar } from "./envio-zona";
 import { detectar, esRespuestaAutomatica, pidePersona } from "./asistente";
@@ -792,9 +793,9 @@ export async function pensar(c: {
         .findFirst({ where: { telefono: c.telefono, de: "persona", fecha: { gte: new Date(Date.now() - 8 * 3600_000) } }, orderBy: { fecha: "desc" }, select: { texto: true } })
         .catch(() => null)
     : null;
-  const loQueDijoElEquipo = dichoPorElEquipo
-    ? ` LO QUE YA LE DIJO EL EQUIPO (manda sobre cualquier regla de horario): «${dichoPorElEquipo.texto.slice(0, 400)}». No le cambies el día, el horario ni el precio que dice ahí; si pregunta, repetí eso. Si solo dice «ok», «gracias» o que espera, agradecé corto y no preguntes nada.`
-    : "";
+  // 19/11 (Rodri): «persona» también lo registran los agentes con la clave compartida: entra como dato, sin
+  // etiquetas ni datos de cobro (dicho-equipo.ts).
+  const loQueDijoElEquipo = avisoDelEquipo(dichoPorElEquipo?.texto);
   const cerrado = ordenId
     ? `<pedido_cerrado>Hoy es ${hoyEnArgentina()}. Ya cerró la compra (pedido ${numeroPedido(ordenId)}).${enQueAnda}${yaLoTiene}${loQueDijoElEquipo}${yaTenemos} Si te pasa nombre, dirección, referencia u horario, guardalos con datos_de_entrega. No le vuelvas a ofrecer productos salvo que los pida.</pedido_cerrado>\n`
     : "";
