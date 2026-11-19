@@ -177,6 +177,10 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     // Si escribe «transferencia» en el chat igual se le dan los datos (lo resuelve atencion.ts).
     void PAGO_AL_RECIBIR;
     lineas.push("", "Te lo dejo armado en la web: ahí elegís Mercado Pago o transferencia (8% menos) y queda confirmado al toque.");
+    // 18/11: el link casi nadie lo usa («0 fueron a pagar por link» varios días) y las ventas se cierran en el chat
+    // pagando al recibir. En la zona del reparto se ofrece también cerrarlo por acá.
+    if (pedido.envio.costo === 0 || (pedido.envio.costo ?? 99999) <= 5000)
+      lineas.push("O si te resulta más fácil, pasame calle y número y lo pagás al recibir.");
     return [
       {
         tipo: "cta",
