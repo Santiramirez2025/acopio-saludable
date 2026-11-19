@@ -32,6 +32,7 @@ import { pesos, precioTransferencia, renglonCombo } from "./precios";
 import { baseTransferencia, pctTransferenciaCombo, PRECIO_FIJO_DESDE } from "./precio-fijo";
 import { sinLoEnEspera } from "./recompra-reglas";
 import { zonaSinMinimo } from "./minimo-zona";
+import { cargoVecinaPorLugar } from "./envios/vecinas";
 
 /** Transferencia de la Despensa redondeada a $100, la misma que ya cotizan el bot y el equipo ($35.500 → $32.700). */
 const transferenciaAlCien = (precio: number, pct: number) => (pct > 0 ? Math.round((precio * (1 - pct / 100)) / 100) * 100 : null);
@@ -513,7 +514,8 @@ export async function atender(e: Entrada): Promise<void> {
       ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160)
       : [...histRecibir].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
     console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
-    return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: "Villa Carlos Paz" }, direccion || undefined);
+    const lugarPR = ultimoEnvio ?? lugarCharla ?? "Villa Carlos Paz";
+    return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: cargoVecinaPorLugar(`${lugarPR} ${direccion ?? ""}`), lugar: lugarPR }, direccion || undefined);
   }
 
   // 12/11: «Sí, dejalo listo» después de que le aceptamos pagar al recibir: se crea el pedido AL_RECIBIR en el acto.
@@ -526,10 +528,15 @@ export async function atender(e: Entrada): Promise<void> {
     const previo = [...hist].reverse().find((h) => h.de === "acopio")?.texto ?? "";
     // 16/11 (seguridad): una dirección de Córdoba Capital o Malagueño confirma, pero ahí se paga antes: no se cierra al recibir.
     const lugarHist = lugarDelHistorial(hist);
-    if (aceptamosAlRecibir(previo) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio)) && (!lugarHist || recibeEnZonaPropia(lugarHist)) && !clienteNombraFueraDeZona(hist, texto)) {
+    // 19/11 (Marcos, Tanti): el último mensaje era «Anotamos la dirección… ¿Lo dejamos así?» y el «al recibir» se había
+    // ofrecido antes; vale el último mensaje nuestro que habla de cómo se paga.
+    const ofertaPago = [...hist].reverse().slice(0, 8).find((h) => h.de === "acopio" && /recib|contra ?entrega|transferencia|pago anticipado|por adelantado/i.test(h.texto))?.texto ?? previo;
+    if ((aceptamosAlRecibir(previo) || aceptamosAlRecibir(ofertaPago)) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio)) && (!lugarHist || recibeEnZonaPropia(lugarHist)) && !clienteNombraFueraDeZona(hist, texto)) {
       const direccion = [...hist].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
       console.log("chat: confirma el pedido al recibir, se cierra", cola(e.clave));
-      return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: 0, lugar: ultimoEnvio ?? "Villa Carlos Paz" }, direccion || undefined);
+      // 19/11: a las vecinas con cargo (Tanti, Bialet…) el envío se cobra también al recibir.
+      const lugarAR = ultimoEnvio ?? lugarHist ?? "Villa Carlos Paz";
+      return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: cargoVecinaPorLugar(lugarAR), lugar: lugarAR }, direccion || undefined);
     }
   }
 

@@ -2064,3 +2064,9 @@ test("granja web 19/11: lee cajas, «No disponible» y el código sin prefijo", 
   assert.equal(claveGranja("9-977-021"), "977-021");
   assert.equal(claveGranja("9-977-021-10"), null);
 });
+
+test("19/11 (Marcos, Tanti): «Sí, dejalo» confirma el pedido", () => {
+  assert.ok(confirmaPedido("Sí, dejalo"));
+  assert.ok(confirmaPedido("dejalo así"));
+  assert.ok(!confirmaPedido("dejalo para la semana que viene"));
+});
