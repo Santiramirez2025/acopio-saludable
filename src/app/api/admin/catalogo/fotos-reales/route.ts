@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { put, list } from "@vercel/blob";
 import sharp from "sharp";
+import { formatoFotoSeguro, OPCIONES_SHARP_EXTERNA } from "@/lib/imagen-externa";
 import { prisma } from "@/lib/prisma";
 import type { Credito } from "@/lib/creditos-fotos";
 
@@ -51,8 +52,9 @@ async function bajar(url: string): Promise<Buffer | null> {
 
 async function imagen(h: Hit, chica = false): Promise<Buffer | null> {
   const crudo = chica ? ((h.thumbnail ? await bajar(h.thumbnail) : null) ?? (await bajar(h.url))) : ((await bajar(h.url)) ?? (h.thumbnail ? await bajar(h.thumbnail) : null));
-  if (!crudo) return null;
-  const s = sharp(crudo).rotate().resize(chica ? 180 : 900, chica ? 180 : 900, { fit: "cover", position: "attention" });
+  // Imagen de un sitio ajeno: solo JPEG/PNG/WebP reales, con tope de píxeles (ver imagen-externa.ts).
+  if (!crudo || !formatoFotoSeguro(crudo)) return null;
+  const s = sharp(crudo, OPCIONES_SHARP_EXTERNA).rotate().resize(chica ? 180 : 900, chica ? 180 : 900, { fit: "cover", position: "attention" });
   return chica ? s.jpeg({ quality: 55 }).toBuffer() : s.modulate({ saturation: 1.06 }).webp({ quality: 80 }).toBuffer();
 }
 
