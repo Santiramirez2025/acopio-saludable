@@ -23,7 +23,7 @@ export async function GET() {
   const filas = await prisma.product.findMany({ where: { AND: [wherePublicado(cfg.margenMinimoPct), { fotoUrl: { not: null } }, { categoria: { not: "Congelados" } }] }, orderBy: { codigo: "asc" } });
   const items = filas.filter((f) => !NO_ENVIAR.test(`${f.producto} ${f.presentacion}`)).flatMap((f) => {
     const p = aTienda(f, cfg);
-    const img = fotoFeed(p.codigo, p.fotoUrl);
+    const img = fotoFeed(p.codigo, p.fotoUrl, f.fotos ?? []);
     if (!img) return [];
     const foto = img.startsWith("/") ? `${base}${img}` : img;
     const titulo = tituloLimpio(`${p.producto} ${p.presentacion}`).slice(0, 150);

@@ -20,6 +20,16 @@ test("feed de Google: foto real recortada si existe, nunca la tarjeta ilustrada"
   assert.equal(fotoFeed("100", null), null);
 });
 
+test("feed de Google: nunca las fotos ilustrativas de Openverse; si hay otra propia, va esa", () => {
+  const ov = "https://x.public.blob.vercel-storage.com/productos/openverse-c3f8e076-lg-001202.webp";
+  const propia = "https://x.public.blob.vercel-storage.com/productos/lg-001202.webp";
+  assert.equal(fotoFeed("LG-001202", ov), null);
+  assert.equal(fotoFeed("LG-001202", ov, [ov]), null);
+  assert.equal(fotoFeed("LG-001202", ov, [ov, "/img/productos/encargo/lg-001202.webp", propia]), propia);
+  // La foto real de la mesa de fraccionado sigue primero aunque la principal sea de Openverse.
+  assert.equal(fotoFeed("TG-NUEZ", ov, [ov]), "/img/reales/feed/real-nuez.jpg");
+});
+
 test("feed de Google: cada foto real recortada existe", () => {
   for (const c of ["TG-NUEZ", "LG-ALMNP", "LG-ALMNP-500", "TG-CAJU", "LG-DATIL", "TG-GIRASOL", "LG-GTRAD", "LG-GPROTE", "LG-MIEL", "TG-MIXCG", "TG-MIXCG-500", "TG-PASAS", "LG-MIXSEM", "TG-BANANA"]) {
     const f = fotoFeed(c, null);
