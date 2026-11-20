@@ -52,8 +52,12 @@ export function notaPedidoQueSalio(estado: string | null | undefined): string {
 }
 
 /** El plazo de entrega es para lo que todavía no salió: a un pedido ENVIADO o ENTREGADO no se le promete. */
-export function notaPlazoEntrega(estado: string | null | undefined, ciudad?: string | null): string {
+export function notaPlazoEntrega(estado: string | null | undefined, ciudad?: string | null, medioPago?: string | null): string {
   if (estado === "ENVIADO" || estado === "ENTREGADO") return "";
+  // 20/11 (Claudia, AS-00086 al recibir): «Hoy espero el pedido, confirmen que vienen» y el bot le contestó
+  // «si lo pagás antes de las 15, sale con el reparto de hoy». Un pedido al recibir no espera ningún pago.
+  if (medioPago === "AL_RECIBIR" && !(ciudad && hablaDeFueraDeZona(ciudad)))
+    return " Es al recibir: sale en el reparto de las 16 del día acordado y lo paga cuando lo recibe. Si pregunta si viene, confirmale el día y que el cadete le escribe al llegar. Nunca le hables de pagar antes ni de «antes de las 15».";
   // 13/11: con el pedido de Córdoba Capital la regla de la zona («antes de las 15 sale hoy») no corre.
   if (ciudad && hablaDeFueraDeZona(ciudad))
     return " Este pedido es fuera de Carlos Paz y la zona: sale en 24 a 48 h hábiles (más el plazo del correo si va por correo). No le digas «sale hoy» ni «si pagás antes de las 15».";

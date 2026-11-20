@@ -784,6 +784,13 @@ export async function pensar(c: {
             : ""
       } Si su mensaje es una pregunta (dirección, envío, pago, un producto), contestala PRIMERO en una frase y recién después ofrecé lo del anuncio. Si no pregunta nada concreto, arrancá por el anuncio: qué trae y por qué conviene, y ofrecé dejárselo listo.</anuncio>\n\n`
     : "";
+  // 20/11 (Damián): escribió «Perito moreno 751 fantacio ... soy damian» y el bot le preguntó «¿A nombre de quién
+  // lo dejo?». Si en la charla dijo «soy X», ese es su nombre.
+  const dijoSoy = [...c.historial.filter((h) => h.de !== "acopio").map((h) => h.texto), c.texto]
+    .map((t) => /(?:^|[\s.,!])soy (?:la |el )?([a-záéíóúñ]{3,15})\b/i.exec(t)?.[1])
+    .filter((n): n is string => !!n && !/^(de|del|nuevo|nueva|cliente|yo|vecino|vecina|celiac[oa]|vegan[oa]|vegetarian[oa]|diabetic[oa]|mam[aá]|pap[aá]|profe|docente|maestr[oa]|jubilad[oa]|nutricionista|due[ñn][oa]|el|la|una?|muy|re|tu|su)$/i.test(n))
+    .pop();
+  if (dijoSoy && !primerNombre(c.nombre)) c = { ...c, nombre: dijoSoy.charAt(0).toUpperCase() + dijoSoy.slice(1).toLowerCase() };
   const cliente = c.nombre ? `<cliente>${primerNombre(c.nombre) ? `Se llama ${primerNombre(c.nombre)}` : `Su perfil de WhatsApp dice «${c.nombre.slice(0, 40)}», que puede ser un apodo o un alias: NO lo llames por ningún nombre hasta que te diga cómo se llama (al cerrar el pedido, preguntá «¿A nombre de quién lo dejo?»)`}${c.historial.length ? " (ya lo saludaste: no lo saludes de nuevo)" : ""}.</cliente>\n` : "";
   const eligio =
     c.toque?.tipo === "quiero"
@@ -800,7 +807,7 @@ export async function pensar(c: {
   const tieneCalle = Boolean(orden?.calle && orden.calle.trim().length > 4 && !/a confirmar/i.test(orden.calle));
   const horario = orden?.notas?.match(/Horario:\s*([^·]+)/i)?.[1]?.trim();
   let yaTenemos = orden
-    ? ` Datos que YA tenemos: nombre ${orden.nombre}${tieneCalle ? `, dirección ${orden.calle}, ${orden.ciudad}` : ", FALTA la dirección"}${horario ? `, horario ${horario}` : ""}. No vuelvas a pedir lo que ya está; si falta algo, pedí solo eso y una sola vez.${notaPlazoEntrega(estadoOrden, orden.ciudad)}`
+    ? ` Datos que YA tenemos: nombre ${orden.nombre}${tieneCalle ? `, dirección ${orden.calle}, ${orden.ciudad}` : ", FALTA la dirección"}${horario ? `, horario ${horario}` : ""}. No vuelvas a pedir lo que ya está; si falta algo, pedí solo eso y una sola vez.${notaPlazoEntrega(estadoOrden, orden.ciudad, orden.medioPago)}`
     : "";
   const eventosComprobante = ordenId && estadoOrden === "PENDIENTE_PAGO" ? await prisma.orderEvent.findMany({ where: { orderId: ordenId }, select: { nota: true } }).catch(() => []) : [];
   let enQueAnda =

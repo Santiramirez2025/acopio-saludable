@@ -11,7 +11,7 @@ const [, , entrada, salida = "promo.jpg"] = process.argv;
 const d = JSON.parse(fs.readFileSync(entrada, "utf8"));
 const raiz = path.dirname(new URL(import.meta.url).pathname);
 const logo = fs.readFileSync(path.join(raiz, "../public/marca/acopio-logo-horizontal-negativo.svg"), "utf8");
-const foto = /^https?:/.test(d.foto) ? d.foto : `data:image/png;base64,${fs.readFileSync(d.foto).toString("base64")}`;
+const foto = /^https?:/.test(d.foto) ? d.foto : `data:image/${/\.jpe?g$/i.test(d.foto) ? "jpeg" : "png"};base64,${fs.readFileSync(d.foto).toString("base64")}`;
 const esc = (s = "") => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 const html = `<!doctype html><html><head><meta charset="utf-8"><style>

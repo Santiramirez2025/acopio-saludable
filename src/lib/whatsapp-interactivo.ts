@@ -738,6 +738,9 @@ export function listaDeProductos(texto: string): string[] {
   // Ojo: al vendedor le llega con etiquetas delante (<cliente>, <anuncio>…), así que se mira sin ellas
   // (a Vanesa, 31/10, su audio transcripto se contestó «Hola — no lo tenemos… Total $0»).
   const sinEtiquetas = texto.replace(/<(\w+)>[\s\S]*?<\/\1>/g, "");
+  // Un video o una foto nuestra reenviada («[video·…] Así armamos tu mix… · Mix clásico con cajú $12.500») no es una
+  // lista: a Laura (19/11) se le cotizó «Mix cervecero — A mano — no lo tenemos» y contestó «mucha IA ya me molesta».
+  if (/^\s*\[(video|foto|imagen|audio)[·\]]/i.test(sinEtiquetas)) return [];
   if (/^\s*\[Mandó/.test(sinEtiquetas) || /\[Mandó (un audio|una foto|un archivo|el comprobante|un comprobante)/.test(texto)) return [];
   // El botón «Pedir por WhatsApp» de la web manda «Hola! Quiero pedir: • 1 × Kit semanal…: $ 25.000 (…) ¿Me ayudás con el
   // pedido?». Es un pedido armado, no una lista para cotizar: a Carla (18/11) el Kit semanal se le contestó «— no lo tenemos».

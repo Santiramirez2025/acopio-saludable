@@ -2096,3 +2096,11 @@ test("promo semanal: baja de promos y vigencia", async () => {
   assert.ok(!p.promoVigente({ ...base, creada: "2026-11-15T20:00:00Z" }, hoy));
   assert.ok(!p.promoVigente({ ...base, hasta: "2026-11-25", creada: "2026-11-25T20:00:00Z" }, hoy));
 });
+
+test("20/11: video reenviado no es lista; al recibir no recibe la regla de pagar antes de las 15", async () => {
+  const { listaDeProductos } = await import("./whatsapp-interactivo");
+  assert.deepEqual(listaDeProductos("[video·1937769007597736] Así armamos tu mix de frutos secos, a mano y el mismo día · Mix clásico con cajú $12.500 el kilo"), []);
+  const r = await import("./atencion-reglas");
+  assert.doesNotMatch(r.notaPlazoEntrega("PENDIENTE_PAGO", "Villa Carlos Paz", "AL_RECIBIR"), /pag[aá]s antes de las 15[^»]/);
+  assert.match(r.notaPlazoEntrega("PENDIENTE_PAGO", "Villa Carlos Paz", "TRANSFERENCIA"), /antes de las 15/);
+});
