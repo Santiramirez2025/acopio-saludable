@@ -19,6 +19,20 @@ import { pesos } from "@/lib/precios";
 import { urlSitio } from "@/lib/sitio";
 import { leerConfig } from "@/lib/config";
 import { argumentoCombo } from "@/lib/combos-tema";
+import { montoSinSigno } from "@/lib/monto-sin-signo";
+
+// Solo a los agentes (curl con la clave): en el panel una persona escribe el texto tal cual.
+function frenoMonto(req: Request, texto: string) {
+  if (!req.headers.get("x-agente-clave")) return null;
+  const m = montoSinSigno(texto);
+  if (!m) return null;
+  return NextResponse.json(
+    {
+      error: `No salió: «${m}» parece un precio sin el signo $. Si mandás el JSON entre comillas dobles, bash se come «$2…» (de «$24.000» queda «4.000»). Mandalo con -d '…' entre comillas simples o con --data @archivo.json, y revisá el monto.`,
+    },
+    { status: 422 },
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +75,8 @@ export async function POST(req: Request) {
 
   const texto = typeof cuerpo.texto === "string" ? cuerpo.texto.trim().slice(0, 4000) : "";
   if (!texto) return NextResponse.json({ error: "Mensaje vacío" }, { status: 400 });
+  const freno = frenoMonto(req, texto);
+  if (freno) return freno;
 
   // Seguimiento: lo manda el vendedor (la charla sigue en sus manos), con los botones de zona si
   // se pide, y deja guardado el pedido para que al tocar la zona salga el envío y los botones de pago.
@@ -127,6 +143,8 @@ async function responderConArchivo(req: Request) {
   const telefono = claveValida(String(fd.get("telefono") ?? "")) ?? "";
   const archivo = fd.get("archivo");
   const caption = String(fd.get("texto") ?? "").trim().slice(0, 1024);
+  const freno = frenoMonto(req, caption);
+  if (freno) return freno;
   if (!telefono || !/^\d+$/.test(telefono)) return NextResponse.json({ error: "Los archivos solo se mandan por WhatsApp" }, { status: 400 });
   if (!(archivo instanceof File) || !archivo.size) return NextResponse.json({ error: "Falta el archivo" }, { status: 400 });
   if (archivo.size > TOPE_ARCHIVO) return NextResponse.json({ error: "El archivo pesa más de 15 MB" }, { status: 400 });
