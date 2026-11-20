@@ -2104,3 +2104,8 @@ test("20/11: video reenviado no es lista; al recibir no recibe la regla de pagar
   assert.doesNotMatch(r.notaPlazoEntrega("PENDIENTE_PAGO", "Villa Carlos Paz", "AL_RECIBIR"), /pag[aá]s antes de las 15[^»]/);
   assert.match(r.notaPlazoEntrega("PENDIENTE_PAGO", "Villa Carlos Paz", "TRANSFERENCIA"), /antes de las 15/);
 });
+
+test("20/11 Rossana: «pasame el aluas» (alias con error de tipeo) pide los datos para transferir", () => {
+  for (const t of ["Cárcano 2830 carlos paz, pasame el aluas porfavor", "pasame el alis", "me pasas el allias?", "el alais?"]) assert.ok(pideDatosTransferencia(t), t);
+  for (const t of ["las alas del pollo", "salsa", "alas"]) assert.ok(!pideDatosTransferencia(t), t);
+});
