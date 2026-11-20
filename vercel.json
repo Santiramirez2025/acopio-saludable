@@ -38,7 +38,7 @@
     },
     {
       "path": "/api/cron/promo-semanal",
-      "schedule": "40 14 * * 4"
+      "schedule": "40 14 * * 1"
     }
   ]
 }

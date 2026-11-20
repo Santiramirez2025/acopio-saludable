@@ -3,7 +3,7 @@
 //   POST { accion: "guardar", titulo, contexto, hasta, camino?, imagen? | imagenBase64? } → la deja lista.
 //   POST { accion: "plantilla" }           → crea la plantilla en Meta con la gráfica guardada de ejemplo.
 //   POST { accion: "probar", telefono }    → la manda a ese número solo.
-//   POST { accion: "enviar" }              → la manda a todos los que corresponde (lo hace el cron de los jueves).
+//   POST { accion: "enviar" }              → la manda a todos los que corresponde (lo hace el cron de los lunes).
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { esAdmin } from "@/lib/admin-acceso";

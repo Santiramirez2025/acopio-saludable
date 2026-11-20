@@ -1,6 +1,6 @@
 // Promo de la semana a los clientes que ya compraron (Santiago, 19/11: «aprovechemos sin molestarlos, de la mejor
 // manera, a los clientes que ya hicimos»). La arma el equipo cada semana con lo que La Granja tiene en oferta y su
-// gráfica; sale los jueves a media mañana (la gente arma el finde y el reparto del viernes y sábado ya está).
+// gráfica; sale los lunes a media mañana (Santiago, 20/11: arranca la semana y el reparto del lunes ya está).
 //
 // Cuidados para no molestar:
 // - Solo a quien ya recibió un pedido, y nunca dentro de los 5 días de su última compra.
