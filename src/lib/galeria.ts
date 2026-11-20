@@ -98,8 +98,11 @@ export function fotoRealProducto(codigo: string): string | null {
   return r ? `/img/reales/${r[1]}.jpg` : null;
 }
 
-/** La miel va con la foto real primero: la ilustración no representa el producto. */
-export const REAL_PRIMERO = new Set(["LG-MIEL", "LG-MIEL-1KG"]);
+/**
+ * La foto real va primera en todos los productos que la tienen (19/11, Santiago: «la gente piensa que la vas a
+ * estafar»; la bolsa kraft en la mano de verdad da más confianza que cualquier foto de stock). Antes solo la miel.
+ */
+export const REAL_PRIMERO = { has: (codigo: string) => fotoRealProducto(codigo) !== null };
 
 /** Fotos reales: cómo armamos y cómo llega el pedido. Para la desconfianza y el «¿cómo llega?». */
 export const REALES = [
