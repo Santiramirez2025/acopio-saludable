@@ -39,6 +39,7 @@ const transferenciaAlCien = (precio: number, pct: number) => (pct > 0 ? Math.rou
 import { urlSitio } from "./sitio";
 import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
 import { cambiarEstado, estadoDe, guardarPedido, respuestasRecientes, historialDe, pedidoGuardado, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
+import { bajaDePromos, pideNoPromos } from "./promo-semanal";
 import { contextoProspecto, darDeBaja, datosProspecto, enviarProspecto, esBaja } from "./whatsapp-prospectos";
 import { derivacion } from "./derivacion";
 import { AVISO_SUPLEMENTOS } from "./sitio";
@@ -331,6 +332,12 @@ export async function atender(e: Entrada): Promise<void> {
   }
   if (prospecto.baja) {
     console.log("chat: dado de baja, no se contesta", cola(e.clave));
+    return;
+  }
+  // Promo semanal: «No me manden promos» corta solo las promos; si escribe, se lo atiende igual.
+  if (!prospecto.prospecto && e.texto !== null && pideNoPromos(texto)) {
+    await bajaDePromos(e.clave);
+    await responder(e.clave, "Listo, no te mandamos más promos. Si algún día necesitás algo, escribinos por acá 🙌");
     return;
   }
   if (prospecto.prospecto && e.texto !== null && esBaja(texto)) {

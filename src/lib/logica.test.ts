@@ -2084,3 +2084,15 @@ test("19/11 (Sandra, Móni, Marina): pagó, acuses y espera en la puerta", async
   for (const t of ["Hola. No vino el cadete.", "Entonces viene o no?", "Tengo que salir y estoy esperando el pedido, estará lejos?"]) assert.ok(r.esperaElPedido(t), t);
   assert.ok(!r.esperaElPedido("Lo espero mañana entonces"));
 });
+
+test("promo semanal: baja de promos y vigencia", async () => {
+  const p = await import("./promo-semanal");
+  assert.ok(p.pideNoPromos("No me manden promos"));
+  assert.ok(p.pideNoPromos("por favor no me manden más ofertas"));
+  assert.ok(!p.pideNoPromos("No, mandame la promo de nuez"));
+  const hoy = new Date("2026-11-26T14:40:00Z");
+  const base = { titulo: "x", contexto: "y", imagen: "https://a/b.jpg", hasta: "2026-11-29" };
+  assert.ok(p.promoVigente({ ...base, creada: "2026-11-25T20:00:00Z" }, hoy));
+  assert.ok(!p.promoVigente({ ...base, creada: "2026-11-15T20:00:00Z" }, hoy));
+  assert.ok(!p.promoVigente({ ...base, hasta: "2026-11-25", creada: "2026-11-25T20:00:00Z" }, hoy));
+});
