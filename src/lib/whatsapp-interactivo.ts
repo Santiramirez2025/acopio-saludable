@@ -474,7 +474,9 @@ export function pideDatosTransferencia(texto: string, ultimoNuestro = ""): boole
   // 18/11 (Virginia): le preguntamos «¿a qué alias te devolvemos?» y contestó con SU alias; el bot le mandó los
   // nuestros para pagar $71.100. Si el alias es de ella para una devolución, no son datos para pagar.
   if (/devol|reintegr|reembols|a que alias|a que cbu/.test(limpio(ultimoNuestro)) || /\b(es mi|mi) (alias|cbu|cvu)\b|\b(alias|cbu|cvu) es\b/.test(t)) return false;
-  if (/\b(alias|cbu|cvu)\b/.test(t)) return true;
+  // 20/11 (Rossana): «Cárcano 2830 carlos paz, pasame el aluas porfavor» → el bot no lo reconoció y esperó 4 h el alias.
+  // Se aceptan los errores de tipeo comunes de «alias» (aluas, alis, allias, alais, aliass).
+  if (/\b(al+[iu]a?s+|alais|cbu|cvu)\b/.test(t)) return true;
   if (/\b(pasame|pasa|mandame|manda|enviame|dame|pasan|mandan|necesito) (los |tus |sus )?datos( (para|de) (la )?(transferir|transferencia|pago|pagar))?\b/.test(t)) return true;
   if (/\b(quiero|prefiero|voy a|lo|te) (pagar |pago |hago )?(por |con |una )?transferencia\b/.test(t) && /\b(pasame|mandame|dame|datos|cuenta|ya)\b/.test(t)) return true;
   const ofrecimos = /datos (para|de) (transferir|la transferencia|pagar|pago)/.test(limpio(ultimoNuestro));
