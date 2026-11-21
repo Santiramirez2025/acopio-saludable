@@ -38,7 +38,7 @@ export async function candidatosGrafica(): Promise<Candidato[]> {
       AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" h WHERE h."telefono" = c."telefono" AND h."de" = 'persona' AND h."fecha" > now() - interval '12 hours')
     ORDER BY c."ultimoMensaje" DESC
     LIMIT ${TOPE}`;
-  return filas.filter((f) => !NO_QUIERE.test(f.ultimo ?? ""));
+  return filas.filter((f: Candidato) => !NO_QUIERE.test(f.ultimo ?? ""));
 }
 
 export async function piezaDelDia(): Promise<{ url: string; texto: (nombre: string) => string; nombre: string } | null> {
