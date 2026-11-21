@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { codigos?: string[]; combos?: string[]; aplicar?: boolean };
+  const b = (await req.json().catch(() => ({}))) as { codigos?: string[]; combos?: string[]; aplicar?: boolean; soloTextos?: boolean };
   const productos = PRODUCTOS_PROVEEDORES.filter((p) => b.codigos?.includes(p.codigo));
   const combos = COMBOS_PROVEEDORES.filter((c) => b.combos?.includes(c.slug));
   const plan = {
@@ -30,6 +30,13 @@ export async function POST(req: Request) {
     })),
   };
   if (!b.aplicar) return NextResponse.json({ prueba: true, ...plan });
+  // 20/11: solo la ficha («por qué lo elegimos»), sin tocar costo, precio, foto ni stock.
+  if (b.soloTextos) {
+    const out: Record<string, number> = {};
+    for (const p of productos) out[p.codigo] = (await prisma.product.updateMany({ where: { codigo: p.codigo }, data: { porQueLoElegimos: p.porQueLoElegimos ?? null } })).count;
+    revalidatePath("/", "layout");
+    return NextResponse.json({ soloTextos: out });
+  }
 
   for (const p of productos) {
     const precio = precioDe(p);
