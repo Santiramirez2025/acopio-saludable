@@ -42,13 +42,17 @@ async function frenoSeguidos(req: Request, telefono: string, texto: string, forz
   if (!req.headers.get("x-agente-clave")) return null;
   if (forzar && /perd[oó]n|disculp/i.test(texto)) return null;
   const { prisma } = await import("@/lib/prisma");
-  const ult = await prisma.$queryRaw<{ de: string; fecha: Date }[]>`
-    SELECT "de", "fecha" FROM "WhatsappMensaje" WHERE "telefono" = ${telefono} ORDER BY "fecha" DESC LIMIT 1
-  `.catch(() => []);
-  const u = ult[0];
-  if (!u || u.de === "cliente" || Date.now() - new Date(u.fecha).getTime() > 24 * 3_600_000) return null;
+  // Cuántos textos nuestros (sin contar fotos ni videos) hay desde el último mensaje del cliente, en las últimas 24 h.
+  // Uno (la respuesta del bot) deja lugar a UN seguimiento de una persona; dos o más, se espera a que conteste.
+  const filas = await prisma.$queryRaw<{ n: bigint }[]>`
+    SELECT count(*) AS n FROM "WhatsappMensaje" m
+    WHERE m."telefono" = ${telefono} AND m."de" <> 'cliente' AND m."fecha" > now() - interval '24 hours'
+      AND m."texto" NOT LIKE '[Foto]%' AND m."texto" NOT LIKE '[Video]%'
+      AND m."fecha" > coalesce((SELECT max(c."fecha") FROM "WhatsappMensaje" c WHERE c."telefono" = ${telefono} AND c."de" = 'cliente'), 'epoch')
+  `.catch(() => [{ n: BigInt(0) }]);
+  if (Number(filas[0]?.n ?? 0) < 2) return null;
   return NextResponse.json(
-    { error: "No salió: el último mensaje de la charla ya es nuestro y el cliente no contestó. Un mensaje por persona: esperá a que conteste. Solo para corregir un error nuestro: \"forzar\": true y un texto que pida disculpas." },
+    { error: "No salió: ya le mandamos dos mensajes y el cliente no contestó. Un seguimiento por persona: esperá a que conteste. Solo para corregir un error nuestro: \"forzar\": true y un texto que pida disculpas." },
     { status: 409 },
   );
 }
