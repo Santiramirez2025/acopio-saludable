@@ -34,7 +34,7 @@ async function candidatos(): Promise<Candidato[]> {
       -- Máximo un automático sin respuesta: si ya hubo uno (recordatorio, reactivación, seguimiento) después de su último mensaje, no va otro.
       AND NOT EXISTS (
         SELECT 1 FROM "WhatsappMensaje" a WHERE a."telefono" = c."telefono" AND a."de" = 'bot'
-          AND (a."id" LIKE 'rec.%' OR a."id" LIKE 'react.%' OR a."id" LIKE 'seg.%' OR a."id" LIKE 'recompra.%')
+          AND (a."id" LIKE 'rec.%' OR a."id" LIKE 'react.%' OR a."id" LIKE 'seg.%' OR a."id" LIKE 'recompra.%' OR a."id" LIKE 'graf.%')
           AND a."fecha" > (SELECT max(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente')
       )
     ORDER BY c."ultimoMensaje" DESC

@@ -38,7 +38,15 @@
     },
     {
       "path": "/api/cron/promo-semanal",
-      "schedule": "40 14 * * 1"
+      "schedule": "40 14 * * 1-6"
+    },
+    {
+      "path": "/api/cron/grafica-dia",
+      "schedule": "20 14 * * *"
+    },
+    {
+      "path": "/api/cron/grafica-dia",
+      "schedule": "20 21 * * 1-6"
     }
   ]
 }

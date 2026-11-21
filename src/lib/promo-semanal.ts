@@ -67,10 +67,10 @@ export async function candidatosPromo(): Promise<Candidato[]> {
     WHERE c."baja" = false AND c."prospecto" IS NULL AND c."telefono" ~ '^[0-9]+$' AND c."estado" <> 'persona'
       -- Ya recibió al menos un pedido…
       AND EXISTS (SELECT 1 FROM "Order" o WHERE right(regexp_replace(o."telefono", '[^0-9]', '', 'g'), 10) = right(c."telefono", 10) AND o."estado" = 'ENTREGADO')
-      -- …y no compró ni tiene un pedido en curso de los últimos 5 días.
+      -- …y no compró ni tiene un pedido en curso de los últimos 2 días (21/11, Santiago: «esperamos un par de días y pum, la gráfica»).
       AND NOT EXISTS (SELECT 1 FROM "Order" o WHERE right(regexp_replace(o."telefono", '[^0-9]', '', 'g'), 10) = right(c."telefono", 10)
                         AND o."estado" <> 'CANCELADO' AND o."createdAt" > now() - interval '10 days'
-                        AND (o."createdAt" > now() - interval '5 days' OR o."estado" <> 'ENTREGADO'))
+                        AND (o."createdAt" > now() - interval '2 days' OR o."estado" <> 'ENTREGADO'))
       -- No pidió que no le mandemos promos.
       AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" n WHERE n."telefono" = c."telefono" AND n."id" LIKE 'promo-no.%')
       -- Una por semana.
