@@ -2,7 +2,7 @@
 // De los 23 reactivados que siguieron tras «Sí, pasame precios», el motivo más común fue el producto (n=10),
 // y a «qué tiene el mix» el bot contestó «es un kilo y sale $19.300» (Nico, 5/11). Sale de la misma ficha que se ve en la web.
 
-const TOPE = 160;
+const TOPE = 240; // 20/11: la ficha del mix ahora explica que la composición varía y se repone con igual o mayor valor.
 
 export function queTraeMix(producto: string, texto: string | null | undefined): string | null {
   if (!/\bmix\b/i.test(producto)) return null;

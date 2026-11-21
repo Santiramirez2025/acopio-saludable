@@ -18,6 +18,6 @@ test("sin ficha no inventa nada", () => {
 
 test("corta las fichas largas", () => {
   const r = queTraeMix("Mix largo", "a".repeat(300));
-  assert.equal(r?.length, 161);
+  assert.equal(r?.length, 241);
   assert.ok(r?.endsWith("…"));
 });
