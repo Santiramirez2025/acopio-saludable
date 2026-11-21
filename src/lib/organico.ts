@@ -137,7 +137,7 @@ export async function contactar(cantidad = porDia()): Promise<{ enviados: { nego
     WHERE p."estado" = 'nuevo'
       AND NOT EXISTS (SELECT 1 FROM "WhatsappConversacion" c WHERE c."telefono" = p."telefono" AND (c."contactado" IS NOT NULL OR c."baja"))
     LIMIT 400`;
-  const elegidos = elegirHoy(candidatos.filter((c: Candidato) => rubroHabilitado(c.rubro)), await resultadosPorRubro(), cantidad);
+  const elegidos = elegirHoy(candidatos.filter((c: Candidato) => rubroHabilitado(c.rubro, c.localidad)), await resultadosPorRubro(), cantidad);
   const enviados: { negocio: string; rubro: string }[] = [];
   let fallidos = 0;
   for (const c of elegidos) {

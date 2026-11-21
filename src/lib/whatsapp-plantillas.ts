@@ -60,23 +60,22 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "usá pedido_para_negocio con «gimnasio», hablale de reventa (precio sugerido y cuánto gana por unidad) y preguntá cuántos socios tiene para armarle el pedido.",
   },
   dietetica: {
-    nombre: "acopio_negocios_dietetica_v3",
+    // 21/11 (Santiago: «vender por internet a todo el país… que los captadores busquen nuestro nicho en el país»).
+    // Fuera de Punilla las dietéticas no son competencia: son clientes de reventa que reciben por correo.
+    // Una sola pregunta corta (lo que funcionó desde el 17/11), sin links ni pedidos: en Argentina la gente desconfía.
+    nombre: "acopio_dieteticas_pais_v4",
     cuerpo:
-      "Hola, {{1}}. Soy Santiago, de Acopio Saludable, de Villa Carlos Paz.\n\n" +
-      "Armamos mixes de frutos secos propios en el día (clásico con cajú, con o sin girasol) y se los vendemos a las dietéticas de Punilla a granel o fraccionados. Entrega sin cargo en nuestra ruta semanal por Carlos Paz y la zona.\n\n" +
-      "¿Le paso precios a quien hace las compras?",
-    botones: ["Sí, pasame precios", "No, gracias"],
+      "Hola, {{1}} 👋 ¿A cuánto le está llegando hoy el kilo de nuez o de cajú? Somos Acopio, de Villa Carlos Paz (Córdoba): frutos secos por bulto con envío a todo el país.",
+    botones: ["Pasame precios", "No, gracias"],
     contexto:
-      "le escribimos nosotros ofreciendo nuestros mixes propios para revender. Es una dietética. " +
-      "Hay dos mixes: clásico con cajú y girasol, y clásico con cajú. Si pregunta por el tropical (un mensaje viejo lo nombraba), decile que ya no lo armamos. No prometas que está listo para la góndola: los rótulos y registros los confirma Leo. " +
-      "PRIMERO contestá lo que pregunta: si pide otro producto (tostadas, galletas, una marca), buscalo con buscar_productos y pasale lo que tenemos con precio; si no lo tenemos, decilo claro y ofrecé lo más parecido. " +
-      "No vuelvas a ofrecerle los mixes si ya se los ofreciste y está hablando de otra cosa: NUNCA repitas la misma oferta dos veces. " +
-      "Si pide fotos, mandalas con mandar_fotos; no digas «te mando las fotos» si no las mandás. " +
-      "Escalera mayorista, solo como referencia: −10% desde 5 kg, −15% desde 10 kg y −20% desde 25 kg con reposición semanal; no todos los productos entran y algunos tienen tope por margen. " +
-      "NO calcules descuentos ni digas un precio por volumen de tu cuenta: para precios usá buscar_productos (precio de la tienda) y, si pide precio por volumen, anotá qué productos y cuántos kilos quiere y decile que Leo, de ventas mayoristas, le confirma el número por este chat. " +
-      "Condiciones: pedido mínimo $60.000; se paga antes de entregar, por transferencia o Mercado Pago (no se ofrece pagar al recibir; si lo pregunta porque el primer mensaje lo decía, explicale con amabilidad que desde ahora todos los pedidos se pagan antes). " +
-      "Entrega sin cargo en Carlos Paz y la zona; Córdoba Capital $15.000, sin cargo desde $150.000. " +
-      "Si confirma, anotá qué lleva, cuántos y la dirección del local, y decile que Leo le confirma el total y que sale apenas se acredite el pago.",
+      "le escribimos nosotros: es una dietética, almacén natural o kiosco saludable de OTRA provincia o ciudad lejos de Carlos Paz, posible cliente de reventa por correo. " +
+      "PRIMERO preguntá (o anotá, si ya lo dijo) a cuánto le llega hoy el kilo de nuez o cajú y de quién: ese precio se registra siempre, escribilo textual en tu respuesta para que Leo lo vea. " +
+      "Después compará con buscar_productos y pasale la lista mayorista con fotos: https://www.acopiosaludable.com/mayorista (−10% desde 5 kg, −15% desde 10 kg). " +
+      "NO calcules descuentos de tu cuenta: si pide precio por volumen, anotá productos y kilos y decile que Leo, de ventas mayoristas, le confirma el número por este chat. " +
+      "Condiciones: pedido mínimo $60.000; envío por Andreani o Correo Argentino con número de seguimiento (el costo depende del código postal: pedíselo); pago anticipado por transferencia o link de Mercado Pago. " +
+      "CONFIANZA (mucha gente teme estafas): ofrecé una primera compra chica de prueba, foto del pedido armado antes de despachar y el número de seguimiento; nunca presiones. " +
+      "Hay dos mixes clásicos (con cajú y girasol, y con cajú) y la composición puede variar según lo que entra; no prometas que está listo para la góndola: los rótulos los confirma Leo. " +
+      "Si confirma, anotá qué lleva, cuántos kilos, ciudad y código postal, y decile que Leo le confirma el total con el envío.",
   },
   regalos: {
     // 17/11 (Santiago: «tenemos que ser campeones en mensajes en frío»): 0 respuestas con el pitch largo.
@@ -99,7 +98,7 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
  * con la desayuno v3 (11/11), que ya no nombra «sin TACC».
  * Dietética (T-037): la v2 ofrecía el tropical y «listos para la góndola». Queda frenada hasta que Meta apruebe la v3.
  */
-const FRENADAS: ReadonlySet<keyof typeof PLANTILLAS> = new Set(["kit", "dietetica"] as const);
+const FRENADAS: ReadonlySet<keyof typeof PLANTILLAS> = new Set(["kit"] as const);
 
 /**
  * Rubros que el robot no contacta por decisión, no por plantilla (orden de Laura, 6/11): dietéticas,
@@ -107,12 +106,17 @@ const FRENADAS: ReadonlySet<keyof typeof PLANTILLAS> = new Set(["kit", "dietetic
  * y a esos se llega hablando con el dueño, no con una plantilla. Aunque Meta apruebe la dietética v3,
  * siguen afuera hasta que alguien saque esta regla.
  */
-export function rubroExcluido(rubro: string): boolean {
-  return /diet|almac[eé]n natural|naturista|granel|herbor/i.test(rubro);
+export function rubroExcluido(rubro: string, localidad?: string | null): boolean {
+  if (!/diet|almac[eé]n natural|naturista|granel|herbor/i.test(rubro)) return false;
+  // 21/11 (Santiago): a todo el país. Siguen afuera las de nuestra zona (competencia) y las sin localidad.
+  return !localidad || ZONA_COMPETENCIA.test(localidad);
 }
 
-export function rubroHabilitado(rubro: string): boolean {
-  return !rubroExcluido(rubro) && !FRENADAS.has(plantillaDe(rubro));
+/** Donde las dietéticas son competencia: Punilla, Paravachasca, Córdoba capital y alrededores. */
+const ZONA_COMPETENCIA = /carlos paz|punilla|cosqu[ií]n|bialet|tanti|icho cruz|san antonio de arredondo|mayu sumaj|cuesta blanca|tala huasi|cabalango|santa mar[ií]a|la falda|huerta grande|valle hermoso|capilla del monte|alta gracia|c[oó]rdoba(?!.*(santa fe|corrientes))|villa allende|r[ií]o ceballos|unquillo|mendiolaza|saldan|malague[nñ]o/i;
+
+export function rubroHabilitado(rubro: string, localidad?: string | null): boolean {
+  return !rubroExcluido(rubro, localidad) && !FRENADAS.has(plantillaDe(rubro));
 }
 
 export function plantillaDe(rubro: string): keyof typeof PLANTILLAS {

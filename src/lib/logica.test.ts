@@ -1385,17 +1385,19 @@ test("ML: dátiles sueltos por bulto tienen costo conocido (3 y 5 kg)", async ()
   assert.deepEqual(SKU_ML["AS-DATIL-5KG"], { codigo: "LG-DATIL", cantidad: 5 });
 });
 
-test("Plantilla dietética v3: sin tropical ni góndola (T-037)", async () => {
+test("Plantilla dietética v4 (país): sin tropical ni góndola (T-037)", async () => {
   const { PLANTILLAS } = await import("./whatsapp-plantillas");
-  assert.equal(PLANTILLAS.dietetica.nombre, "acopio_negocios_dietetica_v3");
+  assert.equal(PLANTILLAS.dietetica.nombre, "acopio_dieteticas_pais_v4");
+  assert.match(PLANTILLAS.dietetica.cuerpo, /todo el pa[ií]s/);
   assert.doesNotMatch(PLANTILLAS.dietetica.cuerpo, /tropical|g[oó]ndola/i);
 });
 
 test("Plantilla dietética: regla mayorista única y cobro anticipado", async () => {
   const { contextoProspecto } = await import("./whatsapp-plantillas");
   const c = contextoProspecto("dietética", "Dietética Sol");
-  assert.match(c, /−10% desde 5 kg, −15% desde 10 kg y −20% desde 25 kg/);
+  assert.match(c, /−10% desde 5 kg, −15% desde 10 kg/);
   assert.match(c, /mínimo \$60\.000/);
+  assert.match(c, /pago anticipado/);
   assert.doesNotMatch(c, /\$10\.000 el kilo|\$50\.000|pagando al recibir|martes Punilla/);
   // Tras #439 el bot no calcula el volumen: sin costos no puede respetar el piso (el precio lo confirma Leo).
   assert.match(c, /NO calcules descuentos/);
@@ -1909,6 +1911,10 @@ test("captación: cabañas frenadas por «sin TACC» y budines; hoteles vuelven 
   for (const r of ["hotel", "hostel", "cafetería", "gimnasio", "panadería", "heladería"]) assert.equal(rubroHabilitado(r), true, r);
   // T-037: dietética frenada hasta que Meta apruebe la v3.
   assert.equal(rubroHabilitado("dietética"), false);
+  // 21/11: a todo el país. Fuera de nuestra zona las dietéticas son clientes de reventa.
+  assert.equal(rubroHabilitado("dietética", "Neuquén, Neuquén"), true);
+  assert.equal(rubroHabilitado("dietética", "Villa Carlos Paz"), false);
+  assert.equal(rubroHabilitado("dietética", "Córdoba"), false);
   assert.doesNotMatch(contextoProspecto("cabañas / complejo", "X"), /budines sin TACC/);
   assert.match(contextoProspecto("cabañas / complejo", "X"), /Budines no tenemos/);
 });
