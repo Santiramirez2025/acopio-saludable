@@ -107,7 +107,7 @@ const FILAS_ELEGIDAS: Fila[] = [
   ["LG-TAHINI", "950-002", "Pasta de sésamo (tahini)", "Sytari", "x 200 g", "Almacen", 200, "g", 4764, "Para hummus casero y aderezos."],
   ["LG-OLIVA-500", "935-002", "Aceite de oliva extra virgen", "Pisi", "x 500 cc", "Almacen", 500, "ml", 14293, "Oliva extra virgen de San Juan."],
   ["LG-MERM-FROJOS", "913-006", "Mermelada de frutos rojos con stevia", "Rincón de Vida", "x 400 g", "Almacen", 400, "g", 5267, "Endulzada con stevia, sin azúcar agregada."],
-  ["LG-DDL-STEVIA", "958-006", "Dulce de leche con stevia", "Trini", "x 400 g", "Almacen", 400, "g", 6698, "Dulce de leche sin azúcar agregada."],
+  ["LG-DDL-STEVIA", "958-006", "Dulce de leche con stevia sin TACC", "Trini", "x 400 g", "Sin TACC", 400, "g", 6698, "Endulzado con stevia, sin azúcar agregada y rotulado sin TACC. Para rellenar alfajores, en tostadas o en el postre."],
   ["LG-STEVIA-250", "916-401", "Stevia líquida", "Sin marca / envasado", "x 250 cc", "Almacen", 250, "ml", 2495, "Unas gotas endulzan el mate o el café."],
 
   // ——— Infusiones ———
