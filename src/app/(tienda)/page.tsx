@@ -114,7 +114,7 @@ export default async function Home() {
       <nav aria-label="Atajos" className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {[
           // Tomi 21/11: el atajo iba fijo al Kit semanal y daba 404 cuando faltaba el mix de semillas.
-          ...(atajo ? [{ href: `/combos/${atajo.slug}`, t: atajo.slug === KIT_SEMANAL ? "Kit semanal" : atajo.nombre, d: atajo.slug === KIT_SEMANAL ? "Desayuno y colación de la semana" : "El combo de la semana", e: "🧺" }] : []),
+          ...(atajo ? [{ href: `/combos/${atajo.slug}`, t: atajo.slug === KIT_SEMANAL ? "Kit semanal" : atajo.nombre.split(" · ")[0], d: atajo.slug === KIT_SEMANAL ? "Desayuno y colación de la semana" : "El combo de la semana", e: "🧺" }] : []),
           { href: "/combos", t: "Combos", d: "Ahorrás llevando el pack", e: "🎁" },
           { href: "/sin-tacc", t: "Sin TACC", d: `${totalSinTacc} productos rotulados`, e: "🌾" },
           { href: "/novedades", t: "Nuevos", d: "Por encargo, en 24-48 hs", e: "✨" },
