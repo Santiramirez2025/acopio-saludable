@@ -45,5 +45,16 @@
     "tailwindcss": "^3.4.19",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.33"
+    },
+    "@vercel/cli-config": {
+      "zod": "^4.6.7"
+    },
+    "@prisma/config": {
+      "effect": "^3.22.5"
+    }
   }
 }
