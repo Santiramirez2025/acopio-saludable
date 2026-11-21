@@ -2115,3 +2115,10 @@ test("20/11 Rossana: «pasame el aluas» (alias con error de tipeo) pide los dat
   for (const t of ["Cárcano 2830 carlos paz, pasame el aluas porfavor", "pasame el alis", "me pasas el allias?", "el alais?"]) assert.ok(pideDatosTransferencia(t), t);
   for (const t of ["las alas del pollo", "salsa", "alas"]) assert.ok(!pideDatosTransferencia(t), t);
 });
+
+test("Comprobante en la charla: ya pagó aunque el pedido diga al recibir (Miguel, 21/11)", async () => {
+  const { charlaTieneComprobante } = await import("./atencion-reglas");
+  assert.equal(charlaTieneComprobante([{ de: "cliente", texto: "[archivo·1441310584294101] Comprobante.pdf" }]), true);
+  assert.equal(charlaTieneComprobante([{ de: "acopio", texto: "Gracias, Miguel. Recibimos el comprobante y lo revisamos ahora" }]), true);
+  assert.equal(charlaTieneComprobante([{ de: "cliente", texto: "¿me pasás el alias?" }, { de: "acopio", texto: "Mandame el comprobante por acá" }]), false);
+});

@@ -35,6 +35,19 @@ export function notaPedidoSinPagar(medioPago: string | null | undefined, yaMando
   return " TODAVÍA NO PAGÓ: el pedido sale recién con el pago acreditado. No digas que va en el reparto ni que le confirmamos el horario; si pregunta cuándo llega, decile que se coordina apenas se acredite el pago. Si dice que paga más tarde, no insistas.";
 }
 
+/**
+ * 21/11 (Miguel, AS-00139): pagó por transferencia el 19/11 y mandó el PDF del comprobante, pero el pedido seguía
+ * «al recibir» y el sábado el bot le dijo dos veces «lo pagás al recibirlo». Si en la charla hay un comprobante del
+ * cliente (archivo o foto que dice comprobante) o le contestamos que lo recibimos, ya pagó: nunca se le cobra de nuevo.
+ */
+export function charlaTieneComprobante(historial: { de: string; texto: string }[]): boolean {
+  return historial.some((h) =>
+    h.de === "acopio"
+      ? /recibimos (el|tu) comprobante|ya tenemos tu comprobante|gracias por el comprobante/i.test(h.texto)
+      : /^\[(archivo|foto|imagen|documento)[^\]]*\].*comprobante|comprobante.*\.(pdf|jpe?g|png)/i.test(h.texto),
+  );
+}
+
 /** El historial del pedido dice que llegó un comprobante (lo anota notaComprobante; no significa cobrado). */
 export function yaMandoComprobante(notasDelPedido: (string | null | undefined)[]): boolean {
   return notasDelPedido.some((n) => /^Mandó comprobante/.test(n ?? ""));

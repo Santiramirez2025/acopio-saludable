@@ -47,7 +47,7 @@ import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
 import { transcribirAudio } from "./oir-audio";
 import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
-import { clienteDiceQuePago, equipoDijoQueVa, esDudaDeConfianza, esperaElPedido, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, soloAcuse, yaMandoComprobante } from "./atencion-reglas";
+import { charlaTieneComprobante, clienteDiceQuePago, equipoDijoQueVa, esDudaDeConfianza, esperaElPedido, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, soloAcuse, yaMandoComprobante } from "./atencion-reglas";
 import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from "./direccion-cliente";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
@@ -809,7 +809,17 @@ export async function pensar(c: {
   let yaTenemos = orden
     ? ` Datos que YA tenemos: nombre ${orden.nombre}${tieneCalle ? `, dirección ${orden.calle}, ${orden.ciudad}` : ", FALTA la dirección"}${horario ? `, horario ${horario}` : ""}. No vuelvas a pedir lo que ya está; si falta algo, pedí solo eso y una sola vez.${notaPlazoEntrega(estadoOrden, orden.ciudad, orden.medioPago)}`
     : "";
-  const eventosComprobante = ordenId && estadoOrden === "PENDIENTE_PAGO" ? await prisma.orderEvent.findMany({ where: { orderId: ordenId }, select: { nota: true } }).catch(() => []) : [];
+  const eventosComprobante = ordenId && estadoOrden && !["ENTREGADO", "CANCELADO"].includes(estadoOrden) ? await prisma.orderEvent.findMany({ where: { orderId: ordenId }, select: { nota: true } }).catch(() => []) : [];
+  // 21/11 (Miguel, AS-00139): ya había pagado y el bot le decía «lo pagás al recibirlo». Comprobante en el pedido,
+  // en la charla o «ya pagué» del cliente: pagó, y eso manda sobre el medio de pago guardado.
+  const yaPagoOComprobante =
+    yaMandoComprobante(eventosComprobante.map((x) => x.nota)) ||
+    charlaTieneComprobante(c.historial) ||
+    clienteDiceQuePago([c.texto, ...c.historial.filter((h) => h.de !== "acopio").map((h) => h.texto)]);
+  if (orden && yaPagoOComprobante && estadoOrden !== "PENDIENTE_PAGO" && estadoOrden !== "ENTREGADO") {
+    yaTenemos = yaTenemos.replace(notaPlazoEntrega(estadoOrden, orden.ciudad, orden.medioPago), notaPlazoEntrega(estadoOrden, orden.ciudad, "TRANSFERENCIA"));
+    yaTenemos += " YA PAGÓ POR TRANSFERENCIA (mandó el comprobante): NUNCA le digas que lo paga al recibir ni le hables de pagos, montos o transferencias. Si dice «ya pagué», agradecé corto y confirmá solo la entrega.";
+  }
   let enQueAnda =
     estadoOrden === "ENTREGADO" || estadoOrden === "ENVIADO"
       ? notaPedidoQueSalio(estadoOrden)
@@ -818,7 +828,7 @@ export async function pensar(c: {
         : estadoOrden === "PENDIENTE_PAGO"
           ? notaPedidoSinPagar(
               orden?.medioPago,
-              yaMandoComprobante(eventosComprobante.map((x) => x.nota)) || clienteDiceQuePago([c.texto, ...c.historial.filter((h) => h.de !== "acopio").map((h) => h.texto)]),
+              yaPagoOComprobante,
             )
           : "";
   // 17/11: Myriam dijo «Lo recibí ayer» y el bot le contestó que su pedido iba en el reparto de hoy. Lo que dice ella manda.
