@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { MARCA, campaniaEnMensajes } from "./origen-web";
-import type { MedioPago, Order } from "@prisma/client";
+import type { MedioPago, Order, OrderItem } from "@prisma/client";
 import { prisma } from "./prisma";
 import { enviarComprobante, urlComprobante } from "./comprobante-envio";
 import { leerConfig, type Config } from "./config";
@@ -318,7 +318,7 @@ export async function crearPedidoWhatsapp(a: {
   envio: { lugar: string; costo: number | null };
   /** Precio por volumen (escalera mayorista −10/−15/−20%): reemplaza el descuento por transferencia, no se suma. */
   mayoristaPct?: number;
-}): Promise<Order> {
+}): Promise<Order & { items: OrderItem[] }> {
   const cfg = await leerConfig();
   const mayoristaPct = Math.min(20, Math.max(0, Math.round(Number(a.mayoristaPct) || 0)));
   const [cotizacion, renglones] = await Promise.all([cotizarCarrito(a.lineas), expandirCarrito(a.lineas, cfg)]);
