@@ -629,8 +629,9 @@ export async function avisarCincoMinutos(fd: FormData) {
     const { esNombreDePila } = await import("./nombres-comunes");
     const pn = p.nombre.trim().split(/\s+/)[0] ?? "";
     const nombre = esNombreDePila(pn) ? pn[0].toUpperCase() + pn.slice(1).toLowerCase() : "";
-    const cobrar = !p.pagadoAt && p.medioPago === "AL_RECIBIR" ? ` Son ${Number(p.total).toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 })}.` : "";
-    const texto = `¡Hola${nombre ? ` ${nombre}` : ""}! Soy el cadete de Acopio: estoy a 5 minutos de llegar con tu pedido 🚗${cobrar}`;
+    // 21/11 (Miguel ya había pagado y el aviso le dijo «Son $24.000»): el aviso no lleva montos. El monto lo tiene
+    // el cadete en la hoja de reparto; si sale mal acá, es un mensaje más para corregir justo en la puerta.
+    const texto = `¡Hola${nombre ? ` ${nombre}` : ""}! Soy el cadete de Acopio: estoy a 5 minutos de llegar con tu pedido 🚗`;
     const { enviarTexto } = await import("./whatsapp-cloud");
     const { registrarSalida, ventanaAbierta } = await import("./whatsapp-memoria");
     let ok = false;
@@ -642,6 +643,10 @@ export async function avisarCincoMinutos(fd: FormData) {
       ok = Boolean(await avisarReparto(tel, nombre, numeroPedido(p.id), "ahora", texto));
     }
     if (!ok) throw new Error("WhatsApp no aceptó el mensaje");
+    // 21/11 (Victor): el cadete avisó «estoy a 5 minutos» y el bot le contestó «hoy no sale ningún reparto, va el lunes».
+    // Con el cadete llegando, la charla pasa a manos de una persona: el bot no contesta (vuelve solo a las 2 horas).
+    const { cambiarEstado } = await import("./whatsapp-memoria");
+    await cambiarEstado(tel, "persona").catch(() => undefined);
     await prisma.orderEvent.create({ data: { orderId: id, estado: p.estado, nota: "Avisado: el cadete está a 5 minutos" } }).catch(() => undefined);
   } catch (e) {
     destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;

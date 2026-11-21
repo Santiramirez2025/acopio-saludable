@@ -49,9 +49,9 @@ export async function agradecerConReferidos(p: Order): Promise<boolean> {
   if (!p.pagadoAt || p.estado !== "ENTREGADO") return false;
   const tel = telefonoDe(p);
   if (!tel || !(await ventanaAbierta(tel).catch(() => false))) return false;
-  const [uno, dos] = mensajesGracias(p, urlSitio());
+  // 21/11 (Santiago: «le mandamos 200 mensajes encima justo cuando estoy llegando»): un solo mensaje de gracias, no dos.
+  const [uno] = mensajesGracias(p, urlSitio());
   if (!(await enviarTexto(tel, uno))) return false;
   await registrarSalida(tel, "persona", uno).catch(() => undefined);
-  if (await enviarTexto(tel, dos)) await registrarSalida(tel, "persona", dos).catch(() => undefined);
   return true;
 }

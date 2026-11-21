@@ -34,7 +34,9 @@ export function mensajeDespacho(p: Pick<Order, "id" | "nombre" | "medioPago" | "
  */
 export function mensajesGracias(p: Pick<Order, "id" | "nombre" | "token">, sitio: string): [string, string] {
   const nombre = primerNombre(p.nombre);
-  const uno = `¡Gracias por tu compra${nombre ? `, ${nombre}` : ""}! 💚 Esperamos que disfrutes tu pedido ${numeroPedido(p.id)}.\n\nUn regalo para vos 🎁 Si nos recomendás, tu amigo tiene 5% en su primera compra y vos 5% en la próxima por cada uno que compre. Reenviale el mensaje de abajo 👇`;
-  const dos = `Yo compro la despensa en Acopio Saludable (Villa Carlos Paz): frutos secos, mixes y granolas, y me la traen a casa. Con este link tenés 5% de descuento en tu primera compra 👉 ${sitio}/?ref=amigo-${codigoAmigo(p.token)}`;
+  // Un solo mensaje, corto: gracias y el link para recomendar (antes eran dos mensajes seguidos en la puerta).
+  const link = `${sitio}/?ref=amigo-${codigoAmigo(p.token)}`;
+  const uno = `¡Gracias${nombre ? `, ${nombre}` : ""}! 💚 Que disfrutes tu pedido. Si querés recomendarnos, con este link tu amigo tiene 5% en su primera compra y vos 5% en la próxima: ${link}`;
+  const dos = `Yo compro la despensa en Acopio Saludable (Villa Carlos Paz): frutos secos, mixes y granolas, y me la traen a casa. Con este link tenés 5% de descuento en tu primera compra 👉 ${link}`;
   return [uno, dos];
 }

@@ -237,10 +237,20 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
 const VIDEOS: [RegExp, string, string][] = [
   [/semilla|tr[ií]o del desayuno/i, "/video/reels/reel-2026-11-12-semillas-no-frutos-secos.mp4", "Mix de semillas (lino, chía y sésamo) vs. mix de frutos secos: los dos fraccionados en el día"],
   [/mix|frutos secos|despensa|alacena|nuez|caj[uú]|almendra|man[ií]\b/i, "/video/reels/reel-2026-11-12-asi-armamos-tu-mix.mp4", "Así armamos tu mix de frutos secos, a mano y el mismo día · Mix clásico con cajú {precio:TG-MIXC} el kilo"],
-  [/cu[aá]ndo (llega|me llega|lo tra|lo llev)|env[ií]o|reparto|hoy mismo|para hoy/i, "/video/reels/reel-2026-11-12-repartimos-cada-dia.mp4", "Repartimos todos los días a las 16: si pagás antes de las 15, hoy lo tenés"],
+  // 21/11: fuera «Repartimos todos los días a las 16: si pagás antes de las 15, hoy lo tenés». Empuja a pagar antes
+  // (CONFIANZA PRIMERO) y salía junto con foto y texto: tres mensajes por una pregunta (Norberto).
 ];
 
 export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number }): FotoOportuna[] {
+  // 21/11 (Santiago: «le mandamos 200 mensajes encima»): Norberto recibió la foto del Trío dos veces y un video en
+  // 3 minutos; Leila, foto + video + texto. Regla: UNA imagen o video por charla, sola, y nunca otra sin que la pida
+  // (si pide fotos, va por ver_fotos). Cada imagen es un mensaje más en el celular del cliente.
+  const yaMandamosMedia = a.historial.some((t) => t.de === "acopio" && /^\[(Foto|Video)\]/.test(t.texto));
+  if (yaMandamosMedia) return [];
+  return fotosOportunasSinTope(a).slice(0, 1);
+}
+
+function fotosOportunasSinTope(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number }): FotoOportuna[] {
   const fotos = fotosBase(a);
   const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
   const videosYa = nuestros.filter((t) => t.startsWith("[Video]"));

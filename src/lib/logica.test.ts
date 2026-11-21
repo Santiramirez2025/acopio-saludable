@@ -1185,7 +1185,8 @@ test("despacho sin referidos; gracias con referidos", () => {
   assert.match(d, /Lo pagás cuando te llega/);
   assert.doesNotMatch(d, /5%|recomend/i);
   const [g, link] = mensajesGracias(base, "https://www.acopiosaludable.com");
-  assert.match(g, /Gracias por tu compra, Lidia/);
+  assert.match(g, /Gracias, Lidia/);
+  assert.match(g, /\?ref=amigo-/); // 21/11: un solo mensaje, con el link adentro
   assert.match(g, /5%/);
   assert.match(link, /\?ref=amigo-/);
 });

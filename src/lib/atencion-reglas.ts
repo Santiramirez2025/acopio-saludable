@@ -138,7 +138,7 @@ export function clienteDiceQuePago(textos: string[]): boolean {
 // «si lo pagás ahora, te lo llevamos mañana». Si el equipo dijo que va en camino o que llega hoy, las reglas
 // del reparto y del pago no corren: se habla solo de eso.
 export function equipoDijoQueVa(texto: string | null | undefined): boolean {
-  return /(^|[^a-z])(va para all[aá]|va en camino|en camino|llegando|ya sale|sale hoy|hoy (sale|pasa|te lo llev)|(el )?cadete (ya )?(pasa|va|llega))(?![a-z])/i.test(texto ?? "");
+  return /(^|[^a-z])(va para all[aá]|va en camino|en camino|llegando|de llegar|a \d+ minutos|estoy afuera|estoy en la ubicaci[oó]n|estoy en la puerta|ya sale|sale hoy|hoy (sale|pasa|te lo llev)|(el )?cadete (ya )?(pasa|va|llega))(?![a-z])/i.test(texto ?? "");
 }
 
 // «Dale», «Si dale», «Bueno dale», «Ok», «👍», «🩷»: acuse de recibo. Después de un mensaje nuestro que no
@@ -146,7 +146,8 @@ export function equipoDijoQueVa(texto: string | null | undefined): boolean {
 export function soloAcuse(texto: string): boolean {
   if (/\?|\d/.test(texto)) return false;
   const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
-  return t === "" || /^((si|sii+|bueno|ok|oka|okey|okis|dale|listo|joya|genial|perfecto|barbaro|buenisimo|de una)\s?){1,3}$/.test(t);
+  // 21/11: «Recibido. Gracias.» después del gracias del reparto también es acuse (Miguel recibió otra respuesta).
+  return t === "" || /^((si|sii+|bueno|ok|oka|okey|okis|dale|listo|joya|genial|perfecto|barbaro|buenisimo|de una|gracias|muchas|mil|recibido|recibi|llego|lleg[oó]|todo|bien|hermoso|riquisimo|re|lindo|amor|chau|saludos|igualmente)\s?){1,5}$/.test(t);
 }
 
 // «No vino el cadete», «¿viene o no?», «estará lejos?», «sigo esperando»: alguien espera en la puerta.

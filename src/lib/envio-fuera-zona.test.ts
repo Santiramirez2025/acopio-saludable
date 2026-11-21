@@ -57,7 +57,7 @@ test("el video del reparto en el día no sale si el envío es a Córdoba Capital
   const fuera = fotosOportunas({ entrante: "cuánto sale el envío a Córdoba capital?", respuesta: "Envío a Córdoba Capital: $15.000", historial: vacio });
   assert.ok(!fuera.some((f) => f.url.includes("repartimos-cada-dia")));
   const zona = fotosOportunas({ entrante: "cuánto sale el envío a Carlos Paz?", respuesta: "Envío a Carlos Paz: sin cargo desde $20.000", historial: vacio, ahoraMs: new Date("2026-11-13T12:00:00-03:00").getTime() });
-  assert.ok(zona.some((f) => f.url.includes("repartimos-cada-dia")));
+  assert.ok(!zona.some((f) => f.url.includes("repartimos-cada-dia"))); // 21/11: el video se dio de baja
 });
 
 test("domingo o pasadas las 15 no sale el video «si pagás antes de las 15, hoy lo tenés» (15/11, Nanci)", () => {
@@ -68,5 +68,9 @@ test("domingo o pasadas las 15 no sale el video «si pagás antes de las 15, hoy
   const tarde = fotosOportunas({ ...pregunta, ahoraMs: new Date("2026-11-16T17:00:00-03:00").getTime() });
   assert.ok(!tarde.some((f) => f.url.includes("repartimos-cada-dia")));
   const manana = fotosOportunas({ ...pregunta, ahoraMs: new Date("2026-11-16T11:00:00-03:00").getTime() });
-  assert.ok(manana.some((f) => f.url.includes("repartimos-cada-dia")));
+  assert.ok(!manana.some((f) => f.url.includes("repartimos-cada-dia"))); // 21/11: el video se dio de baja
+  // 21/11: una sola imagen o video por charla.
+  const ya = fotosOportunas({ entrante: "cuánto sale el mix?", respuesta: "El mix sale $10.500", historial: [{ de: "acopio", texto: "[Foto] Trío de frutos secos" }] as never });
+  assert.equal(ya.length, 0);
+  assert.ok(fotosOportunas({ entrante: "cuánto sale el mix?", respuesta: "El mix sale $10.500", historial: vacio }).length <= 1);
 });

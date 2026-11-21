@@ -34,13 +34,32 @@ function frenoMonto(req: Request, texto: string) {
   );
 }
 
+// 21/11 (Santiago: «le mandamos 200 mensajes encima justo cuando estoy llegando… no podemos cometer más esos
+// errores»). Los AGENTES (curl con la clave) no mandan un mensaje si el último de la charla ya es nuestro y el
+// cliente no contestó en las últimas 24 h: un mensaje por persona, y el siguiente recién cuando contesta.
+// Excepción: corregir un error nuestro, con "forzar": true y un texto que pida disculpas.
+async function frenoSeguidos(req: Request, telefono: string, texto: string, forzar: boolean) {
+  if (!req.headers.get("x-agente-clave")) return null;
+  if (forzar && /perd[oó]n|disculp/i.test(texto)) return null;
+  const { prisma } = await import("@/lib/prisma");
+  const ult = await prisma.$queryRaw<{ de: string; fecha: Date }[]>`
+    SELECT "de", "fecha" FROM "WhatsappMensaje" WHERE "telefono" = ${telefono} ORDER BY "fecha" DESC LIMIT 1
+  `.catch(() => []);
+  const u = ult[0];
+  if (!u || u.de === "cliente" || Date.now() - new Date(u.fecha).getTime() > 24 * 3_600_000) return null;
+  return NextResponse.json(
+    { error: "No salió: el último mensaje de la charla ya es nuestro y el cliente no contestó. Un mensaje por persona: esperá a que conteste. Solo para corregir un error nuestro: \"forzar\": true y un texto que pida disculpas." },
+    { status: 409 },
+  );
+}
+
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   // Un archivo (foto o documento) llega como multipart: se sube a Meta y se manda con el texto como pie.
   if ((req.headers.get("content-type") ?? "").includes("multipart/form-data")) return responderConArchivo(req);
-  let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown; pedido?: unknown; zonas?: unknown; combos?: unknown; silencioso?: unknown };
+  let cuerpo: { telefono?: unknown; texto?: unknown; accion?: unknown; pedido?: unknown; zonas?: unknown; combos?: unknown; silencioso?: unknown; forzar?: unknown };
   try {
     cuerpo = await req.json();
   } catch {
@@ -75,7 +94,7 @@ export async function POST(req: Request) {
 
   const texto = typeof cuerpo.texto === "string" ? cuerpo.texto.trim().slice(0, 4000) : "";
   if (!texto) return NextResponse.json({ error: "Mensaje vacío" }, { status: 400 });
-  const freno = frenoMonto(req, texto);
+  const freno = frenoMonto(req, texto) ?? (await frenoSeguidos(req, telefono, texto, cuerpo.forzar === true));
   if (freno) return freno;
 
   // Seguimiento: lo manda el vendedor (la charla sigue en sus manos), con los botones de zona si
