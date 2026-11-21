@@ -11,6 +11,17 @@ export const maxDuration = 300;
 export async function GET(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const qs = new URL(req.url).searchParams.get("qs");
+  // 20/11: búsqueda de la web de La Granja (el formulario es POST «buscar») y cualquier página suya (ofertas, promos).
+  const buscar = new URL(req.url).searchParams.get("buscar");
+  const pag = new URL(req.url).searchParams.get("pag");
+  if (buscar || pag) {
+    const u = `https://lagranjadelcentro.com.ar/${pag && /^[a-z0-9_-]+\.php(\?[\w=&%-]*)?$/i.test(pag) ? pag : "productos.php"}`;
+    const fd = new FormData();
+    if (buscar) fd.set("buscar", buscar);
+    const html = await fetch(u, buscar ? { method: "POST", body: fd, signal: AbortSignal.timeout(25_000) } : { signal: AbortSignal.timeout(25_000) }).then((r) => r.text());
+    const i = html.indexOf(new URL(req.url).searchParams.get("busco") ?? "box-content-1");
+    return NextResponse.json({ cajas: leerCajas(html).slice(0, 80), trozo: html.slice(Math.max(0, i - 200), i + 2500), links: [...new Set([...html.matchAll(/href="([a-z0-9_-]+\.php[^"]*)"/gi)].map((m) => m[1]))].slice(0, 80) });
+  }
   if (qs) {
     const html = await fetch(`https://lagranjadelcentro.com.ar/productos.php?${qs}`, { signal: AbortSignal.timeout(25_000) }).then((r) => r.text());
     const i = html.indexOf(new URL(req.url).searchParams.get("busco") ?? "box-content-1");
