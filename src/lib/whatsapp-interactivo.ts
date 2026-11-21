@@ -786,8 +786,44 @@ export function nombraElTrio(texto: string): boolean {
   return /(\b(x|por)\s*3\b|\bel de (los )?3\b|\blos 3 (kilos|kg)\b|\b3 kilos,? 3 recetas\b)/.test(t);
 }
 
+type ItemCombo = { producto: { producto: string; presentacion: string }; cantidad: number };
+
+/** «1 kg de mix clásico con cajú y girasol, 1 kg de dátiles con carozo y 1 kg de pasas…» */
+function listaQueTrae(items: ItemCombo[]): string {
+  const trae = items
+    .map((i) => {
+      const cuanto = i.producto.presentacion.replace(/^x\s*/i, "").trim();
+      const que = i.producto.producto.replace(/\s+x\s+\d.*$/i, "").trim();
+      const q = que.charAt(0).toLowerCase() + que.slice(1);
+      return `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${cuanto ? `${cuanto} de ` : ""}${q}`;
+    })
+    .filter(Boolean);
+  return trae.length > 1 ? `${trae.slice(0, -1).join(", ")} y ${trae[trae.length - 1]}` : trae[0] ?? "";
+}
+
+/**
+ * «¿Qué frutos secos están en esos 3 kg?» (Rocío …6782, 20/11 20:01): sin IA le salió «En un rato te escribimos con los
+ * precios» y esperó 3 h. Si pregunta qué trae y nombra el Trío / 3 kg / el combo, o se lo acabamos de ofrecer, se le
+ * contesta la composición fija sin esperar a nadie.
+ */
+export function preguntaQueTraeElCombo(texto: string, historial: { de: string; texto: string }[]): boolean {
+  const t = sinTildes(texto);
+  const pregunta =
+    /\bque (trae|tiene|viene|vienen|lleva|incluye|frutos secos|productos|hay|es lo que trae)\b/.test(t) ||
+    /\bde que (es|son)\b|\bcuales (son|vienen|trae)\b|\bque contiene\b/.test(t);
+  if (!pregunta) return false;
+  if (nombraElTrio(texto) || /\b3 ?(kg|kilos?)\b|\bcombo\b|\bpromo(cion)?\b/.test(t)) return true;
+  return historial.slice(-4).some((h) => h.de === "acopio" && /carrito\?p=c-trio|tr[ií]o/i.test(h.texto));
+}
+
+export function textoQueTraeSinIA(c: { combo: { nombre: string; precio: number; items: ItemCombo[] }; nombre: string | null; pesos: (n: number) => string }): string | null {
+  if (!(c.combo.precio > 0) || !c.combo.items.length) return null;
+  const nombreCombo = c.combo.nombre.split("·")[0].trim();
+  return `${c.nombre ? `${c.nombre}, el` : "El"} ${nombreCombo} trae ${listaQueTrae(c.combo.items)}: ${c.pesos(c.combo.precio)} en total. ¿Te lo dejamos listo?`;
+}
+
 export function textoComboSinIA(c: {
-  combo: { slug: string; nombre: string; precio: number; items: { producto: { producto: string; presentacion: string }; cantidad: number }[] };
+  combo: { slug: string; nombre: string; precio: number; items: ItemCombo[] };
   conTransferencia: number | null;
   nombre: string | null;
   sinCargoDesde: number;
@@ -797,15 +833,7 @@ export function textoComboSinIA(c: {
   const { combo } = c;
   if (!(combo.precio > 0)) return null;
   const nombreCombo = combo.nombre.split("·")[0].trim();
-  const trae = combo.items
-    .map((i) => {
-      const cuanto = i.producto.presentacion.replace(/^x\s*/i, "").trim();
-      const que = i.producto.producto.replace(/\s+x\s+\d.*$/i, "").trim();
-      const q = que.charAt(0).toLowerCase() + que.slice(1);
-      return `${i.cantidad > 1 ? `${i.cantidad} x ` : ""}${cuanto ? `${cuanto} de ` : ""}${q}`;
-    })
-    .filter(Boolean);
-  const listaTrae = trae.length > 1 ? `${trae.slice(0, -1).join(", ")} y ${trae[trae.length - 1]}` : trae[0] ?? "";
+  const listaTrae = listaQueTrae(combo.items);
   const precio = c.conTransferencia ? `${c.pesos(c.conTransferencia)} pagando antes por transferencia, o ${c.pesos(combo.precio)} al recibir` : c.pesos(combo.precio);
   const zona = combo.precio >= c.sinCargoDesde ? "En Carlos Paz te lo llevamos sin cargo." : "En Carlos Paz te lo llevamos nosotros.";
   return [
