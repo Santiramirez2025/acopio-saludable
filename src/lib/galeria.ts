@@ -242,12 +242,19 @@ const VIDEOS: [RegExp, string, string][] = [
 ];
 
 export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number }): FotoOportuna[] {
-  // 21/11 (Santiago: «le mandamos 200 mensajes encima»): Norberto recibió la foto del Trío dos veces y un video en
-  // 3 minutos; Leila, foto + video + texto. Regla: UNA imagen o video por charla, sola, y nunca otra sin que la pida
-  // (si pide fotos, va por ver_fotos). Cada imagen es un mensaje más en el celular del cliente.
-  const yaMandamosMedia = a.historial.some((t) => t.de === "acopio" && /^\[(Foto|Video)\]/.test(t.texto));
-  if (yaMandamosMedia) return [];
-  return fotosOportunasSinTope(a).slice(0, 1);
+  // 21/11 (Santiago): «Enviar fotos es clave. La foto es lo que más vende, no puede faltar», pero sin saturar:
+  // Norberto recibió la MISMA foto del Trío dos veces y un video en 3 minutos; Leila, foto + video + texto.
+  // Reglas: una imagen por respuesta (nunca foto + video juntos), nunca la misma imagen dos veces en la charla,
+  // un solo video por charla y como mucho 4 imágenes en toda la charla (si pide más, va por ver_fotos).
+  const nuestras = a.historial.filter((t) => t.de === "acopio" && /^\[(Foto|Video)\]/.test(t.texto)).map((t) => t.texto);
+  if (nuestras.length >= 4) return [];
+  const yaVideo = nuestras.some((t) => t.startsWith("[Video]"));
+  // «Trío de frutos secos · mix…» y «Trío de frutos secos: mix…» son la misma foto: se compara el nombre (hasta «·» o «:»).
+  const nombre = (pie: string) => pie.split(/ · |: /)[0].trim().slice(0, 40).toLowerCase();
+  const yaSalio = (f: FotoOportuna) => nuestras.some((t) => t.toLowerCase().includes(nombre(f.pie)));
+  return fotosOportunasSinTope(a)
+    .filter((f) => !yaSalio(f) && !(yaVideo && /\.mp4$/i.test(f.url)))
+    .slice(0, 1);
 }
 
 function fotosOportunasSinTope(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number }): FotoOportuna[] {

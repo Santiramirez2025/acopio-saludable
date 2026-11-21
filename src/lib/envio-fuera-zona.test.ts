@@ -69,8 +69,11 @@ test("domingo o pasadas las 15 no sale el video «si pagás antes de las 15, hoy
   assert.ok(!tarde.some((f) => f.url.includes("repartimos-cada-dia")));
   const manana = fotosOportunas({ ...pregunta, ahoraMs: new Date("2026-11-16T11:00:00-03:00").getTime() });
   assert.ok(!manana.some((f) => f.url.includes("repartimos-cada-dia"))); // 21/11: el video se dio de baja
-  // 21/11: una sola imagen o video por charla.
-  const ya = fotosOportunas({ entrante: "cuánto sale el mix?", respuesta: "El mix sale $10.500", historial: [{ de: "acopio", texto: "[Foto] Trío de frutos secos" }] as never });
-  assert.equal(ya.length, 0);
+  // 21/11: una imagen por respuesta, nunca la misma dos veces.
+  const primera = fotosOportunas({ entrante: "cuánto sale el mix?", respuesta: "El mix sale $10.500", historial: vacio });
+  if (primera[0]) {
+    const otra = fotosOportunas({ entrante: "cuánto sale el mix?", respuesta: "El mix sale $10.500", historial: [{ de: "acopio", texto: `[${primera[0].url.endsWith(".mp4") ? "Video" : "Foto"}] ${primera[0].pie}` }] as never });
+    assert.ok(!otra.some((f) => f.url === primera[0].url));
+  }
   assert.ok(fotosOportunas({ entrante: "cuánto sale el mix?", respuesta: "El mix sale $10.500", historial: vacio }).length <= 1);
 });

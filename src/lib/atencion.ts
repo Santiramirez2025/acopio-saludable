@@ -39,7 +39,7 @@ const transferenciaAlCien = (precio: number, pct: number) => (pct > 0 ? Math.rou
 import { urlSitio } from "./sitio";
 import { canalDe, enviarMeta, marcarVistoMeta } from "./meta-mensajes";
 import { cambiarEstado, estadoDe, guardarPedido, respuestasRecientes, historialDe, pedidoGuardado, ultimoDelCliente, registrarAnuncio, registrarEntrante, registrarSalida } from "./whatsapp-memoria";
-import { bajaDePromos, pideNoPromos } from "./promo-semanal";
+import { bajaDePromos, leerPromo, pideNoPromos, promoVigente } from "./promo-semanal";
 import { contextoProspecto, darDeBaja, datosProspecto, enviarProspecto, esBaja } from "./whatsapp-prospectos";
 import { derivacion } from "./derivacion";
 import { AVISO_SUPLEMENTOS } from "./sitio";
@@ -863,7 +863,14 @@ export async function pensar(c: {
     !web && !ordenId && c.canal === "whatsapp" && (esPrimerPedidoDePrecios({ texto: c.texto, historial: c.historial, deAnuncio: Boolean(textoAnuncio), negocio: c.negocio }) || esToqueReactivacion({ texto: c.texto, historial: c.historial, negocio: c.negocio }))
       ? textoPrimeraListaPorKilo(await catalogo(), primerNombre(c.nombre), pesos)
       : null;
-  const crudo = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId, subtotalPedido }) : null);
+  // 21/11 (Santiago: «hacemos hincapié en las promociones semanales, ahí es el foco donde quiero que más se venda»).
+  const promo = c.canal === "whatsapp" ? await leerPromo().catch(() => null) : null;
+  const promoYaDicha = c.historial.some((h) => h.de === "acopio" && /promo de la semana/i.test(h.texto));
+  const promoTxt =
+    promo && promoVigente(promo) && !promoYaDicha
+      ? `<promo_semana>PROMO DE LA SEMANA (el foco de ventas, hasta ${promo.hasta}): ${promo.titulo}. ${promo.contexto} Nombrala UNA vez en esta charla, con las palabras «promo de la semana», cuando venga al caso: al pasar precios, si pregunta qué hay o qué conviene, o al cerrar un pedido como agregado opcional («¿Te sumo la promo de la semana?»). Sin insistir: si no le interesa, no se vuelve a nombrar.</promo_semana>\n`
+      : "";
+  const crudo = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${promoTxt}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId, subtotalPedido }) : null);
   // Con calle y número ya dados (o un «Envío a X:» ya cotizado) no se repregunta la ciudad (Carlos Taborda, Martha Penfold, 12/11).
   const r = crudo ? sinRepreguntarCiudad(crudo, c.historial, c.texto) : null;
 
@@ -994,6 +1001,10 @@ export async function pensar(c: {
         return t.replace(/\{precio:([A-Z0-9-]+)\}/g, (_, c: string) => `$${Math.round(precios.get(c)!).toLocaleString("es-AR")}`);
       };
       respuesta = { ...respuesta, fotos: oportunas.map((f) => ({ url: `${urlSitio()}${f.url}`, pie: pie(f.pie) })) };
+    }
+    // La gráfica de la promo va la vez que el vendedor la nombra (una sola vez por charla), en lugar de otra foto.
+    if (promo && promoVigente(promo) && !promoYaDicha && /promo de la semana/i.test(respuesta.texto) && promo.imagen) {
+      respuesta = { ...respuesta, fotos: [{ url: promo.imagen, pie: `Promo de la semana · ${promo.titulo}` }] };
     }
   }
   // A una duda de confianza se le contesta la duda: sin el resumen ni los botones de pago en ese mensaje
