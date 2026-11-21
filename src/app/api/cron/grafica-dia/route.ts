@@ -11,7 +11,7 @@ export const maxDuration = 120;
 
 export async function GET(req: Request) {
   const simular = new URL(req.url).searchParams.get("simular") === "1";
-  if (!cronAutorizado(req) && !(simular && (await esAdmin()))) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!cronAutorizado(req) && !(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   if (simular) return NextResponse.json(await correrGraficaDiaSiguiente({ simular: true }));
   return NextResponse.json(await conRegistro("grafica-dia", () => correrGraficaDiaSiguiente()));
 }
