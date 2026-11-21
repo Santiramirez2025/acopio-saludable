@@ -99,10 +99,11 @@ export function fotoRealProducto(codigo: string): string | null {
 }
 
 /**
- * La foto real va primera en todos los productos que la tienen (19/11, Santiago: «la gente piensa que la vas a
- * estafar»; la bolsa kraft en la mano de verdad da más confianza que cualquier foto de stock). Antes solo la miel.
+ * Foto real primero solo donde se pide explícito. 19/11 se pusieron primeras todas las reales y el 20/11 Santiago
+ * las bajó: «no me gustan las imágenes medio crudas, mi mano agarrando un paquete de 500 de dátiles; que no parezca
+ * todo tan casero». La foto principal es la de producto (prolija y con el mismo estilo); la real queda en la galería.
  */
-export const REAL_PRIMERO = { has: (codigo: string) => fotoRealProducto(codigo) !== null };
+export const REAL_PRIMERO = new Set<string>([]);
 
 /** Fotos reales: cómo armamos y cómo llega el pedido. Para la desconfianza y el «¿cómo llega?». */
 export const REALES = [
