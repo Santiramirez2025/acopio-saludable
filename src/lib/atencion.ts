@@ -16,7 +16,7 @@ import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { clienteNombraFueraDeZona, lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
@@ -892,6 +892,14 @@ export async function pensar(c: {
       const lista = textoPreciosPorKilo(productos, despensa, cfg.descuentoTransferenciaPct, pesos, transferenciaAlCien);
       if (lista) {
         return { salientes: [{ tipo: "texto" as const, texto: lista }], respuesta: { texto: lista }, derivar: true, conIA: false, sinIA: true };
+      }
+    }
+    // «¿Qué trae el Trío?» (Rocío 20/11): la composición, sin esperar a nadie. La charla igual pasa a Santiago.
+    if (!c.negocio && preguntaQueTraeElCombo(c.texto, c.historial)) {
+      const elegido = combo ?? (await combosTienda({ slug: "trio-de-frutos-secos" })).find((d) => d.disponible) ?? null;
+      const texto = elegido ? textoQueTraeSinIA({ combo: elegido, nombre: primerNombre(c.nombre) || null, pesos }) : null;
+      if (texto && !c.historial.slice(-4).some((h) => h.de === "acopio" && h.texto === texto)) {
+        return { salientes: [{ tipo: "texto" as const, texto }], respuesta: { texto }, derivar: true, conIA: false, sinIA: true };
       }
     }
     // El Trío (o el combo del anuncio) con precio y link, sin esperar a nadie (14/11). La charla igual pasa a Santiago.

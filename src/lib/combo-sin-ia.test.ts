@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { nombraElTrio, textoComboSinIA } from "./whatsapp-interactivo";
+import { nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA } from "./whatsapp-interactivo";
 
 const pesos = (n: number) => `$${n.toLocaleString("es-AR")}`;
 const trio = {
@@ -46,4 +46,17 @@ test("vendedor: lo que se vio en el aviso nunca es «no lo tenemos»", async () 
   const { readFileSync } = await import("node:fs");
   const src = readFileSync(new URL("./vendedor.ts", import.meta.url), "utf8");
   assert.match(src, /LO DEL AVISO EXISTE/);
+});
+
+test("sin IA, «¿qué frutos secos están en esos 3 kg?» se contesta con lo que trae el Trío (Rocío 20/11)", () => {
+  const ofrecido = [{ de: "acopio", texto: "El Trío trae…: $24.000 👉 https://x/carrito?p=c-trio-de-frutos-secos*1" }];
+  assert.equal(preguntaQueTraeElCombo("¿Qué frutos secos están en esos 3 kg?", []), true);
+  assert.equal(preguntaQueTraeElCombo("que trae el trio?", []), true);
+  assert.equal(preguntaQueTraeElCombo("y que viene?", ofrecido), true);
+  assert.equal(preguntaQueTraeElCombo("y que viene?", []), false);
+  assert.equal(preguntaQueTraeElCombo("¿Qué precio tiene la nuez?", ofrecido), false);
+  assert.equal(preguntaQueTraeElCombo("Hola, vi el video del Trío y lo quiero", []), false);
+  const t = textoQueTraeSinIA({ combo: trio, nombre: "Rocío", pesos })!;
+  assert.equal(t, "Rocío, el Trío de frutos secos trae 1 kg de mix Clásico con cajú y girasol, 1 kg de dátiles con carozo y 1 kg de pasas de uva negras sin semilla: $24.000 en total. ¿Te lo dejamos listo?");
+  assert.doesNotMatch(t, /transferencia|perfecto|Santiago/i);
 });
