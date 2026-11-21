@@ -24,7 +24,8 @@ type Candidato = { telefono: string; nombre: string | null; ultimo: string | nul
 export async function candidatosGrafica(): Promise<Candidato[]> {
   const filas = await prisma.$queryRaw<Candidato[]>`
     SELECT c."telefono", c."nombre",
-           (SELECT m."texto" FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente' ORDER BY m."fecha" DESC LIMIT 1) AS "ultimo"
+           -- Todo lo que dijo en los últimos 3 días: «Yo no pedí nada» seguido de «Ok, gracias» sigue siendo un no (Nilda).
+           (SELECT string_agg(m."texto", ' | ') FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente' AND m."fecha" > now() - interval '3 days') AS "ultimo"
     FROM "WhatsappConversacion" c
     WHERE c."baja" = false AND c."prospecto" IS NULL AND c."telefono" ~ '^[0-9]+$' AND c."estado" <> 'persona'
       AND (SELECT max(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente')
