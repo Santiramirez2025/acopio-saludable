@@ -16,7 +16,7 @@ import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, soloDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { clienteNombraFueraDeZona, lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
@@ -520,9 +520,10 @@ export async function atender(e: Entrada): Promise<void> {
   const ofrecimosRecibir =
     aceptamosAlRecibir([...histRecibir].reverse().find((h) => h.de === "acopio")?.texto ?? "") && (!lugarCharla || recibeEnZonaPropia(lugarCharla)) && !clienteNombraFueraDeZona(histRecibir, texto);
   if (PAGO_AL_RECIBIR && guardado?.startsWith("/carrito?p=") && pagaAlRecibir(texto) && (ultimoEnvio ? recibeEnZonaPropia(ultimoEnvio) : ofrecimosRecibir)) {
-    const direccion = tieneDireccion(texto)
-      ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "").replace(/\s+/g, " ").trim().slice(0, 160)
-      : [...histRecibir].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
+    const crudo = tieneDireccion(texto)
+      ? texto.replace(/\b(pago|abono)[^.]*\.?/gi, "")
+      : [...histRecibir].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto;
+    const direccion = crudo ? soloDireccion(crudo) : undefined;
     console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
     const lugarPR = ultimoEnvio ?? lugarCharla ?? "Villa Carlos Paz";
     return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: cargoVecinaPorLugar(`${lugarPR} ${direccion ?? ""}`), lugar: lugarPR }, direccion || undefined);
@@ -542,7 +543,8 @@ export async function atender(e: Entrada): Promise<void> {
     // ofrecido antes; vale el último mensaje nuestro que habla de cómo se paga.
     const ofertaPago = [...hist].reverse().slice(0, 8).find((h) => h.de === "acopio" && /recib|contra ?entrega|transferencia|pago anticipado|por adelantado/i.test(h.texto))?.texto ?? previo;
     if ((aceptamosAlRecibir(previo) || aceptamosAlRecibir(ofertaPago)) && (!ultimoEnvio || recibeEnZonaPropia(ultimoEnvio)) && (!lugarHist || recibeEnZonaPropia(lugarHist)) && !clienteNombraFueraDeZona(hist, texto)) {
-      const direccion = [...hist].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto.replace(/\s+/g, " ").trim().slice(0, 160);
+      const crudoAR = [...hist].reverse().find((h) => h.de === "yo" && tieneDireccion(h.texto))?.texto;
+      const direccion = crudoAR ? soloDireccion(crudoAR) : undefined;
       console.log("chat: confirma el pedido al recibir, se cierra", cola(e.clave));
       // 19/11: a las vecinas con cargo (Tanti, Bialet…) el envío se cobra también al recibir.
       const lugarAR = ultimoEnvio ?? lugarHist ?? "Villa Carlos Paz";

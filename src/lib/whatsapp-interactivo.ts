@@ -513,6 +513,24 @@ export function tieneDireccion(texto: string): boolean {
 }
 
 /**
+ * 21/11 (Lucía, AS-150): el pedido salió «Va a Hola, vi el video del Trío y lo quiero la promoción, mi dirección es
+ * Pasteur 221 -Dpto.7 Villa Suiza- gracias». Del mensaje se guarda solo el domicilio: lo que sigue a «mi dirección
+ * es», «vivo en» o «la dirección:», sin el saludo, el «vi el video…» ni el «gracias».
+ */
+export function soloDireccion(texto: string): string {
+  let t = texto.replace(/\s+/g, " ").trim();
+  const m = t.match(/\b(?:mi direcci[oó]n es|la direcci[oó]n es|direcci[oó]n\s*:|vivo en|domicilio\s*:?|calle\s*:)\s*(.+)$/i);
+  if (m) t = m[1];
+  t = t
+    .replace(/^(hola|buen[oa]s?( d[ií]as| tardes| noches)?)[,!. ]*/i, "")
+    .replace(/\bvi el video[^,.]*[,.]?\s*/i, "")
+    .replace(/[\s,.-]*(muchas )?gracias[!. ]*$/i, "")
+    .replace(/^[\s,.-]+|[\s,.-]+$/g, "")
+    .trim();
+  return (t || texto.trim()).slice(0, 160);
+}
+
+/**
  * 12/11 (Nico): a Carlos Taborda le preguntaron «¿De qué ciudad sos?» con «Saavedra 50» ya dado («Seguro contesta
  * una máquina») y a Martha Penfold le llegaron los botones de ciudad después de «Santo Cabral 212».
  * Si el cliente ya dio calle y número, o ya le cotizamos «Envío a X:», no se repregunta la zona.
