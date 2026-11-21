@@ -379,6 +379,7 @@ export async function crearPedidoWhatsapp(a: {
       items: { create: renglones.map(aItemDePedido) },
       eventos: { create: { estado: "PENDIENTE_PAGO", nota: `Venta por WhatsApp · ${NOMBRE_MEDIO[a.medioPago]}` } },
     },
+    include: { items: true },
   });
   await guardarOrigen(pedido.id, origen.slice(0, 200));
   await avisarVenta(pedido, "Nueva venta por WhatsApp");

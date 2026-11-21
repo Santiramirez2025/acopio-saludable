@@ -3,10 +3,11 @@
 // Puro (sin base): se prueba sin gastar nada.
 
 // 16/11, 22:30 (Santiago): «seguimos $22.000 por transferencia, prefiero la plata y el cliente en mano». Queda vacío: el mecanismo sigue por si se usa.
-export const COMBOS_PRECIO_FIJO = new Set<string>([]);
+// 21/11, 20:25 (Santiago): «no cobramos más 22mil de ninguna manera». El Trío vale $24.000 con cualquier medio de pago.
+export const COMBOS_PRECIO_FIJO = new Set<string>(["trio-de-frutos-secos"]);
 
 /** Desde cuándo rige: a los pedidos anteriores se les respeta el precio por transferencia que se les dijo. */
-export const PRECIO_FIJO_DESDE = new Date("2026-11-17T01:00:00Z");
+export const PRECIO_FIJO_DESDE = new Date("2026-11-21T23:25:00Z");
 
 export function esPrecioFijo(slug: string | null | undefined): boolean {
   return !!slug && COMBOS_PRECIO_FIJO.has(slug);

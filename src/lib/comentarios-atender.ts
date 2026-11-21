@@ -9,6 +9,7 @@ import { ignorar, mensajePrivado, respuestaPublica, tieneIntencion, tipoComentar
 import { avisarSantiago } from "@/lib/avisos";
 import { leerConfig } from "@/lib/config";
 import { precioTransferencia, renglonCombo } from "@/lib/precios";
+import { pctTransferenciaCombo } from "@/lib/precio-fijo";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 
@@ -45,7 +46,7 @@ export async function atenderComentarios(lista: Comentario[]): Promise<void> {
     const trio = combos.find((x) => x.slug === "trio-de-frutos-secos");
     if (!trio) return (oferta = null);
     const cfg = await leerConfig().catch(() => null);
-    const antes = cfg ? precioTransferencia(Math.round(trio.precio), cfg.descuentoTransferenciaPct) : null;
+    const antes = cfg ? precioTransferencia(Math.round(trio.precio), pctTransferenciaCombo(trio.slug, cfg.descuentoTransferenciaPct)) : null;
     const trae = trio.items.map((i) => renglonCombo(i.producto, i.cantidad)).join(", ");
     return (oferta = `El Trío son 3 kg (${trae}): ${antes ? `${pesos(antes)} pagando antes por transferencia o ${pesos(Math.round(trio.precio))} al recibir` : pesos(Math.round(trio.precio))}, con envío sin cargo en Carlos Paz.`);
   };

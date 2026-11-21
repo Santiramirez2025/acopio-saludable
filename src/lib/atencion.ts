@@ -237,8 +237,11 @@ async function cerrarVenta(
   const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "con envío sin cargo si es en Carlos Paz (si es en otra localidad, te confirmo el costo)";
   // 18/11: a Cris (Av. Cárcano, Carlos Paz) le llegó «$22.000 más el envío, que te confirmo» después de que el bot le dijo «sin cargo».
   // 17/11 (Santiago): dos precios según CUÁNDO paga. Al recibir, el de lista; pagando antes por transferencia, con descuento.
-  const antes = medio === "AL_RECIBIR" ? precioTransferencia(Number(pedido.subtotal), cfg.descuentoTransferenciaPct) : null;
-  const ahorroAntes = antes && antes < Number(pedido.subtotal) ? `. Si preferís pagarlo antes por transferencia, te queda en ${pesos(antes + Number(pedido.envioCobrado))}: decime y te paso el alias` : "";
+  // 21/11 (Santiago): «no cobramos más 22mil de ninguna manera». El Trío no tiene precio por transferencia: solo lleva descuento el resto.
+  const subA = Number(pedido.subtotal);
+  const baseA = baseTransferencia(pedido.items.map((i) => ({ comboSlug: i.comboSlug, importe: Number(i.precioUnitario) * i.cantidad })));
+  const antes = medio === "AL_RECIBIR" && baseA > 0 ? subA - baseA + (precioTransferencia(baseA, cfg.descuentoTransferenciaPct) ?? baseA) : null;
+  const ahorroAntes = antes && antes < subA ? `. Si preferís pagarlo antes por transferencia, te queda en ${pesos(antes + Number(pedido.envioCobrado))}: decime y te paso el alias` : "";
   // Ya pasó la dirección: no se le vuelve a pedir nada. Se confirma y listo.
   if (direccion) await completarEntrega(pedido.id, { direccion });
   const partes = direccion
