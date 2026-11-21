@@ -318,9 +318,12 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
     const soloSinTacc = entrada.solo_sin_tacc === true;
     const partes = await Promise.all(
       consultas.map(async (c) => {
-        const ps = (await hallarProductos(c, soloSinTacc)).slice(0, 3);
+        const todos = await hallarProductos(c, soloSinTacc);
+        const ps = todos.slice(0, 3);
         if (!ps.length) return `«${c}»: NO LO TENEMOS (decilo así, y si hay algo parecido en otra línea, ofrecelo).`;
-        return `«${c}»:\n${ps.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}${p.encargo ? " · POR ENCARGO (24-48 hs)" : ""}`).join("\n")}`;
+        // 21/11 (Móni): pidió «especias» y le dijimos «solo tenemos el comino» con 100 especias en la web: se mostraban 3.
+        const hayMas = todos.length > 3 ? `\n(Hay ${todos.length} en total de «${c}»: estos son solo 3. NUNCA digas «solo tenemos» esto; decí que hay muchos más y preguntá cuál busca, o pasá https://www.acopiosaludable.com/catalogo.)` : "";
+        return `«${c}»:\n${ps.map((p) => `- codigo ${p.codigo} · ${p.producto} · ${p.presentacion} · ${pesos(p.precio)}${p.sinTacc ? " · sin TACC" : ""}${p.encargo ? " · POR ENCARGO (24-48 hs)" : ""}`).join("\n")}${hayMas}`;
       }),
     );
     return {
