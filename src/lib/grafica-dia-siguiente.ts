@@ -35,8 +35,9 @@ export async function candidatosGrafica(): Promise<Candidato[]> {
       AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" n WHERE n."telefono" = c."telefono" AND n."id" LIKE 'promo-no.%')
       -- Esta gráfica, una vez por semana.
       AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" g WHERE g."telefono" = c."telefono" AND g."id" LIKE 'graf.%' AND g."fecha" > now() - interval '7 days')
-      -- Si una persona del equipo le escribió en las últimas 12 h, la charla la lleva esa persona.
-      AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" h WHERE h."telefono" = c."telefono" AND h."de" = 'persona' AND h."fecha" > now() - interval '12 hours')
+      -- Si una persona del equipo ya le hizo el seguimiento (escribió después del último mensaje del cliente), no va otro.
+      AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" h WHERE h."telefono" = c."telefono" AND h."de" = 'persona'
+                        AND h."fecha" > (SELECT max(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente'))
     ORDER BY c."ultimoMensaje" DESC
     LIMIT ${TOPE}`;
   return filas.filter((f: Candidato) => !NO_QUIERE.test(f.ultimo ?? ""));
