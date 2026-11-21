@@ -13,7 +13,7 @@ import { umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { Foto } from "@/components/Foto";
 import { BotonCargarPedido } from "@/components/Carrito";
 import { DestacadoComboInicio, DestacadoInicio } from "@/components/DestacadoInicio";
-import { DESTACADO_PRODUCTO, DESTACADO_SI_FALTA, elegirDestacado } from "@/lib/destacado-inicio";
+import { atajoCombo, DESTACADO_PRODUCTO, DESTACADO_SI_FALTA, elegirDestacado, KIT_SEMANAL } from "@/lib/destacado-inicio";
 import { totalTransferencia } from "@/lib/combos-tema";
 import { pctTransferenciaCombo } from "@/lib/precio-fijo";
 import { DibujoNutri } from "@/components/Nutri";
@@ -55,6 +55,7 @@ export default async function Home() {
     return [...primero, ...deEncargo.filter((p) => p.fotoUrl && !primero.includes(p))].slice(0, 12);
   })();
   const destacado = elegirDestacado<ProductoTienda, ComboTienda>(candidatos, combos);
+  const atajo = atajoCombo(combos);
   const seVende = new Set(vendibles.map((v) => v.codigo));
   // Los destacados son lo que tenemos en mano: uno por producto, con foto, y lo que más se vende primero.
   const vidriera = (() => { const v = vidrieraDeStock(ganchos, true); return (v.length >= 4 ? v : ganchos).slice(0, 8); })();
@@ -112,7 +113,8 @@ export default async function Home() {
       {/* Los atajos: lo que antes eran 12 botones en la portada, en cuatro tarjetas claras. */}
       <nav aria-label="Atajos" className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {[
-          { href: "/combos/kit-semanal", t: "Kit semanal", d: "Desayuno y colación de la semana", e: "🧺" },
+          // Tomi 21/11: el atajo iba fijo al Kit semanal y daba 404 cuando faltaba el mix de semillas.
+          ...(atajo ? [{ href: `/combos/${atajo.slug}`, t: atajo.slug === KIT_SEMANAL ? "Kit semanal" : atajo.nombre, d: atajo.slug === KIT_SEMANAL ? "Desayuno y colación de la semana" : "El combo de la semana", e: "🧺" }] : []),
           { href: "/combos", t: "Combos", d: "Ahorrás llevando el pack", e: "🎁" },
           { href: "/sin-tacc", t: "Sin TACC", d: `${totalSinTacc} productos rotulados`, e: "🌾" },
           { href: "/novedades", t: "Nuevos", d: "Por encargo, en 24-48 hs", e: "✨" },
