@@ -31,7 +31,12 @@ const nextConfig: NextConfig = {
   },
   // La dirección vieja de Vercel lleva al dominio propio (menos /api, que recibe avisos de pago).
   async redirects() {
-    return [{ source: "/:path((?!api/).*)", has: [{ type: "host", value: "acopio-saludable.vercel.app" }], destination: "https://www.acopiosaludable.com/:path", permanent: true }];
+    return [
+      { source: "/:path((?!api/).*)", has: [{ type: "host", value: "acopio-saludable.vercel.app" }], destination: "https://www.acopiosaludable.com/:path", permanent: true },
+      // 21/11: los agentes y el bot mandaban /precios y daba 404. La lista con foto y precio es el catálogo.
+      { source: "/precios", destination: "/catalogo", permanent: false },
+      { source: "/lista-precios", destination: "/catalogo", permanent: false },
+    ];
   },
   // Headers de seguridad en todo el sitio (HSTS ya lo pone Vercel):
   // nadie puede meter la tienda ni el panel en un iframe ajeno (clickjacking), el navegador no adivina
