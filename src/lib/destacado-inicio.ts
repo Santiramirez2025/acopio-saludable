@@ -5,7 +5,9 @@
 
 /** Combos que se empujan esta semana, en este orden. Si uno no se puede vender, se saltea. */
 // 14/11: el Kit semanal va primero (Santiago: «se vendería mucho»).
-export const COMBOS_DE_LA_SEMANA = ["kit-semanal", "trio-de-frutos-secos", "trio-del-desayuno", "pan-dulce-casero"] as const;
+/** El Kit semanal: el menú de arriba y el atajo del inicio lo enlazan solo si se puede comprar (si no, daba 404). */
+export const KIT_SEMANAL = "kit-semanal";
+export const COMBOS_DE_LA_SEMANA = [KIT_SEMANAL, "trio-de-frutos-secos", "trio-del-desayuno", "pan-dulce-casero"] as const;
 
 /** El mix de la casa (orden de Santiago 4/11) y lo que va si no está. */
 export const DESTACADO_PRODUCTO = "TG-MIXC";
@@ -37,4 +39,13 @@ export function ordenarCombos<C extends { slug: string }>(combos: C[]): C[] {
     return i === -1 ? COMBOS_DE_LA_SEMANA.length : i;
   };
   return combos.map((c, i) => ({ c, i })).sort((a, b) => rango(a.c.slug) - rango(b.c.slug) || a.i - b.i).map((x) => x.c);
+}
+
+/** El primer atajo del inicio: el Kit semanal si se vende; si no, el primer combo de la semana que sí (nunca un link a un 404). */
+export function atajoCombo<C extends ConSlug & { nombre: string }>(combos: C[]): { slug: string; nombre: string } | null {
+  for (const slug of COMBOS_DE_LA_SEMANA) {
+    const c = combos.find((x) => x.slug === slug && x.disponible);
+    if (c) return { slug: c.slug, nombre: c.nombre };
+  }
+  return null;
 }

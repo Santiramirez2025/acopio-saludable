@@ -8,7 +8,7 @@ import { Asistente } from "./Asistente";
 
 const NAV = [
   ["/catalogo", "Catálogo"],
-  ["/combos/kit-semanal", "Kit semanal"],
+  ["/combos/kit-semanal", "Kit semanal"], // solo si se puede comprar (conKit)
   ["/sin-tacc", "Sin TACC"],
   ["/nichos", "Por negocio"],
   ["/objetivos", "Por objetivo"],
@@ -28,7 +28,7 @@ const ICONOS = {
   carrito: "M3 4h2.5l2.2 11h10.6L20.5 7H7M9.5 19.5h.01M17 19.5h.01",
 };
 
-export function Encabezado() {
+export function Encabezado({ conKit = true }: { conKit?: boolean }) {
   const { cotizacion, lineas } = useCarrito();
   const unidades = lineas.reduce((s, l) => s + l.cantidad, 0);
   return (
@@ -51,7 +51,7 @@ export function Encabezado() {
         </Link>
       </div>
       <nav className="mx-auto hidden max-w-6xl gap-6 px-4 pb-1 text-sm font-medium text-white/80 md:flex" aria-label="Secciones">
-        {NAV.map(([href, label]) => (
+        {NAV.filter(([href]) => conKit || href !== "/combos/kit-semanal").map(([href, label]) => (
           <Link key={href} href={href} className="flex min-h-[44px] items-center hover:text-white">{label}</Link>
         ))}
       </nav>

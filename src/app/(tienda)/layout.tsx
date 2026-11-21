@@ -7,7 +7,9 @@ import { BotonWhatsapp, EnlaceWhatsapp } from "@/components/Whatsapp";
 import { NICHOS } from "@/lib/taxonomia";
 import { leerConfig } from "@/lib/config";
 import { pesos } from "@/lib/precios";
-import { umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { barraArriba, zonaSinMinimo } from "@/lib/minimo-zona";
+import { combosTienda } from "@/lib/tienda";
+import { KIT_SEMANAL } from "@/lib/destacado-inicio";
 import { AVISO_SUPLEMENTOS, SITIO, urlSitio } from "@/lib/sitio";
 import { politicasNegocio } from "@/lib/politicas-schema";
 
@@ -45,7 +47,8 @@ const NEGOCIO = {
 import { Origen } from "@/components/Origen";
 
 export default async function TiendaLayout({ children }: { children: React.ReactNode }) {
-  const cfg = await leerConfig();
+  const [cfg, [kit]] = await Promise.all([leerConfig(), combosTienda({ slug: KIT_SEMANAL, tipo: "COMBO" })]);
+  const barra = barraArriba(cfg);
   return (
     <ProveedorCarrito>
       <div className="flex min-h-screen flex-col overflow-x-clip">
@@ -55,8 +58,9 @@ export default async function TiendaLayout({ children }: { children: React.React
         <p className="bg-acopio-700 px-4 py-2 text-center text-[13px] leading-snug text-white">
           {zonaSinMinimo(cfg) ? (
             <>
-              En Villa Carlos Paz y la zona <b className="font-bold text-sol">sin compra mínima</b> · entrega sin cargo desde <b className="font-bold text-sol">{pesos(umbralZona(cfg))}</b> (si no, {pesos(cfg.envioBajoMinimo)})
-              <span className="hidden sm:inline"> · Envíos a todo el país desde {pesos(cfg.compraMinima)}</span>
+              {/* Martín 19/11: sin cargo solo en Carlos Paz y San Antonio de Arredondo; el resto de la zona paga un fijo. */}
+              <b className="font-bold text-sol">Sin compra mínima</b> en Carlos Paz y la zona · Carlos Paz y San Antonio: sin cargo desde <b className="font-bold text-sol">{pesos(barra.sinCargoDesde)}</b> (si no, {pesos(barra.bajoUmbral)}) · <Link href="/envios" className="underline underline-offset-2">resto de la zona, desde {pesos(barra.vecinasDesde)}</Link>
+              <span className="hidden sm:inline"> · Envíos a todo el país desde {pesos(barra.paisDesde)}</span>
             </>
           ) : (
             <>
@@ -65,7 +69,7 @@ export default async function TiendaLayout({ children }: { children: React.React
             </>
           )}
         </p>
-        <Encabezado />
+        <Encabezado conKit={Boolean(kit?.disponible)} />
         <Origen />
         <main id="contenido" className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 pb-40 pt-5 md:pb-24 md:pt-8">{children}</main>
         <footer className="fondo-oscuro bg-acopio-900 pb-28 text-white/80 md:pb-0">

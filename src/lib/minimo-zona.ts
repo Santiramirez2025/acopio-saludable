@@ -37,7 +37,17 @@ export function costoEntregaZona(c: ReglaMinimo): string {
 /** Donde la entrega propia va sin cargo desde el umbral (Santiago, 16/11: «solo Carlos Paz es gratis, y San Antonio de Arredondo y por acá cerca»). */
 export const ZONA_SIN_CARGO = "Villa Carlos Paz y San Antonio de Arredondo (hasta 8 km del centro)";
 
-const enumerar = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} y ${xs[xs.length - 1]}` : xs[0] ?? "");
+/** Lo menos que paga una vecina con cargo (para «resto de la zona, desde $ X» en la barra de arriba). */
+export function cargoMinimoVecinas(): number {
+  return Math.min(...VECINAS_CON_CARGO.map((v) => v.cargo));
+}
+
+/** La barra de arriba de todo el sitio, en partes (Martín 19/11: que no prometa «sin cargo en la zona»). */
+export function barraArriba(c: ReglaMinimo): { sinCargoDesde: number; bajoUmbral: number; vecinasDesde: number; paisDesde: number } {
+  return { sinCargoDesde: umbralZona(c), bajoUmbral: c.envioBajoMinimo, vecinasDesde: cargoMinimoVecinas(), paisDesde: c.compraMinima };
+}
+
+const enumerar =(xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} y ${xs[xs.length - 1]}` : xs[0] ?? "");
 
 /** El resto de la zona, con su cargo fijo por pedido: «Icho Cruz, Cuesta Blanca y Tala Huasi, $ 4.000; Tanti, …, $ 5.000». */
 export function textoVecinasConCargo(): string {
