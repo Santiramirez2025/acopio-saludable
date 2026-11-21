@@ -16,7 +16,8 @@ import { imagenCombo } from "./galeria";
 import { urlSitio } from "./sitio";
 
 const TOPE = 40;
-const NO_QUIERE = /no gracias|no,? gracias|no me interesa|no quiero|no me escrib|no me manden|dame de baja|baja|no estoy interesad|ya compr[eé]|equivocad/i;
+// «Yo no pedí nada, hay un error» (Nilda, 20/11) también es un no.
+const NO_QUIERE = /no ped[ií]|un error|me confund|no soy de|no estoy en la zona|no gracias|no,? gracias|no me interesa|no quiero|no me escrib|no me manden|dame de baja|baja|no estoy interesad|ya compr[eé]|equivocad/i;
 
 type Candidato = { telefono: string; nombre: string | null; ultimo: string | null };
 
@@ -30,7 +31,7 @@ export async function candidatosGrafica(): Promise<Candidato[]> {
           BETWEEN now() - interval '23 hours' AND now() - interval '10 hours'
       -- No compró (ni tiene un pedido en curso) en los últimos 10 días.
       AND NOT EXISTS (SELECT 1 FROM "Order" o WHERE right(regexp_replace(o."telefono", '[^0-9]', '', 'g'), 10) = right(c."telefono", 10)
-                        AND o."estado" <> 'CANCELADO' AND o."createdAt" > now() - interval '10 days')
+                        AND o."estado" <> 'CANCELADO' AND (o."createdAt" > now() - interval '10 days' OR o."estado" <> 'ENTREGADO'))
       AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" n WHERE n."telefono" = c."telefono" AND n."id" LIKE 'promo-no.%')
       -- Esta gráfica, una vez por semana.
       AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" g WHERE g."telefono" = c."telefono" AND g."id" LIKE 'graf.%' AND g."fecha" > now() - interval '7 days')
