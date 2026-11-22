@@ -55,7 +55,7 @@ const REALES_PRODUCTO: [RegExp, string, string][] = [
   [/almendra/i, "real-almendras", "Almendras Non Pareil 1 kg"],
   [/caj[uú]|casta[ñn]a/i, "real-caju", "Castañas de cajú 1 kg"],
   [/\bnuez|\bnueces/i, "real-nuez", "Nuez mariposa light 1 kg"],
-  [/d[aá]til/i, "real-datiles", "Dátiles con carozo 1 kg"],
+  [/d[aá]til/i, "real-datiles-v2", "Dátiles con carozo 1 kg"],
   [/\bpasas?\b/i, "real-pasas", "Pasas de uva"],
   [/banana/i, "real-banana", "Banana chips 1 kg"],
   [/girasol/i, "real-girasol", "Girasol pelado 1 kg"],
@@ -82,7 +82,7 @@ const REAL_POR_CODIGO: [RegExp, string][] = [
   [/^LG-ALMNP/, "real-almendras"],
   [/^TG-CAJU$/, "real-caju"],
   [/^TG-BANANA/, "real-banana"],
-  [/^LG-DATIL/, "real-datiles"],
+  [/^LG-DATIL/, "real-datiles-v2"],
   [/^TG-GIRASOL/, "real-girasol"],
   [/^(LG|TG)-GPROTE/, "real-granola-proteica"],
   [/^(LG|TG)-GTRAD/, "real-granola"],
@@ -105,11 +105,17 @@ export function fotoRealProducto(codigo: string): string | null {
  */
 export const REAL_PRIMERO = new Set<string>([]);
 
+/** Video real del producto en la galería de la ficha (22/11: los dátiles egipcios en la caja, tomados por Santiago). */
+const VIDEO_POR_CODIGO: Record<string, string> = { "LG-DATIL": "/video/productos/lg-datil.mp4" };
+export function videoProducto(codigo: string): string | null {
+  return VIDEO_POR_CODIGO[codigo] ?? null;
+}
+
 /** Fotos reales: cómo armamos y cómo llega el pedido. Para la desconfianza y el «¿cómo llega?». */
 export const REALES = [
   { archivo: "real-asi-llega", pie: "Así llega tu pedido: en bolsa kraft, fraccionado y con una nota para vos" },
   { archivo: "real-armamos-tu-pedido", pie: "Así armamos tu despensa, el mismo día que sale" },
-  { archivo: "real-datiles", pie: "Dátiles con carozo recién fraccionados" },
+  { archivo: "real-datiles-v2", pie: "Dátiles con carozo recién fraccionados" },
 ];
 
 const url = (archivo: string) => `${BASE}/${archivo}.jpg`;

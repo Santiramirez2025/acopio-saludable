@@ -14,7 +14,7 @@ import { Plazos } from "@/components/Plazos";
 import { costoEntregaZona } from "@/lib/minimo-zona";
 import { urlSitio } from "@/lib/sitio";
 import { descripcionLd, imagenesLd } from "@/lib/producto-ld";
-import { fotoRealProducto, REAL_PRIMERO } from "@/lib/galeria";
+import { fotoRealProducto, videoProducto, REAL_PRIMERO } from "@/lib/galeria";
 import { Medir } from "@/components/Medicion";
 import { BotonCompartir } from "@/components/Compartir";
 import { Galeria } from "@/components/Galeria";
@@ -62,6 +62,11 @@ export default async function Producto({ params }: Props) {
     const base = fila.fotos.length ? fila.fotos : fila.fotoUrl ? [fila.fotoUrl] : [];
     fila.fotos = REAL_PRIMERO.has(fila.codigo) ? [real, ...base] : [...base, real];
   }
+  const video = videoProducto(fila.codigo);
+  if (video && !fila.fotos.includes(video)) {
+    const base = fila.fotos.length ? fila.fotos : fila.fotoUrl ? [fila.fotoUrl] : [];
+    fila.fotos = [base[0], video, ...base.slice(1)].filter(Boolean) as string[];
+  }
   const p = aTienda(fila, cfg);
   // Sin stock por ahora: la ficha queda (el link no se rompe), pero sin «Agregar» y con aviso por WhatsApp.
   const sinStock = fila.estado === "SIN_STOCK";
@@ -91,7 +96,7 @@ export default async function Producto({ params }: Props) {
     ...(marcaVisible(p.marca) ? { brand: { "@type": "Brand", name: p.marca } } : {}),
     category: p.categoria,
     description: descripcionLd(`${p.producto} ${p.presentacion}`, p.categoria, porQue),
-    image: imagenesLd(urlSitio(), fila.fotos, fila.fotoUrl),
+    image: imagenesLd(urlSitio(), fila.fotos.filter((f) => !f.endsWith(".mp4")), fila.fotoUrl),
     offers: {
       "@type": "Offer",
       price: p.precio.toFixed(2),

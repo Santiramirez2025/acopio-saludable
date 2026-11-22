@@ -176,6 +176,8 @@ export const FOTO_ENCARGO: Record<string, string> = {
   // 21/11 (Santiago): envase original del fabricante, mejorado con la marca de Acopio (scripts/kit-alfajores/packshot.mjs).
   "LG-NATUZEN-TAPAS": "/img/productos/prov/lg-natuzen-tapas-v2.webp",
   "LG-DDL-STEVIA": "/img/productos/encargo/lg-ddl-stevia-v2.webp",
+  // 22/11 (Santiago): «no me gusta la foto de los dátiles»: su foto de los dátiles egipcios, con la marca de Acopio.
+  "LG-DATIL": "/img/productos/prov/lg-datil-v2.webp",
   "LG-PMANI-NATURAL": "/img/productos/pasta-mani-natural-entrenuts.webp",
   "LG-PMANI-1KG": "/img/productos/pasta-mani-natural-entrenuts.webp",
   "LG-PMANI-CACAO": "/img/productos/pasta-mani-cacao-entrenuts.webp",

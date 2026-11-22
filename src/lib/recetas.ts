@@ -67,7 +67,7 @@ export const RECETAS: Receta[] = [
     minutos: 15,
     rinde: "unas 20 bolitas",
     dificultad: "Fácil",
-    foto: "/img/reales/real-datiles.jpg",
+    foto: "/img/reales/real-datiles-v2.jpg",
     productos: ["LG-DATIL", "TG-NUEZ", "LG-COCO", "LG-CACAO"],
     ingredientes: [
       { cantidad: "200 g", que: "Dátiles sin carozo", codigo: "LG-DATIL" },
