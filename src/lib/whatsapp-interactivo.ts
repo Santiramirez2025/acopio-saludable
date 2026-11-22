@@ -564,6 +564,26 @@ export function confirmaPedido(texto: string): boolean {
   return /^(si|sii+|dale|ok|okey|listo|perfecto|genial|joya|bueno)?[,.! ]*(si[,! ]*)?(dejalo|dejenlo|dejamelo|dejen|deja)( todo)? listo[.! ]*$|^(si|sii+)[,.! ]*(dale|listo|perfecto|genial|joya|confirmo|confirmado)?[.! ]*$|^(confirmo|confirmado|lo confirmo)[.! ]*$|^(si|sii+|dale|ok|listo)?[,.! ]*(dejalo|dejamelo|dejenlo)( asi| confirmado)?[.! ]*$/.test(t);
 }
 
+/**
+ * 22/11 (Andrés, Bialet): a «¿Te lo dejo listo?» contestó «Ok bueno 👍» y el bot repreguntó en vez de crear el pedido.
+ * Un «sí» escrito corto (ok, dale, bueno, de una, 👍) vale como el botón «Sí, dejalo listo», pero SOLO si nuestro
+ * último mensaje era esa pregunta de cierre. «Ok gracias» o «bueno, gracias» solos no confirman (pueden ser un «no»).
+ */
+export function asienteAlCierre(texto: string, previoAcopio: string): boolean {
+  if (texto.includes("?")) return false;
+  if (!/\b(te (lo|la|los|las) dejo listos?|lo dejamos listo|lo dejo listo|te (lo|la|los|las) separo|lo dejamos separado)\b/.test(limpio(previoAcopio))) return false;
+  const s = limpio(texto)
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{1F3FB}-\u{1F3FF}\u200d]/gu, " ")
+    .replace(/[,.!;:]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!s) return /👍|👌|🙌|✅/u.test(texto);
+  if (s.length > 40) return false;
+  if (!/^((si|sii+|ok|okey|oka|okis|dale|bueno|buenisimo|listo|joya|de una|claro|obvio|perfecto|genial|va|por favor|porfa|gracias|muchas|bien|re|nomas)( |$))+$/.test(s)) return false;
+  if (/\bgracias\b/.test(s) && !/\b(si|sii+|dale|de una|listo|claro|obvio)\b/.test(s)) return false;
+  return /\b(si|sii+|ok|okey|oka|okis|dale|bueno|buenisimo|listo|joya|de una|claro|obvio|perfecto|genial|va)\b/.test(s);
+}
+
 /** El último mensaje nuestro aceptó pagar al recibir (en efectivo, cuando te lo llevamos). */
 export function aceptamosAlRecibir(textoAcopio: string): boolean {
   const t = limpio(textoAcopio);
