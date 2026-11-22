@@ -67,7 +67,7 @@ export function textoSalidaReparto(ahoraMs: number): string {
  * por defecto (o está vacío), se dice el día real; si Santiago escribió otro en el panel, manda el suyo.
  */
 export function plazoZonaPropia(guardado: string | undefined, ahoraMs: number): string {
-  if (guardado && !/24\s*a\s*48/i.test(guardado)) return guardado;
+  if (guardado && !/24\s*a\s*48|reparto de las 16/i.test(guardado)) return guardado;
   const a = avisoReparto(ahoraMs);
   const dia = new Date(ahoraMs - AR_MS).getUTCDay();
   const nombre = (salto: number) => DIAS[(dia + salto) % 7];
