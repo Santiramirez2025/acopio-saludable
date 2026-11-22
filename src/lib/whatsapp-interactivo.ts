@@ -522,7 +522,9 @@ export function soloDireccion(texto: string): string {
   const m = t.match(/\b(?:mi direcci[oó]n es|la direcci[oó]n es|direcci[oó]n\s*:|vivo en|domicilio\s*:?|calle\s*:)\s*(.+)$/i);
   if (m) t = m[1];
   t = t
-    .replace(/^(hola|buen[oa]s?( d[ií]as| tardes| noches)?)[,!. ]*/i, "")
+    .replace(/^(hol[ai]s?|buen[oa]s?( d[ií]as| tardes| noches)?)[,!. ]*/i, "")
+    // «Soy de CPaz Alemania 249» (Adriana, AS-157, 22/11): el «soy de» y la ciudad no son la calle.
+    .replace(/^soy de\s+(c\.?\s?paz|vcp|(villa )?carlos paz)[,.]?\s*/i, "")
     .replace(/\bvi el video[^,.]*[,.]?\s*/i, "")
     .replace(/[\s,.-]*(muchas )?gracias[!. ]*$/i, "")
     .replace(/^[\s,.-]+|[\s,.-]+$/g, "")
@@ -617,7 +619,7 @@ export function planSinApuro(nombre: string | null, tienda: string, fotoReal?: s
     ...foto,
     {
       tipo: "texto",
-      texto: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. Cuando quieras lo pagás por transferencia (te sale más barato) o Mercado Pago, y en Carlos Paz y la zona te lo llevamos sin cargo. Si te queda alguna duda, preguntame por acá nomás.`,
+      texto: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. En Carlos Paz y la zona te lo llevamos sin cargo y lo pagás cuando te llega. Si te queda alguna duda, preguntame por acá nomás.`,
     },
   ];
 }

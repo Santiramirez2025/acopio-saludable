@@ -43,3 +43,8 @@ test("«pero soy jubilada» no es un producto (Beatriz, 22/11)", async () => {
   const { listaDeProductos } = await import("./whatsapp-interactivo");
   assert.ok(!listaDeProductos("Me encantan los dátiles, la fruta seca, las nueces, pero soy jubilada").some((p) => /jubilada/i.test(p)));
 });
+
+test("«Holi Soy de CPaz Alemania 249» → «Alemania 249» (AS-157, 22/11)", async () => {
+  const { soloDireccion } = await import("./whatsapp-interactivo");
+  assert.equal(soloDireccion("Holi Soy de CPaz Alemania 249"), "Alemania 249");
+});

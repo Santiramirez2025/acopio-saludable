@@ -978,6 +978,13 @@ export async function pensar(c: {
 
   // Pedir una persona deriva siempre, conteste la IA o el buscador.
   const derivar = Boolean(respuesta.derivar) || pidePersona(c.texto);
+  // 22/11: «Hola, quiero el Trío» → «El Trío sale $24.000: …» y nada más. Andrés, Alejandra, Sil y Verónica quedaron
+  // sin una pregunta que contestar y la charla murió. Si todavía no hay pedido ni sabemos de dónde es, la respuesta
+  // termina con la pregunta que lleva a la venta (salvo que el cliente solo haya agradecido o despedido).
+  if (!derivar && respuesta.texto && !/\?/.test(respuesta.texto) && !estadoOrden && !soloAcuse(c.texto) && c.canal === "whatsapp") {
+    const sabeLugar = Boolean(respuesta.envio) || Boolean(lugarDelHistorial([...c.historial, { de: "yo", texto: c.texto }]));
+    respuesta = { ...respuesta, texto: `${respuesta.texto.trimEnd()} ${sabeLugar ? "¿Me pasás calle y número así te lo dejo listo?" : "¿De qué barrio o ciudad sos? Así te digo cuándo te llega."}` };
+  }
   // Primera respuesta de la charla: se presenta como asistente con IA, sin cortar la venta.
   if (!derivar && respuesta.texto && !c.historial.some((h) => h.de === "acopio")) respuesta = { ...respuesta, texto: conPresentacion(respuesta.texto) };
   // El pedido: el que acaba de armar, o el guardado si recién ahora cotizó el envío.
