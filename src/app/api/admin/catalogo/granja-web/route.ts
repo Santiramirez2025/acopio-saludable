@@ -20,6 +20,15 @@ export async function GET(req: Request) {
     const r = await fetch(`https://lagranjadelcentro.com.ar/${img}`, { signal: AbortSignal.timeout(25_000) });
     return NextResponse.json({ ok: r.ok, tipo: r.headers.get("content-type"), b64: r.ok ? Buffer.from(await r.arrayBuffer()).toString("base64") : "" });
   }
+  // 21/11: foto original de un producto envasado (packshot del fabricante en otra tienda) para mejorarla con la marca de Acopio.
+  // Solo https, solo imágenes y hasta 6 MB.
+  const foto = new URL(req.url).searchParams.get("foto");
+  if (foto && /^https:\/\/[\w.-]+\//.test(foto)) {
+    const r = await fetch(foto, { signal: AbortSignal.timeout(25_000), headers: { "user-agent": "Mozilla/5.0" } });
+    const tipo = r.headers.get("content-type") ?? "";
+    const buf = r.ok && tipo.startsWith("image/") ? Buffer.from(await r.arrayBuffer()) : Buffer.alloc(0);
+    return NextResponse.json({ ok: r.ok && buf.length > 0 && buf.length < 6_000_000, tipo, b64: buf.length < 6_000_000 ? buf.toString("base64") : "" });
+  }
   if (buscar || pag) {
     const u = `https://lagranjadelcentro.com.ar/${pag && /^[a-z0-9_-]+\.php(\?[\w=&%-]*)?$/i.test(pag) ? pag : "productos.php"}`;
     const fd = new FormData();
