@@ -2129,3 +2129,12 @@ test("Comprobante en la charla: ya pagó aunque el pedido diga al recibir (Migue
   assert.equal(charlaTieneComprobante([{ de: "acopio", texto: "Gracias, Miguel. Recibimos el comprobante y lo revisamos ahora" }]), true);
   assert.equal(charlaTieneComprobante([{ de: "cliente", texto: "¿me pasás el alias?" }, { de: "acopio", texto: "Mandame el comprobante por acá" }]), false);
 });
+
+test("envío cotizado en la charla: Bialet $3.000 no se pierde al cerrar al recibir (Liliana, AS-152)", async () => {
+  const { envioCotizadoEnCharla } = await import("./pedido-charla");
+  const h = (de: "yo" | "acopio", texto: string) => ({ de, texto });
+  assert.equal(envioCotizadoEnCharla([h("yo", "Bialet Massé"), h("acopio", "Dale, Liliana. Con el envío a Bialet Massé ($3.000) queda en $27.000. Te lo llevamos mañana lunes desde las 16. ¿Te lo dejamos listo?\n\n• Trío — $ 24.000\nTotal: $ 24.000\nEnvío: $ 3.000\nTotal con envío: $ 27.000")]), 3000);
+  assert.equal(envioCotizadoEnCharla([h("acopio", "Con el Trío de $24.000 va sin cargo en Carlos Paz.")]), 0);
+  assert.equal(envioCotizadoEnCharla([h("acopio", "El Trío sale $24.000. ¿De qué barrio sos?")]), null);
+  assert.equal(envioCotizadoEnCharla([h("acopio", "Envío a Tanti: $4.000")]), 4000);
+});

@@ -18,7 +18,7 @@ import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
 import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, soloDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
-import { clienteNombraFueraDeZona, lugarDelHistorial, sumarLineas } from "./pedido-charla";
+import { clienteNombraFueraDeZona, envioCotizadoEnCharla, lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
 import { dioPorCerrada } from "./whatsapp-recordatorio";
@@ -526,7 +526,9 @@ export async function atender(e: Entrada): Promise<void> {
     const direccion = crudo ? soloDireccion(crudo) : undefined;
     console.log("chat: paga al recibir, se cierra sin preguntar zona", cola(e.clave));
     const lugarPR = ultimoEnvio ?? lugarCharla ?? "Villa Carlos Paz";
-    return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: cargoVecinaPorLugar(`${lugarPR} ${direccion ?? ""}`), lugar: lugarPR }, direccion || undefined);
+    // Sin lugar dicho, vale el envío que ya le cotizamos en la charla (Bialet, Tanti…): no se le promete «sin cargo» después de cotizarle $3.000.
+    const cargoPR = Math.max(cargoVecinaPorLugar(`${lugarPR} ${direccion ?? ""}`), ultimoEnvio || lugarCharla ? 0 : (envioCotizadoEnCharla(histRecibir) ?? 0));
+    return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: cargoPR, lugar: lugarPR }, direccion || undefined);
   }
 
   // 12/11: «Sí, dejalo listo» después de que le aceptamos pagar al recibir: se crea el pedido AL_RECIBIR en el acto.
@@ -548,7 +550,8 @@ export async function atender(e: Entrada): Promise<void> {
       console.log("chat: confirma el pedido al recibir, se cierra", cola(e.clave));
       // 19/11: a las vecinas con cargo (Tanti, Bialet…) el envío se cobra también al recibir.
       const lugarAR = ultimoEnvio ?? lugarHist ?? "Villa Carlos Paz";
-      return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: cargoVecinaPorLugar(lugarAR), lugar: lugarAR }, direccion || undefined);
+      const cargoAR = Math.max(cargoVecinaPorLugar(lugarAR), ultimoEnvio || lugarHist ? 0 : (envioCotizadoEnCharla(hist) ?? 0));
+      return cerrarVenta(e.clave, e.nombre, "AL_RECIBIR", guardado, { costo: cargoAR, lugar: lugarAR }, direccion || undefined);
     }
   }
 

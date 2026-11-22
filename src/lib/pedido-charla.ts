@@ -38,3 +38,17 @@ export function clienteNombraFueraDeZona(historial: { de: "yo" | "acopio"; texto
     return z ? z.tipo !== "propia" : hablaDeFueraDeZona(t);
   });
 }
+
+/**
+ * 22/11 (Liliana, Bialet Massé, AS-152): el bot le cotizó «Envío: $ 3.000 · Total con envío $27.000», ella dijo
+ * «al recibirlo pago efectivo» y el pedido salió «$24.000 con envío sin cargo», porque el cierre al recibir tomaba
+ * «Villa Carlos Paz» por defecto. Lo último que le cotizamos de envío en la charla (null si nunca se dijo).
+ */
+export function envioCotizadoEnCharla(historial: { de: "yo" | "acopio"; texto: string }[]): number | null {
+  for (const h of [...historial].reverse().filter((x) => x.de === "acopio").slice(0, 8)) {
+    const m = h.texto.match(/\benv[ií]o(?: a [^:\n(]{2,40})?:? \(?\$ ?(\d{1,3}(?:\.\d{3})+|\d{3,6})\)?/i);
+    if (m) return Number(m[1].replace(/\./g, ""));
+    if (/env[ií]o sin cargo|va sin cargo|sin costo de env[ií]o/i.test(h.texto)) return 0;
+  }
+  return null;
+}
