@@ -109,6 +109,8 @@ export const REAL_PRIMERO = new Set<string>([]);
 // 22/11: tomas crudas del celular de Santiago (IMG_86xx, IMG_91xx), cortadas al producto, con música alegre propia.
 const VIDEO_POR_CODIGO: Record<string, string> = {
   "LG-DATIL": "/video/productos/lg-datil.mp4",
+  "LG-DATIL-500": "/video/productos/lg-datil.mp4",
+  "LG-DATIL-5KG": "/video/productos/lg-datil.mp4",
   "TG-MIXCG": "/video/productos/tg-mixcg.mp4",
   "TG-MIXCG-500": "/video/productos/tg-mixcg.mp4",
   "TG-MIXC": "/video/productos/tg-mixc.mp4",
