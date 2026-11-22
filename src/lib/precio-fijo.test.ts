@@ -31,3 +31,15 @@ test("del mensaje queda solo el domicilio (Lucía, AS-150, 21/11)", async () => 
   assert.equal(soloDireccion("Garibaldi 251"), "Garibaldi 251");
   assert.equal(soloDireccion("Hola! Atahualpa 513 barrio Belgrano, gracias"), "Atahualpa 513 barrio Belgrano");
 });
+
+test("la calle con «, Villa Carlos Paz» al final igual cobra la vecina (AS-152, 22/11)", async () => {
+  const { cargoVecinaPorLugar } = await import("./envios/vecinas");
+  const limpia = (c: string) => c.replace(/(,\s*(villa )?carlos paz)+\s*$/i, "");
+  assert.ok(cargoVecinaPorLugar(limpia("Mataro 375 Villa Liliana, Bialet Massé, Villa Carlos Paz")) > 0);
+  assert.equal(cargoVecinaPorLugar(limpia("Garibaldi 251, Villa Carlos Paz")), 0);
+});
+
+test("«pero soy jubilada» no es un producto (Beatriz, 22/11)", async () => {
+  const { listaDeProductos } = await import("./whatsapp-interactivo");
+  assert.ok(!listaDeProductos("Me encantan los dátiles, la fruta seca, las nueces, pero soy jubilada").some((p) => /jubilada/i.test(p)));
+});

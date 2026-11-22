@@ -58,5 +58,7 @@ export async function completarDireccion(clave: string, direccion: string): Prom
     prisma.order.update({ where: { id: o.id }, data: { calle: direccion } }),
     prisma.orderEvent.create({ data: { orderId: o.id, estado: o.estado, nota: `Dirección que mandó el cliente: ${direccion}` } }),
   ]);
+  const { ajustarEnvioVecina } = await import("./pedidos");
+  await ajustarEnvioVecina(o.id);
   return numeroPedido(o.id);
 }

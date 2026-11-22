@@ -10,7 +10,7 @@ import { armarBultos, PESO_POR_DEFECTO_G } from "./envios/bultos";
 import { cotizarEnvio } from "./envios/cotizar";
 import { cpEnLista, normalizarCp, zonaDeProvincia } from "./envios/geo";
 import { MINIMO_ZONA_PAGA } from "./envios/tabla";
-import { cargoVecinaPorCp } from "./envios/vecinas";
+import { cargoVecinaPorCp, cargoVecinaPorLugar } from "./envios/vecinas";
 import { envioPedidoZonaPropia, zonaDeLugar } from "./envio-zona";
 import type { Bulto, OpcionEnvio } from "./envios/tipos";
 import { enviarEmail, escaparHtml } from "./email";
@@ -390,6 +390,22 @@ export async function crearPedidoWhatsapp(a: {
 /** ¿Ya hay una dirección para ir? («A confirmar por WhatsApp» no cuenta.) */
 const conDireccion = (calle: string | null | undefined) => Boolean(calle && calle.trim().length > 4 && !/a confirmar|sin direcci|retira/i.test(calle));
 
+/**
+ * 22/11: AS-152 y AS-155 (Bialet Massé) y AS-154 (Tanti) quedaron «sin cargo» a $24.000: el pedido se crea con
+ * «Villa Carlos Paz» y la calle llega después. Cuando llega la calle y nombra una vecina con cargo, se suma el envío.
+ */
+export async function ajustarEnvioVecina(orderId: number): Promise<void> {
+  const o = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!o || o.envioOpcionId !== "propia" || Number(o.envioCobrado) > 0 || !o.calle) return;
+  // La calle suele terminar en «, Villa Carlos Paz» (lo agrega el pedido): eso no cuenta como estar en Carlos Paz.
+  const cargo = cargoVecinaPorLugar(o.calle.replace(/(,\s*(villa )?carlos paz)+\s*$/i, ""));
+  if (cargo <= 0) return;
+  await prisma.$transaction([
+    prisma.order.update({ where: { id: o.id }, data: { envioCobrado: cargo, total: Number(o.total) + cargo, envioNombre: "Entrega propia" } }),
+    prisma.orderEvent.create({ data: { orderId: o.id, estado: o.estado, nota: `Envío a la localidad: $${cargo} (la dirección es fuera de Carlos Paz)` } }),
+  ]);
+}
+
 export async function completarEntrega(orderId: number, d: { nombre?: string; direccion?: string; horario?: string; referencia?: string }): Promise<Order | null> {
   const pedido = await prisma.order.findUnique({ where: { id: orderId } });
   if (!pedido) return null;
@@ -405,6 +421,7 @@ export async function completarEntrega(orderId: number, d: { nombre?: string; di
   // Un solo aviso: cuando aparece la dirección. Los retoques (horario, referencia, «Calle …») no avisan:
   // el 26/10 llegaron 9 avisos iguales por un pedido. Todo junto llega igual en el reparto de la mañana.
   // Si la dirección vino en el mismo momento que la venta, ya está en el aviso de «Nueva venta» o llega en el reparto.
+  if (d.direccion) await ajustarEnvioVecina(orderId);
   const recien = Date.now() - pedido.createdAt.getTime() < 2 * 60_000;
   if (!recien && !conDireccion(pedido.calle) && conDireccion(actualizado.calle)) await avisarVenta(actualizado, "Datos de entrega");
   return actualizado;

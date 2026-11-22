@@ -782,6 +782,8 @@ export function listaDeProductos(texto: string): string[] {
     // «cuánto me sale», «dónde retiro» son preguntas, no productos (se contestaban «— no lo tenemos»).
     .filter((p) => p.length >= 3 && p.length <= 60 && !/^(hola|buen[oa]s?|gracias|sii?|pero|por ejemplo)\b/i.test(p))
     .filter((p) => !/^¿?\s*(cu[aá]nto|cu[aá]ndo|d[oó]nde|c[oó]mo|qu[eé]|hacen|tienen|env[ií]an)\b/i.test(p))
+    // «pero soy jubilada» habla de la persona, no es un producto (Beatriz 22/11: salió «Soy jubilada — no lo tenemos»).
+    .filter((p) => !/^(soy|estoy|somos|vivo|tengo|me encanta[n]?|me gusta[n]?)\b/i.test(p))
     // «Precio por favor.....gracias» es cortesía, no un producto (Cristian 18/11: salió «— no lo tenemos»).
     .filter((p) => !(claves(p).length > 0 && palabrasDeRespaldo(p).length === 0));
   return partes.length >= 3 ? partes.slice(0, 15) : [];
