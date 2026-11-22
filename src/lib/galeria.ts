@@ -106,7 +106,16 @@ export function fotoRealProducto(codigo: string): string | null {
 export const REAL_PRIMERO = new Set<string>([]);
 
 /** Video real del producto en la galería de la ficha (22/11: los dátiles egipcios en la caja, tomados por Santiago). */
-const VIDEO_POR_CODIGO: Record<string, string> = { "LG-DATIL": "/video/productos/lg-datil.mp4" };
+// 22/11: tomas crudas del celular de Santiago (IMG_86xx, IMG_91xx), cortadas al producto, con música alegre propia.
+const VIDEO_POR_CODIGO: Record<string, string> = {
+  "LG-DATIL": "/video/productos/lg-datil.mp4",
+  "TG-MIXCG": "/video/productos/tg-mixcg.mp4",
+  "TG-MIXCG-500": "/video/productos/tg-mixcg.mp4",
+  "TG-MIXC": "/video/productos/tg-mixc.mp4",
+  "TG-MIXC-500": "/video/productos/tg-mixc.mp4",
+  "TG-CAJU": "/video/productos/tg-caju.mp4",
+  "TG-NUEZ": "/video/productos/tg-nuez.mp4",
+};
 export function videoProducto(codigo: string): string | null {
   return VIDEO_POR_CODIGO[codigo] ?? null;
 }

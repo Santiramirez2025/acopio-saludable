@@ -6,6 +6,7 @@ import { Foto } from "./Foto";
 /** Galería de la ficha: foto grande y miniaturas. Con una sola foto, solo la foto. */
 export function Galeria({ fotos, alt, etiqueta }: { fotos: string[]; alt: string; etiqueta: string }) {
   const [activa, setActiva] = useState(0);
+  const [mudo, setMudo] = useState(true);
   const actual = fotos[activa] ?? fotos[0] ?? null;
   return (
     <div>
@@ -13,7 +14,12 @@ export function Galeria({ fotos, alt, etiqueta }: { fotos: string[]; alt: string
       <div className="rounded-3xl bg-white p-2.5 shadow-ficha max-md:mx-auto max-md:max-w-[13rem]">
         <div className="relative">
           {actual?.endsWith(".mp4") ? (
-            <video key={actual} src={actual} poster={actual.replace(/\.mp4$/, ".jpg")} className="aspect-square w-full rounded-2xl object-cover" autoPlay muted loop playsInline aria-label={`Video de ${alt}`} />
+            <>
+              <video key={actual} src={actual} poster={actual.replace(/\.mp4$/, ".jpg")} className="aspect-square w-full rounded-2xl object-cover" autoPlay muted={mudo} loop playsInline aria-label={`Video de ${alt}`} />
+              <button type="button" onClick={() => setMudo((m) => !m)} className="absolute bottom-2 right-2 rounded-full bg-acopio-900/85 px-3 py-1.5 text-xs font-semibold text-white">
+                {mudo ? "🔈 Activar sonido" : "🔊 Silenciar"}
+              </button>
+            </>
           ) : (
             <Foto key={actual ?? "sin"} src={actual} alt={alt} etiqueta={etiqueta} className="aspect-square w-full rounded-2xl" prioridad sizes="(max-width: 768px) 208px, 560px" />
           )}
