@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { codigos?: string[]; combos?: string[]; aplicar?: boolean; soloTextos?: boolean };
+  const b = (await req.json().catch(() => ({}))) as { codigos?: string[]; combos?: string[]; aplicar?: boolean; soloTextos?: boolean; soloFotos?: boolean };
   const productos = PRODUCTOS_PROVEEDORES.filter((p) => b.codigos?.includes(p.codigo));
   const combos = COMBOS_PROVEEDORES.filter((c) => b.combos?.includes(c.slug));
   const plan = {
@@ -30,6 +30,17 @@ export async function POST(req: Request) {
     })),
   };
   if (!b.aplicar) return NextResponse.json({ prueba: true, ...plan });
+  // 21/11: solo la foto (producto y combo), sin tocar costo, precio, textos ni stock.
+  if (b.soloFotos) {
+    const out: Record<string, number> = {};
+    for (const codigo of b.codigos ?? []) {
+      const foto = fotoProducto(codigo);
+      if (foto) out[codigo] = (await prisma.product.updateMany({ where: { codigo }, data: { fotoUrl: foto, fotos: [foto] } })).count;
+    }
+    for (const slug of b.combos ?? []) out[slug] = (await prisma.combo.updateMany({ where: { slug }, data: { fotoUrl: fotoCombo(slug) } })).count;
+    revalidatePath("/", "layout");
+    return NextResponse.json({ soloFotos: out });
+  }
   // 20/11: solo la ficha («por qué lo elegimos»), sin tocar costo, precio, foto ni stock.
   if (b.soloTextos) {
     const out: Record<string, number> = {};

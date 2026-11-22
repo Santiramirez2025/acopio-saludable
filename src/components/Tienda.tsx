@@ -50,9 +50,9 @@ export function GrillaProductos({ productos }: { productos: ProductoTienda[] }) 
 }
 
 /** Fila que se desliza con el dedo en el celular y pasa a grilla en pantallas grandes. */
-export function RielProductos({ productos }: { productos: ProductoTienda[] }) {
+export function RielProductos({ productos, tres = false }: { productos: ProductoTienda[]; tres?: boolean }) {
   return (
-    <div className="riel lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
+    <div className={`riel lg:mx-0 lg:grid ${tres ? "lg:grid-cols-3" : "lg:grid-cols-4"} lg:overflow-visible lg:px-0`}>
       {productos.map((p) => (
         <TarjetaProducto key={p.codigo} p={p} className="w-[46%] shrink-0 snap-start sm:w-[30%] lg:w-auto" />
       ))}

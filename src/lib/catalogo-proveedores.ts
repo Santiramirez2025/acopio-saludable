@@ -281,7 +281,9 @@ export const fotoProducto = (codigo: string) =>
   FOTO_ENCARGO[codigo] ?? (POR_ENCARGO.has(codigo) ? `/img/productos/encargo/${codigo.toLowerCase()}.webp` : CON_FOTO.has(codigo) ? `/img/productos/prov/${(FOTO_DE[codigo] ?? codigo).toLowerCase()}.webp` : null);
 /** Combos sin portada propia en public/img/combos/v3: sin foto, la página muestra los productos (no una imagen rota). */
 const COMBOS_SIN_PORTADA = new Set<string>([]);
-export const fotoCombo = (slug: string) => (COMBOS_SIN_PORTADA.has(slug) ? null : `/img/combos/v3/${slug}.webp`);
+/** Portadas rehechas: archivo nuevo para que la caché de imágenes (30 días) no siga mostrando la vieja. */
+const PORTADA_VERSION: Record<string, string> = { "kit-alfajores-sin-tacc": "kit-alfajores-sin-tacc-v2" };
+export const fotoCombo = (slug: string) => (COMBOS_SIN_PORTADA.has(slug) ? null : `/img/combos/v3/${PORTADA_VERSION[slug] ?? slug}.webp`);
 
 OCULTAR.codigos.push(...Object.keys(REEMPLAZOS));
 

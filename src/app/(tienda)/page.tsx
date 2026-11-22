@@ -56,6 +56,7 @@ export default async function Home() {
   })();
   const destacado = elegirDestacado<ProductoTienda, ComboTienda>(candidatos, combos);
   const atajo = atajoCombo(combos);
+  const kitAlfajores = combos.find((c) => c.slug === "kit-alfajores-sin-tacc" && c.disponible !== false) ?? null;
   const seVende = new Set(vendibles.map((v) => v.codigo));
   // Los destacados son lo que tenemos en mano: uno por producto, con foto, y lo que más se vende primero.
   const vidriera = (() => { const v = vidrieraDeStock(ganchos, true); return (v.length >= 4 ? v : ganchos).slice(0, 8); })();
@@ -207,15 +208,32 @@ export default async function Home() {
           <div className="fondo-oscuro mb-3 flex flex-wrap items-end justify-between gap-x-3 gap-y-1 text-white">
             <div className="min-w-0">
               <span className="chip bg-sol text-acopio-900">Súper promo</span>
-              <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight tracking-tight">Alfajores sin TACC, por caja</h2>
+              <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight tracking-tight">Alfajores sin TACC</h2>
               <p className="mt-1 text-[15px] text-white/80">
-                Llevando la caja te quedan desde <b className="font-semibold text-sol tabular-nums">{pesos(alfajorDesde)} el alfajor</b>
-                {cfg.descuentoTransferenciaPct > 0 ? `, y pagando por transferencia ${cfg.descuentoTransferenciaPct}% menos.` : "."}
+                {kitAlfajores ? (
+                  <>
+                    Hacelos en casa con el kit: 2 tapitas Natuzen + dulce de leche Trini con stevia, <b className="font-semibold text-sol tabular-nums">{pesos(kitAlfajores.precio)}</b>
+                    {kitAlfajores.ahorro > 0 ? ` (por separado ${pesos(kitAlfajores.precioLista)}).` : "."} O llevá la caja desde{" "}
+                    <b className="font-semibold text-sol tabular-nums">{pesos(alfajorDesde)} el alfajor</b>.
+                  </>
+                ) : (
+                  <>
+                    Llevando la caja te quedan desde <b className="font-semibold text-sol tabular-nums">{pesos(alfajorDesde)} el alfajor</b>.
+                  </>
+                )}
               </p>
             </div>
             <Link href="/catalogo?q=alfajor&sintacc=1" className="-my-2 flex min-h-[48px] items-center whitespace-nowrap text-sm font-semibold text-sol underline underline-offset-4">Ver todos</Link>
           </div>
-          <RielProductos productos={alfajores} />
+          {/* 21/11 (Santiago): el kit de tapitas Natuzen + dulce de leche Trini va primero, con su foto del envase original. */}
+          {kitAlfajores ? (
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
+              <TarjetaCombo c={kitAlfajores} className="ring-2 ring-sol" />
+              <RielProductos tres productos={alfajores.filter((p) => p.codigo !== "LG-NATUZEN-TAPAS").slice(0, 3)} />
+            </div>
+          ) : (
+            <RielProductos productos={alfajores} />
+          )}
           <p className="mt-1 text-xs text-white/60">{AVISO_SIN_TACC}</p>
         </section>
       )}
