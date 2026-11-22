@@ -1,3 +1,4 @@
+import { plazoZonaPropia } from "./salida-reparto";
 // De qué zona de envío es lo que escribió la persona. Puro: se prueba sin base.
 
 import { PROVINCIAS } from "./envios/geo";
@@ -44,7 +45,7 @@ export function envioZonaPropia(cfg: ReglaMinimo & { plazoEntregaPropia: string 
       propia: true,
       zonaPropia: true,
       alRecibir: true,
-      detalle: `Envío a ${lugar}: ${pesos(cargo)} con cualquier pedido (queda fuera de la ciudad de Carlos Paz). Te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.`,
+      detalle: `Envío a ${lugar}: ${pesos(cargo)} con cualquier pedido (queda fuera de la ciudad de Carlos Paz). Te lo llevamos nosotros en ${plazoZonaPropia(cfg.plazoEntregaPropia, Date.now())}.`,
     };
   }
   const fijo = envioPropioPara(cfg, subtotal);
@@ -59,7 +60,7 @@ export function envioZonaPropia(cfg: ReglaMinimo & { plazoEntregaPropia: string 
       zonaPropia: true,
       alRecibir: true,
       sinCargoDesde: umbral,
-      detalle: `Envío a ${lugar}: sin cargo desde ${pesos(umbral)}; abajo de eso, ${pesos(fijo)}. Te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.`,
+      detalle: `Envío a ${lugar}: sin cargo desde ${pesos(umbral)}; abajo de eso, ${pesos(fijo)}. Te lo llevamos nosotros en ${plazoZonaPropia(cfg.plazoEntregaPropia, Date.now())}.`,
     };
   }
   if (fijo > 0) {
@@ -70,10 +71,10 @@ export function envioZonaPropia(cfg: ReglaMinimo & { plazoEntregaPropia: string 
       zonaPropia: true,
       alRecibir: true,
       sinCargoDesde: umbral,
-      detalle: `Envío a ${lugar}: ${pesos(fijo)} porque el pedido no llega a ${pesos(umbral)}; desde ${pesos(umbral)} va sin cargo. Te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.`,
+      detalle: `Envío a ${lugar}: ${pesos(fijo)} porque el pedido no llega a ${pesos(umbral)}; desde ${pesos(umbral)} va sin cargo. Te lo llevamos nosotros en ${plazoZonaPropia(cfg.plazoEntregaPropia, Date.now())}.`,
     };
   }
-  return { lugar, costo: 0, propia: true, zonaPropia: true, alRecibir: true, detalle: `Envío a ${lugar}: sin cargo, te lo llevamos nosotros en ${cfg.plazoEntregaPropia}.` };
+  return { lugar, costo: 0, propia: true, zonaPropia: true, alRecibir: true, detalle: `Envío a ${lugar}: sin cargo, te lo llevamos nosotros en ${plazoZonaPropia(cfg.plazoEntregaPropia, Date.now())}.` };
 }
 
 /**
