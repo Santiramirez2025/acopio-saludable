@@ -200,8 +200,10 @@ export async function planCobroLink(camino: string): Promise<Saliente[]> {
  * a Distrimay), se le avisa a Santiago y el vendedor le pide nombre, dirección y horario para entregar.
  */
 /** Pagar al recibir solo en la zona de entrega sin cargo (Carlos Paz y alrededores). */
+// 22/11 (Santiago): Córdoba Capital y Malagueño también pagan al recibir (lo lleva él en el viaje a Córdoba).
 function recibeEnZonaPropia(lugar: string | undefined | null): boolean {
-  return Boolean(lugar) && zonaDeLugar(String(lugar), null)?.tipo === "propia";
+  const z = Boolean(lugar) ? zonaDeLugar(String(lugar), null)?.tipo : null;
+  return z === "propia" || z === "capital";
 }
 
 async function cerrarVenta(

@@ -24,8 +24,8 @@ export const CARGO_LEJOS = 4000;
 const POR_CP: Record<string, number> = { "5155": CARGO_LEJOS, "5158": CARGO_CERCA };
 
 const POR_NOMBRE: [RegExp, number][] = [
-  [/\b(tanti|cuesta blanca)\b/, CARGO_LEJOS],
-  [/\b(mayu sumaj|icho cruz|villa rio icho cruz|tala huasi|bialet masse|cabalango|villa parque siquiman|parque siquiman|siquiman)\b/, CARGO_CERCA],
+  [/\b(tanti|cuesta blanca|villa parque siquiman|parque siquiman|siquiman)\b/, CARGO_LEJOS],
+  [/\b(mayu sumaj|icho cruz|villa rio icho cruz|tala huasi|bialet masse|cabalango)\b/, CARGO_CERCA],
 ];
 
 /** Las vecinas con cargo, como se las nombra en la tienda (mismo cargo que POR_NOMBRE; lo controla vecinas.test.ts). */
