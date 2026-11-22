@@ -2076,6 +2076,12 @@ test("19/11 (Marcos, Tanti): «Sí, dejalo» confirma el pedido", () => {
   assert.ok(confirmaPedido("Sí, dejalo"));
   assert.ok(confirmaPedido("dejalo así"));
   assert.ok(!confirmaPedido("dejalo para la semana que viene"));
+  // 22/11 (Beatriz): el botón «Sí, separalo» del recordatorio confirma igual que «Sí, dejalo listo».
+  assert.ok(confirmaPedido("Sí, separalo"));
+  assert.ok(confirmaPedido("si separala"));
+  assert.ok(confirmaPedido("Dale, reservamelo"));
+  assert.ok(!confirmaPedido("¿Me lo separás para el martes?"));
+  assert.ok(!confirmaPedido("separalo para la semana que viene"));
 });
 
 test("19/11 (Sandra, Móni, Marina): pagó, acuses y espera en la puerta", async () => {

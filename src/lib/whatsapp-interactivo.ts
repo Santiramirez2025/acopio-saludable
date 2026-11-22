@@ -556,6 +556,9 @@ export function sinRepreguntarCiudad<T extends { texto: string; opciones?: strin
 export function confirmaPedido(texto: string): boolean {
   const t = limpio(texto);
   if (t.includes("?")) return false;
+  // 22/11 (Beatriz, Carlos Paz): tocó «Sí, separalo» del recordatorio con la dirección dada y el «al recibir» ofrecido,
+  // no contaba como confirmación y la IA contestó «quedó separado… te lo llevamos el lunes» sin crear el pedido.
+  if (/^(si|sii+|dale|ok|listo|bueno)?[,.! ]*(si[,! ]*)?(separal[oa]|separamel[oa]|separalos|reservalo|reservamelo|reservala|guardamelo|guardamela)( nomas| porfa| por favor| dale)?[.! ]*$/.test(t)) return true;
   return /^(si|sii+|dale|ok|okey|listo|perfecto|genial|joya|bueno)?[,.! ]*(si[,! ]*)?(dejalo|dejenlo|dejamelo|dejen|deja)( todo)? listo[.! ]*$|^(si|sii+)[,.! ]*(dale|listo|perfecto|genial|joya|confirmo|confirmado)?[.! ]*$|^(confirmo|confirmado|lo confirmo)[.! ]*$|^(si|sii+|dale|ok|listo)?[,.! ]*(dejalo|dejamelo|dejenlo)( asi| confirmado)?[.! ]*$/.test(t);
 }
 
