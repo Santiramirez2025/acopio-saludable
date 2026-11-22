@@ -16,7 +16,7 @@ import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, soloDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
+import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, asienteAlCierre, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, soloDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { clienteNombraFueraDeZona, envioCotizadoEnCharla, lugarDelHistorial, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
@@ -537,7 +537,13 @@ export async function atender(e: Entrada): Promise<void> {
   // Antes la IA contestaba «quedó agendado» y el pedido no existía en el panel (Carlos Taborda, Martha Penfold).
   // 15/11 (Viki, Tanti: «Los espero 🩷»; Lilian: «Saavedra 165, avisame y bajo»): después de aceptarle pagar al recibir,
   // la dirección o un «los espero» también confirman. El bot repreguntaba «¿Lo dejamos listo?» y el pedido no llegaba al panel.
-  const confirmaAlRecibir = confirmaPedido(texto) || (!texto.includes("?") && (tieneDireccion(texto) || /\b(los|te|lo|las?) esper[oa]\b/i.test(texto)));
+  // 22/11 (Andrés): «Ok bueno 👍» a «¿Te lo dejo listo?» también confirma (solo si esa fue nuestra última pregunta).
+  const previoCierre =
+    PAGO_AL_RECIBIR && canal === "whatsapp" && guardado?.startsWith("/carrito?p=") && texto.length <= 60
+      ? ([...(await historialDe(e.clave, 6))].reverse().find((h) => h.de === "acopio")?.texto ?? "")
+      : "";
+  const confirmaAlRecibir =
+    confirmaPedido(texto) || asienteAlCierre(texto, previoCierre) || (!texto.includes("?") && (tieneDireccion(texto) || /\b(los|te|lo|las?) esper[oa]\b/i.test(texto)));
   if (PAGO_AL_RECIBIR && canal === "whatsapp" && guardado?.startsWith("/carrito?p=") && confirmaAlRecibir) {
     const hist = await historialDe(e.clave, 12);
     const previo = [...hist].reverse().find((h) => h.de === "acopio")?.texto ?? "";
