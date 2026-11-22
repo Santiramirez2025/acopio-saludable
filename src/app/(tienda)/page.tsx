@@ -56,6 +56,8 @@ export default async function Home() {
   })();
   const destacado = elegirDestacado<ProductoTienda, ComboTienda>(candidatos, combos);
   const atajo = atajoCombo(combos);
+  // Las cajas de alfajores van al lado del kit; las tapitas ya están adentro del kit.
+  const cajasAlfajor = alfajores.filter((p) => p.codigo !== "LG-NATUZEN-TAPAS").slice(0, 3);
   const kitAlfajores = combos.find((c) => c.slug === "kit-alfajores-sin-tacc" && c.disponible !== false) ?? null;
   const seVende = new Set(vendibles.map((v) => v.codigo));
   // Los destacados son lo que tenemos en mano: uno por producto, con foto, y lo que más se vende primero.
@@ -205,7 +207,7 @@ export default async function Home() {
       {alfajores.length > 0 && (
         <section className="rounded-3xl bg-acopio-900 p-4 sm:p-6">
           {/* El blanco va solo en el encabezado y el aviso: adentro del riel las fichas son blancas y el texto tiene que seguir oscuro. */}
-          <div className="fondo-oscuro mb-3 flex flex-wrap items-end justify-between gap-x-3 gap-y-1 text-white">
+          <div className="fondo-oscuro mb-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-1 text-white">
             <div className="min-w-0">
               <span className="chip bg-sol text-acopio-900">Súper promo</span>
               <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight tracking-tight">Alfajores sin TACC</h2>
@@ -227,9 +229,9 @@ export default async function Home() {
           </div>
           {/* 21/11 (Santiago): el kit de tapitas Natuzen + dulce de leche Trini va primero, con su foto del envase original. */}
           {kitAlfajores ? (
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
+            <div className={`grid gap-4 lg:items-start ${cajasAlfajor.length >= 3 ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]" : "lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"}`}>
               <TarjetaCombo c={kitAlfajores} className="ring-2 ring-sol" />
-              <RielProductos tres productos={alfajores.filter((p) => p.codigo !== "LG-NATUZEN-TAPAS").slice(0, 3)} />
+              {cajasAlfajor.length > 0 && <RielProductos columnas={cajasAlfajor.length >= 3 ? 3 : 2} productos={cajasAlfajor} />}
             </div>
           ) : (
             <RielProductos productos={alfajores} />

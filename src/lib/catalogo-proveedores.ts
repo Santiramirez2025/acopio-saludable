@@ -282,7 +282,7 @@ export const fotoProducto = (codigo: string) =>
 /** Combos sin portada propia en public/img/combos/v3: sin foto, la página muestra los productos (no una imagen rota). */
 const COMBOS_SIN_PORTADA = new Set<string>([]);
 /** Portadas rehechas: archivo nuevo para que la caché de imágenes (30 días) no siga mostrando la vieja. */
-const PORTADA_VERSION: Record<string, string> = { "kit-alfajores-sin-tacc": "kit-alfajores-sin-tacc-v2" };
+const PORTADA_VERSION: Record<string, string> = { "kit-alfajores-sin-tacc": "kit-alfajores-sin-tacc-v3" };
 export const fotoCombo = (slug: string) => (COMBOS_SIN_PORTADA.has(slug) ? null : `/img/combos/v3/${PORTADA_VERSION[slug] ?? slug}.webp`);
 
 OCULTAR.codigos.push(...Object.keys(REEMPLAZOS));

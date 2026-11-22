@@ -6,9 +6,10 @@ import fs from "node:fs";
 import path from "node:path";
 const dir = path.dirname(new URL(import.meta.url).pathname);
 const [,, modo, salida] = process.argv;
+const ancho = modo === "kit43" ? 1600 : 1200;
 const b64 = (f) => "data:image/png;base64," + fs.readFileSync(path.join(dir, f)).toString("base64");
 const caja = b64("hq_tapitas.png"), frasco = b64("hq_ddl.png");
-const css = `*{margin:0;padding:0;box-sizing:border-box}body{width:1200px;height:1200px;overflow:hidden;font-family:Inter,"DejaVu Sans",sans-serif;background:radial-gradient(circle at 50% 36%,#FFFDF6,#F1E7D2 70%,#E7D9BB)}
+const css = `*{margin:0;padding:0;box-sizing:border-box}body{width:${ancho}px;height:1200px;overflow:hidden;font-family:Inter,"DejaVu Sans",sans-serif;background:radial-gradient(circle at 50% 36%,#FFFDF6,#F1E7D2 70%,#E7D9BB)}
 .mesa{position:absolute;left:0;right:0;top:820px;height:380px;background:linear-gradient(#E9DBBC,#DCC79F)}
 .p{position:absolute;filter:drop-shadow(0 30px 28px rgba(60,40,15,.32)) drop-shadow(0 6px 6px rgba(60,40,15,.18))}
 .marca{position:absolute;top:36px;left:36px;background:#10251C;color:#F6F1E4;font-weight:800;font-size:30px;padding:14px 26px;border-radius:999px}
@@ -25,13 +26,20 @@ if (modo === "tapitas") {
 } else if (modo === "ddl") {
   cuerpo += `<img class="p" src="${frasco}" style="left:410px;top:130px;height:800px">` + arriba
     + `<div class="txt"><span class="chip">400 g · Trini</span><h1>Dulce de leche con stevia</h1><div class="sub">Sin azúcar agregada · sin TACC</div></div>`;
+} else if (modo === "kit43") {
+  // Portada 4:3 de la tarjeta de combo: sin texto abajo (el nombre y el precio van en la tarjeta).
+  cuerpo += `<img class="p" src="${caja}" style="left:170px;top:250px;height:720px;transform:rotate(-5deg)">`
+    + `<img class="p" src="${caja}" style="left:520px;top:230px;height:760px">`
+    + `<img class="p" src="${frasco}" style="left:1080px;top:250px;height:720px">`
+    + `<div class="marca">Acopio Saludable</div><div class="sello">Sin TACC</div>`
+    + `<div style="position:absolute;left:44px;bottom:44px" class="chip">2 tapitas Natuzen + dulce de leche Trini con stevia</div>`;
 } else {
   cuerpo += `<img class="p" src="${caja}" style="left:60px;top:300px;height:560px;transform:rotate(-5deg)">`
     + `<img class="p" src="${caja}" style="left:330px;top:290px;height:580px">`
     + `<img class="p" src="${frasco}" style="left:830px;top:300px;height:560px">` + arriba
     + `<div class="txt"><span class="chip">3 productos</span><h1>Kit alfajores sin TACC</h1><div class="sub">2 tapitas Natuzen + dulce de leche Trini con stevia</div></div>`;
 }
-const br = await chromium.launch(); const p = await br.newPage({ viewport: { width: 1200, height: 1200 } });
+const br = await chromium.launch(); const p = await br.newPage({ viewport: { width: ancho, height: 1200 } });
 await p.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${cuerpo}</body></html>`);
 const png = salida.replace(/\.webp$/, ".png");
 await p.screenshot({ path: png, type: "png" });
