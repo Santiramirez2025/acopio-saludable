@@ -148,7 +148,9 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
       // 17/11 (Santiago: «sin molestar con tanto texto»): con un solo producto el texto ya lo nombra con su precio,
       // así que no se repite el resumen; y si el texto ya pregunta la ciudad, no se pregunta dos veces.
       if (pedido.renglones.length === 1 && /\$\s?\d/.test(texto)) lineas.splice(1);
-      if (!/\?/.test(texto) || !/(ciudad|barrio|zona|de d[oó]nde)/i.test(texto)) lineas.push("", "¿De qué barrio o ciudad sos? Así te digo el envío.");
+      // 22/11: solo si el texto no termina en pregunta. Nora ya había dado «Morandini 271» y le llegó
+      // «¿Te lo dejo listo?» + «¿De qué barrio o ciudad sos?»: dos preguntas, una ya contestada.
+      if (!/\?/.test(texto)) lineas.push("", "¿De qué barrio o ciudad sos? Así te digo el envío.");
       return [
         {
           tipo: "botones",
@@ -177,7 +179,9 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
     // Mercado Pago o transferencia (con su 8%), queda registrado y se puede comprar a cualquier hora.
     // Si escribe «transferencia» en el chat igual se le dan los datos (lo resuelve atencion.ts).
     void PAGO_AL_RECIBIR;
-    lineas.push("", "Te lo dejo armado en la web: ahí elegís Mercado Pago o transferencia (8% menos) y queda confirmado al toque.");
+    // 22/11: el Trío tiene un solo precio (política del 21/11): el «8% menos» solo si el pedido de verdad lo tiene.
+    const conDescuento = Boolean(pedido.conTransferencia || pedido.envio.transferenciaConEnvio);
+    lineas.push("", `Te lo dejo armado en la web: ahí elegís Mercado Pago o transferencia${conDescuento ? " (8% menos)" : ""} y queda confirmado al toque.`);
     // 18/11: el link casi nadie lo usa («0 fueron a pagar por link» varios días) y las ventas se cierran en el chat
     // pagando al recibir. En la zona del reparto se ofrece también cerrarlo por acá.
     if (pedido.envio.costo === 0 || (pedido.envio.costo ?? 99999) <= 5000)
