@@ -73,3 +73,16 @@ test("16/11: al que viene a Carlos Paz se le ofrece llevárselo acá, pagando an
   assert.match(regla, /Nunca des una dirección nuestra/);
   assert.doesNotMatch(regla, /perfecto|antes de pagar/i);
 });
+
+test("22/11: pedir NUESTRA dirección no es dar un domicilio (AS-162)", async () => {
+  const { tieneDireccion } = await import("./whatsapp-interactivo");
+  for (const x of ["Hola, quiero la dirección. Gracias", "Quiero la dirección. Yo no pedí nada todavía", "Quiero la dirección para ver si quiero verlo personalmente", "Dirección x favor", "necesito la ubicación"]) {
+    assert.equal(preguntaDondeEstan(x), true, x);
+    assert.equal(tieneDireccion(x), false, x);
+  }
+  for (const x of ["La dirección es Cartago 100", "Mi dirección es Los Cerezos s/n, Colinas", "Dirección: Morandini 271 dpto 3"]) {
+    assert.equal(tieneDireccion(x), true, x);
+    assert.equal(preguntaDondeEstan(x), false, x);
+  }
+  assert.equal(tieneDireccion("la dirección"), false);
+});

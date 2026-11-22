@@ -513,7 +513,9 @@ export function tieneDireccion(texto: string): boolean {
     .replace(/\b\d{1,2} ?[:.] ?\d{2}\b( ?hs?\b)?/g, " ")
     .replace(/\b(a|hasta|desde|despues de|antes de|tipo|como a|entre|y|estoy|estare|llego|vuelvo|salgo|seguro|exacto)( (la|las))? \d{1,2}\b( ?(hs?|horas?|y media|y cuarto|en punto)\b)?/g, " ")
     .replace(/\b\d{1,2} ?(hs|horas?)\b/g, " ");
-  return /\b(direccion|calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?))/.test(t);
+  // La palabra «dirección» sola no es un domicilio: tiene que venir como «mi/la dirección es …» o «dirección: …».
+  if (/\b(mi|la) direccion (es|seria)\b|\bdireccion ?:/.test(t) && t.replace(/.*\bdireccion (es|seria)?:? ?/, "").trim().length >= 4) return true;
+  return /\b(calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?))/.test(t);
 }
 
 /**
@@ -912,6 +914,12 @@ export function preguntaDondeEstan(texto: string): boolean {
     /\b(me )?(pasa|pasas|pasame|pasan|mandame|mandas|decime|me das|me decis|cual es|me podes pasar|me pasarias) (la )?(direccion|ubicacion)\b/.test(t) ||
     /\bvoy yo\b|\bvamos nosotros\b/.test(t) ||
     /\b(tienen|hay) local\b/.test(t) ||
+    // 22/11 (cristinalorca52, AS-162): «Hola, quiero la dirección. Gracias» pedía NUESTRA dirección «para ver si quiero
+    // verlo personalmente»; contaba como domicilio y el bot creó un pedido al recibir «Va a quiero la dirección».
+    // Lo mismo «Dirección x favor» (Naty, 22/11).
+    /\b(quiero|quisiera|queria|necesito|me gustaria|podes darme|me podrias dar) (saber )?(la |su |tu )?(direccion|ubicacion)\b/.test(t) ||
+    /^\W*(la )?(direccion|ubicacion) (x|por|porfa|por favor)\b/.test(t) ||
+    /\b(verlo|verla|verlos|verlas|ver la mercaderia) (personalmente|en persona)\b/.test(t) ||
     /\b(retirar|retiro|lo retiro|paso a buscar|voy a buscar|vamos a buscar|ir a buscar|lo busco|voy personalmente)/.test(t) ||
     // 16/11 (Martín): «Puede transferir y después pasar a buscar», «Dirección para buscarlo mañana», «mañana paso por el negocio».
     /\b(pasar a buscar|pasamos a buscar|pasa a buscar|para buscarl[oa]|a buscarl[oa]|paso por el (negocio|local)|pasar por el (negocio|local))\b/.test(t)
