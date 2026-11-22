@@ -991,7 +991,7 @@ export async function pensar(c: {
   // termina con la pregunta que lleva a la venta (salvo que el cliente solo haya agradecido o despedido).
   // 22/11 tarde: no a quien se despide o lo deja para después («por ahora no», «te aviso», «chau»: Roque, José Juan,
   // Beba, Cris), y si ya dijo de dónde es, no se le vuelve a preguntar.
-  const cierraCharla = /\b(chau|por ahora no|m[aá]s adelante|despu[eé]s (te|le) (escribo|aviso|llamo)|te aviso|le aviso|te escribo|ya no me interesa|no me interesa|no gracias|cuando vaya|otro d[ií]a|lo pienso|lo charlo|le pregunto|te confirmo)\b/i.test(c.texto);
+  const cierraCharla = /\b(chau|por ahora no|m[aá]s adelante|despu[eé]s (te|le) (escribo|aviso|llamo)|te aviso|le aviso|te escribo|ya no me interesa|no me interesa|no[\s.,!]+gracias|otra oportunidad|otro momento|por ahora nada|cuando vaya|otro d[ií]a|lo pienso|lo charlo|le pregunto|te confirmo)\b/i.test(c.texto);
   const yaDijoLugar = [...c.historial.filter((h) => h.de === "yo").map((h) => h.texto), c.texto].some((t) => zonaDeLugar(t, null) !== null);
   if (!derivar && respuesta.texto && !/\?/.test(respuesta.texto) && !estadoOrden && !soloAcuse(c.texto) && !cierraCharla && c.canal === "whatsapp") {
     const sabeLugar = yaDijoLugar || Boolean(respuesta.envio) || Boolean(lugarDelHistorial([...c.historial, { de: "yo", texto: c.texto }]));
