@@ -3,6 +3,7 @@
 // Si el equipo no dejó una promo vigente, no sale nada.
 import { NextResponse } from "next/server";
 import { cronAutorizado } from "@/lib/cron-acceso";
+import { conCandado } from "@/lib/cron-candado";
 import { conRegistro } from "@/lib/salud";
 import { correrPromo } from "@/lib/promo-semanal";
 
@@ -11,5 +12,5 @@ export const maxDuration = 120;
 
 export async function GET(req: Request) {
   if (!cronAutorizado(req)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  return NextResponse.json(await conRegistro("promo-semanal", () => correrPromo()));
+  return NextResponse.json(await conCandado("promo-semanal", () => conRegistro("promo-semanal", () => correrPromo())));
 }
