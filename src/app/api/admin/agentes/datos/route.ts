@@ -38,9 +38,11 @@ export async function GET(req: Request) {
     const os = await prisma.order.findMany({
       where: { OR: [{ estado: { notIn: ["ENTREGADO", "CANCELADO"] } }, { updatedAt: { gte: hace7 } }] },
       include: { items: true, eventos: { orderBy: { fecha: "desc" }, take: 5 } },
-      orderBy: { id: "asc" },
+      // 22/11: con «asc» + take 100 quedaban afuera los más nuevos (AS-163 a 165 no aparecían). Los últimos 100, en orden.
+      orderBy: { id: "desc" },
       take: 100,
     });
+    os.reverse();
     return NextResponse.json({
       pedidos: os.map((o) => ({
         id: o.id,
