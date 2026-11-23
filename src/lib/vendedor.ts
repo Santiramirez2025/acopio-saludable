@@ -10,6 +10,7 @@
 //    así que se cobran una vez cada cinco minutos en lugar de una vez por mensaje.
 
 import { sinFrasesDeCobroProhibidas } from "./frases-cobro";
+import { sinPedidoDadoPorHecho, hayPedidoEnCharla } from "./frases-pedido";
 import { claves, palabrasDeRespaldo } from "./lista-palabras";
 import { bloqueLeccionesVendedor } from "./organico";
 import { bloqueTemporada } from "./temporada";
@@ -973,6 +974,8 @@ export async function responderComoVendedor(
           fichas = [];
         }
         texto = sinFrasesDeCobroProhibidas(texto);
+        // 23/11 (Mayra): «Ya lo dejamos cargado» sin pedido creado. Sin código AS en la charla, se saca.
+        texto = sinPedidoDadoPorHecho(texto, Boolean(ctx.ordenId) || hayPedidoEnCharla([mensaje, ...historial.map((h) => h.texto)]));
         let mostradas = sep.texto ? fichasNombradas(fichas, texto) : fichas.slice(0, 4);
         // 23/11 (Elsa): pidió el Trío, el texto habló del Trío y la foto fue la de la Alacena con su precio viejo.
         // Si el cliente y la respuesta hablan del Trío, solo va una foto del Trío (o ninguna).
