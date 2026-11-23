@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { aceptaComboOfrecido, preguntaDondeEstan, textoDondeEstanSinIA, textoPideDireccionSinIA } from "./whatsapp-interactivo";
+import { aceptaComboOfrecido, preguntaDondeEstan, tieneDireccion, textoDondeEstanSinIA, textoPideDireccionSinIA } from "./whatsapp-interactivo";
 
 const pesos = (n: number) => `$${n.toLocaleString("es-AR")}`;
 const ofertaTrio = { de: "acopio", texto: "¡Hola Mary! El Trío ... $24.000, o $22.000 por transferencia. Acá lo armás: https://www.acopiosaludable.com/carrito?p=c-trio-de-frutos-secos*1" };
@@ -85,4 +85,9 @@ test("22/11: pedir NUESTRA dirección no es dar un domicilio (AS-162)", async ()
     assert.equal(preguntaDondeEstan(x), false, x);
   }
   assert.equal(tieneDireccion("la dirección"), false);
+});
+
+test("el mensaje del anuncio no es un domicilio (AS-169, 23/11)", () => {
+  assert.equal(tieneDireccion("Hola, quiero el Trío con las 3 recetas"), false);
+  assert.equal(tieneDireccion("Morandini 271 Dpto 3"), true);
 });

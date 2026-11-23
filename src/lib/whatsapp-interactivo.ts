@@ -517,7 +517,7 @@ export function tieneDireccion(texto: string): boolean {
     .replace(/\b\d{1,2} ?(hs|horas?)\b/g, " ");
   // La palabra «dirección» sola no es un domicilio: tiene que venir como «mi/la dirección es …» o «dirección: …».
   if (/\b(mi|la) direccion (es|seria)\b|\bdireccion ?:/.test(t) && t.replace(/.*\bdireccion (es|seria)?:? ?/, "").trim().length >= 4) return true;
-  return /\b(calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?))/.test(t);
+  return /\b(calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?|recetas?|productos?|meses|dias|personas))/.test(t);
 }
 
 /**

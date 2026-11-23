@@ -937,6 +937,12 @@ export async function responderComoVendedor(
             texto = "¡Listo! Ya te armé el pedido. ¿De qué ciudad sos así te digo el envío?";
           } else if (!fichas.length) return null;
           // Ya no va la lista debajo: los precios tienen que estar en el texto.
+          // 23/11: «Hola, quiero el Trío con las 3 recetas» (el mensaje del anuncio) caía acá y salía
+          // «Alacena $37.000, Mix con maní, Maní». Si pidió el Trío, se le contesta el Trío.
+          else if (/\btr[ií]o\b/i.test(mensaje)) {
+            fichas = fichas.filter((f) => /tr[ií]o/i.test(f.nombre));
+            texto = "El Trío sale $24.000: 1 kg de mix clásico con cajú y girasol, 1 kg de dátiles y 1 kg de pasas, y lo pagás cuando te llega. ¿De qué barrio o ciudad sos? Así te digo cuándo te llega.";
+          }
           else {
           const tres = fichas.slice(0, 3).map((f) => `${f.nombre.replace(/^Combo /, "")} ${presentacionDe(f)} a ${f.precio}`.replace(/\s+/g, " "));
           texto = `Te paso los precios: ${tres.join(", ")}. ¿Cuál te llevás?`;
