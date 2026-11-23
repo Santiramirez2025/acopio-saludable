@@ -151,6 +151,8 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
       // 22/11: solo si el texto no termina en pregunta. Nora ya había dado «Morandini 271» y le llegó
       // «¿Te lo dejo listo?» + «¿De qué barrio o ciudad sos?»: dos preguntas, una ya contestada.
       if (!/\?/.test(texto)) lineas.push("", "¿De qué barrio o ciudad sos? Así te digo el envío.");
+      // 22/11 (Enrique, «Vivo en Carlos Paz»): si el texto ya pide calle y número, los botones de zona sobran.
+      if (/calle y n[uú]mero/i.test(texto)) return [{ tipo: "texto", texto: corte(lineas.join("\n"), 4000) }];
       return [
         {
           tipo: "botones",

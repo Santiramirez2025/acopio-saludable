@@ -763,6 +763,11 @@ export async function pensar(c: {
     const salientes = planSinApuro(c.nombre, urlSitio(), yaMandoReal ? undefined : `${urlSitio()}${REALES[0] ? "/img/galeria/real-asi-llega.jpg" : ""}`);
     return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
   }
+  // 22/11 (Selva): tocó «Ver el carrito» y la IA le preguntó «¿qué es lo que lo hace pensarlo?». Se le manda el link.
+  if (/^\s*ver (el |mi )?(carrito|pedido)\s*[.!]?\s*$/i.test(c.texto) && c.pedidoGuardado && !c.pedidoGuardado.startsWith("orden:")) {
+    const salientes = await planCobroLink(c.pedidoGuardado);
+    return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
+  }
   // «Ver los productos»: se muestran, sin preguntar ni gastar el modelo. Primero los que vendemos, después por precio.
   if (quiereVer(c.texto)) {
     const cfgArg = await leerConfig();
