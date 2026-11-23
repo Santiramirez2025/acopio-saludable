@@ -36,7 +36,7 @@ async function candidatos(): Promise<Candidato[]> {
     LIMIT ${TOPE}`;
 }
 
-async function plantilla(tel: string, nombre: string, dia: string): Promise<boolean> {
+export async function plantillaSeguimiento(tel: string, nombre: string, dia: string): Promise<boolean> {
   const token = process.env.WHATSAPP_TOKEN;
   const id = process.env.WHATSAPP_PHONE_ID;
   if (!token || !id) return false;
@@ -57,7 +57,7 @@ export async function correrSeguimiento(): Promise<{ enviados: string[]; fallido
   let fallidos = 0;
   for (const c of await candidatos()) {
     const nombre = primerNombre(c.nombre) || "¡hola";
-    if (await plantilla(c.telefono, nombre, dia)) {
+    if (await plantillaSeguimiento(c.telefono, nombre, dia)) {
       const id = `seg.${c.telefono}.${Date.now()}`;
       await prisma.$executeRaw`INSERT INTO "WhatsappMensaje" ("id", "telefono", "de", "texto") VALUES (${id}, ${c.telefono}, 'bot', ${`[Seguimiento] ¿Seguís interesado? Te lo podemos llevar el ${dia}. [Botones: Sí, agendalo · Más adelante]`})`;
       enviados.push(c.nombre ?? c.telefono.slice(-4));

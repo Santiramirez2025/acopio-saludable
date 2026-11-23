@@ -13,7 +13,8 @@ import { NextResponse } from "next/server";
 import { crearPlantillaAviso } from "@/lib/avisos";
 import { crearPlantillaComprobante } from "@/lib/comprobante-envio";
 import { avisarReparto, crearPlantillaReparto, crearPlantillaRepartoHoy } from "@/lib/aviso-reparto";
-import { crearPlantillaSeguimiento } from "@/lib/seguimiento";
+import { crearPlantillaSeguimiento, plantillaSeguimiento } from "@/lib/seguimiento";
+import { registrarSalida } from "@/lib/whatsapp-memoria";
 import { correrReactivacion, crearPlantillaReactivacion } from "@/lib/reactivacion";
 import { correrRecompra, crearPlantillaRecompra } from "@/lib/recompra";
 import { correrRegalo, crearPlantillaRegalo, topeRegalo } from "@/lib/regalo-recetas";
@@ -84,6 +85,18 @@ export async function POST(req: Request) {
     for (const it of (Array.isArray(cuerpo.lista) ? cuerpo.lista : []).slice(0, 30)) {
       const o = (it ?? {}) as Record<string, string>;
       r[String(o.pedido)] = await avisarReparto(String(o.telefono), String(o.nombre ?? ""), String(o.pedido), String(o.hora), String(o.texto));
+    }
+    return NextResponse.json(r);
+  }
+  // 23/11: reprogramar pedidos con la ventana de 24 h cerrada (feriado, se pasó el reparto al martes).
+  // Plantilla acopio_seguimiento_v1: «Te lo guardamos y te lo podemos llevar el {{2}}. ¿Lo agendamos?».
+  if (cuerpo.accion === "reprogramar") {
+    const r: Record<string, boolean> = {};
+    for (const it of (Array.isArray(cuerpo.lista) ? cuerpo.lista : []).slice(0, 30)) {
+      const o = (it ?? {}) as Record<string, string>;
+      const ok = await plantillaSeguimiento(String(o.telefono), String(o.nombre || "¡hola"), String(o.dia));
+      if (ok) await registrarSalida(String(o.telefono), "persona", `[Plantilla reprogramar] ${o.pedido ?? ""}: te lo llevamos el ${o.dia}`).catch(() => undefined);
+      r[String(o.pedido ?? o.telefono)] = ok;
     }
     return NextResponse.json(r);
   }
