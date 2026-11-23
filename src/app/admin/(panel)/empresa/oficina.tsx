@@ -322,6 +322,7 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
   const cortarMic = useRef<(() => void) | null>(null);
   const [estadoVoz, setEstadoVoz] = useState("");
   const llamada = useRef<Llamada | null>(null);
+  const aborto = useRef<AbortController | null>(null);
   const ultimoRefresco = useRef(0);
   const [enVivo, setEnVivo] = useState<EstadoLlamada | null>(null);
   const [silenciado, setSilenciado] = useState(false);
@@ -360,6 +361,7 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
   useEffect(() => () => {
     cortarMic.current?.();
     callar();
+    aborto.current?.abort();
     llamada.current?.cortar();
   }, []);
 
@@ -491,9 +493,17 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
     cortarMic.current?.();
     setError("");
     llamada.current?.cortar();
-    llamada.current = await llamar({
+    llamada.current = null;
+    // Una sola llamada viva: la anterior (otra oficina, o una que todavía conectaba) se aborta, y lo que
+    // diga una llamada abortada ya no se muestra ni cambia el estado.
+    aborto.current?.abort();
+    const ac = new AbortController();
+    aborto.current = ac;
+    const nueva = await llamar({
       agente: a.id,
+      senal: ac.signal,
       onEstado: (e, detalle) => {
+        if (ac.signal.aborted) return;
         setEnVivo(e === "cortada" ? null : e);
         if (e === "error") {
           if (detalle) setError(detalle);
@@ -505,6 +515,7 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
         }
       },
       onTexto: (rol, t, final, rid) => {
+        if (ac.signal.aborted) return;
         // Mientras habla, el texto se refresca 4 veces por segundo (no en cada letra) para no trabar el audio.
         const ahora = performance.now();
         if (rol === "assistant" && !final && ahora - ultimoRefresco.current < 250) return;
@@ -541,6 +552,8 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
         onCambio();
       },
     });
+    if (ac.signal.aborted) nueva.cortar();
+    else llamada.current = nueva;
   };
   const silenciar = () => {
     const v = !silenciado;
@@ -548,6 +561,7 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
     llamada.current?.silenciar(v);
   };
   const cortarLlamada = () => {
+    aborto.current?.abort();
     setSilenciado(false);
     setVerChat(false);
     llamada.current?.cortar();
@@ -580,8 +594,10 @@ export function Ficha({ a, tv, onCerrar, onCambio, manosLibres = false, angosta 
     return () => {
       cancelado = true;
       clearTimeout(t);
+      aborto.current?.abort();
       llamada.current?.cortar();
       llamada.current = null;
+      callar();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [manosLibres, a.id]);

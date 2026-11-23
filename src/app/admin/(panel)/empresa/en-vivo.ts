@@ -16,6 +16,8 @@ type Opciones = {
   onOrden: (orden: string, para: string) => void;
   /** Algo que el agente hizo de verdad en la llamada (con el sí de Santiago). */
   onAccion?: (herramienta: string, args: Record<string, unknown>, ok: boolean, resultado: string) => void;
+  /** Si se aborta (cambiaste de oficina o cerraste) la llamada se corta aunque todavía esté conectando. */
+  senal?: AbortSignal;
 };
 
 export type Llamada = { cortar: () => void; silenciar: (si: boolean) => void };
@@ -53,13 +55,29 @@ export async function llamar(o: Opciones): Promise<Llamada> {
     cortar();
   };
 
+  // 22/11: si se abortaba mientras conectaba, la llamada vieja quedaba viva y saludaba con la voz de otro
+  // agente antes que el de la oficina nueva. Ahora el aborto corta en cualquier momento.
+  if (o.senal?.aborted) {
+    vivo = false;
+    return { cortar: () => undefined, silenciar: () => undefined };
+  }
+  o.senal?.addEventListener("abort", () => cortar(), { once: true });
+  const seguir = () => {
+    if (!vivo || o.senal?.aborted) throw new Error("cancelada");
+  };
+
   try {
     const r = await fetch("/api/admin/agentes/en-vivo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ agente: o.agente }) });
     const d = (await r.json().catch(() => ({}))) as { clave?: string; error?: string };
     if (!r.ok || !d.clave) throw new Error(d.error ?? `No se pudo abrir la llamada (${r.status})`);
 
+    seguir();
     const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
     limpiar.push(() => mic.getTracks().forEach((t) => t.stop()));
+    if (!vivo || o.senal?.aborted) {
+      mic.getTracks().forEach((t) => t.stop());
+      throw new Error("cancelada");
+    }
 
     const pc = new RTCPeerConnection();
     limpiar.push(() => pc.close());
@@ -115,6 +133,7 @@ export async function llamar(o: Opciones): Promise<Llamada> {
     document.addEventListener("visibilitychange", visibilidad);
     limpiar.push(() => document.removeEventListener("visibilitychange", visibilidad));
     dc.onopen = () => {
+      if (!vivo || o.senal?.aborted) return cortar();
       o.onEstado("escuchando");
       // Que salude primero y SOLO eso: hola + quién es, en una frase. Nada de retomar la charla anterior;
       // Santiago arranca hablando él (antes leía un montón de lo que había quedado de la vez pasada).
@@ -217,6 +236,7 @@ export async function llamar(o: Opciones): Promise<Llamada> {
       headers: { authorization: `Bearer ${d.clave}`, "content-type": "application/sdp" },
     });
     if (!sdp.ok) throw new Error(`OpenAI no respondió la llamada (${sdp.status}): ${(await sdp.text()).slice(0, 160)}`);
+    seguir();
     await pc.setRemoteDescription({ type: "answer", sdp: await sdp.text() });
     pc.onconnectionstatechange = () => {
       if (["failed", "closed", "disconnected"].includes(pc.connectionState)) cortar();
@@ -228,6 +248,10 @@ export async function llamar(o: Opciones): Promise<Llamada> {
     };
   } catch (e) {
     const msg = String(e instanceof Error ? e.message : e);
+    if (msg === "cancelada" || o.senal?.aborted) {
+      cortar();
+      return { cortar, silenciar: () => undefined };
+    }
     cortar();
     o.onEstado("error", /Permission|NotAllowed/i.test(msg) ? "Habilitá el micrófono en el navegador (candadito de la barra de direcciones)." : msg);
     return { cortar, silenciar: () => undefined };

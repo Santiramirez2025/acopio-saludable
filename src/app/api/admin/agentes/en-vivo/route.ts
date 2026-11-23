@@ -53,9 +53,9 @@ export async function POST(req: Request) {
               transcription: { model: nivel >= 1 ? "gpt-live-transcribe" : "gpt-4o-transcribe", language: "es", prompt: VOCABULARIO },
               noise_reduction: { type: "near_field" },
               // Que no te pise: entiende por el sentido de la frase si terminaste (no solo por el silencio)
-              // y con «low» te espera un poco más. Si hablás encima, se calla.
+              // 22/11: «medium» (antes «low», que esperaba de más y la charla no fluía). Si hablás encima, se calla.
               turn_detection: nivel >= 1
-                ? { type: "semantic_vad", eagerness: "low", create_response: true, interrupt_response: true }
+                ? { type: "semantic_vad", eagerness: "medium", create_response: true, interrupt_response: true }
                 : { type: "server_vad", threshold: 0.55, prefix_padding_ms: 300, silence_duration_ms: 1000, create_response: true, interrupt_response: true },
             },
             output: { voice: VOCES_EN_VIVO[agente] ?? "marin", ...(nivel >= 1 ? { speed: VELOCIDAD_VOZ[agente] ?? 1 } : {}) },
