@@ -25,7 +25,7 @@ test("aplicarReglas cobra el precio fijo del envío propio bajo mínimo y nos cu
   assert.equal(o.masBarata, true);
 });
 
-test("cotizarEnvio: con $15.000 en la zona el envío propio sale $3.000 y avisa desde cuándo es sin cargo", async () => {
+test("cotizarEnvio: con $15.000 en la zona el envío propio sale $3.000 y ya no promete sin cargo (23/11)", async () => {
   const opciones = await cotizarEnvio(cfg, { cpDestino: "5152", provincia: "Córdoba", bultos, subtotal: 15000 }, []);
   const propia = opciones.find((o) => o.id === "propia");
   assert.ok(propia);
@@ -33,15 +33,15 @@ test("cotizarEnvio: con $15.000 en la zona el envío propio sale $3.000 y avisa 
   assert.equal(propia.costo, 0);
   assert.equal(propia.nombre, "Te lo llevamos nosotros");
   // `pesos` separa el signo con un espacio no separable: se acepta cualquier espacio.
-  assert.match(propia.plazo, /desde \$\s?20\.000 van sin cargo/u);
+  assert.doesNotMatch(propia.plazo, /sin cargo/u);
 });
 
-test("cotizarEnvio: con $25.000 en la zona el envío propio sigue sin cargo", async () => {
+test("cotizarEnvio: con $25.000 en la zona el envío propio también cuesta $3.000 (23/11)", async () => {
   const opciones = await cotizarEnvio(cfg, { cpDestino: "5152", provincia: "Córdoba", bultos, subtotal: 25000 }, []);
   const propia = opciones.find((o) => o.id === "propia");
   assert.ok(propia);
-  assert.equal(propia.precio, 0);
-  assert.equal(propia.nombre, "Entrega propia sin cargo");
+  assert.equal(propia.precio, 3000);
+  assert.equal(propia.nombre, "Te lo llevamos nosotros");
 });
 
 test("cotizarEnvio: sin propiaBajoMinimo todo sigue como antes (sin cargo, el mínimo lo frena antes)", async () => {

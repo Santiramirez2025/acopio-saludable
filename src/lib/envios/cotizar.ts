@@ -1,5 +1,6 @@
 // Orquestador de envíos: entrega propia + correos con credenciales; la tabla entra como respaldo.
 
+import { ENVIO_SIEMPRE } from "../minimo-zona";
 import { cpEnLista, zonaDeProvincia } from "./geo";
 import { cargoVecinaPorCp, envioVecina } from "./vecinas";
 import { pesos, precioRedondo } from "../precios";
@@ -66,8 +67,9 @@ export async function cotizarEnvio(
     const bajo = cfg.propiaBajoMinimo;
     const plazo = `Te lo llevamos en ${plazoPropia}. Coordinamos el horario por WhatsApp.`;
     // Debajo del mínimo de la zona se cobra un envío fijo: nos sigue costando $0 (lo llevamos nosotros), pero el cliente paga `precio`.
-    if (bajo && bajo.precio > 0 && pedido.subtotal < bajo.desde) {
-      tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Te lo llevamos nosotros", costo: 0, precioFijo: bajo.precio, plazo: `${plazo} Pedidos desde ${pesos(bajo.desde)} van sin cargo.` });
+    // 23/11 (Santiago): el envío de Carlos Paz se cobra siempre, sin umbral de «sin cargo».
+    if (bajo && bajo.precio > 0 && (ENVIO_SIEMPRE || pedido.subtotal < bajo.desde)) {
+      tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Te lo llevamos nosotros", costo: 0, precioFijo: bajo.precio, plazo: ENVIO_SIEMPRE ? plazo : `${plazo} Pedidos desde ${pesos(bajo.desde)} van sin cargo.` });
     } else {
       tarifas.push({ id: "propia", proveedor: "propia", modalidad: "propia", nombre: "Entrega propia sin cargo", costo: 0, plazo });
     }
