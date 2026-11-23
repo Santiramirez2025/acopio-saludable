@@ -5,6 +5,7 @@ import { wherePublicado } from "@/lib/filtros-producto";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
 import { textoEntregaZona, textoCompraMinima, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { textoComoPagar } from "@/lib/como-pagar";
 import { urlSitio } from "@/lib/sitio";
 import { RielProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
 
@@ -28,7 +29,7 @@ export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
     ["¿A qué zonas llevan el pedido?", `A Villa Carlos Paz y al sur de Punilla, en ${cfg.plazoEntregaPropia}. ${textoEntregaZona(cfg)}`],
     ["¿Hacen envíos al resto de Córdoba y del país?", `Sí. ${zonaPaga ? `Hasta ${zonaPaga.nombre} llegamos nosotros: ${pesos(zonaPaga.precio)} por pedido. ` : ""}Al resto del país despachamos por correo. El costo se calcula en el carrito con tu código postal.`],
     ["¿Cuál es la compra mínima?", textoCompraMinima(cfg)],
-    ["¿Cómo se paga?", "Por transferencia bancaria, con descuento, o con tarjeta y dinero en cuenta a través de Mercado Pago."],
+    ["¿Cómo se paga?", textoComoPagar({ reparto: propia || !!zonaPaga })],
     ["¿Tienen productos sin TACC?", "Sí, hay una góndola completa de productos rotulados sin TACC por sus fabricantes. Verificá siempre el logo oficial en el envase."],
   ];
   const faq = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: preguntas.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) };

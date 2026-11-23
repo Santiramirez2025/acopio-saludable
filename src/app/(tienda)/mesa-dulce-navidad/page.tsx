@@ -4,6 +4,7 @@ import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
 import { textoEntregaZona, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { textoComoPagar } from "@/lib/como-pagar";
 import { urlSitio } from "@/lib/sitio";
 import { GRUPOS, MESA_DULCE, presupuestoMesa } from "@/lib/mesa-dulce";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
@@ -44,7 +45,7 @@ export default async function MesaDulceNavidad() {
     ...(mesa ? [["¿Qué trae el combo Mesa navideña?", `${mesa.items.map((i) => i.producto.producto).join(", ")}. Sale ${pesos(mesa.precio)}.`] as [string, string]] : []),
     ["¿Cuánto antes conviene comprar?", "Los frutos secos y las garrapiñadas en frasco hermético se mantienen bien varias semanas, así que podés comprar a principios de diciembre y evitar las corridas de la última semana."],
     ["¿Hacen entrega en Carlos Paz?", `Sí, en ${cfg.plazoEntregaPropia}${sinMinimo ? ", sin compra mínima" : `, con compra mínima de ${minimo}`}. ${textoEntregaZona(cfg)} A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
-    ["¿Cómo pago?", "Por transferencia, con descuento, o con Mercado Pago. El pedido sale cuando el pago está acreditado."],
+    ["¿Cómo pago?", textoComoPagar()],
   ];
 
   const base = urlSitio();
@@ -118,7 +119,7 @@ export default async function MesaDulceNavidad() {
               </tbody>
             </table>
           </div>
-          <p className="mt-2 text-xs text-stone-600">En Villa Carlos Paz la entrega es sin cargo desde {minimo}; al resto de la zona, con costo según la localidad. Pagando por transferencia sale menos.</p>
+          <p className="mt-2 text-xs text-stone-600">En Villa Carlos Paz la entrega es sin cargo desde {minimo}; al resto de la zona, con costo según la localidad. En la zona pagás al recibir.</p>
         </section>
       )}
 

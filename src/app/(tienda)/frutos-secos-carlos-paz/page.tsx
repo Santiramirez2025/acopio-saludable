@@ -4,6 +4,7 @@ import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda } from "@/lib/tienda";
 import { pesos } from "@/lib/precios";
 import { textoEntregaZona, textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { textoComoPagar } from "@/lib/como-pagar";
 import { urlSitio } from "@/lib/sitio";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { GrillaProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
@@ -34,7 +35,7 @@ export default async function FrutosSecosCarlosPaz() {
     ["¿Los mixes los arman ustedes?", "Sí. El Mix Clásico con cajú (con o sin girasol), el sin maní y el tropical los armamos en casa con frutos secos que compramos por bolsa grande, y te los mandamos en bolsas de 1 kg, 500 g o 250 g según el producto."],
     ["¿Cobran el envío en Carlos Paz?", `${textoEntregaZona(cfg)} Te lo llevamos en ${cfg.plazoEntregaPropia}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
     ["¿Hay compra mínima?", sinMinimo ? `No. ${textoZonaSinMinimo(cfg)} Sumás frutos secos, combos y cualquier otro producto de la tienda.` : `Sí, ${minimo} por pedido en la zona de entrega, sumando frutos secos, combos y cualquier otro producto de la tienda.`],
-    ["¿Cómo pago?", "Por transferencia, con descuento, o con Mercado Pago. Si preferís, consultanos por WhatsApp y te armamos el pedido."],
+    ["¿Cómo pago?", textoComoPagar()],
     ["¿Sirven para regalar en las fiestas?", "Sí. Los combos de frutos secos y los mixes en bolsa de 1 kg se usan mucho para regalos de fin de año y para la mesa navideña. Si necesitás varias unidades para una empresa, escribinos por WhatsApp."],
   ];
 
