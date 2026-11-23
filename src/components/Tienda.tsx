@@ -6,7 +6,15 @@ import { CHIP_ENCARGO } from "@/lib/catalogo-encargo";
 import { Foto } from "./Foto";
 import { AgregarRapido, BotonAgregar } from "./Carrito";
 
-export function TarjetaProducto({ p, className = "", antes, bajoPct }: { p: ProductoTienda; className?: string; antes?: number; bajoPct?: number }) {
+/** Sello sobre la foto, al estilo de las vidrieras de mayorista: «NUEVO», «PROMO SEMANAL» (solo si de verdad bajó) o «DESTACADO». */
+export type Sello = "nuevo" | "promo" | "destacado";
+const SELLO: Record<Sello, { texto: string; clase: string }> = {
+  nuevo: { texto: "Nuevo", clase: "bg-sol text-acopio-900" },
+  promo: { texto: "Promo semanal", clase: "bg-[#c8372d] text-white" },
+  destacado: { texto: "Destacado de la semana", clase: "bg-acopio-700 text-white" },
+};
+
+export function TarjetaProducto({ p, className = "", antes, bajoPct, sello }: { p: ProductoTienda; className?: string; antes?: number; bajoPct?: number; sello?: Sello }) {
   const href = `/producto/${encodeURIComponent(p.codigo)}`;
   // Si el envase trae varias unidades, mostramos cuánto sale cada una: es lo que el cliente compara.
   const cadaUna = precioPorUnidadSuelta(p.precio, p.presentacion);
@@ -19,6 +27,9 @@ export function TarjetaProducto({ p, className = "", antes, bajoPct }: { p: Prod
         {/* La baja la decide el proveedor y dura lo que dure: por eso se muestra cuánto bajó,
             no una promo nuestra con fecha. */}
         {bajoPct ? <span className="chip absolute right-2 top-2 bg-sol font-bold text-acopio-900">−{bajoPct}%</span> : null}
+        {sello && (
+          <span className={`absolute -right-1 -rotate-3 rounded-l-full px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide shadow ${bajoPct ? "top-10" : "top-3"} ${SELLO[sello].clase}`}>{SELLO[sello].texto}</span>
+        )}
         <div className="flex flex-1 flex-col px-1.5 pt-2.5">
           <h3 className="text-[15px] font-semibold leading-snug"><Link href={href} className="estirado line-clamp-2 after:absolute after:inset-0 after:rounded-xl hover:underline">{p.producto}</Link></h3>
           <p className="mt-0.5 line-clamp-1 text-xs text-stone-600">{p.presentacion}</p>
@@ -57,6 +68,38 @@ export function RielProductos({ productos, columnas = 4 }: { productos: Producto
         <TarjetaProducto key={p.codigo} p={p} className="w-[46%] shrink-0 snap-start sm:w-[30%] lg:w-auto" />
       ))}
     </div>
+  );
+}
+
+/** Riel con sello: novedades, promos de la semana y destacados. Con precio de antes si bajó. */
+export function RielSellado({ productos }: { productos: (ProductoTienda & { precioAntes?: number; bajoPct?: number; sello: Sello })[] }) {
+  return (
+    <div className="riel lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
+      {productos.map((o) => (
+        <TarjetaProducto key={o.codigo} p={o} antes={o.precioAntes} bajoPct={o.bajoPct} sello={o.sello} className="w-[46%] shrink-0 snap-start sm:w-[30%] lg:w-auto" />
+      ))}
+    </div>
+  );
+}
+
+/** Banda de título de la portada (23/11): barra verde con estrella, como las vidrieras de mayorista. */
+export function BandaSeccion({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative mb-4 flex items-center">
+      <span className="z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 border-acopio-600 bg-white text-xl text-acopio-600" aria-hidden>☆</span>
+      <h2 className="-ml-5 flex-1 rounded-r-2xl bg-acopio-600 py-2 pl-8 pr-4 text-center font-display text-base font-extrabold uppercase tracking-wider text-white sm:text-lg">{children}</h2>
+    </div>
+  );
+}
+
+/** Botón rojo centrado debajo de cada banda: «Ver novedades», «Ver ofertas». */
+export function BotonVer({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <p className="mt-4 text-center">
+      <Link href={href} className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-[#c8372d] px-7 text-sm font-bold text-white shadow-md hover:bg-[#a92b23]">
+        <span aria-hidden>🛒</span> {children}
+      </Link>
+    </p>
   );
 }
 

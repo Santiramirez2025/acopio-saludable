@@ -17,7 +17,8 @@ import { atajoCombo, DESTACADO_PRODUCTO, DESTACADO_SI_FALTA, elegirDestacado, KI
 import { totalTransferencia } from "@/lib/combos-tema";
 import { pctTransferenciaCombo } from "@/lib/precio-fijo";
 import { DibujoNutri } from "@/components/Nutri";
-import { ListaCombo, RielOfertas, RielProductos, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
+import { BandaSeccion, BotonVer, ListaCombo, RielProductos, RielSellado, TarjetaCombo, TituloSeccion } from "@/components/Tienda";
+import { promosDeLaSemana } from "@/lib/promo-proveedor";
 import { ofertasDelProveedor } from "@/lib/ofertas";
 import { vidrieraDeStock } from "@/lib/en-stock";
 import { POR_ENCARGO } from "@/lib/catalogo-encargo";
@@ -54,6 +55,15 @@ export default async function Home() {
     const primero = deEncargo.filter((p) => p.fotoUrl && !vistos.has(p.categoria) && vistos.add(p.categoria));
     return [...primero, ...deEncargo.filter((p) => p.fotoUrl && !primero.includes(p))].slice(0, 12);
   })();
+  // Banda «Ofertas y promociones» (23/11): primero lo que de verdad bajó de precio («Promo semanal», con el
+  // precio de antes tachado) y después lo que el proveedor tiene en promo esta semana y nosotros publicamos
+  // («Destacado de la semana»: el sello de promo solo va si nuestro precio bajó).
+  const enPromo = await promosDeLaSemana().catch(() => []);
+  const dePromo = enPromo.length ? await productosTienda({ where: { codigo: { in: enPromo.map((x) => x.codigo) }, fotoUrl: { not: null } }, take: 12 }) : [];
+  const banda = [
+    ...ofertas.map((o) => ({ ...o, sello: "promo" as const })),
+    ...dePromo.filter((p) => !ofertas.some((o) => o.codigo === p.codigo)).map((p) => ({ ...p, sello: "destacado" as const })),
+  ].slice(0, 8);
   const destacado = elegirDestacado<ProductoTienda, ComboTienda>(candidatos, combos);
   const atajo = atajoCombo(combos);
   // Las cajas de alfajores van al lado del kit; las tapitas ya están adentro del kit.
@@ -147,6 +157,34 @@ export default async function Home() {
         </section>
       )}
 
+      {nuevos.length > 0 && (
+        <section>
+          <BandaSeccion>Novedades</BandaSeccion>
+          <RielSellado productos={nuevos.slice(0, 8).map((p) => ({ ...p, sello: "nuevo" as const }))} />
+          <BotonVer href="/novedades">Ver novedades</BotonVer>
+        </section>
+      )}
+
+      {banda.length > 0 && (
+        <section>
+          <BandaSeccion>Ofertas y promociones</BandaSeccion>
+          <RielSellado productos={banda} />
+          <BotonVer href="/ofertas">Ver ofertas</BotonVer>
+        </section>
+      )}
+
+      {disponibles.length > 0 && (
+        <section>
+          <BandaSeccion>Promociones destacadas del mes</BandaSeccion>
+          <div className="riel lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0">
+            {disponibles.slice(0, 4).map((c) => (
+              <TarjetaCombo key={c.slug} c={c} llegaAlMinimo={c.precio >= cfg.compraMinima} className="w-[78%] shrink-0 snap-start sm:w-[44%] lg:w-auto" />
+            ))}
+          </div>
+          <BotonVer href="/combos">Ver combos</BotonVer>
+        </section>
+      )}
+
       {vidriera.length > 0 && (
         <section>
           <TituloSeccion href="/catalogo" enlace="Ver todo el catálogo">Los que más se llevan</TituloSeccion>
@@ -196,13 +234,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {nuevos.length > 0 && (
-        <section>
-          <TituloSeccion href="/novedades" enlace="Ver todos">Recién sumados, por encargo</TituloSeccion>
-          <p className="-mt-1 mb-3 max-w-2xl text-sm text-stone-700">Más variedad de La Granja: frutas, harinas, sin TACC, untables, infusiones y suplementos. Los pedimos con tu compra y te llegan en 24 a 48 hs.</p>
-          <RielProductos productos={nuevos} />
-        </section>
-      )}
 
       {alfajores.length > 0 && (
         <section className="rounded-3xl bg-acopio-900 p-4 sm:p-6">
@@ -240,15 +271,6 @@ export default async function Home() {
         </section>
       )}
 
-      {ofertas.length > 0 && (
-        <section>
-          {/* Las bajas las manda el proveedor y duran lo que duran: por eso no hay fecha de
-              vencimiento inventada, solo cuánto bajó respecto del precio anterior. */}
-          <TituloSeccion href="/ofertas" enlace="Ver todas">Bajaron de precio</TituloSeccion>
-          <p className="-mt-1 mb-3 max-w-2xl text-sm text-stone-700">Lo que el proveedor bajó en la última lista. Los precios se mueven todos los días: hoy están a este valor.</p>
-          <RielOfertas ofertas={ofertas} />
-        </section>
-      )}
 
       {sinTacc.length > 0 && (
         <section className="rounded-3xl bg-acopio-100 p-4 sm:p-6">
