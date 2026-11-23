@@ -10,6 +10,7 @@
 //   POST { accion: "estado", id, estado, nota?, silencioso? } → cambia el estado de un pedido (mismo efecto que el panel:
 //        ENVIADO avisa «ya está en el reparto de hoy, el repartidor te escribe» por WhatsApp; ENTREGADO = cobrado (registra el pago si faltaba) y manda gracias + referidos; silencioso = sin avisos)
 import { NextResponse } from "next/server";
+import { urlSitio } from "@/lib/sitio";
 import type { EstadoPedido } from "@prisma/client";
 import { esAdmin, esSesionAdmin } from "@/lib/admin-acceso";
 import { cobroRequiereSesion } from "@/lib/cobro-permiso";
@@ -49,6 +50,8 @@ export async function GET(req: Request) {
       pedidos: os.map((o) => ({
         id: o.id,
         codigo: `AS-${String(o.id).padStart(5, "0")}`,
+        // Página del pedido: ahí el cliente lo puede pagar con tarjeta por Mercado Pago (Angela, 23/11).
+        link: `${urlSitio()}/pedido/${o.token}`,
         estado: o.estado,
         creado: o.createdAt,
         nombre: o.nombre,
