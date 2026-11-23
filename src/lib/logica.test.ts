@@ -2167,3 +2167,10 @@ test("23/11: las respuestas automáticas de los consultorios (nutricionistas) no
   ]) assert.ok(esRespuestaAutomatica(m), m);
   for (const m of ["Sí, contame", "Gracias, mañana te escribo", "Hola, quiero el Trío con las 3 recetas"]) assert.ok(!esRespuestaAutomatica(m), m);
 });
+
+test("23/11 (Jorge): «Pasame el domicilio» pide NUESTRA dirección, no es que nos pasa la suya", async () => {
+  const { preguntaDondeEstan } = await import("./whatsapp-interactivo");
+  assert.ok(preguntaDondeEstan("Pasame el domicilio."));
+  assert.ok(preguntaDondeEstan("pasame la dirección"));
+  assert.ok(!preguntaDondeEstan("Los Cerros 123, barrio Centro"));
+});

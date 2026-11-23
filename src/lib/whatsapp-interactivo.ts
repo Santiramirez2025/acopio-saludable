@@ -915,7 +915,7 @@ export function preguntaDondeEstan(texto: string): boolean {
   return (
     /\bdonde (estan|esta el (negocio|local)|quedan?|los encuentro|se encuentran|es el (negocio|local))\b/.test(t) ||
     /\b(tu|su) direccion\b|\bdame (la|tu) direccion\b|\bdireccion del (local|negocio)\b/.test(t) ||
-    /\b(me )?(pasa|pasas|pasame|pasan|mandame|mandas|decime|me das|me decis|cual es|me podes pasar|me pasarias) (la )?(direccion|ubicacion)\b/.test(t) ||
+    /\b(me )?(pasa|pasas|pasame|pasan|mandame|mandas|decime|me das|me decis|cual es|me podes pasar|me pasarias) (la |el |tu |su )?(direccion|ubicacion|domicilio)\b/.test(t) ||
     /\bvoy yo\b|\bvamos nosotros\b/.test(t) ||
     /\b(tienen|hay) local\b/.test(t) ||
     // 22/11 (cristinalorca52, AS-162): «Hola, quiero la dirección. Gracias» pedía NUESTRA dirección «para ver si quiero
