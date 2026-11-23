@@ -12,7 +12,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const volver = (motivo?: string) => NextResponse.redirect(`${urlSitio()}/pedido/${token}${motivo ? `?mp=${motivo}` : ""}`);
   const pedido = await prisma.order.findUnique({ where: { token } });
   if (!pedido) return NextResponse.json({ error: "Pedido inexistente" }, { status: 404 });
-  if (pedido.estado !== "PENDIENTE_PAGO" || pedido.medioPago !== "MERCADOPAGO") return volver();
+  // 23/11 (Angela): pidió pagar al recibir y después quiso pagar con tarjeta: un pedido «al recibir» que
+  // sigue pendiente también se puede pagar por Mercado Pago desde su página.
+  if (pedido.estado !== "PENDIENTE_PAGO" || (pedido.medioPago !== "MERCADOPAGO" && pedido.medioPago !== "AL_RECIBIR")) return volver();
   if (!mpConfigurado()) return volver("no-disponible");
   try {
     const pref = await crearPreferencia({ token, numero: numeroPedido(pedido.id), total: Number(pedido.total), nombre: pedido.nombre, email: pedido.email });

@@ -81,6 +81,13 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
           {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="btn mt-4">Enviar comprobante por WhatsApp</a>}
         </section>
       )}
+      {pendiente && pedido.medioPago === "AL_RECIBIR" && mpConfigurado() && (
+        <section className="rounded-xl border border-tierra-200 bg-white p-5">
+          <h2 className="font-display text-xl font-semibold">¿Preferís pagarlo con tarjeta?</h2>
+          <p className="mt-1 text-stone-700">Lo podés pagar cuando te llega, en efectivo o por transferencia. Si te queda mejor con tarjeta de crédito o débito, pagalo ahora por Mercado Pago y el pedido sale igual.</p>
+          <a href={`/pedido/${token}/pagar`} className="btn mt-4">Pagar {pesos(Number(pedido.total))} con tarjeta (Mercado Pago)</a>
+        </section>
+      )}
       {pendiente && pedido.medioPago === "MERCADOPAGO" && (
         <section className="rounded-xl border border-tierra-200 bg-white p-5">
           <h2 className="font-display text-xl font-semibold">Falta el pago</h2>
