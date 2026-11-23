@@ -65,6 +65,8 @@ export async function candidatosPromo(): Promise<Candidato[]> {
   return prisma.$queryRaw<Candidato[]>`
     SELECT c."telefono", c."nombre" FROM "WhatsappConversacion" c
     WHERE c."baja" = false AND c."prospecto" IS NULL AND c."telefono" ~ '^[0-9]+$' AND c."estado" <> 'persona'
+      -- 23/11: clientes con reclamo a los que no se les escribe más (orden 15)
+      AND c."telefono" NOT IN ('5493515642516')
       -- Ya recibió al menos un pedido…
       AND EXISTS (SELECT 1 FROM "Order" o WHERE right(regexp_replace(o."telefono", '[^0-9]', '', 'g'), 10) = right(c."telefono", 10) AND o."estado" = 'ENTREGADO')
       -- …y no compró ni tiene un pedido en curso de los últimos 2 días (21/11, Santiago: «esperamos un par de días y pum, la gráfica»).
