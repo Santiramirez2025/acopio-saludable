@@ -6,6 +6,7 @@
 //   POST { accion: "notas", id, notas, nota? } → corrige las notas del pedido (qué se cobra, cambios acordados)
 //   POST { accion: "item", id, producto, presentacion?, cantidad, precio, costo? } → suma al pedido un renglón sin código
 //        (producto cotizado a mano). Solo pedidos sin pagar. Suma precio × cantidad al subtotal y al total.
+//   POST { accion: "item", quitar: true, id, producto, cantidad } → saca ese renglón (no toca el total)
 //   POST { accion: "total", id, total, nota } → corrige el total de un pedido sin pagar (la diferencia va como descuento o recargo).
 //   POST { accion: "estado", id, estado, nota?, silencioso? } → cambia el estado de un pedido (mismo efecto que el panel:
 //        ENVIADO avisa «ya está en el reparto de hoy, el repartidor te escribe» por WhatsApp; ENTREGADO = cobrado (registra el pago si faltaba) y manda gracias + referidos; silencioso = sin avisos)
@@ -123,13 +124,24 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   if (!(await esAdmin())) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { accion?: string; id?: number; estado?: string; nota?: string; notas?: string; silencioso?: boolean; producto?: string; presentacion?: string; cantidad?: number; precio?: number; costo?: number; total?: number };
+  const b = (await req.json().catch(() => ({}))) as { accion?: string; id?: number; estado?: string; nota?: string; notas?: string; silencioso?: boolean; producto?: string; presentacion?: string; cantidad?: number; precio?: number; costo?: number; total?: number; quitar?: boolean };
   // Pedido cotizado a mano (Sara, 29/10: cacao Alzol y pasas rubias sin código): el panel quedaba $22.100 abajo.
   if (b.accion === "item" || b.accion === "total") {
     const id = Number(b.id);
     const o = id ? await prisma.order.findUnique({ where: { id } }) : null;
     if (!o) return NextResponse.json({ error: "No existe el pedido" }, { status: 404 });
     if (o.pagadoAt || o.estado === "CANCELADO" || o.estado === "ENTREGADO") return NextResponse.json({ error: "Solo se corrigen pedidos abiertos y sin pagar" }, { status: 400 });
+    // { accion: "item", quitar: true, id, producto, cantidad } saca un renglón (el que coincide en producto y cantidad). El total se corrige aparte con accion total.
+    if (b.accion === "item" && b.quitar) {
+      const it = await prisma.orderItem.findFirst({ where: { orderId: id, producto: String(b.producto ?? ""), cantidad: Math.round(Number(b.cantidad) || 1) } });
+      if (!it) return NextResponse.json({ error: "No hay un renglón así" }, { status: 404 });
+      await prisma.$transaction([
+        prisma.orderItem.delete({ where: { id: it.id } }),
+        prisma.order.update({ where: { id }, data: { subtotal: { decrement: Number(it.precioUnitario) * it.cantidad } } }),
+        prisma.orderEvent.create({ data: { orderId: id, estado: o.estado, nota: `Renglón quitado: ${it.cantidad}× ${it.producto}` } }),
+      ]);
+      return NextResponse.json({ ok: true });
+    }
     if (b.accion === "item") {
       const cantidad = Math.max(1, Math.round(Number(b.cantidad) || 1));
       const precio = Math.round(Number(b.precio) || 0);
