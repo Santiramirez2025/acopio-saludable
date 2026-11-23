@@ -45,7 +45,7 @@ export function tipoComentario(texto: string): TipoComentario {
 export function respuestaPublica(c: Comentario, conDm: boolean, oferta?: string | null): string {
   const tipo = tipoComentario(c.texto);
   const rota = [...c.id].reduce((s, ch) => s + ch.charCodeAt(0), 0);
-  if (tipo === "donde") return `¡Hola! No tenemos local: armamos cada pedido y te lo llevamos a tu casa, sin cargo en Carlos Paz. Escribinos al WhatsApp ${WHATSAPP_VISIBLE} y te lo dejamos listo 🙌`;
+  if (tipo === "donde") return `¡Hola! No tenemos local: armamos cada pedido y te lo llevamos a tu casa en Carlos Paz y lo pagás al recibir. Escribinos al WhatsApp ${WHATSAPP_VISIBLE} y te lo dejamos listo 🙌`;
   if (tipo === "compra" || conDm) return `¡Hola! ${oferta ? `${oferta} ` : ""}Escribinos al WhatsApp ${WHATSAPP_VISIBLE} y te lo dejamos listo 🙌`;
   return GRACIAS[rota % GRACIAS.length];
 }
@@ -53,7 +53,7 @@ const GRACIAS = ["¡Gracias! 🙌", "¡Gracias por sumarte! 🌱", "¡Qué bueno
 
 /** El mensaje privado: lo que se vende hoy y el WhatsApp, donde se cierra la venta. */
 export function mensajePrivado(oferta: string | null): string {
-  const que = oferta ?? "Tenemos frutos secos, mixes y semillas por kilo, y te los llevamos sin cargo en Carlos Paz.";
+  const que = oferta ?? "Tenemos frutos secos, mixes y semillas por kilo, y te los llevamos a tu casa en Carlos Paz; pagás al recibir.";
   return `¡Hola! Te escribo por tu comentario 🙌 ${que} Para pedirlo, escribinos al WhatsApp: wa.me/549${WHATSAPP_VISIBLE.replace(/\D/g, "")} ¿Es para tu casa?`;
 }
 

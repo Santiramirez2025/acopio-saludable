@@ -59,7 +59,7 @@ export default async function TiendaLayout({ children }: { children: React.React
           {zonaSinMinimo(cfg) ? (
             <>
               {/* Martín 19/11: sin cargo solo en Carlos Paz y San Antonio de Arredondo; el resto de la zona paga un fijo. */}
-              <b className="font-bold text-sol">Sin compra mínima</b> en Carlos Paz y la zona · Carlos Paz y San Antonio: sin cargo desde <b className="font-bold text-sol">{pesos(barra.sinCargoDesde)}</b> (si no, {pesos(barra.bajoUmbral)}) · <Link href="/envios" className="underline underline-offset-2">resto de la zona, desde {pesos(barra.vecinasDesde)}</Link>
+              <b className="font-bold text-sol">Sin compra mínima</b> en Carlos Paz y la zona · Carlos Paz y San Antonio: envío <b className="font-bold text-sol">{pesos(barra.bajoUmbral)}</b>, pagás al recibir · <Link href="/envios" className="underline underline-offset-2">resto de la zona, desde {pesos(barra.vecinasDesde)}</Link>
               <span className="hidden sm:inline"> · Envíos a todo el país desde {pesos(barra.paisDesde)}</span>
             </>
           ) : (

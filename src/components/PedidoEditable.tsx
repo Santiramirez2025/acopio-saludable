@@ -42,7 +42,7 @@ export function PedidoEditable({ items, compraMinima, etiqueta = "Cargar este pe
         <div>
           <p className="text-lg font-semibold tabular-nums">{pesosCliente(total)}</p>
           <p className="text-xs text-stone-600">
-            {sinMinimo ? (total >= compraMinima ? "Envío sin cargo en Carlos Paz" : `Faltan ${pesosCliente(compraMinima - total)} para el envío sin cargo en Carlos Paz`) : total >= compraMinima ? "Llega a la compra mínima" : `Faltan ${pesosCliente(compraMinima - total)} para la compra mínima de ${pesosCliente(compraMinima)}`}
+            {sinMinimo ? "En Carlos Paz te lo llevamos nosotros y lo pagás al recibir" : total >= compraMinima ? "Llega a la compra mínima" : `Faltan ${pesosCliente(compraMinima - total)} para la compra mínima de ${pesosCliente(compraMinima)}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

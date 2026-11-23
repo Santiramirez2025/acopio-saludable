@@ -3,7 +3,7 @@ import { plazoZonaPropia } from "./salida-reparto";
 
 import { PROVINCIAS } from "./envios/geo";
 import type { EnvioCotizado } from "./asistente-catalogo";
-import { envioPropioPara, umbralZona, type ReglaMinimo } from "./minimo-zona";
+import { ENVIO_SIEMPRE, envioPropioPara, umbralZona, type ReglaMinimo } from "./minimo-zona";
 import { pesos } from "./precios";
 import { cargoVecinaPorLugar, envioVecina } from "./envios/vecinas";
 
@@ -52,6 +52,9 @@ export function envioZonaPropia(cfg: ReglaMinimo & { plazoEntregaPropia: string 
   const umbral = umbralZona(cfg);
   // Sin subtotal (todavía no eligió nada) no se puede decir «no llega»: se da la regla entera.
   // El 5/11 a Deolinda, con una Despensa de $28.500, el bot le dijo $3.000 porque la herramienta recibía 0.
+  if (fijo > 0 && ENVIO_SIEMPRE) {
+    return { lugar, costo: fijo, propia: true, zonaPropia: true, alRecibir: true, detalle: `Envío a ${lugar}: ${pesos(fijo)} con cualquier pedido, y lo pagás al recibir. Te lo llevamos nosotros en ${plazoZonaPropia(cfg.plazoEntregaPropia, Date.now())}.` };
+  }
   if (fijo > 0 && subtotal <= 0) {
     return {
       lugar,

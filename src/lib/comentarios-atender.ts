@@ -48,7 +48,7 @@ export async function atenderComentarios(lista: Comentario[]): Promise<void> {
     const cfg = await leerConfig().catch(() => null);
     const antes = cfg ? precioTransferencia(Math.round(trio.precio), pctTransferenciaCombo(trio.slug, cfg.descuentoTransferenciaPct)) : null;
     const trae = trio.items.map((i) => renglonCombo(i.producto, i.cantidad)).join(", ");
-    return (oferta = `El Trío son 3 kg (${trae}): ${antes ? `${pesos(antes)} pagando antes por transferencia o ${pesos(Math.round(trio.precio))} al recibir` : pesos(Math.round(trio.precio))}, con envío sin cargo en Carlos Paz.`);
+    return (oferta = `El Trío son 3 kg (${trae}): ${antes ? `${pesos(antes)} pagando antes por transferencia o ${pesos(Math.round(trio.precio))} al recibir` : pesos(Math.round(trio.precio))}, más $3.000 de envío en Carlos Paz; lo pagás al recibir.`);
   };
   for (const c of lista) {
     // Lo que comenta la propia cuenta (nuestras respuestas) y las respuestas dentro de un hilo no se contestan.

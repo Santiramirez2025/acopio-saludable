@@ -68,7 +68,7 @@ export default async function SinTaccCarlosPaz() {
         {[
           ["Entrega en la zona", `${textoEntregaZona(cfg)} Te lo llevamos en ${cfg.plazoEntregaPropia}.`],
           ["Solo rotulados", "En esta sección van únicamente productos envasados con marca y rótulo sin TACC o sin gluten del fabricante. Nada fraccionado."],
-          ["Combinás con todo", sinMinimo ? `Sin compra mínima en la zona (entrega sin cargo desde ${minimo}), sumando sin TACC con frutos secos, semillas y el resto de la tienda.` : `Compra mínima de ${minimo}, sumando sin TACC con frutos secos, semillas y el resto de la tienda.`],
+          ["Combinás con todo", sinMinimo ? `Sin compra mínima en la zona (envío $3.000, pagás al recibir), sumando sin TACC con frutos secos, semillas y el resto de la tienda.` : `Compra mínima de ${minimo}, sumando sin TACC con frutos secos, semillas y el resto de la tienda.`],
         ].map(([t, d]) => (
           <div key={t} className="rounded-2xl bg-white p-4 shadow-ficha">
             <h2 className="font-display text-lg font-bold">{t}</h2>

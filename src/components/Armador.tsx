@@ -65,7 +65,7 @@ export function Armador({ nichos, compraMinima, nichoInicial, sinMinimo = false 
           <span className="text-stone-600">$</span>
           <input id="presupuesto" className="campo" inputMode="numeric" value={presupuesto} onChange={(e) => setPresupuesto(e.target.value.replace(/[^\d]/g, ""))} />
         </div>
-        <p className="mt-1 text-xs text-stone-600">{sinMinimo ? `Desde ${pesosCliente(compraMinima)} te lo llevamos sin cargo en Carlos Paz. A otras localidades, por correo, la compra mínima es mayor: la ves en el carrito.` : `La compra mínima es de ${pesosCliente(compraMinima)}.`}</p>
+        <p className="mt-1 text-xs text-stone-600">{sinMinimo ? `En Carlos Paz te lo llevamos nosotros y lo pagás al recibir. A otras localidades, por correo, la compra mínima es mayor: la ves en el carrito.` : `La compra mínima es de ${pesosCliente(compraMinima)}.`}</p>
       </div>
       <button type="button" className="btn" disabled={!nicho || !personas || !presupuesto || cargando} onClick={armar}>
         {cargando ? "Armando…" : "Ver pedido sugerido"}
@@ -75,7 +75,7 @@ export function Armador({ nichos, compraMinima, nichoInicial, sinMinimo = false 
         <section aria-live="polite">
           <h2 className="mb-1 font-display text-2xl font-semibold text-acopio-900">Tu pedido sugerido</h2>
           {resultado.presupuestoAjustado && (
-            <p className="mb-2 text-sm text-tierra-700">{sinMinimo ? `Lo armamos para llegar a ${pesosCliente(resultado.compraMinima)}, así el envío va sin cargo.` : `Tu presupuesto está por debajo de la compra mínima, así que lo armamos para llegar a ${pesosCliente(resultado.compraMinima)}.`}</p>
+            <p className="mb-2 text-sm text-tierra-700">{sinMinimo ? `Lo armamos para llegar a ${pesosCliente(resultado.compraMinima)}.` : `Tu presupuesto está por debajo de la compra mínima, así que lo armamos para llegar a ${pesosCliente(resultado.compraMinima)}.`}</p>
           )}
           <PedidoEditable key={JSON.stringify(resultado.lineas.map((l) => [l.producto.codigo, l.cantidad]))} items={resultado.lineas} compraMinima={resultado.compraMinima} sinMinimo={sinMinimo} etiqueta="Cargar al carrito" />
         </section>

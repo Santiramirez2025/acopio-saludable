@@ -55,7 +55,7 @@ export default function Regalo() {
 
       <section className="rounded-2xl bg-white p-5 shadow-ficha sm:p-6">
         <h2 className="font-display text-xl font-bold">¿Se te terminó algo?</h2>
-        <p className="mt-1 text-sm text-stone-700">El Kit semanal trae granola, mix con cajú, dátiles y semillas para toda la semana. En Carlos Paz te lo llevamos sin cargo.</p>
+        <p className="mt-1 text-sm text-stone-700">El Kit semanal trae granola, mix con cajú, dátiles y semillas para toda la semana. En Carlos Paz te lo llevamos a tu casa y lo pagás al recibir.</p>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link href="/combos/kit-semanal?utm_source=whatsapp&utm_campaign=regalo-recetas" className="btn-comprar">Ver el Kit semanal</Link>
           <Link href="/catalogo?utm_source=whatsapp&utm_campaign=regalo-recetas" className="inline-flex min-h-[48px] items-center text-sm font-semibold text-acopio-900 underline underline-offset-4">Ver todo el catálogo</Link>

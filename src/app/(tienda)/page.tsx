@@ -84,7 +84,7 @@ export default async function Home() {
   const pasos = [
     ["Elegí", "Por rubro, por objetivo o buscando lo que necesitás."],
     zonaSinMinimo(cfg)
-      ? ["Sumá lo que quieras", `En Carlos Paz y la zona no hay compra mínima: sin cargo desde ${pesos(umbralZona(cfg))}. Al resto del país, compra mínima de ${pesos(cfg.compraMinima)}.`]
+      ? ["Sumá lo que quieras", `En Carlos Paz y la zona no hay compra mínima: envío ${pesos(cfg.envioBajoMinimo)} y pagás al recibir. Al resto del país, compra mínima de ${pesos(cfg.compraMinima)}.`]
       : [`Llegá a ${pesos(cfg.compraMinima)}`, "Es la compra mínima. El medidor te va diciendo cuánto falta."],
     ["Recibilo", cfg.entregaPropiaActiva ? `En Carlos Paz y el sur de Punilla te lo llevamos en ${cfg.plazoEntregaPropia}. Al resto del país, por correo en 3 a 9 días hábiles.` : "Lo compramos para vos y te lo enviamos por correo a todo el país en 3 a 9 días hábiles."],
   ];
@@ -103,13 +103,13 @@ export default async function Home() {
                 propuesta (el Kit semanal) y una sola salida al catálogo. Rubros, sin TACC y herramientas van más abajo. */}
             <p className="mt-3 max-w-md text-[15px] text-white/80 sm:text-[17px]">
               Frutos secos, semillas y dietética fraccionados en el día.{" "}
-              {zonaSinMinimo(cfg) ? <>En Carlos Paz te lo llevamos sin cargo desde {pesos(umbralZona(cfg))}.</> : cfg.entregaPropiaActiva ? <>En Carlos Paz te lo llevamos en {cfg.plazoEntregaPropia}.</> : <>Envíos a todo el país.</>}
+              {zonaSinMinimo(cfg) ? <>En Carlos Paz te lo llevamos por {pesos(cfg.envioBajoMinimo)} y lo pagás al recibir.</> : cfg.entregaPropiaActiva ? <>En Carlos Paz te lo llevamos en {cfg.plazoEntregaPropia}.</> : <>Envíos a todo el país.</>}
             </p>
             {destacado?.tipo === "producto" && <DestacadoInicio p={destacado.p} etiqueta={destacado.esLaCasa ? "El mix de la casa" : "El más vendido"} />}
             {destacado?.tipo === "combo" && (
               <DestacadoComboInicio
                 c={destacado.c}
-                etiqueta={destacado.c.slug === "kit-semanal" ? "Para toda la semana" : zonaSinMinimo(cfg) && destacado.c.precio >= umbralZona(cfg) ? "Combo · sin cargo en Carlos Paz" : "Combo de la semana"}
+                etiqueta={destacado.c.slug === "kit-semanal" ? "Para toda la semana" : "Combo de la semana"}
                 transferencia={pctTransferenciaCombo(destacado.c.slug, cfg.descuentoTransferenciaPct) > 0 ? totalTransferencia(destacado.c.precio, cfg.descuentoTransferenciaPct) : null}
               />
             )}
@@ -298,7 +298,7 @@ export default async function Home() {
                   <ListaCombo items={items} />
                   <p className="mt-3 font-display text-2xl font-bold tabular-nums">{pesos(total)}</p>
                   <p className="mb-3 text-xs text-stone-600">{zonaSinMinimo(cfg)
-                      ? total >= umbralZona(cfg) ? "Entrega sin cargo en Carlos Paz" : `Te quedan ${pesos(umbralZona(cfg) - total)} para la entrega sin cargo en Carlos Paz`
+                      ? `En Carlos Paz, envío ${pesos(cfg.envioBajoMinimo)} y pagás al recibir`
                       : total >= cfg.compraMinima ? "Ya llega a la compra mínima" : `Te quedan ${pesos(cfg.compraMinima - total)} para completar el mínimo`}</p>
                   <div className="mt-auto flex gap-2">
                     <BotonCargarPedido etiqueta="Cargar pedido" className="btn-comprar flex-1" lineas={items.map((i) => ({ tipo: "producto" as const, id: i.producto.codigo, cantidad: i.cantidad }))} />

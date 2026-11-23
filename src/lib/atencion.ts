@@ -31,7 +31,7 @@ import { MINIMO_ZONA_PAGA } from "./envios/tabla";
 import { pesos, precioTransferencia, renglonCombo } from "./precios";
 import { baseTransferencia, esPrecioFijo, pctTransferenciaCombo, PRECIO_FIJO_DESDE } from "./precio-fijo";
 import { sinLoEnEspera } from "./recompra-reglas";
-import { zonaSinMinimo } from "./minimo-zona";
+import { zonaSinMinimo, envioPropioPara } from "./minimo-zona";
 import { cargoVecinaPorLugar } from "./envios/vecinas";
 
 /** Transferencia de la Despensa redondeada a $100, la misma que ya cotizan el bot y el equipo ($35.500 → $32.700). */
@@ -236,7 +236,7 @@ async function cerrarVenta(
     return;
   }
   const total = pesos(Number(pedido.total));
-  const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "con envío sin cargo si es en Carlos Paz (si es en otra localidad, te confirmo el costo)";
+  const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "más $3.000 de envío si es en Carlos Paz (si es en otra localidad, te confirmo el costo)";
   // 18/11: a Cris (Av. Cárcano, Carlos Paz) le llegó «$22.000 más el envío, que te confirmo» después de que el bot le dijo «sin cargo».
   // 17/11 (Santiago): dos precios según CUÁNDO paga. Al recibir, el de lista; pagando antes por transferencia, con descuento.
   // 21/11 (Santiago): «no cobramos más 22mil de ninguna manera». El Trío no tiene precio por transferencia: solo lleva descuento el resto.
@@ -941,6 +941,7 @@ export async function pensar(c: {
           conTransferencia: pct > 0 ? Math.floor((elegido.precio * (1 - pct / 100)) / 100) * 100 : null,
           nombre: primerNombre(c.nombre) || null,
           sinCargoDesde: cfg.compraMinimaPropia,
+          envioZona: envioPropioPara(cfg, elegido.precio) || undefined,
           sitio: urlSitio(),
           pesos,
         });
@@ -954,7 +955,7 @@ export async function pensar(c: {
       const texto = !cfgZona
         ? null
         : preguntaDondeEstan(c.texto)
-          ? textoDondeEstanSinIA({ nombre: primerNombre(c.nombre) || null, sinCargoDesde: cfgZona.compraMinimaPropia, pesos })
+          ? textoDondeEstanSinIA({ nombre: primerNombre(c.nombre) || null, sinCargoDesde: cfgZona.compraMinimaPropia, envioZona: envioPropioPara(cfgZona, 1) || undefined, pesos })
           : textoPideDireccionSinIA(primerNombre(c.nombre) || null);
       if (texto && !recientes.includes(texto)) return { salientes: [{ tipo: "texto" as const, texto }], respuesta: { texto }, derivar: true, conIA: false, sinIA: true };
     }

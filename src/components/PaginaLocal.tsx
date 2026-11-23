@@ -47,7 +47,7 @@ export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
       <section className="grid gap-3 sm:grid-cols-3">
         {[
           propia ? ["Entrega en la zona", `${textoEntregaZona(cfg)} Te lo llevamos en ${cfg.plazoEntregaPropia}.`] : zonaPaga ? [`Entrega en ${nombre}`, `Llegamos nosotros: ${pesos(zonaPaga.precio)} por pedido, en ${zonaPaga.plazo || cfg.plazoEntregaPropia}, y coordinamos el horario por WhatsApp.`] : ["Envío por correo", `Despachamos a ${nombre} en 24 a 48 hs hábiles. El costo se calcula en el carrito con tu código postal.`],
-          ["Precio por volumen", zonaSinMinimo(cfg) ? `Comprás en cantidad y pagás menos por kilo. Sin compra mínima en la zona; en Villa Carlos Paz, entrega sin cargo desde ${pesos(umbralZona(cfg))}.` : `Comprás en cantidad y pagás menos por kilo. Compra mínima de ${pesos(cfg.compraMinima)}, combinando lo que quieras.`],
+          ["Precio por volumen", zonaSinMinimo(cfg) ? `Comprás en cantidad y pagás menos por kilo. Sin compra mínima en la zona; en Villa Carlos Paz, envío ${pesos(cfg.envioBajoMinimo)} y pagás al recibir.` : `Comprás en cantidad y pagás menos por kilo. Compra mínima de ${pesos(cfg.compraMinima)}, combinando lo que quieras.`],
           ["Para casa o para tu negocio", "Familias, hoteles y cabañas, cafeterías, gimnasios, kioscos y dietéticas."],
         ].map(([t, d]) => (
           <div key={t} className="rounded-2xl bg-white p-4 shadow-ficha">

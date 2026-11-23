@@ -1963,17 +1963,17 @@ import { envioZonaPropia } from "./envio-zona";
 test("envío de la zona: sale del subtotal real y sin subtotal da la regla, no «no llega»", () => {
   const cfg = { compraMinima: 60000, compraMinimaPropia: 20000, envioBajoMinimo: 3000, entregaPropiaActiva: true, plazoEntregaPropia: "24 a 48 hs" };
   const despensa = envioZonaPropia(cfg, "Villa del Lago, Carlos Paz", 28500);
-  assert.equal(despensa.costo, 0);
-  assert.match(despensa.detalle, /sin cargo/);
+  // 23/11: el envío de Carlos Paz se cobra siempre.
+  assert.equal(despensa.costo, 3000);
+  assert.doesNotMatch(despensa.detalle, /sin cargo/);
   const chico = envioZonaPropia(cfg, "Villa Carlos Paz", 15000);
   assert.equal(chico.costo, 3000);
-  assert.match(chico.detalle, /no llega/);
   const sinElegir = envioZonaPropia(cfg, "Villa Carlos Paz", 0);
-  assert.doesNotMatch(sinElegir.detalle, /no llega/);
-  assert.match(sinElegir.detalle, /sin cargo desde/);
+  assert.doesNotMatch(sinElegir.detalle, /no llega|sin cargo/);
+  assert.match(sinElegir.detalle, /con cualquier pedido/);
   assert.deepEqual(zonaDeLugar("vertiente de arredondo, un barrio de san antonio"), { tipo: "propia" });
   // 16/11 a la noche: San Antonio de Arredondo va como Carlos Paz; más lejos se cobra siempre.
-  assert.equal(envioZonaPropia(cfg, "Vertientes de Arredondo", 28500).costo, 0);
+  assert.equal(envioZonaPropia(cfg, "Vertientes de Arredondo", 28500).costo, 3000);
   assert.equal(envioZonaPropia(cfg, "Bialet Massé", 61000).costo, 3000);
 });
 

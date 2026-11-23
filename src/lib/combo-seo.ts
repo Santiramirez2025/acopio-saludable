@@ -23,7 +23,7 @@ export function seoCombo(c: Combo, minimoEntregaPropia: number): { title: string
   const conPeso = peso && !/kilo|kg/i.test(c.nombre) ? ` (${peso})` : "";
   const cuerpo = `${peso ? `${peso} por ` : ""}${precio}${c.ahorro > 0 ? `, ahorrás ${sinEspacioDuro(pesos(c.ahorro))}` : ""}.`;
   // Sin cargo solo en Villa Carlos Paz (regla del 16/11); el resto de la zona paga según la localidad.
-  const entrega = c.precio >= minimoEntregaPropia ? "Sin cargo en Villa Carlos Paz; resto de la zona con costo. Envíos al país." : "Entrega en Carlos Paz y la zona. Envíos al país.";
+  const entrega = false ? "" : "Entrega en Carlos Paz y la zona. Envíos al país.";
   const fijo = ` ${cuerpo} ${entrega}`;
   // Entran los productos que quepan: el precio y la entrega nunca se cortan.
   const nombres: string[] = [];

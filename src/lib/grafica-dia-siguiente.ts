@@ -58,7 +58,7 @@ export async function piezaDelDia(): Promise<{ url: string; texto: (nombre: stri
   return {
     url: `${urlSitio()}${trio}`,
     nombre: "Trío",
-    texto: (n) => `¡Hola${n ? ` ${n}` : ""}! Te escribe Nico, de Acopio 🙂 El más pedido de la semana es el Trío: 1 kg de mix con cajú y girasol, 1 de dátiles y 1 de pasas, $24.000. En Carlos Paz te lo llevamos sin cargo y lo pagás cuando te llega. ¿Te lo anoto?`,
+    texto: (n) => `¡Hola${n ? ` ${n}` : ""}! Te escribe Nico, de Acopio 🙂 El más pedido de la semana es el Trío: 1 kg de mix con cajú y girasol, 1 de dátiles y 1 de pasas, $24.000. En Carlos Paz te lo llevamos por $3.000 y lo pagás cuando te llega. ¿Te lo anoto?`,
   };
 }
 

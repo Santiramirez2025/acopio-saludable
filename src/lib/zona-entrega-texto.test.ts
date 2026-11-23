@@ -17,7 +17,7 @@ test("zona: cada vecina con cargo de la tienda cobra lo mismo en el chat", () =>
 
 test("zona: el texto de entrega no promete sin cargo a Icho Cruz ni a Cuesta Blanca", () => {
   const t = sinEsp(textoEntregaZona(regla));
-  assert.ok(t.startsWith(`En ${ZONA_SIN_CARGO}, sin cargo desde $ 20.000; abajo de eso, $ 3.000.`), t);
+  assert.ok(t.startsWith(`En ${ZONA_SIN_CARGO}, envío $ 3.000 por pedido.`), t);
   assert.match(t, /Mayu Sumaj, Icho Cruz, Tala Huasi, Bialet Massé y Cabalango, \$ 3\.000/);
   assert.match(t, /Tanti y Cuesta Blanca, \$ 4\.000/);
   assert.doesNotMatch(t.split("Al resto de la zona")[0], /Icho Cruz|Cuesta Blanca/);
@@ -25,15 +25,16 @@ test("zona: el texto de entrega no promete sin cargo a Icho Cruz ni a Cuesta Bla
 });
 
 test("zona: las frases de compra mínima dicen dónde va sin cargo", () => {
-  assert.match(sinEsp(textoZonaSinMinimo(regla)), /En Villa Carlos Paz y San Antonio de Arredondo \(hasta 8 km del centro\) la entrega es sin cargo desde \$ 20\.000/);
-  assert.match(sinEsp(textoZonaSinMinimo(regla)), /al resto de la zona, con un costo fijo según la localidad/);
-  assert.match(sinEsp(lineaCompraMinima(regla)), /en Villa Carlos Paz, sin cargo desde \$ 20\.000/);
+  assert.match(sinEsp(textoZonaSinMinimo(regla)), /En Villa Carlos Paz y San Antonio de Arredondo \(hasta 8 km del centro\) el envío cuesta \$ 3\.000 por pedido/);
+  assert.match(sinEsp(textoZonaSinMinimo(regla)), /al resto de la zona, un costo fijo según la localidad/);
+  assert.match(sinEsp(lineaCompraMinima(regla)), /el envío en Villa Carlos Paz cuesta \$ 3\.000/);
 });
 
 test("zona: la descripción de los combos ya no dice «sin cargo en Carlos Paz y sur de Punilla»", () => {
   const c = { nombre: "Trío de frutos secos", precio: 24000, ahorro: 3300, items: [] };
   const d = seoCombo(c, 20000).description;
   assert.doesNotMatch(d, /sur de Punilla/);
-  assert.match(d, /Sin cargo en Villa Carlos Paz; resto de la zona con costo/);
+  assert.doesNotMatch(d, /[Ss]in cargo/);
+  assert.match(d, /Entrega en Carlos Paz y la zona/);
   assert.doesNotMatch(seoCombo({ ...c, precio: 15000 }, 20000).description, /[Ss]in cargo/);
 });

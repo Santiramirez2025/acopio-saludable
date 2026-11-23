@@ -146,7 +146,7 @@ export function QuizMix({ productos }: { productos: Record<string, Prod> }) {
             <Link href="/carrito" className="btn-comprar flex-1">Ver mi pedido</Link>
             <button type="button" className="btn-sec" onClick={reiniciar}>Jugar de nuevo</button>
           </div>
-          <p className="text-center text-xs text-stone-500">En Villa Carlos Paz, envío sin cargo desde $20.000. Se paga por transferencia (8% menos) o Mercado Pago.</p>
+          <p className="text-center text-xs text-stone-500">En Villa Carlos Paz, envío $3.000 y lo pagás al recibir.</p>
         </section>
       )}
     </div>

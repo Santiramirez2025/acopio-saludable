@@ -383,7 +383,7 @@ export function textoPreciosPorKilo(
     ...renglones,
     "",
     `Lo que más sale es la Despensa de 4 kilos${trae.length ? ` (${trae.join(", ")})` : ""}: ${pesos(despensa.precio)}${transf ? `, ${pesos(transf)} por transferencia` : ""}.`,
-    "En Carlos Paz y la zona te la llevamos sin cargo; se paga antes del reparto, por transferencia o Mercado Pago.",
+    "En Carlos Paz y la zona te la llevamos nosotros; se paga antes del reparto, por transferencia o Mercado Pago.",
     "¿De qué ciudad sos, así te digo el envío?",
   ].join("\n");
 }
@@ -647,7 +647,7 @@ export function planSinApuro(nombre: string | null, tienda: string, fotoReal?: s
     ...foto,
     {
       tipo: "texto",
-      texto: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. En Carlos Paz y la zona te lo llevamos sin cargo y lo pagás cuando te llega. Si te queda alguna duda, preguntame por acá nomás.`,
+      texto: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. En Carlos Paz y la zona te lo llevamos nosotros y lo pagás cuando te llega. Si te queda alguna duda, preguntame por acá nomás.`,
     },
   ];
 }
@@ -880,6 +880,8 @@ export function textoComboSinIA(c: {
   conTransferencia: number | null;
   nombre: string | null;
   sinCargoDesde: number;
+  /** 23/11: el envío que se cobra siempre en Carlos Paz (si hay, ya no se dice «sin cargo»). */
+  envioZona?: number;
   sitio: string;
   pesos: (n: number) => string;
 }): string | null {
@@ -888,7 +890,7 @@ export function textoComboSinIA(c: {
   const nombreCombo = combo.nombre.split("·")[0].trim();
   const listaTrae = listaQueTrae(combo.items);
   const precio = c.conTransferencia ? `${c.pesos(c.conTransferencia)} pagando antes por transferencia, o ${c.pesos(combo.precio)} al recibir` : c.pesos(combo.precio);
-  const zona = combo.precio >= c.sinCargoDesde ? "En Carlos Paz te lo llevamos sin cargo." : "En Carlos Paz te lo llevamos nosotros.";
+  const zona = c.envioZona ? `En Carlos Paz te lo llevamos nosotros (envío ${c.pesos(c.envioZona)}).` : combo.precio >= c.sinCargoDesde ? "En Carlos Paz te lo llevamos sin cargo." : "En Carlos Paz te lo llevamos nosotros.";
   return [
     `¡Hola${c.nombre ? ` ${c.nombre}` : ""}! El ${nombreCombo}${listaTrae ? ` trae ${listaTrae}` : ""}: ${precio}.`,
     `Lo dejás pedido acá 👉 ${c.sitio}/carrito?p=c-${combo.slug}*1&utm_source=whatsapp&utm_campaign=combo-sin-ia`,
@@ -928,10 +930,10 @@ export function preguntaDondeEstan(texto: string): boolean {
   );
 }
 
-export function textoDondeEstanSinIA(c: { nombre: string | null; sinCargoDesde: number; pesos: (n: number) => string }): string {
+export function textoDondeEstanSinIA(c: { nombre: string | null; sinCargoDesde: number; envioZona?: number; pesos: (n: number) => string }): string {
   return [
     `¡Hola${c.nombre ? ` ${c.nombre}` : ""}! No tenemos local a la calle: trabajamos online desde Villa Carlos Paz y el pedido te lo llevamos nosotros.`,
-    `En Carlos Paz va sin cargo desde ${c.pesos(c.sinCargoDesde)} (localidades vecinas, con un cargo de envío). ¿Me pasás calle, número y barrio así te lo agendo?`,
+    `${c.envioZona ? `En Carlos Paz el envío cuesta ${c.pesos(c.envioZona)} y lo pagás al recibir` : `En Carlos Paz va sin cargo desde ${c.pesos(c.sinCargoDesde)}`} (localidades vecinas, con un cargo de envío). ¿Me pasás calle, número y barrio así te lo agendo?`,
   ].join("\n");
 }
 

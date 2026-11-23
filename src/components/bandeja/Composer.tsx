@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react";
 // Respuestas rápidas: lo que más se escribe a mano. Se insertan en el cuadro para editarlas antes de mandar.
 const RAPIDAS = [
   ["Saludo", "¡Hola! Gracias por escribir a Acopio. ¿En qué te puedo ayudar?"],
-  ["Envío", "En Villa Carlos Paz y el sur de Punilla te lo llevamos sin cargo desde $20.000; debajo, $3.000. Al resto del país va por correo y el costo se ve en el carrito con tu código postal."],
-  ["Mínimo", "En Villa Carlos Paz y la zona no hay compra mínima: desde $20.000 la entrega es sin cargo, y si el pedido es más chico el envío cuesta $3.000. Para otras localidades el mínimo es $60.000."],
+  ["Envío", "En Villa Carlos Paz y el sur de Punilla te lo llevamos por $3.000 y lo pagás al recibir. Al resto del país va por correo y el costo se ve en el carrito con tu código postal."],
+  ["Mínimo", "En Villa Carlos Paz y la zona no hay compra mínima: el envío cuesta $3.000 en cualquier pedido. Para otras localidades el mínimo es $60.000."],
   ["Pago", "Podés pagar con Mercado Pago (tarjeta, débito o dinero en cuenta) o por transferencia, que tiene descuento."],
   ["Link", "Te paso el link con el pedido armado, así lo pagás directo: "],
   ["Gracias", "¡Gracias por tu compra! Cualquier cosa escribime por acá."],

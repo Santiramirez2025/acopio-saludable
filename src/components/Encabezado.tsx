@@ -113,8 +113,8 @@ export function MedidorPedido() {
   const faltaZona = Math.max(0, cotizacion.compraMinimaPropia - subtotal);
   // Con envío fijo bajo mínimo, en la zona se compra igual: lo que falta es para el envío sin cargo, no para poder pedir.
   const textoZona =
-    cotizacion.envioBajoMinimo > 0 && faltaZona > 0
-      ? `En Carlos Paz ya podés comprar · ${pesosCliente(faltaZona)} más y el envío va sin cargo`
+    cotizacion.envioBajoMinimo > 0 && faltaZona >= 0
+      ? `En Carlos Paz ya podés comprar · envío ${pesosCliente(cotizacion.envioBajoMinimo)}, pagás al recibir`
       : "Ya podés comprar en Carlos Paz y la zona";
   return (
     <aside aria-label="Tu pedido" className={`fixed inset-x-3 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 mx-auto max-w-md md:inset-x-auto md:bottom-5 md:right-24 md:w-[380px] ${enCarrito ? "md:hidden" : ""}`}>

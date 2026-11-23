@@ -119,7 +119,7 @@ export default async function MesaDulceNavidad() {
               </tbody>
             </table>
           </div>
-          <p className="mt-2 text-xs text-stone-600">En Villa Carlos Paz la entrega es sin cargo desde {minimo}; al resto de la zona, con costo según la localidad. En la zona pagás al recibir.</p>
+          <p className="mt-2 text-xs text-stone-600">En Villa Carlos Paz la entrega cuesta $3.000; al resto de la zona, con costo según la localidad. En la zona pagás al recibir.</p>
         </section>
       )}
 

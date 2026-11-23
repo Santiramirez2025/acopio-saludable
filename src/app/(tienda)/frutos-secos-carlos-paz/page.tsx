@@ -66,7 +66,7 @@ export default async function FrutosSecosCarlosPaz() {
         {[
           ["Entrega en la zona", `${textoEntregaZona(cfg)} Te lo llevamos en ${cfg.plazoEntregaPropia}.`],
           ["Mixes armados en casa", "Mix Clásico con cajú (con o sin girasol), sin maní y tropical. Sabés lo que lleva cada uno antes de comprar."],
-          ["Por kilo, mejor precio", sinMinimo ? `Comprás en bolsa grande y pagás menos por kilo. Sin compra mínima; entrega sin cargo desde ${minimo}.` : `Comprás en bolsa grande y pagás menos por kilo. Compra mínima de ${minimo}, combinando lo que quieras.`],
+          ["Por kilo, mejor precio", sinMinimo ? `Comprás en bolsa grande y pagás menos por kilo. Sin compra mínima; envío $3.000 y pagás al recibir.` : `Comprás en bolsa grande y pagás menos por kilo. Compra mínima de ${minimo}, combinando lo que quieras.`],
         ].map(([t, d]) => (
           <div key={t} className="rounded-2xl bg-white p-4 shadow-ficha">
             <h2 className="font-display text-lg font-bold">{t}</h2>

@@ -51,11 +51,13 @@ test("cotizarEnvio: sin propiaBajoMinimo todo sigue como antes (sin cargo, el m�
   assert.equal(propia.precio, 0);
 });
 
-test("la regla de la zona: envío fijo abajo del umbral, nada arriba, y apagada con 0", () => {
+// 23/11 (Santiago): el envío de Carlos Paz se cobra siempre, sin umbral de «sin cargo».
+test("la regla de la zona: envío fijo en cualquier pedido, y apagada con 0", () => {
   const regla = { compraMinima: 60000, compraMinimaPropia: 20000, envioBajoMinimo: 3000, entregaPropiaActiva: true };
   assert.equal(zonaSinMinimo(regla), true);
   assert.equal(envioPropioPara(regla, 15000), 3000);
-  assert.equal(envioPropioPara(regla, 20000), 0);
+  assert.equal(envioPropioPara(regla, 20000), 3000);
+  assert.equal(envioPropioPara(regla, 90000), 3000);
   assert.equal(envioPropioPara({ ...regla, envioBajoMinimo: 0 }, 15000), 0);
   assert.equal(zonaSinMinimo({ ...regla, envioBajoMinimo: 0 }), false);
   assert.match(textoCompraMinima(regla), /no hay compra mínima/);
@@ -65,12 +67,13 @@ test("la regla de la zona: envío fijo abajo del umbral, nada arriba, y apagada 
 test("lineaCompraMinima: con zona sin mínimo el $ 60.000 no aparece solo; sin envío fijo vuelve el texto de siempre", () => {
   const regla = { compraMinima: 60000, compraMinimaPropia: 20000, envioBajoMinimo: 3000, entregaPropiaActiva: true };
   const sinMin = lineaCompraMinima(regla).replace(/\s/g, " ");
-  assert.match(sinMin, /^En Villa Carlos Paz y la zona no hay compra mínima; en Villa Carlos Paz, sin cargo desde \$ 20\.000\. Al resto del país, compra mínima de \$ 60\.000/);
+  assert.match(sinMin, /^En Villa Carlos Paz y la zona no hay compra mínima; el envío en Villa Carlos Paz cuesta \$ 3\.000\. Al resto del país, compra mínima de \$ 60\.000/);
   assert.match(lineaCompraMinima({ ...regla, envioBajoMinimo: 0 }).replace(/\s/g, " "), /^Compra mínima de \$ 60\.000 por pedido/);
 });
 
 test("la entrega de la zona nunca se anuncia sin cargo si abajo del umbral se cobra", () => {
   const regla = { compraMinima: 60000, compraMinimaPropia: 20000, envioBajoMinimo: 3000, entregaPropiaActiva: true };
-  assert.match(costoEntregaZona(regla), /sin cargo desde \$\s?20\.000; abajo de eso, \$\s?3\.000/);
+  assert.match(costoEntregaZona(regla), /^envío \$\s?3\.000 por pedido$/);
+  assert.doesNotMatch(costoEntregaZona(regla), /sin cargo/);
   assert.equal(costoEntregaZona({ ...regla, envioBajoMinimo: 0 }), "sin cargo");
 });

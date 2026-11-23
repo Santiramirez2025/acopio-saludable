@@ -9,6 +9,13 @@ import { VECINAS_CON_CARGO } from "./envios/vecinas";
 
 export type ReglaMinimo = { compraMinima: number; compraMinimaPropia: number; envioBajoMinimo: number; entregaPropiaActiva: boolean };
 
+/**
+ * 23/11 (Santiago): «agregamos $3.000 de envío en Carlos Paz, no pagamos la nafta si no… a partir de ahora cobramos
+ * todos los envíos un precio accesible». En la zona propia el envío fijo se cobra SIEMPRE, sin umbral de «sin cargo».
+ * Los pedidos ya tomados quedan como se vendieron. En false vuelve la regla anterior (sin cargo desde el umbral).
+ */
+export const ENVIO_SIEMPRE = true;
+
 /** El umbral de la zona propia: hasta ahí es el mínimo (o el envío sin cargo), nunca más alto que el general. */
 export function umbralZona(c: ReglaMinimo): number {
   return Math.min(c.compraMinimaPropia, c.compraMinima);
@@ -26,12 +33,18 @@ export function zonaSinMinimo(c: ReglaMinimo): boolean {
 
 /** Cuánto sale el envío propio para ese subtotal: sin cargo desde el umbral; abajo, el fijo (si hay). */
 export function envioPropioPara(c: ReglaMinimo, subtotal: number): number {
-  return zonaSinMinimo(c) && subtotal < umbralZona(c) ? c.envioBajoMinimo : 0;
+  return zonaSinMinimo(c) && (ENVIO_SIEMPRE || subtotal < umbralZona(c)) ? c.envioBajoMinimo : 0;
 }
 
 /** Cuánto sale la entrega propia, sin nombrar la zona: «sin cargo desde $ X; abajo de eso, $ Y». Para páginas y FAQ. */
 export function costoEntregaZona(c: ReglaMinimo): string {
+  if (zonaSinMinimo(c) && ENVIO_SIEMPRE) return `envío ${pesos(c.envioBajoMinimo)} por pedido`;
   return zonaSinMinimo(c) ? `sin cargo desde ${pesos(umbralZona(c))}; abajo de eso, ${pesos(c.envioBajoMinimo)}` : "sin cargo";
+}
+
+/** ¿Ese total va sin cargo en Carlos Paz? Con el envío siempre cobrado, nunca. */
+export function vaSinCargo(c: ReglaMinimo, total: number): boolean {
+  return !ENVIO_SIEMPRE && zonaSinMinimo(c) && total >= umbralZona(c);
 }
 
 /** Donde la entrega propia va sin cargo desde el umbral (Santiago, 16/11: «solo Carlos Paz es gratis, y San Antonio de Arredondo y por acá cerca»). */
@@ -61,13 +74,14 @@ export function textoEntregaZona(c: ReglaMinimo): string {
 
 /** Una frase, para FAQ y páginas: la regla completa de la zona propia cuando no hay mínimo. */
 export function textoZonaSinMinimo(c: ReglaMinimo): string {
+  if (ENVIO_SIEMPRE) return `En Villa Carlos Paz y la zona no hay compra mínima. En ${ZONA_SIN_CARGO} el envío cuesta ${pesos(c.envioBajoMinimo)} por pedido y lo pagás al recibir; al resto de la zona, un costo fijo según la localidad.`;
   return `En Villa Carlos Paz y la zona no hay compra mínima. En ${ZONA_SIN_CARGO} la entrega es sin cargo desde ${pesos(umbralZona(c))} y, si el pedido no llega, cuesta ${pesos(c.envioBajoMinimo)}; al resto de la zona, con un costo fijo según la localidad.`;
 }
 
 /** Una línea corta, para fichas y páginas de la tienda: el mínimo de $ X nunca aparece solo si la zona no lo tiene. */
 export function lineaCompraMinima(c: ReglaMinimo, combinando = "los productos"): string {
   const general = `${pesos(c.compraMinima)} por pedido, combinando ${combinando} que quieras.`;
-  if (zonaSinMinimo(c)) return `En Villa Carlos Paz y la zona no hay compra mínima; en Villa Carlos Paz, sin cargo desde ${pesos(umbralZona(c))}. Al resto del país, compra mínima de ${general}`;
+  if (zonaSinMinimo(c)) return `En Villa Carlos Paz y la zona no hay compra mínima; ${ENVIO_SIEMPRE ? `el envío en Villa Carlos Paz cuesta ${pesos(c.envioBajoMinimo)}` : `en Villa Carlos Paz, sin cargo desde ${pesos(umbralZona(c))}`}. Al resto del país, compra mínima de ${general}`;
   return `Compra mínima de ${general}`;
 }
 
