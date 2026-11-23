@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 // Una persona contesta por WhatsApp desde el panel, o le devuelve la charla al bot.
 //
 // La respuesta sale por la misma API que usa el bot. Si Meta la rechaza, lo más común es
@@ -71,6 +72,17 @@ export async function POST(req: Request) {
   }
   const telefono = typeof cuerpo.telefono === "string" ? (claveValida(cuerpo.telefono) ?? "") : "";
   if (!telefono) return NextResponse.json({ error: "Falta el teléfono" }, { status: 400 });
+
+  // 23/11 (Santiago): «el cliente que se queja no lo queremos». Bloquear = no se le escribe más: el bot se calla,
+  // no entra en promos ni seguimientos, y los agentes dejan de verla. No borra pedidos (son la contabilidad).
+  if (cuerpo.accion === "bloquear") {
+    await prisma.$executeRaw`UPDATE "WhatsappConversacion" SET "baja" = true, "estado" = 'persona', "noLeidos" = 0 WHERE "telefono" = ${telefono}`;
+    return NextResponse.json({ ok: true, bloqueado: telefono });
+  }
+  {
+    const b = await prisma.$queryRaw<{ n: number }[]>`SELECT 1 AS n FROM "WhatsappConversacion" WHERE "telefono" = ${telefono} AND "baja" = true AND "prospecto" IS NULL`;
+    if (b.length && cuerpo.accion !== "leida") return NextResponse.json({ error: "Cliente bloqueado: no se le escribe" }, { status: 409 });
+  }
 
   if (cuerpo.accion === "leida") {
     await marcarLeida(telefono);

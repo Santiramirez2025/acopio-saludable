@@ -90,7 +90,7 @@ export async function GET(req: Request) {
     const limite = Math.min(300, Math.max(1, Number(u.get("limite")) || 80));
     const cs = await prisma.$queryRaw<{ telefono: string; nombre: string | null; estado: string; anuncioTitulo: string | null; prospecto: string | null; negocio: string | null; pedido: string | null; baja: boolean; ultimoMensaje: Date }[]>`
       SELECT "telefono", "nombre", "estado", "anuncioTitulo", "prospecto", "negocio", "pedido", "baja", "ultimoMensaje" FROM "WhatsappConversacion"
-      WHERE "ultimoMensaje" >= ${desde} ORDER BY "ultimoMensaje" DESC LIMIT ${limite}`;
+      WHERE "ultimoMensaje" >= ${desde} AND NOT ("baja" AND "prospecto" IS NULL) ORDER BY "ultimoMensaje" DESC LIMIT ${limite}`;
     const ms = cs.length
       ? await prisma.$queryRaw<{ telefono: string; de: string; texto: string; fecha: Date }[]>`
           SELECT "telefono", "de", "texto", "fecha" FROM (
