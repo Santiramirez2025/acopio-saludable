@@ -6,7 +6,7 @@
 // quinoa 25 kg…), y la lectura diaria los volvía a la venta. Esto recorre la web (productos.php por categoría,
 // 40 por página), arma código → disponible y pasa a SIN_STOCK lo nuestro que La Granja no tiene; cuando vuelve a
 // estar, lo reactiva (solo lo que pausó esto: lo pausado a mano en casa no se toca).
-import { PRODUCTOS_PROVEEDORES } from "./catalogo-proveedores";
+import { COMBOS_PROVEEDORES, PRODUCTOS_PROVEEDORES } from "./catalogo-proveedores";
 import { PRODUCTOS_ENCARGO } from "./catalogo-encargo";
 
 export const MOTIVO_GRANJA_WEB = "La Granja: no disponible en su web";
@@ -76,7 +76,47 @@ export type ResultadoGranjaWeb = {
   noEstanEnLaWeb: { codigo: string; producto: string }[];
   aplicado: boolean;
   aviso?: string;
+  /** 23/11: lo que hoy hay que comprar en otra presentación y sale más caro que el costo cargado. */
+  costoSubio?: CostoSubio[];
 };
+
+export type CostoSubio = { codigo: string; producto: string; costoCargado: number; costoHoy: number; compra: string; combos: string[] };
+
+/**
+ * 23/11 (Santiago): «quedamos sin dátiles de Egipto… por esos dátiles existía el combo, ahora los pagamos más caros
+ * y no lo tuvimos en cuenta. Cada día ver qué se queda sin stock». Cuando la caja habitual no está y se compra otra
+ * presentación, compara el costo por kilo de la más barata disponible con el costo cargado. Puro.
+ */
+export function costosQueSubieron(cajas: CajaGranja[], tolerancia = 0.05): CostoSubio[] {
+  const porClave = new Map<string, CajaGranja>();
+  for (const c of cajas) { const k = claveGranja(c.codigo); if (k && c.disponible && c.precio > 0) porClave.set(k, c); }
+  const kilos = (nombre: string) => { const m = nombre.match(/X\s*(\d+(?:[.,]\d+)?)\s*KG/i); return m ? Number(m[1].replace(",", ".")) : null; };
+  const salida: CostoSubio[] = [];
+  for (const [codigo, alts] of Object.entries(ALTERNATIVAS)) {
+    const p = PRODUCTOS_PROVEEDORES.find((x) => x.codigo === codigo);
+    if (!p || !p.codigoProveedor || p.unidad !== "g" || !p.contenido) continue;
+    if (porClave.has(p.codigoProveedor.replace(/^\d-(?=\d{3}-\d{3}$)/, ""))) continue; // la caja habitual está: el costo lo actualiza la lista del día
+    const opciones = alts.map((a) => porClave.get(a)).filter((c): c is CajaGranja => Boolean(c)).map((c) => ({ c, kg: kilos(c.nombre) })).filter((o) => o.kg);
+    if (!opciones.length) continue;
+    const mejor = opciones.reduce((a, b) => (a.c.precio / a.kg! <= b.c.precio / b.kg! ? a : b));
+    const costoHoy = Math.round((mejor.c.precio / mejor.kg!) * (p.contenido / 1000));
+    if (costoHoy <= p.costo * (1 + tolerancia)) continue;
+    salida.push({
+      codigo, producto: `${p.producto} ${p.presentacion}`.trim(), costoCargado: p.costo, costoHoy, compra: mejor.c.nombre,
+      combos: COMBOS_PROVEEDORES.filter((c) => c.items.some((i) => i.codigo === codigo)).map((c) => c.nombre.split(" · ")[0]),
+    });
+  }
+  return salida;
+}
+
+/** Texto del aviso diario (null si nada subió). */
+export function avisoCostos(lista: CostoSubio[]): string | null {
+  if (!lista.length) return null;
+  const $ = (n: number) => `$${Math.round(n).toLocaleString("es-AR")}`;
+  return ["⚠️ Insumo de combos más caro hoy (la caja habitual no está en La Granja):",
+    ...lista.map((x) => `· ${x.producto}: costo cargado ${$(x.costoCargado)}, hoy ${$(x.costoHoy)} (+${Math.round((x.costoHoy / x.costoCargado - 1) * 100)}%) comprando «${x.compra}». Lo usan: ${x.combos.join(", ") || "ningún combo"}.`),
+    "Los precios de venta NO cambiaron solos: decidí si se ajusta el suelto o el combo."].join("\n");
+}
 
 /** Otras presentaciones del proveedor que sirven igual para lo que fraccionamos nosotros. */
 export const ALTERNATIVAS: Record<string, string[]> = {
@@ -117,7 +157,7 @@ export async function cruzarConWebGranja(aplicar: boolean): Promise<ResultadoGra
     if (!d && p.estado === "ACTIVO") pausar.push({ codigo: p.codigo, producto: nombre });
     if (d && p.estado === "SIN_STOCK" && p.ocultoMotivo === MOTIVO_GRANJA_WEB) reactivar.push({ codigo: p.codigo, producto: nombre });
   }
-  const r: ResultadoGranjaWeb = { leidosWeb: cajas.length, paginas, nuestros: productos.length, pausar, reactivar, noEstanEnLaWeb, aplicado: false };
+  const r: ResultadoGranjaWeb = { leidosWeb: cajas.length, paginas, nuestros: productos.length, pausar, reactivar, noEstanEnLaWeb, aplicado: false, costoSubio: costosQueSubieron(cajas) };
   // Si la web vino rota (pocas cajas) no se toca nada.
   if (cajas.length < 500) {
     r.aviso = `La web de La Granja devolvió solo ${cajas.length} productos: no se cambió nada.`;

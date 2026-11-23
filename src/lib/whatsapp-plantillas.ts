@@ -87,7 +87,7 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
     contexto:
       "le escribimos nosotros: es nutricionista (consultorio propio) y le preguntamos si sus pacientes le piden dónde comprar frutos secos, semillas y granola. NO es un comercio: no le vendas reventa ni le pidas pedido mínimo. " +
       "LA OFERTA: 1) le armamos un kit con los productos que ella o él recomienda (preguntale cuáles son los 3 o 4 que más indica) y le damos un link propio para pasar a sus pacientes: abren el link y ya ven el kit armado, pueden sumar o sacar cosas; " +
-      "2) a sus pacientes se lo llevamos a la casa en Villa Carlos Paz y la zona sin cargo y lo pagan al recibir (al resto del país, por correo); 3) de todo lo que se compre con su link, el 10% es para el profesional en productos, todos los meses; " +
+      "2) a sus pacientes se lo llevamos a la casa en Villa Carlos Paz y la zona sin cargo y lo pagan al recibir (a Córdoba Capital va en el viaje semanal a Córdoba, con el envío que dé costo_envio y pago al recibir; al resto del país, por correo y pago antes); 3) de todo lo que se compre con su link, el 10% es para el profesional en productos, todos los meses; " +
       "4) si quiere, armamos un mix con su receta y su nombre. Los precios reales salen de buscar_productos; no ofrezcas descuento por transferencia. " +
       "Nunca afirmes propiedades médicas ni «apto diabéticos/celíacos» salvo lo rotulado sin TACC: el criterio nutricional es del profesional. " +
       "Cuando diga qué productos quiere en el kit, anotalos textual y decile que Martina, del equipo, le manda el link armado por este chat en el día.",

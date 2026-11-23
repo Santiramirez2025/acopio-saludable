@@ -2140,3 +2140,20 @@ test("envío cotizado en la charla: Bialet $3.000 no se pierde al cerrar al reci
   assert.equal(envioCotizadoEnCharla([h("acopio", "El Trío sale $24.000. ¿De qué barrio sos?")]), null);
   assert.equal(envioCotizadoEnCharla([h("acopio", "Envío a Tanti: $4.000")]), 4000);
 });
+
+test("23/11: sin la caja de dátiles de Egipto, avisa el costo por kilo de la alternativa más barata y los combos que la usan", async () => {
+  const { costosQueSubieron, avisoCostos } = await import("./granja-web");
+  const cajas = [
+    { codigo: "0-980-028", nombre: "DATILES CON CAROZO X 5 KG - EGIPTO", precio: 0, disponible: false },
+    { codigo: "0-980-027", nombre: "DATILES CON CAROZO X 1 KG - EGIPTO", precio: 8066.83, disponible: true },
+    { codigo: "0-980-047", nombre: "DATIL DEGLET NOUR CON CAROZO X 5 KG - ARGELIA", precio: 45535.68, disponible: true },
+  ];
+  const r = costosQueSubieron(cajas);
+  const d = r.find((x) => x.codigo === "LG-DATIL")!;
+  assert.equal(d.costoHoy, 8067);
+  assert.match(d.compra, /EGIPTO/);
+  assert.ok(d.combos.some((c) => /Trío de frutos secos/.test(c)));
+  assert.match(avisoCostos(r)!, /NO cambiaron solos/);
+  // Con la caja habitual disponible no avisa: el costo lo actualiza la lista del día.
+  assert.equal(costosQueSubieron([{ codigo: "0-980-028", nombre: "DATILES CON CAROZO X 5 KG - EGIPTO", precio: 31000, disponible: true }]).length, 0);
+});

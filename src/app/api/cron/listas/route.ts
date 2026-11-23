@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { cronAutorizado } from "@/lib/cron-acceso";
 import { conRegistro } from "@/lib/salud";
 import { actualizarDesdeLaGranja, avisarResultadoLista } from "@/lib/listas-aplicar";
-import { cruzarConWebGranja } from "@/lib/granja-web";
+import { avisoCostos, cruzarConWebGranja } from "@/lib/granja-web";
 import { combosTienda } from "@/lib/tienda";
 import { avisoCombosApagados, combosQueSeApagaron } from "@/lib/combos-apagados";
 import { avisarSantiago } from "@/lib/avisos";
@@ -30,5 +30,8 @@ export async function GET(req: Request) {
     const texto = despues ? avisoCombosApagados(combosQueSeApagaron(antes, despues, pausados), "cambio automático de stock o precios de La Granja (7:40)") : null;
     if (texto) await avisarSantiago("Un combo se dejó de vender", texto).catch(() => false);
   }
+  // 23/11: si un insumo de combos hay que comprarlo más caro (dátiles sin la caja de Egipto), se avisa todos los días.
+  const caro = web && "costoSubio" in web ? avisoCostos(web.costoSubio ?? []) : null;
+  if (caro) await avisarSantiago("Un insumo de los combos subió", caro).catch(() => false);
   return NextResponse.json({ lista: r, web });
 }
