@@ -10,7 +10,7 @@ export type Rubro = "hotel" | "cabañas / complejo" | "departamentos / alquiler 
 type Plantilla = { nombre: string; cuerpo: string; botones: [string, string]; contexto: string };
 
 /** Qué plantilla le toca a cada rubro y qué tiene que saber el vendedor cuando contestan. */
-export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" | "dietetica" | "regalos", Plantilla> = {
+export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" | "dietetica" | "regalos" | "nutricionista", Plantilla> = {
   desayuno: {
     // 17/11 (Santiago: «tenemos que ser campeones en mensajes en frío»): 0 respuestas con el pitch largo.
     // Ahora una sola pregunta corta que se contesta sin pensar; la oferta va recién cuando contesta. Sin el nombre del dueño.
@@ -77,6 +77,21 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "Hay dos mixes clásicos (con cajú y girasol, y con cajú) y la composición puede variar según lo que entra; no prometas que está listo para la góndola: los rótulos los confirma Leo. " +
       "Si confirma, anotá qué lleva, cuántos kilos, ciudad y código postal, y decile que Leo le confirma el total con el envío.",
   },
+  nutricionista: {
+    // 23/11 (Santiago: «contactemos a la lista completa de nutricionistas mostrando lo que ofrecemos»).
+    // Una pregunta corta que se contesta sin pensar; la oferta (kit con su link) va cuando contesta.
+    nombre: "acopio_nutricionistas_v1",
+    cuerpo:
+      "Hola, {{1}} 👋 Una consulta corta: ¿tus pacientes te preguntan dónde comprar frutos secos, semillas y granola? Somos Acopio, de Villa Carlos Paz: armamos un kit con lo que vos recomendás y se lo llevamos a su casa.",
+    botones: ["Sí, contame", "No, gracias"],
+    contexto:
+      "le escribimos nosotros: es nutricionista (consultorio propio) y le preguntamos si sus pacientes le piden dónde comprar frutos secos, semillas y granola. NO es un comercio: no le vendas reventa ni le pidas pedido mínimo. " +
+      "LA OFERTA: 1) le armamos un kit con los productos que ella o él recomienda (preguntale cuáles son los 3 o 4 que más indica) y le damos un link propio para pasar a sus pacientes: abren el link y ya ven el kit armado, pueden sumar o sacar cosas; " +
+      "2) a sus pacientes se lo llevamos a la casa en Villa Carlos Paz y la zona sin cargo y lo pagan al recibir (al resto del país, por correo); 3) de todo lo que se compre con su link, el 10% es para el profesional en productos, todos los meses; " +
+      "4) si quiere, armamos un mix con su receta y su nombre. Los precios reales salen de buscar_productos; no ofrezcas descuento por transferencia. " +
+      "Nunca afirmes propiedades médicas ni «apto diabéticos/celíacos» salvo lo rotulado sin TACC: el criterio nutricional es del profesional. " +
+      "Cuando diga qué productos quiere en el kit, anotalos textual y decile que Martina, del equipo, le manda el link armado por este chat en el día.",
+  },
   regalos: {
     // 17/11 (Santiago: «tenemos que ser campeones en mensajes en frío»): 0 respuestas con el pitch largo.
     // Ahora una sola pregunta corta que se contesta sin pensar; la oferta va recién cuando contesta. Sin el nombre del dueño.
@@ -120,6 +135,7 @@ export function rubroHabilitado(rubro: string, localidad?: string | null): boole
 }
 
 export function plantillaDe(rubro: string): keyof typeof PLANTILLAS {
+  if (/nutri/i.test(rubro)) return "nutricionista"; // antes que «consultor»: un consultorio de nutrición no es una empresa
   if (/empresa|estudio|inmobili|concesion|cl[ií]nica|consultor|constructora|seguros|oficina|f[aá]brica|industria|colegio|instituto|sanatorio|banco|mutual|cooperativa|regalo/i.test(rubro)) return "regalos";
   if (rubro === "hotel" || rubro === "hostel") return "desayuno";
   if (/gimnas|yoga|pilates|crossfit|funcional/i.test(rubro)) return "gimnasio";

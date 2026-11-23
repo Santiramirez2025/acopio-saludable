@@ -52,7 +52,7 @@ export async function crearPlantillas(solo?: string): Promise<Record<string, Gra
       language: IDIOMA,
       category: "MARKETING",
       components: [
-        { type: "BODY", text: p.cuerpo, example: { body_text: [[p.nombre.includes("negocios") ? "Café del Lago" : "Hotel del Lago"]] } },
+        { type: "BODY", text: p.cuerpo, example: { body_text: [[p.nombre.includes("nutricion") ? "Lic. Paula" : p.nombre.includes("negocios") ? "Café del Lago" : "Hotel del Lago"]] } },
         { type: "BUTTONS", buttons: p.botones.map((text) => ({ type: "QUICK_REPLY", text })) },
       ],
     });
