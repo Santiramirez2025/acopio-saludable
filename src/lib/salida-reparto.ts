@@ -15,14 +15,23 @@ export type AvisoReparto = {
 
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
+/** Días sin reparto además de los domingos (AAAA-MM-DD, hora de Argentina). 23/11/2026: feriado, el proveedor no abrió
+ *  y Santiago pasó los 21 pedidos al martes. */
+export const SIN_REPARTO = new Set<string>(["2026-11-23"]);
+
+function hayReparto(ahoraMs: number, salto: number): boolean {
+  const d = new Date(ahoraMs - AR_MS + salto * 86_400_000);
+  return d.getUTCDay() !== 0 && !SIN_REPARTO.has(d.toISOString().slice(0, 10));
+}
+
 export function avisoReparto(ahoraMs: number): AvisoReparto {
   const local = new Date(ahoraMs - AR_MS);
   const diaSemana = local.getUTCDay();
   const limiteHoy = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), HORA_LIMITE_PAGO) + AR_MS;
-  if (diaSemana !== 0 && ahoraMs < limiteHoy) return { dia: "hoy", restaMs: limiteHoy - ahoraMs };
-  // Próximo día con reparto (domingo no hay).
+  if (hayReparto(ahoraMs, 0) && ahoraMs < limiteHoy) return { dia: "hoy", restaMs: limiteHoy - ahoraMs };
+  // Próximo día con reparto (domingos y días de SIN_REPARTO no hay).
   let salto = 1;
-  while ((diaSemana + salto) % 7 === 0) salto++;
+  while (!hayReparto(ahoraMs, salto)) salto++;
   return { dia: salto === 1 ? "mañana" : `el ${DIAS[(diaSemana + salto) % 7]}`, restaMs: null };
 }
 
@@ -49,7 +58,7 @@ export function notaRepartoDeHoy(ahoraMs: number): string {
   if (a.dia === "hoy")
     return `(REPARTO, solo Carlos Paz y la zona: hoy es ${hoy}, son las ${hora}. Lo que se paga antes de las 15 sale hoy en el reparto de las 16.)`;
   const nombre = DIAS[(local.getUTCDay() + (a.dia === "mañana" ? 1 : 2)) % 7];
-  const motivo = local.getUTCDay() === 0 ? "los domingos no hay reparto" : "ya pasaron las 15";
+  const motivo = local.getUTCDay() === 0 ? "los domingos no hay reparto" : !hayReparto(ahoraMs, 0) ? "hoy no hay reparto (feriado)" : "ya pasaron las 15";
   return `(REPARTO, solo Carlos Paz y la zona: hoy es ${hoy}, son las ${hora} y ${motivo}. Lo próximo sale ${a.dia === "mañana" ? `mañana ${nombre}` : a.dia} desde las 16. No digas «hoy lo tenés», «sale hoy», «en el reparto de hoy» ni «si pagás antes de las 15»: decí «te lo llevo ${a.dia === "mañana" ? `mañana ${nombre}` : a.dia} desde las 16».)`;
 }
 
