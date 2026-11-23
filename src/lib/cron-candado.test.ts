@@ -29,3 +29,11 @@ test("los crons que le escriben a clientes pasan por el candado", () => {
     assert.ok(src.includes(`conCandado("${n}"`), `${n} sin candado`);
   }
 });
+
+test("publicaciones (cada 15 min, hasta 5 min por corrida) pasa por un candado más corto que su intervalo", () => {
+  const src = readFileSync("src/app/api/cron/publicaciones/route.ts", "utf8");
+  assert.ok(src.includes('conCandado(\n    "publicaciones"') || src.includes('conCandado("publicaciones"'), "publicaciones sin candado");
+  const ventana = Number(src.match(/VENTANA_PUBLICACIONES_MIN = (\d+)/)?.[1]);
+  const duracion = Number(src.match(/maxDuration = (\d+)/)?.[1]) / 60;
+  assert.ok(ventana > duracion && ventana < 15, `ventana ${ventana} min: tiene que ser > ${duracion} y < 15`);
+});
