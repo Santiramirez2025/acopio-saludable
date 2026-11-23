@@ -5,6 +5,7 @@ import { combosTienda, productosTienda } from "@/lib/tienda";
 import { AVISO_SIN_TACC, WHERE_SIN_TACC } from "@/lib/filtros-producto";
 import { pesos } from "@/lib/precios";
 import { textoEntregaZona, textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
+import { textoComoPagar } from "@/lib/como-pagar";
 import { urlSitio } from "@/lib/sitio";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 import { GrillaProductos, TarjetaCombo, Titulo, TituloSeccion } from "@/components/Tienda";
@@ -36,7 +37,7 @@ export default async function SinTaccCarlosPaz() {
     ["¿Los frutos secos, la miel y los mixes sueltos son sin TACC?", "No los marcamos así. Las nueces, las almendras, las legumbres o la miel no tienen gluten como ingrediente, pero lo que se fracciona (por nosotros o por el mayorista) no está certificado y puede tener contaminación cruzada: no es apto para celíacos. Si sos celíaco, elegí solo los productos envasados con marca y el logo sin TACC, y verificalos en el Listado Integrado de Alimentos Libres de Gluten de ANMAT."],
     ["¿Cobran el envío en Carlos Paz?", `${textoEntregaZona(cfg)} Te lo llevamos en ${cfg.plazoEntregaPropia}. A Córdoba Capital y al resto del país el envío se paga y se calcula en el carrito.`],
     ["¿Hay compra mínima?", sinMinimo ? `No. ${textoZonaSinMinimo(cfg)} Sumás productos sin TACC con cualquier otro producto de la tienda.` : `Sí, ${minimo} por pedido en la zona de entrega, sumando productos sin TACC con cualquier otro producto de la tienda.`],
-    ["¿Cómo pago?", "Por transferencia, con descuento, o con Mercado Pago. Si preferís, escribinos por WhatsApp y te armamos el pedido."],
+    ["¿Cómo pago?", textoComoPagar()],
   ];
 
   const base = urlSitio();
