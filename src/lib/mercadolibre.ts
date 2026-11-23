@@ -59,7 +59,18 @@ async function token(): Promise<Token> {
   return pedirToken({ grant_type: "refresh_token", refresh_token: t.refreshToken });
 }
 
-export async function ml<T = unknown>(ruta: string, init: RequestInit = {}): Promise<T> {
+export /** 23/11: el multiget «/items?ids=…» empezó a dar 403 «Resource deprecated»; se piden de a uno, en paralelo. */
+async function mlItems<T>(ids: string[], atributos: string): Promise<{ code: number; body: T }[]> {
+  return Promise.all(
+    ids.map((id) =>
+      ml<T>(`/items/${id}?attributes=${atributos}`)
+        .then((body) => ({ code: 200, body }))
+        .catch(() => ({ code: 404, body: {} as T })),
+    ),
+  );
+}
+
+async function ml<T = unknown>(ruta: string, init: RequestInit = {}): Promise<T> {
   const t = await token();
   const res = await fetch(`${API}${ruta}`, {
     ...init,
@@ -144,7 +155,7 @@ async function misItems(): Promise<Item[]> {
   const uid = await miUsuario();
   const ids = (await ml<{ results: string[] }>(`/users/${uid}/items/search?status=active&limit=50`)).results;
   if (!ids.length) return [];
-  const r = await ml<{ code: number; body: Item }[]>(`/items?ids=${ids.join(",")}&attributes=id,title,price,available_quantity,permalink,status`);
+  const r = await mlItems<Item>(ids, "id,title,price,available_quantity,permalink,status");
   return r.filter((x) => x.code === 200).map((x) => x.body);
 }
 
@@ -219,7 +230,7 @@ export async function ajustarPreciosMl(): Promise<string[]> {
   const uid = await miUsuario();
   const ids = (await ml<{ results: string[] }>(`/users/${uid}/items/search?status=active&limit=50`)).results;
   if (!ids.length) return [];
-  const r = await ml<{ code: number; body: { id: string; title: string; price: number; seller_custom_field?: string | null; attributes?: { id: string; value_name?: string | null }[] } }[]>(`/items?ids=${ids.join(",")}&attributes=id,title,price,seller_custom_field,attributes`);
+  const r = await mlItems<{ id: string; title: string; price: number; seller_custom_field?: string | null; attributes?: { id: string; value_name?: string | null }[] }>(ids, "id,title,price,seller_custom_field,attributes");
   const cambios: string[] = [];
   for (const { body: it } of r.filter((x) => x.code === 200)) {
     const sku = it.seller_custom_field || it.attributes?.find((a) => a.id === "SELLER_SKU")?.value_name || "";
@@ -331,7 +342,7 @@ export async function preciosMl(): Promise<FilaPrecioMl[]> {
   const ids = (await ml<{ results: string[] }>(`/users/${uid}/items/search?status=active&limit=50`)).results;
   if (!ids.length) return [];
   type It = { id: string; title: string; price: number; original_price?: number | null; listing_type_id?: string | null; seller_custom_field?: string | null; attributes?: { id: string; value_name?: string | null }[] };
-  const r = await ml<{ code: number; body: It }[]>(`/items?ids=${ids.join(",")}&attributes=id,title,price,original_price,listing_type_id,seller_custom_field,attributes`);
+  const r = await mlItems<It>(ids, "id,title,price,original_price,listing_type_id,seller_custom_field,attributes");
   const filas = await Promise.all(
     r.filter((x) => x.code === 200).map(async ({ body: it }) => {
       const sku = it.seller_custom_field || it.attributes?.find((a) => a.id === "SELLER_SKU")?.value_name || "";
