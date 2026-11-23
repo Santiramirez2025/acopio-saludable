@@ -870,7 +870,9 @@ export async function responderComoVendedor(
   let reemplazaPedido = false;
   try {
     for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      // 23/11: con muchas charlas a la vez (salió la promo semanal) la API contestó 429/529 y el cliente
+      // recibió la foto pero no el texto (Ale, Isabel, Nely). Se reintenta dos veces antes de rendirse.
+      const pedir = () => fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": clave, "anthropic-version": "2023-06-01" },
         body: JSON.stringify({
@@ -900,6 +902,12 @@ export async function responderComoVendedor(
         }),
         signal: AbortSignal.timeout(25_000),
       });
+      let res = await pedir();
+      for (let intento = 0; intento < 2 && [429, 500, 502, 503, 529].includes(res.status); intento++) {
+        console.error("vendedor: la API está saturada, reintento", res.status, intento + 1);
+        await new Promise((r) => setTimeout(r, 1500 + intento * 2500));
+        res = await pedir();
+      }
       if (!res.ok) {
         const cuerpo = (await res.text()).slice(0, 300);
         console.error("vendedor: la API rechazó", res.status, cuerpo);
@@ -963,7 +971,10 @@ export async function responderComoVendedor(
           fichas = [];
         }
         texto = sinFrasesDeCobroProhibidas(texto);
-        const mostradas = sep.texto ? fichasNombradas(fichas, texto) : fichas.slice(0, 4);
+        let mostradas = sep.texto ? fichasNombradas(fichas, texto) : fichas.slice(0, 4);
+        // 23/11 (Elsa): pidió el Trío, el texto habló del Trío y la foto fue la de la Alacena con su precio viejo.
+        // Si el cliente y la respuesta hablan del Trío, solo va una foto del Trío (o ninguna).
+        if (/\btr[ií]o\b/i.test(mensaje) && /\btr[ií]o\b/i.test(texto)) mostradas = mostradas.filter((f) => /tr[ií]o/i.test(f.nombre));
         return {
           texto,
           opciones: opciones.length ? opciones : undefined,
