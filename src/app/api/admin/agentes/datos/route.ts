@@ -36,9 +36,9 @@ export async function GET(req: Request) {
   if (que === "pedidos") {
     const hace7 = new Date(Date.now() - 7 * 86_400_000);
     // ?codigo=AS-00034 trae ese pedido aunque sea viejo (para recompras: ver la dirección de la vez pasada).
-    const codigo = u.get("codigo");
+    const codigoId = Number((u.get("codigo") ?? "").replace(/\D/g, "")) || 0;
     const os = await prisma.order.findMany({
-      where: codigo ? { codigo } : { OR: [{ estado: { notIn: ["ENTREGADO", "CANCELADO"] } }, { updatedAt: { gte: hace7 } }] },
+      where: codigoId ? { id: codigoId } : { OR: [{ estado: { notIn: ["ENTREGADO", "CANCELADO"] as EstadoPedido[] } }, { updatedAt: { gte: hace7 } }] },
       include: { items: true, eventos: { orderBy: { fecha: "desc" }, take: 5 } },
       // 22/11: con «asc» + take 100 quedaban afuera los más nuevos (AS-163 a 165 no aparecían). Los últimos 100, en orden.
       orderBy: { id: "desc" },
