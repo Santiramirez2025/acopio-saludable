@@ -1,6 +1,7 @@
 "use client";
 
 import { contextoAudio } from "./voz-cliente";
+import { AGENTES } from "@/lib/agentes";
 
 // Llamada en vivo con un agente (OpenAI Realtime por WebRTC): hablás y te contesta al instante con su voz,
 // podés interrumpirlo, y lo que dice mueve su boca en 3D (evento «acopio-boca»).
@@ -132,6 +133,8 @@ export async function llamar(o: Opciones): Promise<Llamada> {
     };
     document.addEventListener("visibilitychange", visibilidad);
     limpiar.push(() => document.removeEventListener("visibilitychange", visibilidad));
+    const quien = AGENTES.find((x) => x.id === o.agente);
+    const saludo = quien ? `Hola, soy ${quien.persona}, de ${quien.nombre}. ¿Qué necesitás?` : "Hola, ¿qué necesitás?";
     dc.onopen = () => {
       if (!vivo || o.senal?.aborted) return cortar();
       o.onEstado("escuchando");
@@ -140,8 +143,8 @@ export async function llamar(o: Opciones): Promise<Llamada> {
       enviar({
         type: "response.create",
         response: {
-          instructions:
-            "Arranca la llamada. Decí SOLO un saludo cortísimo de una frase, con tu nombre y tu área (ej.: «Hola, soy Cami, de Marketplaces. ¿Qué necesitás?»), y callate esperando que Santiago hable. No retomes temas anteriores, no des novedades, números ni pendientes, no uses herramientas.",
+          // 22/11: el ejemplo decía «soy Cami, de Marketplaces» y TODOS saludaban así. Ahora va el nombre real.
+          instructions: `Arranca la llamada. Decí SOLO un saludo cortísimo de una frase: «${saludo}» (o casi igual), y callate esperando que Santiago hable. Vos sos ${quien?.persona ?? "del equipo de Acopio"}: no digas ningún otro nombre. No retomes temas anteriores, no des novedades, números ni pendientes, no uses herramientas.`,
         },
       });
     };
