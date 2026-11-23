@@ -59,7 +59,7 @@ export function yaMandoComprobante(notasDelPedido: (string | null | undefined)[]
  */
 const SI_FALTA_ALGO = " Si dice que no le llegó o que le falta algo: preguntá qué falta si no lo dijo y usá pasar_a_whatsapp. No prometas salida, día ni hora.";
 export function notaPedidoQueSalio(estado: string | null | undefined): string {
-  if (estado === "ENTREGADO") return ` YA LO RECIBIÓ: si agradece o comenta, agradecé corto y cálido y nada más. No digas que está agendado, no ofrezcas avisar cuando salga y no mandes fotos de cómo llega.${SI_FALTA_ALGO}`;
+  if (estado === "ENTREGADO") return ` YA LO RECIBIÓ: si agradece o comenta, agradecé corto y cálido y nada más. No digas que está agendado, no ofrezcas avisar cuando salga y no mandes fotos de cómo llega.${SI_FALTA_ALGO} Si ahora pide algo de nuevo, es un PEDIDO NUEVO que todavía no existe: nunca digas «ya está cargado» ni nombres el código del pedido anterior (22/11, Olga: pidió dátiles y le dijeron «ya está cargado (AS-00034)», su compra de octubre).`;
   if (estado === "ENVIADO") return ` Figura ENVIADO: ya salió y puede que ya lo tenga. No sabés cuándo ni en qué reparto: no digas que sale hoy, que está en el reparto ni que va en camino.${SI_FALTA_ALGO} Si quiere sumar algo es un pedido nuevo, no va «en el mismo reparto».`;
   return "";
 }
