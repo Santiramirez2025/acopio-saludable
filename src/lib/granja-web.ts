@@ -78,6 +78,12 @@ export type ResultadoGranjaWeb = {
   aviso?: string;
 };
 
+/** Otras presentaciones del proveedor que sirven igual para lo que fraccionamos nosotros. */
+export const ALTERNATIVAS: Record<string, string[]> = {
+  "LG-DATIL": ["980-027", "980-047", "980-018"], // Egipto x 1 kg, Deglet Nour x 5 kg y x 1 kg
+  "LG-DATIL-500": ["980-027", "980-047", "980-018"],
+};
+
 /** Cruza la web con nuestro catálogo de La Granja. Con aplicar, pausa y reactiva. */
 export async function cruzarConWebGranja(aplicar: boolean): Promise<ResultadoGranjaWeb> {
   const { prisma } = await import("./prisma");
@@ -99,7 +105,10 @@ export async function cruzarConWebGranja(aplicar: boolean): Promise<ResultadoGra
   const noEstanEnLaWeb: ResultadoGranjaWeb["noEstanEnLaWeb"] = [];
   for (const p of productos) {
     const k = nuestro.get(p.codigo)!.replace(/^\d-(?=\d{3}-\d{3}$)/, "");
-    const d = disp.get(k);
+    // 23/11: la caja de dátiles Egipto x 5 kg (980-028) figuró «no disponible» y el robot pausó los dátiles:
+    // el Trío (casi todas las ventas) y la Despensa dieron 404 toda la mañana con los anuncios prendidos.
+    // Lo que fraccionamos se puede comprar en otra presentación: alcanza con que haya una.
+    const d = disp.get(k) === false && (ALTERNATIVAS[p.codigo] ?? []).some((alt) => disp.get(alt)) ? true : disp.get(k);
     const nombre = `${p.producto} ${p.presentacion}`.trim();
     if (d === undefined) {
       noEstanEnLaWeb.push({ codigo: p.codigo, producto: nombre });
