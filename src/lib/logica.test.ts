@@ -189,7 +189,9 @@ test("envíos: entrega propia, envío gratis, más barata y respaldo si la API f
   assert.deepEqual(mza.map((o) => [o.id, o.masBarata]), [["tabla-sucursal", true], ["tabla-domicilio", false]]);
   const gratis = aplicarReglas(mza, 250000, 200000);
   assert.equal(gratis[0].precio, 0);
-  assert.equal(gratis[1].precio, mza[1].costo - mza[0].costo);
+  // Desde el 23/11 el correo lleva 10% de recargo: la diferencia entre opciones también.
+  const dif = mza[1].costo - mza[0].costo;
+  assert.ok(gratis[1].precio >= dif && gratis[1].precio <= dif * 1.2);
   assert.equal(gratis[0].costo, mza[0].costo); // el costo real se conserva para el margen neto
   const rota = { id: "micorreo" as const, configurado: () => true, cotizar: async () => { throw new Error("caída"); } };
   const respaldo = await cotizarEnvio(cfg, { cpDestino: "5500", provincia: "Mendoza", bultos, subtotal: 1 }, [rota]);

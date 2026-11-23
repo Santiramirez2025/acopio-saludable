@@ -22,10 +22,16 @@ export type ConfigEnvio = {
   propiaBajoMinimo?: { precio: number; desde: number };
 };
 
+/** Recargo sobre el costo que cotiza el correo (Andreani, Correo Argentino). */
+export const RECARGO_CORREO_PCT = 10;
+
 /** Reglas comerciales sobre las tarifas: envío gratis desde $X y marca de la más barata. */
 export function aplicarReglas(tarifas: Tarifa[], subtotal: number, envioGratisDesde: number | null): OpcionEnvio[] {
   // Lo que vale cada opción para el cliente: el precio de lista si lo tiene, si no lo que nos cuesta.
-  const lista = (t: Tarifa) => t.precioFijo ?? t.costo;
+  // 23/11 (Santiago): por correo se vende sin el mínimo de $60.000, cobrando el envío «y ganándole un poquito»:
+  // lo que cotiza el correo va con un recargo (cubre caja, cinta y el viaje a despachar). El reparto propio
+  // tiene precio fijo y no lleva recargo.
+  const lista = (t: Tarifa) => t.precioFijo ?? Math.round(t.costo * (1 + RECARGO_CORREO_PCT / 100));
   const pagas = tarifas.filter((t) => lista(t) > 0);
   const minimoPago = pagas.length ? Math.min(...pagas.map(lista)) : 0;
   const gratis = envioGratisDesde !== null && subtotal >= envioGratisDesde;
