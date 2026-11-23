@@ -2157,3 +2157,13 @@ test("23/11: sin la caja de dátiles de Egipto, avisa el costo por kilo de la al
   // Con la caja habitual disponible no avisa: el costo lo actualiza la lista del día.
   assert.equal(costosQueSubieron([{ codigo: "0-980-028", nombre: "DATILES CON CAROZO X 5 KG - EGIPTO", precio: 31000, disponible: true }]).length, 0);
 });
+
+test("23/11: las respuestas automáticas de los consultorios (nutricionistas) no se contestan como si fueran un cliente", async () => {
+  const { esRespuestaAutomatica } = await import("./asistente");
+  for (const m of [
+    "¡Hola! 👋💕 ¡Gracias por escribirnos! Trabajamos con un enfoque práctico en embarazo, descenso de peso y distintas patologías. ¿me contás cuál es el motivo de tu consulta? 📅 Turnos: https://linktr.ee/x",
+    "¡Hola! Estoy disfrutando de unos días de descanso. No estaré atendiendo hasta el 30/11. A partir de esa fecha, responderé todos los mensajes pendientes.",
+    "Hola! Muchas gracias por comunicarte! Actualmente estoy en consulta, en cuanto pueda responderé tu mensaje.",
+  ]) assert.ok(esRespuestaAutomatica(m), m);
+  for (const m of ["Sí, contame", "Gracias, mañana te escribo", "Hola, quiero el Trío con las 3 recetas"]) assert.ok(!esRespuestaAutomatica(m), m);
+});
