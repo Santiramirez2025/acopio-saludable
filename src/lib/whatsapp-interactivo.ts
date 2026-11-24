@@ -579,7 +579,14 @@ export function confirmaPedido(texto: string): boolean {
  */
 export function asienteAlCierre(texto: string, previoAcopio: string): boolean {
   if (texto.includes("?")) return false;
-  if (!/\b(te (lo|la|los|las) dejo listos?|lo dejamos listo|lo dejo listo|te (lo|la|los|las) separo|lo dejamos separado)\b/.test(limpio(previoAcopio))) return false;
+  const prev = limpio(previoAcopio);
+  // 23/11 (Ricardo, Bialet, AS-173): ya había dado dirección y horario; le dijimos «Te lo llevamos mañana martes en el
+  // reparto de las 16 y lo pagás cuando te llega. ¿Te queda bien que el cadete te escriba cuando esté cerca?» y contestó
+  // «Si por supuesto». No era la pregunta «¿Te lo dejo listo?», pero el mensaje ya cerraba la entrega con pago al recibir:
+  // el bot volvió a preguntar «¿Te lo dejo listo?» y el pedido lo tuvo que crear Nico a mano. Vale como cierre un mensaje
+  // nuestro que promete la entrega («te lo llevamos», «te llevamos») con pago al recibir y termina en pregunta.
+  const cierraEntrega = /\bte (lo |la |los |las )?llevamos\b/.test(prev) && aceptamosAlRecibir(previoAcopio) && /\?\s*$/.test(prev) && !/\b(agregar|sumar|sumarle|algo mas|otra cosa|cambiar|duda|otro producto|otro combo)\b/.test(prev.slice(prev.lastIndexOf(".") + 1));
+  if (!cierraEntrega && !/\b(te (lo|la|los|las) dejo listos?|lo dejamos listo|lo dejo listo|te (lo|la|los|las) separo|lo dejamos separado)\b/.test(prev)) return false;
   const s = limpio(texto)
     .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{1F3FB}-\u{1F3FF}\u200d]/gu, " ")
     .replace(/[,.!;:]+/g, " ")
@@ -587,9 +594,9 @@ export function asienteAlCierre(texto: string, previoAcopio: string): boolean {
     .trim();
   if (!s) return /👍|👌|🙌|✅/u.test(texto);
   if (s.length > 40) return false;
-  if (!/^((si|sii+|ok|okey|oka|okis|dale|bueno|buenisimo|listo|joya|de una|claro|obvio|perfecto|genial|va|por favor|porfa|gracias|muchas|bien|re|nomas)( |$))+$/.test(s)) return false;
+  if (!/^((si|sii+|ok|okey|oka|okis|dale|bueno|buenisimo|listo|joya|de una|claro|obvio|perfecto|genial|va|por supuesto|supuesto|que|por favor|porfa|gracias|muchas|bien|re|nomas)( |$))+$/.test(s)) return false;
   if (/\bgracias\b/.test(s) && !/\b(si|sii+|dale|de una|listo|claro|obvio)\b/.test(s)) return false;
-  return /\b(si|sii+|ok|okey|oka|okis|dale|bueno|buenisimo|listo|joya|de una|claro|obvio|perfecto|genial|va)\b/.test(s);
+  return /\b(si|sii+|ok|okey|oka|okis|dale|bueno|buenisimo|listo|joya|de una|claro|obvio|perfecto|genial|va|supuesto)\b/.test(s);
 }
 
 /** El último mensaje nuestro aceptó pagar al recibir (en efectivo, cuando te lo llevamos). */

@@ -2174,3 +2174,27 @@ test("23/11 (Jorge): «Pasame el domicilio» pide NUESTRA dirección, no es que 
   assert.ok(preguntaDondeEstan("pasame la dirección"));
   assert.ok(!preguntaDondeEstan("Los Cerros 123, barrio Centro"));
 });
+
+test("24/11 (Ricardo, AS-173): «Si por supuesto» a un mensaje que ya promete la entrega con pago al recibir confirma el pedido", async () => {
+  const { asienteAlCierre } = await import("./whatsapp-interactivo");
+  const prev = "Anotado, Ricardo: después de las 17 hasta las 20. Te lo llevamos mañana martes en el reparto de las 16 y lo pagás cuando te llega. ¿Te queda bien que el cadete te escriba cuando esté cerca?";
+  for (const t of ["Si por supuesto.", "Sí", "dale", "Claro que sí", "Ok 👍"]) assert.ok(asienteAlCierre(t, prev), t);
+  // Un «no», una pregunta o un «gracias» solo no confirman.
+  for (const t of ["No, mejor el jueves", "¿Y a qué hora llega?", "Ok gracias", "Si pero cambio la dirección"]) assert.ok(!asienteAlCierre(t, prev), t);
+  // Si la pregunta final es para sumar algo, el «sí» no es un cierre.
+  assert.ok(!asienteAlCierre("Sí", "Te lo llevamos mañana y lo pagás cuando te llega. ¿Querés agregar algo más?"));
+  // Fuera de la zona (pago anticipado) no hay cierre al recibir.
+  assert.ok(!asienteAlCierre("Sí", "Para Córdoba es pago anticipado: te lo llevamos el jueves. ¿Te paso los datos?"));
+  // Sin promesa de entrega, un «sí» a cualquier pregunta tampoco confirma.
+  assert.ok(!asienteAlCierre("Sí", "Lo pagás cuando te llega. ¿Sos de Carlos Paz?"));
+});
+
+test("24/11: respuestas automáticas típicas de Instagram y negocios («te respondemos a la brevedad») no se contestan", async () => {
+  const { esRespuestaAutomatica } = await import("./asistente");
+  for (const m of [
+    "¡Hola! Gracias por escribirnos 😊 Te respondemos a la brevedad.",
+    "Hola, en este momento estamos cerrados. Lo antes posible te contactamos.",
+    "¡Gracias por escribir! Les responderemos en breve.",
+  ]) assert.ok(esRespuestaAutomatica(m), m);
+  for (const m of ["Gracias por escribirnos, sí nos interesa, ¿qué precio tiene la nuez?", "Hola, te respondo mañana que hoy no puedo", "Sí, contame"]) assert.ok(!esRespuestaAutomatica(m), m);
+});
