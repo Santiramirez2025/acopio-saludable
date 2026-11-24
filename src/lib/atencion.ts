@@ -47,7 +47,7 @@ import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
 import { transcribirAudio } from "./oir-audio";
 import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
-import { charlaTieneComprobante, clienteDiceQuePago, equipoDijoQueVa, esDudaDeConfianza, esperaElPedido, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, soloAcuse, yaMandoComprobante } from "./atencion-reglas";
+import { charlaTieneComprobante, clienteDiceQuePago, equipoDijoQueVa, esDudaDeConfianza, esperaElPedido, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, soloAcuse, yaMandoComprobante, sinPreguntaDeCortesia } from "./atencion-reglas";
 import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from "./direccion-cliente";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
@@ -1004,6 +1004,10 @@ export async function pensar(c: {
   if (!derivar && respuesta.texto && !/\?/.test(respuesta.texto) && !estadoOrden && !soloAcuse(c.texto) && !cierraCharla && c.canal === "whatsapp") {
     const sabeLugar = yaDijoLugar || Boolean(respuesta.envio) || Boolean(lugarDelHistorial([...c.historial, { de: "yo", texto: c.texto }]));
     respuesta = { ...respuesta, texto: `${respuesta.texto.trimEnd()} ${sabeLugar ? "¿Me pasás calle y número así te lo dejo listo?" : "¿De qué barrio o ciudad sos? Así te digo cuándo te llega."}` };
+  }
+  // 24/11: con el pedido ya tomado (y sin entregar), la respuesta no termina con una pregunta de cortesía.
+  if (!derivar && respuesta.texto && estadoOrden && !["ENTREGADO", "CANCELADO"].includes(estadoOrden) && c.canal === "whatsapp") {
+    respuesta = { ...respuesta, texto: sinPreguntaDeCortesia(respuesta.texto) };
   }
   // Primera respuesta de la charla: se presenta como asistente con IA, sin cortar la venta.
   if (!derivar && respuesta.texto && !c.historial.some((h) => h.de === "acopio")) respuesta = { ...respuesta, texto: conPresentacion(respuesta.texto) };

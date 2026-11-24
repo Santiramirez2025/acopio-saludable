@@ -2198,3 +2198,15 @@ test("24/11: respuestas automáticas típicas de Instagram y negocios («te resp
   ]) assert.ok(esRespuestaAutomatica(m), m);
   for (const m of ["Gracias por escribirnos, sí nos interesa, ¿qué precio tiene la nuez?", "Hola, te respondo mañana que hoy no puedo", "Sí, contame"]) assert.ok(!esRespuestaAutomatica(m), m);
 });
+
+test("24/11 (Ricardo AS-153): con la venta cerrada no se termina con una pregunta de cortesía, y «sí, lo espero» es un acuse", async () => {
+  const { sinPreguntaDeCortesia, soloAcuse } = await import("./atencion-reglas");
+  assert.equal(sinPreguntaDeCortesia("Dale, Ricardo. Tu pedido queda agendado en Güemes 735, y lo pagás cuando lo recibís. ¿Te queda alguna duda?"), "Dale, Ricardo. Tu pedido queda agendado en Güemes 735, y lo pagás cuando lo recibís.");
+  assert.equal(sinPreguntaDeCortesia("Dale, María, anotado. El cadete te escribe cuando esté cerca. ¿Hay algo más que necesites?"), "Dale, María, anotado. El cadete te escribe cuando esté cerca.");
+  assert.equal(sinPreguntaDeCortesia("Te lo llevamos hoy desde las 16. ¿Te queda bien ese horario? [Botones: Sí · No]"), "Te lo llevamos hoy desde las 16.");
+  // Lo que pide un dato que falta para entregar no se toca.
+  assert.match(sinPreguntaDeCortesia("Anotado, Mar. ¿Me pasás calle y número?"), /calle y número\?$/);
+  assert.ok(soloAcuse("Si lo espero"));
+  assert.ok(soloAcuse("Sí, los espero. Gracias"));
+  assert.ok(!soloAcuse("Me dijiste hoy"));
+});

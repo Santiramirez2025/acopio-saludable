@@ -147,10 +147,23 @@ export function soloAcuse(texto: string): boolean {
   if (/\?|\d/.test(texto)) return false;
   const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   // 21/11: «Recibido. Gracias.» después del gracias del reparto también es acuse (Miguel recibió otra respuesta).
-  return t === "" || /^((si|sii+|bueno|ok|oka|okey|okis|dale|listo|joya|genial|perfecto|barbaro|buenisimo|de una|gracias|muchas|mil|recibido|recibi|llego|lleg[oó]|todo|bien|hermoso|riquisimo|re|lindo|amor|chau|saludos|igualmente)\s?){1,5}$/.test(t);
+  return t === "" || /^((si|sii+|bueno|ok|oka|okey|okis|dale|listo|joya|genial|perfecto|barbaro|buenisimo|de una|gracias|muchas|mil|recibido|recibi|llego|lleg[oó]|todo|bien|lo|los|la|te|aca|aqui|espero|esperamos|estare|hermoso|riquisimo|re|lindo|amor|chau|saludos|igualmente)\s?){1,5}$/.test(t);
 }
 
 // «No vino el cadete», «¿viene o no?», «estará lejos?», «sigo esperando»: alguien espera en la puerta.
 export function esperaElPedido(texto: string): boolean {
   return /\b(no (vino|lleg[oó]|pas[oó])( (el|ning[uú]n) (cadete|chico|repartidor))?|viene o no|vienen o no|estar[aá] lejos|sigo esperando|estoy esperando|lo estoy esperando|a qu[eé] hora (viene|llega)|cu[aá]nto (falta|tarda))\b/i.test(texto);
+}
+
+/**
+ * 24/11 (Santiago, por Ricardo AS-153): «cuando ya se cierra una venta no hacemos más preguntas: le decimos gracias y
+ * listo; "¿algo más en que te pueda ayudar?" es molesto». Con el pedido ya tomado, se le saca a la respuesta la
+ * pregunta de cortesía del final («¿Te queda alguna duda?», «¿Te queda bien ese horario?», «¿Hay algo más…?»).
+ * Las preguntas que piden un dato que falta para entregar (calle, horario, quién recibe) no se tocan. Puro.
+ */
+export function sinPreguntaDeCortesia(texto: string): string {
+  const CORTESIA = /\s*¿[^¿?]*(alguna (otra )?(duda|consulta)|algo m[aá]s|te queda bien|te parece bien|te sirve (ese|el) horario|en qu[eé] (m[aá]s )?te (puedo |podemos )?ayud|necesit[aá]s algo|te gustar[ií]a sumar|quer[eé]s sumar|te avisamos|te aviso (por ac[aá] )?cuando)[^¿?]*\?\s*(\[Botones:[^\]]*\])?\s*$/i;
+  let t = texto;
+  for (let i = 0; i < 2 && CORTESIA.test(t); i++) t = t.replace(CORTESIA, "").trimEnd();
+  return t || texto;
 }
