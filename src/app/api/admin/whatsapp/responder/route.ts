@@ -42,6 +42,9 @@ function frenoMonto(req: Request, texto: string) {
 async function frenoSeguidos(req: Request, telefono: string, texto: string, forzar: boolean) {
   if (!req.headers.get("x-agente-clave")) return null;
   if (forzar && /perd[oó]n|disculp/i.test(texto)) return null;
+  // 24/11: Eduardo le pidió al cadete en la puerta «mandame la lista de precios». Lo que el cliente pidió en persona o
+  // por otro canal no es un seguimiento: sale con el encabezado x-lo-pidio: "<quién y dónde lo pidió>" (10 letras o más).
+  if ((req.headers.get("x-lo-pidio") ?? "").trim().length >= 10) return null;
   const { prisma } = await import("@/lib/prisma");
   // Cuántos textos nuestros (sin contar fotos ni videos) hay desde el último mensaje del cliente, en las últimas 24 h.
   // Uno (la respuesta del bot) deja lugar a UN seguimiento de una persona; dos o más, se espera a que conteste.
