@@ -59,7 +59,7 @@ export function notaRepartoDeHoy(ahoraMs: number): string {
     return `(REPARTO, solo Carlos Paz y la zona: hoy es ${hoy}, son las ${hora}. Lo que se paga antes de las 15 sale hoy en el reparto de las 16.)`;
   const nombre = DIAS[(local.getUTCDay() + (a.dia === "mañana" ? 1 : 2)) % 7];
   const motivo = local.getUTCDay() === 0 ? "los domingos no hay reparto" : !hayReparto(ahoraMs, 0) ? "hoy no hay reparto (feriado)" : "ya pasaron las 15";
-  return `(REPARTO, solo Carlos Paz y la zona: hoy es ${hoy}, son las ${hora} y ${motivo}. Lo próximo sale ${a.dia === "mañana" ? `mañana ${nombre}` : a.dia} desde las 16. No digas «hoy lo tenés», «sale hoy», «en el reparto de hoy» ni «si pagás antes de las 15»: decí «te lo llevo ${a.dia === "mañana" ? `mañana ${nombre}` : a.dia} desde las 16».)`;
+  return `(REPARTO, solo Carlos Paz y la zona: hoy es ${hoy}, son las ${hora} y ${motivo}. Lo próximo sale ${a.dia === "mañana" ? `mañana ${nombre}` : a.dia} desde las 16. No digas «hoy lo tenés», «sale hoy», «en el reparto de hoy» ni «si pagás antes de las 15»: decí «te lo llevo ${a.dia === "mañana" ? `mañana ${nombre}` : a.dia} desde las 16».${motivo === "ya pasaron las 15" ? " ESTO VALE SOLO PARA PEDIDOS NUEVOS: si en la charla ya le avisamos HOY que su pedido (código AS) sale en el reparto de hoy, o el cadete le escribió que está llegando, NO le cambies el día ni digas «mañana»: su pedido sale HOY, el cadete está repartiendo y le escribe antes de llegar." : ""})`;
 }
 
 /** Cierre del mensaje con el alias (Carlos Paz y la zona): «sale hoy en el reparto de las 16» o «sale mañana lunes desde las 16». */
