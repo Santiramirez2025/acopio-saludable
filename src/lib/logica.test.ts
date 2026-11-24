@@ -2210,3 +2210,10 @@ test("24/11 (Ricardo AS-153): con la venta cerrada no se termina con una pregunt
   assert.ok(soloAcuse("Sí, los espero. Gracias"));
   assert.ok(!soloAcuse("Me dijiste hoy"));
 });
+
+test("24/11: «Buenoooo» y «Todo bien 👍🏻👍🏻» son acuses (a Ricardo se le contestó dos veces lo mismo)", async () => {
+  const { soloAcuse } = await import("./atencion-reglas");
+  assert.ok(soloAcuse("Buenoooo"));
+  assert.ok(soloAcuse("Todo bien 👍🏻👍🏻👍🏻"));
+  assert.ok(soloAcuse("👍🏻👍🏻👍🏻 dale"));
+});

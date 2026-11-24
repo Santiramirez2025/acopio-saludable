@@ -145,7 +145,7 @@ export function equipoDijoQueVa(texto: string | null | undefined): boolean {
 // pregunta nada, no se contesta (19/11, Móni recibió cuatro «Cualquier cosa nos escribís por acá» seguidos).
 export function soloAcuse(texto: string): boolean {
   if (/\?|\d/.test(texto)) return false;
-  const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z\s]/g, " ").replace(/([a-z])\1{2,}/g, "$1").replace(/\s+/g, " ").trim(); // «Buenoooo» = «bueno»
   // 21/11: «Recibido. Gracias.» después del gracias del reparto también es acuse (Miguel recibió otra respuesta).
   return t === "" || /^((si|sii+|bueno|ok|oka|okey|okis|dale|listo|joya|genial|perfecto|barbaro|buenisimo|de una|gracias|muchas|mil|recibido|recibi|llego|lleg[oó]|todo|bien|lo|los|la|te|aca|aqui|espero|esperamos|estare|hermoso|riquisimo|re|lindo|amor|chau|saludos|igualmente)\s?){1,5}$/.test(t);
 }
