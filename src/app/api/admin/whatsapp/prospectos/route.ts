@@ -15,6 +15,8 @@ import { crearPlantillaComprobante } from "@/lib/comprobante-envio";
 import { avisarReparto, crearPlantillaReparto, crearPlantillaRepartoHoy } from "@/lib/aviso-reparto";
 import { crearPlantillaSeguimiento, plantillaSeguimiento } from "@/lib/seguimiento";
 import { registrarSalida } from "@/lib/whatsapp-memoria";
+import { planReprogramar, telefonosDeLista } from "@/lib/reprogramar";
+import { prisma } from "@/lib/prisma";
 import { correrReactivacion, crearPlantillaReactivacion } from "@/lib/reactivacion";
 import { correrRecompra, crearPlantillaRecompra } from "@/lib/recompra";
 import { correrRegalo, crearPlantillaRegalo, topeRegalo } from "@/lib/regalo-recetas";
@@ -91,14 +93,20 @@ export async function POST(req: Request) {
   // 23/11: reprogramar pedidos con la ventana de 24 h cerrada (feriado, se pasó el reparto al martes).
   // Plantilla acopio_seguimiento_v1: «Te lo guardamos y te lo podemos llevar el {{2}}. ¿Lo agendamos?».
   if (cuerpo.accion === "reprogramar") {
+    // 24/11 (seguridad): respeta el bloqueo y la baja (como viaje-cordoba y los crons), normaliza y no repite.
+    const tels = telefonosDeLista(cuerpo.lista);
+    const filas = tels.length
+      ? await prisma.$queryRaw<{ telefono: string }[]>`SELECT "telefono" FROM "WhatsappConversacion" WHERE "baja" = true AND "telefono" = ANY(${tels})`
+      : [];
+    const plan = planReprogramar(cuerpo.lista, new Set(filas.map((f: { telefono: string }) => f.telefono)));
     const r: Record<string, boolean> = {};
-    for (const it of (Array.isArray(cuerpo.lista) ? cuerpo.lista : []).slice(0, 30)) {
-      const o = (it ?? {}) as Record<string, string>;
-      const ok = await plantillaSeguimiento(String(o.telefono), String(o.nombre || "¡hola"), String(o.dia));
-      if (ok) await registrarSalida(String(o.telefono), "persona", `[Plantilla reprogramar] ${o.pedido ?? ""}: te lo llevamos el ${o.dia}`).catch(() => undefined);
-      r[String(o.pedido ?? o.telefono)] = ok;
+    for (const o of plan.enviar) {
+      const ok = await plantillaSeguimiento(o.telefono, o.nombre, o.dia);
+      if (ok) await registrarSalida(o.telefono, "persona", `[Plantilla reprogramar] ${o.pedido}: te lo llevamos el ${o.dia}`).catch(() => undefined);
+      r[o.pedido || o.telefono.slice(-4)] = ok;
     }
-    return NextResponse.json(r);
+    for (const k of Object.keys(plan.salteados)) r[k] = false;
+    return NextResponse.json({ ...r, salteados: plan.salteados });
   }
   if (cuerpo.accion === "plantilla-comprobante") return NextResponse.json(await crearPlantillaComprobante());
 
