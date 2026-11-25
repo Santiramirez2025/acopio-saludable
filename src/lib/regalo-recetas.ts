@@ -44,8 +44,12 @@ async function plantilla(tel: string, nombre: string): Promise<boolean> {
 }
 
 /** Con `simular` solo dice a quién le llegaría. Manda como mucho `tope` (ver topeRegalo); `pendientes` son los que quedan. */
-export async function correrRegalo(simular: boolean, tope: number = REGALO_TOPE_DEFECTO): Promise<{ simulado: boolean; destinatarios: string[]; enviados: string[]; fallidos: number; pendientes: number }> {
-  const todos = await candidatos();
+export async function correrRegalo(simular: boolean, tope: number = REGALO_TOPE_DEFECTO, solo?: string[]): Promise<{ simulado: boolean; destinatarios: string[]; enviados: string[]; fallidos: number; pendientes: number }> {
+  // `solo` (25/11): lista de teléfonos a los que mandarlo (los que compraron el Trío y no recibieron las recetas).
+  // Sigue valiendo todo lo demás: una sola vez por teléfono, nunca a quien pidió la baja o está bloqueado.
+  const ult = (t: string) => t.replace(/\D/g, "").slice(-10);
+  const filtro = solo?.length ? new Set(solo.map(ult)) : null;
+  const todos = (await candidatos()).filter((c) => !filtro || filtro.has(ult(c.telefono)));
   const lista = todos.slice(0, Math.max(0, tope));
   const pendientes = todos.length - lista.length;
   // Solo el primer nombre: la respuesta la leen agentes y no hace falta el nombre completo del cliente.

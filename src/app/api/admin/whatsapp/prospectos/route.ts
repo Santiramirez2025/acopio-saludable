@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   }
   if (cuerpo.accion === "plantilla-regalo") return NextResponse.json(await crearPlantillaRegalo());
   // Regalo de recetas a clientes: sin `forzar: true` solo dice a quién le llegaría. Por tandas: `cantidad` (20 por defecto, 40 como mucho).
-  if (cuerpo.accion === "regalo") return NextResponse.json(await correrRegalo(cuerpo.forzar !== true, topeRegalo(cuerpo.cantidad)));
+  if (cuerpo.accion === "regalo") return NextResponse.json(await correrRegalo(cuerpo.forzar !== true, topeRegalo(cuerpo.cantidad), Array.isArray((cuerpo as { solo?: unknown }).solo) ? ((cuerpo as { solo: unknown[] }).solo.filter((x) => typeof x === "string") as string[]) : undefined));
   if (cuerpo.accion === "recompra") return NextResponse.json(await correrRecompra());
   // Captación orgánica: cargar negocios a la lista, correr el día ahora, ver las lecciones.
   if (cuerpo.accion === "semilla") return NextResponse.json(await cargarSemilla(Array.isArray(cuerpo.lista) ? (cuerpo.lista as Semilla[]) : []));

@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 // Las que se hacen con lo que más se lleva (mix, dátiles, pasas, semillas, granola), primero.
 const PRIMERAS = [
   "bolitas-de-datiles-y-nuez-sin-horno",
-  "avena-nocturna-con-semillas-y-datiles",
   "granola-casera-con-mix-de-frutos-secos",
   "datiles-rellenos",
+  "avena-nocturna-con-semillas-y-datiles",
   "galletitas-de-avena-pasas-y-nuez",
   "bowl-de-yogur-con-granola-y-frutos-secos",
 ];
@@ -36,7 +36,8 @@ export default function Regalo() {
       </section>
 
       <section>
-        <h2 className="mb-3 font-display text-2xl font-black text-acopio-900">Para empezar hoy</h2>
+        <h2 className="mb-3 font-display text-2xl font-black text-acopio-900">Las 3 recetas del Trío, y 3 más</h2>
+        <p className="-mt-2 mb-3 text-sm text-stone-600">Las tres primeras salen con lo que trae el Trío: mix, dátiles y pasas.</p>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {primeras.map((r) => (
             <li key={r.slug}>
