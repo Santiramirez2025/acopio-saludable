@@ -79,8 +79,8 @@ export function notaPlazoEntrega(estado: string | null | undefined, ciudad?: str
   // donde esa certeza es lo que hace pagar. Ahora el pedido sin pagar recibe la regla del reparto.
   const correo = " Fuera de Carlos Paz y la zona (por correo): despacho en 24 a 48 h hábiles más el plazo del correo.";
   if (estado === "PENDIENTE_PAGO")
-    return ` Si pregunta cuándo se lo llevan (Carlos Paz y la zona): el reparto sale todos los días a las 16 (domingos no hay reparto); si lo paga antes de las 15, sale ese mismo día, y si paga después, al día siguiente desde las 16. Podés decirlo para cerrar el pago («si lo pagás antes de las 15, hoy a la tarde lo tenés»). No prometas una hora exacta de llegada: el chico del reparto le escribe para coordinar.${correo}`;
-  return ` Si pregunta cuándo se lo llevan (Carlos Paz y la zona): sale en el reparto de las 16 (domingos no hay reparto); el día del reparto le avisamos y el chico del reparto le escribe para coordinar el horario. No prometas una hora exacta de llegada.${correo}`;
+    return ` Si pregunta cuándo se lo llevan (Carlos Paz y la zona): el reparto sale de lunes a sábado a las 16 (los domingos no hay reparto); si lo paga antes de las 15, sale ese mismo día, y si paga después, al día siguiente de reparto desde las 16. Nunca digas «todos los días». Podés decirlo para cerrar el pago («si lo pagás antes de las 15, hoy a la tarde lo tenés»). No prometas una hora exacta de llegada: el chico del reparto le escribe para coordinar.${correo}`;
+  return ` Si pregunta cuándo se lo llevan (Carlos Paz y la zona): sale en el reparto de las 16, de lunes a sábado (los domingos no hay reparto; nunca digas «todos los días»); el día del reparto le avisamos y el chico del reparto le escribe para coordinar el horario. No prometas una hora exacta de llegada.${correo}`;
 }
 
 /**
