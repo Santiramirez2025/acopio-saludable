@@ -1180,17 +1180,18 @@ test("imágenes oportunas: el primer «precios por kilo» va con la imagen del m
 
 import { mensajeDespacho, mensajesGracias } from "./despacho-texto";
 
-test("despacho sin referidos; gracias con referidos", () => {
+test("despacho sin referidos; gracias corto con la foto", () => {
   const base = { id: 17, nombre: "Lidia Charra", medioPago: "AL_RECIBIR" as const, pagadoAt: null, total: 15400 as unknown as never, token: "abc123" };
   const d = mensajeDespacho(base);
   assert.match(d, /Hola Lidia! 😊 Tu pedido AS-00017 ya está en el reparto de hoy/);
   assert.match(d, /Lo pagás cuando te llega/);
   assert.doesNotMatch(d, /5%|recomend/i);
-  const [g, link] = mensajesGracias(base, "https://www.acopiosaludable.com");
+  const [g] = mensajesGracias(base, "https://www.acopiosaludable.com");
   assert.match(g, /Gracias, Lidia/);
-  assert.match(g, /\?ref=amigo-/); // 21/11: un solo mensaje, con el link adentro
-  assert.match(g, /5%/);
-  assert.match(link, /\?ref=amigo-/);
+  assert.match(g, /foto/); // 25/11: foto y etiqueta, no más link de referidos
+  assert.match(g, /@acopio\.saludable/);
+  assert.doesNotMatch(g, /ref=amigo|recomend/i);
+  assert.ok(g.length < 170);
 });
 
 test("precios redondos: $35.227 se vende como $35.000", async () => {

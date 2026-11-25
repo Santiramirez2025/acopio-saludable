@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { enlaceRepetir, codigoAmigo } from "@/lib/repetir";
+import { enlaceRepetir } from "@/lib/repetir";
 import { urlSitio } from "@/lib/sitio";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -134,16 +134,9 @@ export default async function PedidoPagina({ params, searchParams }: Props) {
       )}
       {!pendiente && pedido.estado !== "CANCELADO" && (
         <section className="rounded-xl border border-tierra-200 bg-white p-4 text-sm">
-          <p className="font-medium text-stone-900">Recomendá y ganan los dos</p>
-          <p className="mt-1 text-stone-700">Pasale tu link a quien quiera resolver la compra del mes: tiene 5% de descuento en su primera compra, y vos 5% en tu próxima por cada amigo que compre.</p>
-          <a
-            className="btn-sec mt-3"
-            href={`https://wa.me/?text=${encodeURIComponent(`Yo compro la despensa en Acopio Saludable y me llega a casa. Con este link tenés 5% de descuento en tu primera compra: ${urlSitio()}/?ref=amigo-${codigoAmigo(token)}`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Recomendar por WhatsApp
-          </a>
+          <p className="font-medium text-stone-900">Mostranos tu pedido</p>
+          <p className="mt-1 text-stone-700">Subí una foto a Instagram y etiquetanos en @acopio.saludable: la compartimos y tenés 5% en tu próxima compra.</p>
+          <a className="btn-sec mt-3" href="https://www.instagram.com/acopio.saludable/" target="_blank" rel="noopener noreferrer">Ir a nuestro Instagram</a>
         </section>
       )}
       <Link href="/catalogo" className="text-sm text-acopio-700 underline">Seguir mirando el catálogo</Link>

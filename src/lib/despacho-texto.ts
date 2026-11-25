@@ -3,7 +3,6 @@
 import type { Order } from "@prisma/client";
 import { numeroPedido } from "./pedido-calculos";
 import { pesos } from "./precios";
-import { codigoAmigo } from "./repetir";
 
 // 18/11: «¡Gracias por tu compra, Poretti!» (el pedido estaba a nombre «Poretti María Cristina»). Solo un nombre de
 // pila que reconocemos; si no, sin nombre.
@@ -29,14 +28,12 @@ export function mensajeDespacho(p: Pick<Order, "id" | "nombre" | "medioPago" | "
 }
 
 /**
- * Gracias + referidos: SOLO con el pedido pagado y entregado. Recién ahí, con la venta cerrada y la
- * experiencia completa, se le ofrece recomendar (5% para el amigo, 5% para él).
+ * Gracias al entregar: SOLO con el pedido pagado y entregado.
+ * 25/11 (Santiago: «mucho texto… eso del 5% por recomendar no lo mandamos más. Que saquen una foto y nos etiqueten,
+ * y ahí sí le damos un 5%, y la republicamos»): un mensaje corto, sin link, que invita a la foto.
  */
-export function mensajesGracias(p: Pick<Order, "id" | "nombre" | "token">, sitio: string): [string, string] {
+export const INSTAGRAM_ACOPIO = "@acopio.saludable";
+export function mensajesGracias(p: Pick<Order, "id" | "nombre" | "token">, _sitio?: string): [string] {
   const nombre = primerNombre(p.nombre);
-  // Un solo mensaje, corto: gracias y el link para recomendar (antes eran dos mensajes seguidos en la puerta).
-  const link = `${sitio}/?ref=amigo-${codigoAmigo(p.token)}`;
-  const uno = `¡Gracias${nombre ? `, ${nombre}` : ""}! 💚 Que disfrutes tu pedido. Si querés recomendarnos, con este link tu amigo tiene 5% en su primera compra y vos 5% en la próxima: ${link}`;
-  const dos = `Yo compro la despensa en Acopio Saludable (Villa Carlos Paz): frutos secos, mixes y granolas, y me la traen a casa. Con este link tenés 5% de descuento en tu primera compra 👉 ${link}`;
-  return [uno, dos];
+  return [`¡Gracias${nombre ? `, ${nombre}` : ""}! 💚 Que lo disfrutes. Si subís una foto y nos etiquetás en Instagram (${INSTAGRAM_ACOPIO}), la compartimos y tenés 5% en tu próxima compra.`];
 }
