@@ -253,7 +253,7 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
  *  El pie lleva {precio:CODIGO} y atencion.ts lo reemplaza por el precio del día. Uno por tema y por charla. */
 const VIDEOS: [RegExp, string, string][] = [
   [/semilla|tr[ií]o del desayuno/i, "/video/reels/reel-2026-11-12-semillas-no-frutos-secos.mp4", "Mix de semillas (lino, chía y sésamo) vs. mix de frutos secos: los dos fraccionados en el día"],
-  [/mix|frutos secos|despensa|alacena|nuez|caj[uú]|almendra|man[ií]\b/i, "/video/reels/reel-2026-11-12-asi-armamos-tu-mix.mp4", "Así armamos tu mix de frutos secos, a mano y el mismo día · Mix clásico con cajú {precio:TG-MIXC} el kilo"],
+  [/mix|frutos secos|despensa|alacena|nuez|caj[uú]|almendra|man[ií]\b/i, "/video/reels/reel-2026-11-12-asi-armamos-tu-mix.mp4", "Así armamos tu mix de frutos secos, a mano y el mismo día · Mix clásico con cajú y girasol {precio:TG-MIXCG} el kilo"],
   // 21/11: fuera «Repartimos todos los días a las 16: si pagás antes de las 15, hoy lo tenés». Empuja a pagar antes
   // (CONFIANZA PRIMERO) y salía junto con foto y texto: tres mensajes por una pregunta (Norberto).
 ];
