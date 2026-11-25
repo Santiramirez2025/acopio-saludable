@@ -16,6 +16,7 @@ import { avisarReparto, crearPlantillaReparto, crearPlantillaRepartoHoy } from "
 import { crearPlantillaSeguimiento, plantillaSeguimiento } from "@/lib/seguimiento";
 import { registrarSalida } from "@/lib/whatsapp-memoria";
 import { planReprogramar, telefonosDeLista } from "@/lib/reprogramar";
+import { planReparto, telefonosReparto } from "@/lib/reparto-plan";
 import { prisma } from "@/lib/prisma";
 import { correrReactivacion, crearPlantillaReactivacion } from "@/lib/reactivacion";
 import { correrRecompra, crearPlantillaRecompra } from "@/lib/recompra";
@@ -83,12 +84,16 @@ export async function POST(req: Request) {
   if (cuerpo.accion === "plantilla-reparto") return NextResponse.json(await crearPlantillaReparto());
   if (cuerpo.accion === "plantilla-reparto-hoy") return NextResponse.json(await crearPlantillaRepartoHoy());
   if (cuerpo.accion === "reparto") {
+    // 25/11 (seguridad): respeta el bloqueo y la baja, normaliza, no repite y frena montos sin «$» (como reprogramar).
+    const tels = telefonosReparto(cuerpo.lista);
+    const filas = tels.length
+      ? await prisma.$queryRaw<{ telefono: string }[]>`SELECT "telefono" FROM "WhatsappConversacion" WHERE "baja" = true AND "telefono" = ANY(${tels})`
+      : [];
+    const plan = planReparto(cuerpo.lista, new Set(filas.map((f: { telefono: string }) => f.telefono)));
     const r: Record<string, unknown> = {};
-    for (const it of (Array.isArray(cuerpo.lista) ? cuerpo.lista : []).slice(0, 30)) {
-      const o = (it ?? {}) as Record<string, string>;
-      r[String(o.pedido)] = await avisarReparto(String(o.telefono), String(o.nombre ?? ""), String(o.pedido), String(o.hora), String(o.texto));
-    }
-    return NextResponse.json(r);
+    for (const o of plan.enviar) r[o.pedido] = await avisarReparto(o.telefono, o.nombre, o.pedido, o.hora, o.texto);
+    for (const k of Object.keys(plan.salteados)) r[k] = null;
+    return NextResponse.json({ ...r, salteados: plan.salteados });
   }
   // 23/11: reprogramar pedidos con la ventana de 24 h cerrada (feriado, se pasó el reparto al martes).
   // Plantilla acopio_seguimiento_v1: «Te lo guardamos y te lo podemos llevar el {{2}}. ¿Lo agendamos?».
