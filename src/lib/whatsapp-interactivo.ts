@@ -176,6 +176,22 @@ export function planWhatsapp(r: Respuesta, pedido: PedidoArmado | null): Salient
           : `Envío: ${pesos(pedido.envio.costo)}${pedido.envio.sinCargoDesde ? ` (sin cargo desde ${pesos(pedido.envio.sinCargoDesde)})` : ""}`,
     );
     if (pedido.envio.totalConEnvio) lineas.push(`Total con envío: ${pedido.envio.totalConEnvio}`);
+    // 25/11 (política «confianza primero», 21/11: en la zona no se le pide a nadie que pague antes). A Ricardo
+    // (Carlos Paz) le llegó «Pagando antes por transferencia: $48.500» y «(8% menos)»; contestó «Contado» y el bot
+    // le insistió con transferir ya. En la zona del reparto el resumen ofrece pagar al recibir y nada de pagar antes.
+    const zonaAlRecibir = Boolean(pedido.envio.alRecibir);
+    if (zonaAlRecibir) {
+      lineas.push("", "Lo pagás cuando te lo llevamos, en efectivo o transferencia. Pasame calle y número y te lo dejo listo para el reparto.");
+      return [
+        {
+          tipo: "cta",
+          cuerpo: corte(lineas.join("\n"), TOPE.cuerpo),
+          texto: "Terminar mi pedido",
+          url: `${urlSitio()}${pedido.camino}`,
+          pie: "acopiosaludable.com · pago seguro",
+        },
+      ];
+    }
     if (pedido.envio.transferenciaConEnvio) lineas.push(`Pagando antes por transferencia: ${pedido.envio.transferenciaConEnvio}`);
     // 9/11 (Santiago): la venta se cierra EN LA WEB. Un solo botón que abre el carrito ya armado; ahí elige
     // Mercado Pago o transferencia (con su 8%), queda registrado y se puede comprar a cualquier hora.

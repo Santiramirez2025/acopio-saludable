@@ -724,6 +724,10 @@ test("whatsapp: productos van en lista para tocar, pedido con botón a la web, s
   // Tampoco en Carlos Paz hay pago al recibir ni botones de pago en el chat: mismo botón a la web.
   assert.equal(cp[0].tipo, "cta");
   assert.doesNotMatch(JSON.stringify(cp), /Pago al recibir|pagar\|/);
+  // 25/11 (Ricardo): en la zona del reparto no se empuja a pagar antes ni se muestra el «8% menos».
+  const cpCuerpo = (cp[0] as { cuerpo: string }).cuerpo;
+  assert.doesNotMatch(cpCuerpo, /Pagando antes|8% menos|antes de las 15/);
+  assert.match(cpCuerpo, /Lo pagás cuando te lo llevamos/);
 
   const corto = planWhatsapp({ texto: "Listo." }, { camino: "/carrito?p=1*1", renglones: ["Algo — $ 5.000"], total: "$ 5.000", conTransferencia: null, falta: "$ 30.000" });
   assert.equal(corto[0].tipo, "texto");
