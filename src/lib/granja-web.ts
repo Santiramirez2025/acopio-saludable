@@ -183,3 +183,22 @@ export async function cruzarConWebGranja(aplicar: boolean): Promise<ResultadoGra
   }
   return r;
 }
+
+/**
+ * 25/11 (Santiago: «no descuidar ningún precio de la web… que nada se nos escape, atentos a los precios de la granja»).
+ * Lo que la lista del día no cubre sola: productos que quedaron con poco margen (debajo del mínimo dejan de verse
+ * en la tienda sin que nadie se entere) y, los lunes, los que el proveedor ya no publica (su costo no se puede verificar). Puro.
+ */
+export function avisoControlPrecios(d: { margenBajo: { producto: string; margenPct: number; visibleEnTienda: boolean }[]; sinRespaldo: { producto: string }[]; esLunes: boolean }): string | null {
+  const lineas: string[] = [];
+  if (d.margenBajo.length) {
+    lineas.push("⚠️ Margen bajo hoy (revisar precio o costo):");
+    for (const x of d.margenBajo.slice(0, 15)) lineas.push(`· ${x.producto}: ${x.margenPct.toFixed(1)}%${x.visibleEnTienda ? "" : " — YA NO SE VE en la tienda"}`);
+    if (d.margenBajo.length > 15) lineas.push(`· y ${d.margenBajo.length - 15} más.`);
+  }
+  if (d.esLunes && d.sinRespaldo.length) {
+    lineas.push(`🔎 Repaso del lunes: ${d.sinRespaldo.length} productos a la venta que el proveedor no publica en su web (el costo cargado puede estar viejo):`);
+    lineas.push(d.sinRespaldo.slice(0, 20).map((x) => x.producto).join("; ") + (d.sinRespaldo.length > 20 ? "…" : "."));
+  }
+  return lineas.length ? lineas.join("\n") : null;
+}

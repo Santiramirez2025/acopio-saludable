@@ -30,3 +30,10 @@ test("ficha editorial: todo el catálogo tiene producto y uso, y nada promete cu
   for (const [i, x] of todo.entries()) assert.ok(x.producto.length > 20 && x.uso.length > 20, PRODUCTOS_PROVEEDORES[i].codigo);
   assert.doesNotMatch(JSON.stringify(todo), /\b(cura|previene|trata|adelgaza|baja el colesterol|sana)\b/i);
 });
+
+import { avisoControlPrecios } from "./granja-web";
+test("control de precios: avisa margen bajo todos los días y lo sin respaldo solo el lunes", () => {
+  assert.equal(avisoControlPrecios({ margenBajo: [], sinRespaldo: [{ producto: "Nuez x 10 kg" }], esLunes: false }), null);
+  assert.match(avisoControlPrecios({ margenBajo: [], sinRespaldo: [{ producto: "Nuez x 10 kg" }], esLunes: true }) ?? "", /Nuez x 10 kg/);
+  assert.match(avisoControlPrecios({ margenBajo: [{ producto: "Pasas", margenPct: 6.77, visibleEnTienda: false }], sinRespaldo: [], esLunes: false }) ?? "", /Pasas: 6\.8% — YA NO SE VE/);
+});

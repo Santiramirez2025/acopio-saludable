@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { cronAutorizado } from "@/lib/cron-acceso";
 import { conRegistro } from "@/lib/salud";
 import { actualizarDesdeLaGranja, avisarResultadoLista } from "@/lib/listas-aplicar";
-import { avisoCostos, cruzarConWebGranja } from "@/lib/granja-web";
+import { avisoControlPrecios, avisoCostos, cruzarConWebGranja } from "@/lib/granja-web";
+import { prisma } from "@/lib/prisma";
+import { leerConfig } from "@/lib/config";
 import { combosTienda } from "@/lib/tienda";
 import { avisoCombosApagados, combosQueSeApagaron } from "@/lib/combos-apagados";
 import { avisarSantiago } from "@/lib/avisos";
@@ -33,5 +35,17 @@ export async function GET(req: Request) {
   // 23/11: si un insumo de combos hay que comprarlo más caro (dátiles sin la caja de Egipto), se avisa todos los días.
   const caro = web && "costoSubio" in web ? avisoCostos(web.costoSubio ?? []) : null;
   if (caro) await avisarSantiago("Un insumo de los combos subió", caro).catch(() => false);
-  return NextResponse.json({ lista: r, web });
+  // 25/11: control de todos los precios propios después de la lista: margen bajo (todos los días) y sin respaldo en la web (lunes).
+  const control = await (async () => {
+    const cfg = await leerConfig();
+    const filas = await prisma.product.findMany({ where: { visible: true, estado: "ACTIVO", OR: [{ codigo: { startsWith: "LG-" } }, { codigo: { startsWith: "TG-" } }], margenPct: { lt: cfg.margenMinimoPct + 3 } }, select: { producto: true, presentacion: true, margenPct: true }, orderBy: { margenPct: "asc" }, take: 40 });
+    const esLunes = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "America/Argentina/Cordoba" }).format(new Date()) === "Mon";
+    return avisoControlPrecios({
+      margenBajo: filas.map((f) => ({ producto: `${f.producto} ${f.presentacion}`.trim(), margenPct: Number(f.margenPct), visibleEnTienda: Number(f.margenPct) >= cfg.margenMinimoPct })),
+      sinRespaldo: web && "noEstanEnLaWeb" in web ? web.noEstanEnLaWeb : [],
+      esLunes,
+    });
+  })().catch(() => null);
+  if (control) await avisarSantiago("Control de precios", control).catch(() => false);
+  return NextResponse.json({ lista: r, web, control });
 }
