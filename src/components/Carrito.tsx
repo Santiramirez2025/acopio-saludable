@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Cotizacion } from "@/lib/tienda";
 import type { LineaEntrada } from "@/lib/tienda-saneo";
 import { barraZona } from "@/lib/barra-zona";
+import { ENVIO_SIEMPRE } from "@/lib/minimo-zona";
 
 const CLAVE = "acopio-carrito-v1";
 const MAX = 999;
@@ -110,6 +111,21 @@ export function BarraMinimo({ compacta = false }: { compacta?: boolean }) {
   const zona = cotizacion.compraMinimaPropia;
   // Con envío fijo bajo mínimo, en la zona ya se puede pedir con cualquier subtotal: la barra mide hacia el envío sin cargo.
   const envioBajo = cotizacion.envioBajoMinimo;
+  // 23/11: en la zona propia el envío fijo se cobra siempre y no hay mínimo. No hay meta que alcanzar:
+  // nada de «te faltan $ X para la compra mínima» a quien está en Carlos Paz (el mínimo es solo para el correo).
+  if (ENVIO_SIEMPRE && envioBajo > 0 && zona > 0) {
+    if (compacta) return null;
+    const faltaOtras = Math.max(0, compraMinima - subtotal);
+    return (
+      <div aria-live="polite" className="text-sm">
+        <p className="font-medium">{`En Carlos Paz y la zona no hay compra mínima: envío ${pesosCliente(envioBajo)} por pedido.`}</p>
+        <p className="mt-1 text-xs text-stone-600">
+          ¿Preferís pagarlo al recibir? Tocá «Pedir por WhatsApp» y te lo dejamos anotado.
+          {faltaOtras > 0 ? ` A otras localidades, por correo, enviamos desde ${pesosCliente(compraMinima)} (te faltan ${pesosCliente(faltaOtras)}).` : ""}
+        </p>
+      </div>
+    );
+  }
   const haciaZona = zona > 0 && zona < compraMinima && subtotal < zona;
   const meta = haciaZona ? zona : compraMinima;
   const faltaMeta = haciaZona ? zona - subtotal : falta;
