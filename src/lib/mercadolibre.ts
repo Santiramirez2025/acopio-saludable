@@ -251,7 +251,7 @@ export async function ajustarPreciosMl(): Promise<string[]> {
 
 /** Ventas pagadas de los últimos `dias` días: qué se vendió, cuánto, comisión de ML y estado del envío (sin datos personales del comprador). */
 export async function ventasRecientes(dias = 7): Promise<
-  { id: number; fecha: string; total: number; comision: number; items: { titulo: string; sku: string | null; cantidad: number; precio: number }[]; envio: { id: number | null; tipo: string | null; estado: string | null; subestado: string | null; destino: string | null } }[]
+  { id: number; fecha: string; total: number; comision: number; items: { titulo: string; sku: string | null; cantidad: number; precio: number }[]; envio: { id: number | null; tipo: string | null; estado: string | null; subestado: string | null; destino: string | null; despacharAntesDe: string | null; plazo: unknown } }[]
 > {
   const uid = await miUsuario();
   const desde = new Date(Date.now() - Math.max(1, Math.min(60, dias)) * 86_400_000).toISOString().slice(0, 10);
@@ -266,6 +266,8 @@ export async function ventasRecientes(dias = 7): Promise<
       const e = idEnvio
         ? await ml<{ logistic_type?: string; status?: string; substatus?: string | null; receiver_address?: { city?: { name?: string }; state?: { name?: string } } }>(`/shipments/${idEnvio}`).catch(() => null)
         : null;
+      // 25/11: hasta cuándo hay que despacharlo (Santiago: «¿hasta qué hora lo puedo llevar?»).
+      const sla = idEnvio ? await ml<{ expected_date?: string; status?: string }>(`/shipments/${idEnvio}/sla`).catch(() => null) : null;
       const destino = [e?.receiver_address?.city?.name, e?.receiver_address?.state?.name].filter(Boolean).join(", ") || null;
       return {
         id: o.id,
@@ -273,7 +275,7 @@ export async function ventasRecientes(dias = 7): Promise<
         total: o.total_amount,
         comision: o.order_items.reduce((s, i) => s + (i.sale_fee ?? 0) * i.quantity, 0),
         items: o.order_items.map((i) => ({ titulo: i.item.title, sku: i.item.seller_sku ?? null, cantidad: i.quantity, precio: i.unit_price })),
-        envio: { id: idEnvio, tipo: e?.logistic_type ?? null, estado: e?.status ?? null, subestado: e?.substatus ?? null, destino },
+        envio: { id: idEnvio, tipo: e?.logistic_type ?? null, estado: e?.status ?? null, subestado: e?.substatus ?? null, destino, despacharAntesDe: sla?.expected_date ?? null, plazo: sla },
       };
     }),
   );
