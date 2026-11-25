@@ -19,6 +19,8 @@ export function textoRespuestaMl(crudo: string): string | null {
 /** Qué trae cada publicación de ML, por su SKU: para calcular el costo de hoy. */
 export const SKU_ML: Record<string, { combo?: string; codigo?: string; cantidad?: number }> = {
   "AS-DESPENSA-4KG": { combo: "despensa-4-kilos" },
+  // 25/11 (Santiago: «mejor vendemos el Trío… publicalo si cierran los números»).
+  "AS-TRIO-3KG": { combo: "trio-de-frutos-secos" },
   "AS-ALACENA-3KG": { combo: "alacena-de-frutos-secos" },
   "AS-PANDULCE": { combo: "pan-dulce-casero" },
   "AS-REGALO-NAVIDAD": { combo: "regalo-navideno" },
