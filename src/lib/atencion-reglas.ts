@@ -150,6 +150,25 @@ export function soloAcuse(texto: string): boolean {
   return t === "" || /^((si|sii+|bueno|ok|oka|okey|okis|dale|listo|joya|genial|perfecto|barbaro|buenisimo|de una|gracias|muchas|mil|recibido|recibi|llego|lleg[oó]|todo|bien|lo|los|la|te|aca|aqui|espero|esperamos|estare|hermoso|riquisimo|re|lindo|amor|chau|saludos|igualmente)\s?){1,5}$/.test(t);
 }
 
+/**
+ * 25/11 (Beatriz AS-156: «no venían nueces»; Ricardo AS-153: «no quedé conforme», «las nueces ni con lupa»): un
+ * cliente que ya recibió y reclama por la calidad o por algo que faltó. El bot le inventó una explicación («se repone
+ * con cajú»), le mandó la lista de precios y le preguntó tres veces «¿Lo dejamos listo?». Un reclamo no se vende:
+ * pasa a una persona. Solo mira el texto (el llamador confirma que tiene un pedido recibido). Puro.
+ */
+export function esReclamoDeProducto(texto: string): boolean {
+  const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ");
+  const PROD = "(?:nuez|nueces|caju|almendras?|pasas|datiles|mani|semillas|girasol|avellanas?|pistachos?|granola|mix|mezcla|mesclas?|producto|bolsa|bolsita|paquete)";
+  return (
+    new RegExp(`\\bno (?:venian?|vino|traian?|trajo|habian?|tenian?|estaban?)(?: (?:casi|ninguna|ningun|ni una|las|los|el|la|nada de|una|un))* ${PROD}`).test(t) ||
+    new RegExp(`\\b${PROD} no (?:habia|venian?|vino|traian?|trajo|tenian?|estaban?|llegaron|llego)\\b`).test(t) ||
+    new RegExp(`\\bfalt(?:o|aba|aban|aron)(?: (?:el|la|los|las|un|una))? ${PROD}`).test(t) ||
+    /\bno qued(?:e|amos) conforme|\bni con lupa|\b(?:un|hacer el|hacer un|quiero hacer un|tengo un) reclamo\b|\bquiero reclamar|\branci[oa]s?\b|\bmal estado\b|\bpodrid[oa]s?\b|\bcon bichos\b|\bgorgojo|\bmoho\b|\bvencid[oa]s?\b|\b(?:me |nos )?(?:vino|llego|vinieron|llegaron) (?:roto|rota|rotos|abiert[oa]s?|mal|otra cosa|distinto|equivocado|humed[oa]s?)\b/.test(t)
+  );
+}
+
+export const textoReclamo = (nombre: string | null) => `Uy, perdón${nombre ? `, ${nombre}` : ""}. Lo veo ya con el equipo y te escribo hoy por acá.`;
+
 // «No vino el cadete», «¿viene o no?», «estará lejos?», «sigo esperando»: alguien espera en la puerta.
 export function esperaElPedido(texto: string): boolean {
   return /\b(no (vino|lleg[oó]|pas[oó])( (el|ning[uú]n) (cadete|chico|repartidor))?|viene o no|vienen o no|estar[aá] lejos|sigo esperando|estoy esperando|lo estoy esperando|a qu[eé] hora (viene|llega)|cu[aá]nto (falta|tarda))\b/i.test(texto);
