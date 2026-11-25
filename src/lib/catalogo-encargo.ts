@@ -36,6 +36,10 @@ const FILAS_ELEGIDAS: Fila[] = [
   ["LG-LENTCHOC-250", "023-015", "Lentejas de chocolate", SUELTO, "x 250 g", "Repostería", 250, "g", kg(21568, 250), "Para decorar tortas y galletitas, o para los chicos."],
   ["LG-GOTAS-250", "023-016", "Gotas de chocolate semiamargo", SUELTO, "x 250 g", "Repostería", 250, "g", kg(11507, 250), "No se derriten en el horno: para cookies, budines y muffins."],
   ["LG-HALMENDRA-250", "981-019", "Harina de almendras sin piel", SUELTO, "x 250 g", "Harinas y Féculas", 250, "g", kg(34511, 250), "Almendra molida fina: para macarons, budines sin harina de trigo y rebozar."],
+  // 24/11 (Santiago): «harina de almendra, explicamos que tenemos de la económica nomás y esperamos la premium». Dos clientas
+  // la pidieron en dos días. Es la línea económica del proveedor (bolsa de 5 kg): se dice así, sin prometer que es la premium.
+  ["LG-HALMECO-500", "981-012", "Harina de almendras económica", SUELTO, "x 500 g", "Harinas y Féculas", 500, "g", kg(3230, 500), "La línea económica de harina de almendras, la que tenemos hoy mientras esperamos la premium. Para budines, galletas y rebozar."],
+  ["LG-HALMECO", "981-012", "Harina de almendras económica", SUELTO, "x 1 kg", "Harinas y Féculas", 1000, "g", 3230, "La línea económica de harina de almendras, la que tenemos hoy mientras esperamos la premium. Para budines, galletas y rebozar."],
   ["LG-HCOCO-500", "981-020", "Harina de coco", SUELTO, "x 500 g", "Harinas y Féculas", 500, "g", kg(7337, 500), "Absorbe mucho líquido y rinde: para panqueques, budines y tortas."],
 
   // ——— Frutas desecadas y para pan dulce ———
@@ -139,6 +143,12 @@ const FILAS: Fila[] = [...FILAS_ELEGIDAS, ...FILAS_LISTA];
 /** Rubros a mano donde las palabras clave no alcanzan (el resto lo clasifica el ajuste del catálogo). */
 const NICHOS_POR_CATEGORIA: Record<string, string[]> = { Especias: ["rotiserias", "familias", "dieteticas"], "Sin TACC": ["familias", "dieteticas", "cafeterias"] };
 
+/** Precio puesto a mano (margen sobre el costo) cuando la regla general deja el producto regalado. */
+const MARGEN_A_MANO: Record<string, number> = {
+  "LG-HALMECO": 2.065 /* $9.900 el kilo */,
+  "LG-HALMECO-500": 2.405 /* $5.500 */,
+};
+
 const TIPO_POR_CATEGORIA: Record<string, "especia" | "suplemento"> = { Especias: "especia", Suplementos: "suplemento" };
 /** Yuyos e infusiones sueltas de 100 g: mismo margen que las especias (bolsa chica, mucho fraccionado). */
 const esHierbaSuelta = (categoria: string, marca: string, contenido: number) => categoria === "Café, yerba e infusiones" && marca === SUELTO && contenido <= 100;
@@ -155,7 +165,7 @@ export const PRODUCTOS_ENCARGO: ProductoProveedor[] = FILAS.map(([codigo, codigo
     contenido,
     unidad,
     costo,
-    margen: margenEncargo(costo, tipo),
+    margen: MARGEN_A_MANO[codigo] ?? margenEncargo(costo, tipo),
     // Peso para el envío: lo que trae más el envase (los líquidos y potes pesan más).
     pesoBrutoG: unidad === "ml" ? Math.round(contenido * 1.25) + 60 : /unidad|comprimidos|saquitos|cápsulas|sobres/.test(presentacion) ? 250 : contenido + 30,
     porQueLoElegimos: porQue,
@@ -183,6 +193,8 @@ export const FOTO_ENCARGO: Record<string, string> = {
   "LG-PMANI-CACAO": "/img/productos/pasta-mani-cacao-entrenuts.webp",
   "LG-COCO-NEUTRO": "/img/productos/aceite-coco-neutro-entrenuts.webp",
   "LG-HALMENDRA-250": "/img/productos/harina-almendras-sin-piel.webp",
+  "LG-HALMECO": "/img/productos/harina-almendras-sin-piel.webp",
+  "LG-HALMECO-500": "/img/productos/harina-almendras-sin-piel.webp",
   "LG-HCOCO-500": "/img/productos/harina-coco.webp",
   "LG-AVENAINST": "/img/productos/avena-instantanea.webp",
   "LG-AVENAGRUESA": "/img/productos/avena-tradicional.webp",
