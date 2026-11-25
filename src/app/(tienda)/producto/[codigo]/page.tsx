@@ -27,6 +27,7 @@ import { nutrientesDe } from "@/lib/nutrientes";
 import { PanelNutri } from "@/components/Nutri";
 import { RECETAS, recetasDe, tiempoTexto } from "@/lib/recetas";
 import { fichaViva } from "@/lib/ficha-viva";
+import { fichaEditorial } from "@/lib/ficha-editorial";
 
 type Props = { params: Promise<{ codigo: string }> };
 
@@ -82,6 +83,9 @@ export default async function Producto({ params }: Props) {
   const nutri = nutrientesDe(p.codigo);
   // 16/11 (Santiago): cada producto con su dato, sus tips y una idea de cocina, además de la Nutri y las recetas.
   const viva = fichaViva({ producto: p.producto, categoria: p.categoria });
+  // 24/11 (Santiago): la ficha cuenta el producto, qué aporta y cómo usarlo, arriba y a la vista.
+  const editorial = fichaEditorial({ codigo: p.codigo, producto: p.producto, categoria: p.categoria, porQue });
+  const tipsLibres = viva.tips.filter((t) => !editorial.uso.includes(t.replace(/[.!?]$/, "")));
   const recetasPropias = recetasDe(p.codigo);
   const recetas = (recetasPropias.length ? recetasPropias : RECETAS.filter((r) => viva.recetas?.includes(r.slug))).slice(0, 3);
   const [combos, relacionados] = await Promise.all([
@@ -189,12 +193,6 @@ export default async function Producto({ params }: Props) {
             {p.categoria === "Congelados" && <p className="mt-3 rounded-xl bg-tierra-100 px-3.5 py-2.5 text-sm text-stone-700"><b>Producto congelado:</b> solo se entrega en Villa Carlos Paz y el sur de Punilla. No se envía por correo.</p>}
             <Plazos propia={cfg.entregaPropiaActiva} plazoPropia={cfg.plazoEntregaPropia} costoZona={costoEntregaZona(cfg)} zonaPaga={zonaPagaDe(cfg.tabla)} className="mt-3 border-t border-tierra-200 pt-3 text-stone-700" />
           </div>
-          {porQue && (
-            <div className="rounded-2xl bg-acopio-100 p-4">
-              <h2 className="mb-1 text-sm font-semibold text-acopio-700">Por qué lo elegimos</h2>
-              <p className="text-sm text-stone-700">{porQue}</p>
-            </div>
-          )}
           <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
             <dt className="text-stone-600">Presentación</dt><dd>{p.presentacion}</dd>
             <dt className="text-stone-600">Formato</dt><dd>{p.formato}</dd>
@@ -215,17 +213,46 @@ export default async function Producto({ params }: Props) {
         </div>
       </div>
 
+      <section className="rounded-3xl bg-white p-5 shadow-ficha sm:p-8" aria-labelledby="editorial-titulo">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-acopio-700">{p.categoria}</p>
+        <h2 id="editorial-titulo" className="sr-only">{p.producto}: qué es, qué aporta y cómo usarlo</h2>
+        <div className={`mt-4 grid gap-6 md:gap-0 md:divide-x md:divide-tierra-200 ${editorial.aporta ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+          <div className="md:pr-8">
+            <h3 className="font-display text-2xl font-bold leading-tight">El producto</h3>
+            <p className="mt-2 leading-relaxed text-stone-700">{editorial.producto}</p>
+          </div>
+          {editorial.aporta && (
+            <div className="border-t border-tierra-200 pt-6 md:border-t-0 md:px-8 md:pt-0">
+              <h3 className="font-display text-2xl font-bold leading-tight">Qué aporta</h3>
+              <p className="mt-2 leading-relaxed text-stone-700">{editorial.aporta}</p>
+            </div>
+          )}
+          <div className="border-t border-tierra-200 pt-6 md:border-t-0 md:pl-8 md:pt-0">
+            <h3 className="font-display text-2xl font-bold leading-tight">Cómo usarlo</h3>
+            <p className="mt-2 leading-relaxed text-stone-700">{editorial.uso}</p>
+          </div>
+        </div>
+        {!sinStock && (
+          <div className="mt-6 flex flex-col gap-2 border-t border-tierra-200 pt-5 sm:flex-row sm:items-center">
+            <BotonAgregar id={p.codigo} etiqueta={`Agregar · ${pesos(p.precio)}`} className="sm:w-auto sm:min-w-[16rem]" />
+            <p className="text-xs text-stone-600">{p.encargo ? "Por encargo: llega en 24 a 48 hs." : "Lo fraccionamos al armar tu pedido."}</p>
+          </div>
+        )}
+      </section>
+
       {nutri && <PanelNutri n={nutri} producto={`${p.producto} ${p.presentacion}`} />}
 
       <section className="rounded-3xl bg-white p-4 shadow-ficha sm:p-6" aria-labelledby="viva-titulo">
         <h2 id="viva-titulo" className="font-display text-xl font-bold">Para sacarle el jugo</h2>
-        <p className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-stone-800"><b>¿Sabías?</b> {viva.dato}</p>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <ul className="space-y-2 text-sm text-stone-700">
-            {viva.tips.map((t) => (
-              <li key={t} className="flex gap-2"><span aria-hidden className="text-acopio-600">✓</span><span>{t}</span></li>
-            ))}
-          </ul>
+        {!editorial.producto.startsWith(viva.dato.replace(/[.!?]$/, "")) && <p className="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-stone-800"><b>¿Sabías?</b> {viva.dato}</p>}
+        <div className={`mt-4 grid gap-4 ${tipsLibres.length ? "md:grid-cols-2" : ""}`}>
+          {tipsLibres.length > 0 && (
+            <ul className="space-y-2 text-sm text-stone-700">
+              {tipsLibres.map((t) => (
+                <li key={t} className="flex gap-2"><span aria-hidden className="text-acopio-600">✓</span><span>{t}</span></li>
+              ))}
+            </ul>
+          )}
           <div className="rounded-2xl bg-acopio-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-acopio-700">Idea para hoy</p>
             <p className="mt-1 font-display text-lg font-bold leading-tight">{viva.idea.titulo}</p>
