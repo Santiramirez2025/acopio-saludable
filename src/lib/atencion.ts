@@ -1034,10 +1034,18 @@ export async function pensar(c: {
       // {precio:CODIGO} en el pie de un video → precio del día (nunca un precio viejo quemado en el video).
       const codigos = [...new Set(oportunas.flatMap((f) => [...f.pie.matchAll(/\{precio:([A-Z0-9-]+)\}/g)].map((m) => m[1])))];
       const precios = codigos.length ? new Map((await productosTienda({ where: { codigo: { in: codigos } } })).map((p) => [p.codigo, p.precio])) : new Map<string, number>();
+      // {combo:slug} → precio del día del combo. Las gráficas no llevan precio impreso: el precio va siempre en el pie (25/11).
+      const slugs = [...new Set(oportunas.flatMap((f) => [...f.pie.matchAll(/\{combo:([a-z0-9-]+)\}/g)].map((m) => m[1])))];
+      const preciosCombo = new Map<string, number>();
+      for (const slug of slugs) {
+        const cb = (await combosTienda({ slug, tipo: "COMBO" }))[0];
+        if (cb?.disponible) preciosCombo.set(slug, cb.precio);
+      }
+      const plata = (n: number) => `$${Math.round(n).toLocaleString("es-AR")}`;
       const pie = (t: string) => {
-        const sinPrecio = [...t.matchAll(/\{precio:([A-Z0-9-]+)\}/g)].some((m) => !precios.has(m[1]));
+        const sinPrecio = [...t.matchAll(/\{precio:([A-Z0-9-]+)\}/g)].some((m) => !precios.has(m[1])) || [...t.matchAll(/\{combo:([a-z0-9-]+)\}/g)].some((m) => !preciosCombo.has(m[1]));
         if (sinPrecio) return t.split(" · ")[0];
-        return t.replace(/\{precio:([A-Z0-9-]+)\}/g, (_, c: string) => `$${Math.round(precios.get(c)!).toLocaleString("es-AR")}`);
+        return t.replace(/\{precio:([A-Z0-9-]+)\}/g, (_, c: string) => plata(precios.get(c)!)).replace(/\{combo:([a-z0-9-]+)\}/g, (_, c: string) => plata(preciosCombo.get(c)!));
       };
       respuesta = { ...respuesta, fotos: oportunas.map((f) => ({ url: `${urlSitio()}${f.url}`, pie: pie(f.pie) })) };
     }

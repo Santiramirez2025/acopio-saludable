@@ -176,14 +176,14 @@ const NOMBRES_COMBO: [RegExp, string, string][] = [
 // El orden importa: «mix de semillas» tiene que caer en semillas, no en el mix de frutos secos
 // (12/11: Olga y Graciela recibieron el Trío pensando que el mix era de frutos secos).
 const PRODUCTOS_TEXTO: [RegExp, string, string][] = [
-  [/semilla/i, "producto-mix-semillas", "Mix de semillas: lino, chía y sésamo (no son frutos secos)"],
+  [/semilla/i, "producto-mix-semillas", "Mix de semillas: lino, chía y sésamo (no son frutos secos) · {precio:LG-MIXSEM} el kilo"],
   [/quinoa/i, "producto-quinoa-pop", "Quinoa pop"],
-  [/\bnuez|\bnueces/i, "producto-nuez", "Nuez mariposa"],
-  [/almendra/i, "producto-almendras", "Almendras"],
-  [/caj[uú]/i, "producto-caju", "Castañas de cajú"],
-  [/d[aá]til/i, "producto-datiles", "Dátiles con carozo"],
-  [/\bpasas?\b/i, "producto-pasas", "Pasas de uva"],
-  [/\bmix\b(?! de semillas)/i, "producto-mix-clasico", "Mix clásico con cajú"],
+  [/\bnuez|\bnueces/i, "producto-nuez", "Nuez mariposa · {precio:TG-NUEZ} el kilo"],
+  [/almendra/i, "producto-almendras", "Almendras · {precio:TG-ALMGUARA} el kilo"],
+  [/caj[uú]/i, "producto-caju", "Castañas de cajú · {precio:TG-CAJU} el kilo"],
+  [/d[aá]til/i, "producto-datiles", "Dátiles con carozo · {precio:LG-DATIL} el kilo"],
+  [/\bpasas?\b/i, "producto-pasas", "Pasas de uva · {precio:TG-PASAS} el kilo"],
+  [/\bmix\b(?! de semillas)/i, "producto-mix-clasico", "Mix clásico con cajú · {precio:TG-MIXC} el kilo"],
 ];
 // 14/11: «harina de almendras», «pasta de maní crocante» o lo que es por encargo no son la almendra ni el mix
 // de la foto: mandar esa imagen (o el video del mix) confunde. En esos casos no va foto de producto.
@@ -191,6 +191,14 @@ const DERIVADO = /harina|pasta de|con chocolate|aceite|leche de|bebida|crema de/
 // 15/11: Graciela pidió «mandame solo el mix» y le llegó la foto de la nuez que estaba sacando. Si saca algo, sin foto.
 const SACA = /\bsolo\b|sac[aá](me|lo|la)?\b|sin (la|el|los|las)\b|no quiero|sacamos/i;
 const esDerivado = (a: { entrante: string; respuesta: string }) => DERIVADO.test(a.entrante) || SACA.test(a.entrante) || /por encargo|sacamos/i.test(a.respuesta);
+const ENTUSIASMO = /me gust[oó]|me encant|qu[eé] (rico|lindo|bueno|buena pinta)|quiero todo|todo+ (me gusta|rico|lindo)|espectacular|hermos[oa]|buen[ií]simo|riqu[ií]sim/i;
+const KITS_PARA_MOSTRAR: [string, string][] = [
+  ["alacena-de-frutos-secos", "Alacena de frutos secos: nuez, mix con cajú y pasas (3 kg)"],
+  ["despensa-4-kilos", "Despensa de 4 kilos: mix, dátiles, pasas y semillas"],
+  ["trio-de-frutos-secos", "Trío de frutos secos: mix con cajú, dátiles y pasas"],
+];
+/** «Trío de frutos secos · mix…» y «Trío de frutos secos: mix…» son la misma foto: se compara el nombre (hasta «·» o «:»). */
+const nombreDePie = (pie: string) => pie.split(/ · |: /)[0].trim().slice(0, 40).toLowerCase();
 const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen local|d[oó]nde est[aá]n|ver antes|c[oó]mo (llega|viene)|empaque|calidad|fresc/i;
 
 function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
@@ -201,7 +209,7 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
   const yaMandadas = nuestros.filter((t) => t.startsWith("[Foto]"));
   // 12/11 (Santiago): «todas las ventas con imágenes, entra por los ojos». Hasta 4 fotos por charla, nunca repetida.
   if (yaMandadas.length >= 4) return [];
-  const yaSalio = (pie: string) => yaMandadas.some((t) => t.includes(pie));
+  const yaSalio = (pie: string) => yaMandadas.some((t) => t.toLowerCase().includes(nombreDePie(pie)));
   const candidata = (archivo: string, pie: string): FotoOportuna | null => (yaSalio(pie) ? null : { url: url(archivo), pie });
   const real = REALES[0];
 
@@ -221,7 +229,15 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
   for (const [re, slug, nombre] of NOMBRES_COMBO) {
     // 12/11: también cuando el vendedor ofrece el combo con precio: que vea qué trae antes de pagar.
     if (re.test(a.entrante) || (conPrecio && re.test(a.respuesta)) || (hablaDeCombos && (re.test(a.respuesta) || a.combos?.includes(slug)))) {
-      const f = candidata(COMBOS[slug], nombre);
+      const f = candidata(COMBOS[slug], `${nombre} · {combo:${slug}}`);
+      if (f) return [f];
+    }
+  }
+  // 3b. 25/11 (Santiago, por Patricia: «Me gustó todooooo»): «todo entra por la vista». Cuando se entusiasma, se le muestra
+  // un kit que todavía no vio, con el precio del día en el pie (la gráfica nunca lleva precio impreso).
+  if (ENTUSIASMO.test(a.entrante)) {
+    for (const [slug, nombre] of KITS_PARA_MOSTRAR) {
+      const f = candidata(COMBOS[slug], `${nombre} · {combo:${slug}}`);
       if (f) return [f];
     }
   }
@@ -267,8 +283,7 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
   if (nuestras.length >= 4) return [];
   const yaVideo = nuestras.some((t) => t.startsWith("[Video]"));
   // «Trío de frutos secos · mix…» y «Trío de frutos secos: mix…» son la misma foto: se compara el nombre (hasta «·» o «:»).
-  const nombre = (pie: string) => pie.split(/ · |: /)[0].trim().slice(0, 40).toLowerCase();
-  const yaSalio = (f: FotoOportuna) => nuestras.some((t) => t.toLowerCase().includes(nombre(f.pie)));
+  const yaSalio = (f: FotoOportuna) => nuestras.some((t) => t.toLowerCase().includes(nombreDePie(f.pie)));
   return fotosOportunasSinTope(a)
     .filter((f) => !yaSalio(f) && !(yaVideo && /\.mp4$/i.test(f.url)))
     .slice(0, 1);
