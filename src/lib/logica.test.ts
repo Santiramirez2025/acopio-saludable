@@ -1979,7 +1979,7 @@ test("envío de la zona: sale del subtotal real y sin subtotal da la regla, no �
   assert.deepEqual(zonaDeLugar("vertiente de arredondo, un barrio de san antonio"), { tipo: "propia" });
   // 16/11 a la noche: San Antonio de Arredondo va como Carlos Paz; más lejos se cobra siempre.
   assert.equal(envioZonaPropia(cfg, "Vertientes de Arredondo", 28500).costo, 3000);
-  assert.equal(envioZonaPropia(cfg, "Bialet Massé", 61000).costo, 3000);
+  assert.equal(envioZonaPropia(cfg, "Bialet Massé", 61000).costo, 4000);
 });
 
 test("la nota de cobro al marcar Entregado dice el medio real", async () => {

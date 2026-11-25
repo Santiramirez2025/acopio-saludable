@@ -18,8 +18,11 @@
 //   8 a 14 km, $3.000: Mayu Sumaj, Icho Cruz, Tala Huasi, Bialet Massé, Cabalango.
 //   más de 14 km, $4.000: Tanti, Cuesta Blanca.
 //   Parque Siquiman: no se reparte (19/11); el vendedor ofrece un punto en Carlos Paz.
-export const CARGO_CERCA = 3000;
-export const CARGO_LEJOS = 4000;
+// 25/11 (Santiago, repartiendo): «en Carlos Paz sí cobramos $3.000, pero Bialet, Parque Siquiman, ya saliendo, eso ya no es
+// Carlos Paz: agregale $1.000 o $2.000 más, que sea $5.000 el envío, siempre que no perdamos la venta».
+// Carlos Paz y San Antonio $3.000 (config); 8 a 14 km $4.000; más de 14 km $5.000. Los pedidos ya tomados quedan como se vendieron.
+export const CARGO_CERCA = 4000;
+export const CARGO_LEJOS = 5000;
 
 const POR_CP: Record<string, number> = { "5155": CARGO_LEJOS, "5158": CARGO_CERCA };
 
