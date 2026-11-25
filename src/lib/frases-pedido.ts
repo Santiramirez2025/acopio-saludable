@@ -30,7 +30,7 @@ export function sinPedidoDadoPorHecho(texto: string, hayPedido: boolean): string
       return "\u0000";
     });
   }
-  if (!t.includes("\u0000")) return texto;
+  if (!t.includes("\u0000")) return sinAnotadoSuelto(texto);
   t = t
     .replace(/\u0000\s*(?:y\s+)?[:,.!]?\s*/g, "\u0001")
     .replace(/(^|[.!?\n]\s*|[¡]\s*|🤖\.?\s*)\u0001(\S)/gu, (_m, pre: string, c: string) => `${pre}${c.toUpperCase()}`)
@@ -39,5 +39,23 @@ export function sinPedidoDadoPorHecho(texto: string, hayPedido: boolean): string
     .replace(/\s+([?.!,:])/g, "$1")
     .replace(/¡\s*([.!])/g, "")
     .trim();
-  return t;
+  return sinAnotadoSuelto(t);
+}
+
+// 25/11 (Elvira, antes del AS-179): «Dale, Elvira, lo anotamos.» y «Gracias, Elvira, ya anotamos la entrega en 9 de
+// Julio 90» sin pedido creado. La frase entera que afirma que anotamos o agendamos se saca (las preguntas quedan).
+const ANOTADO = /\b(?:lo |la |los |las |ya )?(?:anotamos|anot[ée]|agendamos|agend[ée]|reservamos|reserv[ée])\b|\b(?:queda|qued[óo]|est[áa]) (?:anotad|agendad)[oa]s?\b/i;
+function sinAnotadoSuelto(texto: string): string {
+  // Con los separadores: una lista en renglones sigue en renglones.
+  const partes = texto.split(/((?<=[.!?])[ \t]+|\n)/);
+  let saco = false;
+  let t = "";
+  for (let i = 0; i < partes.length; i += 2) {
+    const f = partes[i];
+    if (f && !f.includes("¿") && ANOTADO.test(f)) saco = true;
+    else t += f + (partes[i + 1] ?? "");
+  }
+  if (!saco) return texto;
+  t = t.replace(/ {2,}/g, " ").trim();
+  return t || "Para dejártelo anotado me falta confirmar el pedido. ¿Te lo dejo listo?";
 }

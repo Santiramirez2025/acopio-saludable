@@ -30,3 +30,22 @@ test("hayPedidoEnCharla", () => {
   assert.equal(hayPedidoEnCharla(["hola", "Tu pedido AS-00171 está confirmado"]), true);
   assert.equal(hayPedidoEnCharla(["hola", "$24.000"]), false);
 });
+
+test("25/11 Elvira: «lo anotamos» y «ya anotamos la entrega» sin pedido se sacan", () => {
+  assert.equal(
+    sinPedidoDadoPorHecho("Dale, Elvira, lo anotamos. El día del reparto te lo confirmamos por acá. ¿Te queda bien la dirección de 9 de Julio 90?", false),
+    "El día del reparto te lo confirmamos por acá. ¿Te queda bien la dirección de 9 de Julio 90?",
+  );
+  const solo = sinPedidoDadoPorHecho("Gracias, Elvira, ya anotamos la entrega en 9 de Julio 90, Galería Acuario, Dep 4 A.", false);
+  assert.doesNotMatch(solo, /anotamos la entrega/);
+  assert.match(solo, /¿Te lo dejo listo\?/);
+  // Con pedido creado, igual que antes.
+  const con = "Gracias, Elvira, ya anotamos la entrega en 9 de Julio 90. Tu pedido es el AS-00179.";
+  assert.equal(sinPedidoDadoPorHecho(con, true), con);
+});
+
+test("«anotamos» dentro de una pregunta y las listas en renglones quedan", () => {
+  assert.equal(sinPedidoDadoPorHecho("¿Te lo anotamos para el lunes?", false), "¿Te lo anotamos para el lunes?");
+  const lista = "Te paso los precios:\n• Nuez x 1 kg: $24.500\n• Cajú x 1 kg: $25.000\nLo anotamos.\n¿Cuál te llevás?";
+  assert.equal(sinPedidoDadoPorHecho(lista, false), "Te paso los precios:\n• Nuez x 1 kg: $24.500\n• Cajú x 1 kg: $25.000\n¿Cuál te llevás?");
+});

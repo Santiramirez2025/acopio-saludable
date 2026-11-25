@@ -47,7 +47,7 @@ import { NOMBRE_MEDIO, respuestaMedio } from "./whatsapp-media";
 import { describirFotoConMotivo } from "./ver-foto";
 import { transcribirAudio } from "./oir-audio";
 import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
-import { charlaTieneComprobante, clienteDiceQuePago, equipoDijoQueVa, esDudaDeConfianza, esperaElPedido, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, soloAcuse, yaMandoComprobante, sinPreguntaDeCortesia } from "./atencion-reglas";
+import { esReclamoDeProducto, textoReclamo, charlaTieneComprobante, clienteDiceQuePago, equipoDijoQueVa, esDudaDeConfianza, esperaElPedido, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, soloAcuse, yaMandoComprobante, sinPreguntaDeCortesia } from "./atencion-reglas";
 import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from "./direccion-cliente";
 import { REALES } from "./galeria";
 import { prisma } from "./prisma";
@@ -676,9 +676,14 @@ export async function atender(e: Entrada): Promise<void> {
     return;
   }
   if (p.derivar) {
-    await responder(e.clave, DERIVADO);
+    await responder(e.clave, p.textoDerivado ?? DERIVADO);
     await cambiarEstado(e.clave, "persona");
-    await avisarSantiago("Charla para vos", `💬 ${e.nombre ?? "Alguien"} (${e.clave}) quiere hablar con una persona.\nÚltimo mensaje: «${texto.slice(0, 200)}»\n${urlSitio()}/admin/whatsapp?c=${e.clave}`);
+    await avisarSantiago(
+      p.reclamo ? "Reclamo de un cliente" : "Charla para vos",
+      p.reclamo
+        ? `⚠️ ${e.nombre ?? "Alguien"} (${e.clave}) ya recibió su pedido y reclama. El bot no le vende ni le explica: le dijo que lo ves con el equipo y le escribís hoy.\nÚltimo mensaje: «${texto.slice(0, 200)}»\n${urlSitio()}/admin/whatsapp?c=${e.clave}`
+        : `💬 ${e.nombre ?? "Alguien"} (${e.clave}) quiere hablar con una persona.\nÚltimo mensaje: «${texto.slice(0, 200)}»\n${urlSitio()}/admin/whatsapp?c=${e.clave}`,
+    );
     return;
   }
   // Mientras se pensaba la respuesta llegó otro mensaje (un botón, la ubicación): contesta ese, que ve todo.
@@ -701,7 +706,16 @@ export async function atender(e: Entrada): Promise<void> {
   if (salida) await responder(e.clave, salida);
 }
 
-export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: boolean; conIA: boolean; guardarPedido?: string; aPersona?: boolean; sinIA?: boolean };
+export type Pensado = { salientes: Saliente[]; respuesta: Respuesta; derivar: boolean; conIA: boolean; guardarPedido?: string; aPersona?: boolean; sinIA?: boolean; textoDerivado?: string; reclamo?: boolean };
+
+/** Tiene un pedido recibido o en camino de los últimos 30 días (para tratar «no venían nueces» como reclamo). */
+async function recibioHacePoco(telefono: string): Promise<boolean> {
+  const fin = telefonoFin(telefono);
+  const pedidos = await prisma.order
+    .findMany({ where: { estado: { in: ["ENTREGADO", "ENVIADO"] }, createdAt: { gte: new Date(Date.now() - 30 * 86_400_000) } }, select: { telefono: true }, orderBy: { id: "desc" }, take: 300 })
+    .catch(() => []);
+  return pedidos.some((o) => telefonoFin(o.telefono) === fin);
+}
 
 /**
  * Qué contestar, sin mandar nada ni tocar la base de mensajes. Lo usa atender() y lo usa el
@@ -741,6 +755,11 @@ export async function pensar(c: {
   const preguntaAbierta = rafaga.some((t) => t.includes("?") || /^(con quien|cuando|donde|como|cuanto|que|cual)\b/i.test(t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/^[¿¡\s]+/, "")));
   // 19/11 (Marina: «No vino el cadete», «¿Entonces viene o no?»; Mónica: «estará lejos?»): alguien espera en la
   // puerta. Se le contesta cálido, sin horarios de atención, y se avisa a Santiago al toque.
+  // 25/11 (Beatriz AS-156, Ricardo AS-153): reclamo de alguien que ya recibió → una persona, sin vender ni explicar.
+  if (!c.toque && c.canal === "whatsapp" && c.telefono && esReclamoDeProducto([...rafaga, c.texto].join(" ")) && (await recibioHacePoco(c.telefono))) {
+    const texto = textoReclamo(primerNombre(c.nombre));
+    return { salientes: [{ tipo: "texto" as const, texto }], respuesta: { texto }, derivar: true, conIA: false, textoDerivado: texto, reclamo: true };
+  }
   if (!c.toque && c.canal === "whatsapp" && esperaElPedido(c.texto)) {
     const pn = primerNombre(c.nombre);
     const texto = `¡Perdón por la espera${pn ? `, ${pn}` : ""}! Ya le aviso al cadete y te escribimos enseguida por acá 🙏`;
