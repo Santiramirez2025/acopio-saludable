@@ -9,15 +9,18 @@ import { primerNombre } from "./whatsapp-interactivo";
 import { pesos } from "./precios";
 import { numeroPedido } from "./pedido-calculos";
 import { diaDeEntrega } from "./seguimiento-dia";
+import { rechazaContacto } from "./rechaza-contacto";
 
 export const PLANTILLA_SEGUIMIENTO = "acopio_seguimiento_v1";
 const GRAPH = "https://graph.facebook.com/v21.0";
 const TOPE = 25;
-type Candidato = { telefono: string; nombre: string | null };
+type Candidato = { telefono: string; nombre: string | null; ultimo: string | null };
 
 async function candidatos(): Promise<Candidato[]> {
-  return prisma.$queryRaw<Candidato[]>`
-    SELECT c."telefono", c."nombre" FROM "WhatsappConversacion" c
+  const filas = await prisma.$queryRaw<Candidato[]>`
+    SELECT c."telefono", c."nombre",
+      (SELECT u."texto" FROM "WhatsappMensaje" u WHERE u."telefono" = c."telefono" AND u."de" = 'cliente' ORDER BY u."fecha" DESC LIMIT 1) AS ultimo
+    FROM "WhatsappConversacion" c
     WHERE c."baja" = false AND c."prospecto" IS NULL AND c."telefono" ~ '^[0-9]+$'
       AND c."pedido" LIKE '/carrito?p=%'
       AND (SELECT max(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente')
@@ -33,7 +36,9 @@ async function candidatos(): Promise<Candidato[]> {
           AND a."fecha" > (SELECT max(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente')
       )
     ORDER BY c."ultimoMensaje" DESC
-    LIMIT ${TOPE}`;
+    LIMIT ${TOPE * 2}`;
+  // 24/11 (Vilma): si lo último que dijo fue un no («por ahora no quiero nada»), no se le escribe.
+  return filas.filter((c: Candidato) => !rechazaContacto(c.ultimo)).slice(0, TOPE);
 }
 
 export async function plantillaSeguimiento(tel: string, nombre: string, dia: string): Promise<boolean> {
