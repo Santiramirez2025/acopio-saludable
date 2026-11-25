@@ -65,7 +65,7 @@ export default async function TiendaLayout({ children }: { children: React.React
           ) : (
             <>
               Compra mínima <b className="font-bold text-sol">{pesos(cfg.compraMinima)}</b> por pedido{cfg.entregaPropiaActiva && cfg.compraMinimaPropia < cfg.compraMinima ? <> · en Carlos Paz desde <b className="font-bold text-sol">{pesos(cfg.compraMinimaPropia)}</b></> : null}
-              <span className="hidden sm:inline"> · {cfg.entregaPropiaActiva ? "Entrega sin cargo en Villa Carlos Paz · " : ""}Envíos a todo el país</span>
+              <span className="hidden sm:inline"> · {cfg.entregaPropiaActiva ? "Entrega propia en Villa Carlos Paz · " : ""}Envíos a todo el país</span>
             </>
           )}
         </p>

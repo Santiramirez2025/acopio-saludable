@@ -29,7 +29,7 @@ export default async function Mayorista() {
       <section className="rounded-3xl bg-acopio-900 p-6 text-white md:p-10">
         <div className="text-sm font-semibold uppercase tracking-widest text-amber-300">Para negocios</div>
         <h1 className="mt-2 text-3xl font-black md:text-5xl">Lista mayorista de hoy</h1>
-        <p className="mt-3 max-w-2xl text-white/80">Mixes propios armados en el día y productos de La Granja del Centro, fraccionados en Carlos Paz. Precio por volumen sobre el total del pedido (cada producto muestra su precio final):</p>
+        <p className="mt-3 max-w-2xl text-white/80">Mixes propios armados en el día y productos seleccionados, fraccionados en Carlos Paz. Precio por volumen sobre el total del pedido (cada producto muestra su precio final):</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {[["−10%", "desde 5 kg"], ["−15%", "desde 10 kg"], ["−20%", "desde 25 kg con reposición semanal"]].map(([a, b]) => (
             <div key={a} className="rounded-2xl bg-white/10 p-4"><div className="text-3xl font-black text-amber-300">{a}</div><div className="text-white/80">{b}</div></div>

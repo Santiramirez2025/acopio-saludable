@@ -1,5 +1,5 @@
 // «Abrí tu dietética» (orden de Santiago, 12/11): el kit para arrancar a fraccionar, con las bolsas cerradas
-// de La Granja tal cual vienen, los insumos para fraccionar y lo que ponemos nosotros (lista de precios
+// de origen tal cual vienen (25/11: nunca se nombra al proveedor en la web), los insumos para fraccionar y lo que ponemos nosotros (lista de precios
 // sugerida, reposición semanal, el envío de los jueves). También la opción para almacenes y súper: compran
 // por bolsa cerrada o por la escalera mayorista. Los precios salen del catálogo: nunca quedan viejos.
 import type { Metadata } from "next";
@@ -12,7 +12,7 @@ import { pesos } from "@/lib/precios";
 export const metadata: Metadata = {
   title: "Abrí tu dietética · kit completo para fraccionar · Acopio Saludable",
   description:
-    "Todo para arrancar una dietética o sumar fraccionados a tu almacén: 55 kilos de frutos secos, pasas, dátiles y semillas en bolsas cerradas de La Granja, insumos para fraccionar, lista de precios sugerida y reposición semanal. Villa Carlos Paz y Córdoba.",
+    "Todo para arrancar una dietética o sumar fraccionados a tu almacén: frutos secos, pasas, semillas y cereales en bolsa cerrada al precio de bolsa, insumos para fraccionar, lista de precios sugerida y reposición semanal. Villa Carlos Paz y Córdoba.",
   alternates: { canonical: "/abri-tu-dietetica" },
 };
 export const revalidate = 1800;
@@ -31,10 +31,9 @@ export default async function AbriTuDietetica() {
   const [cfg, combos, bolsas] = await Promise.all([
     leerConfig(),
     combosTienda({ slug: "abri-tu-dietetica" }),
-    productosTienda({ where: { codigo: { in: ["LG-NUEZ-10KG", "LG-CAJU-5KG", "LG-PASAS-10KG", "LG-DATIL-5KG", "LG-MIXSEM-10KG", "LG-MANI-25KG"] } } }),
+    productosTienda({ where: { producto: { contains: "bolsa cerrada" } } }),
   ]);
   const kit = combos[0];
-  const kilos = bolsas.reduce((s, p) => s + (p.contenido ?? 0) / 1000, 0);
   const recargo = cfg.recargoSugeridoPct;
   const porKilo = (p: (typeof bolsas)[number]) => (p.contenido ? p.precio / (p.contenido / 1000) : 0);
 
@@ -44,13 +43,13 @@ export default async function AbriTuDietetica() {
         <div className="text-sm font-semibold uppercase tracking-widest text-amber-300">Para emprender</div>
         <h1 className="mt-2 text-balance font-display text-3xl font-black leading-tight md:text-5xl">Abrí tu dietética con todo listo para fraccionar</h1>
         <p className="mt-4 max-w-2xl text-white/85">
-          Te vendemos lo mismo que compramos nosotros, en las bolsas cerradas de La Granja del Centro, al precio de bolsa. Vos fraccionás y vendés con tu nombre. Nosotros te pasamos la lista de precios sugerida, te diseñamos las etiquetas y te reponemos todas las semanas: el camión llega los jueves.
+          Te vendemos lo mismo que compramos nosotros, en bolsa cerrada de origen y al precio de bolsa. Vos fraccionás y vendés con tu nombre. Nosotros te pasamos la lista de precios sugerida, te diseñamos las etiquetas y te reponemos todas las semanas: repartimos los jueves.
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {[
-            [`${kilos} kg`, "de mercadería en bolsas cerradas"],
-            [kit ? pesos(Math.round(kit.precio)) : "—", "el kit de mercadería, hoy"],
-            ["Jueves", "reposición semanal, sin mínimo"],
+            [`${bolsas.length} productos`, "en bolsa cerrada, con precio de hoy"],
+            kit?.disponible ? [pesos(Math.round(kit.precio)), "el kit de mercadería, hoy"] : [bolsas.length ? `Desde ${pesos(Math.min(...bolsas.map((b) => b.precio)))}` : "A medida", "la bolsa: empezás con una sola"],
+            ["Jueves", "reposición semanal en tu local"],
           ].map(([a, b]) => (
             <div key={b} className="rounded-2xl bg-white/10 p-4">
               <div className="text-3xl font-black text-amber-300">{a}</div>
@@ -68,7 +67,7 @@ export default async function AbriTuDietetica() {
 
       <section>
         <h2 className="font-display text-2xl font-black text-acopio-900">1. La mercadería: bolsas cerradas, precio de bolsa</h2>
-        <p className="mt-2 max-w-2xl text-stone-700">Cada bolsa viene cerrada de La Granja, con su fecha. No la abrimos ni la fraccionamos: por eso sale más barata que el kilo suelto. Podés llevar el kit entero o elegir bolsas sueltas.</p>
+        <p className="mt-2 max-w-2xl text-stone-700">Cada bolsa viene cerrada de origen, con su fecha. No la abrimos ni la fraccionamos: por eso sale más barata que el kilo suelto. Podés llevar el kit entero o elegir bolsas sueltas.</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {bolsas.map((p) => (
             <article key={p.codigo} className="flex flex-col justify-between rounded-2xl border border-stone-200 bg-white p-4">
@@ -85,9 +84,9 @@ export default async function AbriTuDietetica() {
             </article>
           ))}
         </div>
-        {kit && (
+        {kit?.disponible && (
           <div className="mt-4 rounded-2xl bg-acopio-50 p-4 text-sm text-stone-700">
-            El kit junta las {bolsas.length} bolsas ({kilos} kilos) por <b>{pesos(Math.round(kit.precio))}</b> ({pesos(Math.round(kit.precioLista))} sueltas). Por transferencia, {cfg.descuentoTransferenciaPct}% menos. ¿Querés cambiar una bolsa por otra (almendra, chía, avena, higos)? Se arma a medida por WhatsApp.
+            El kit junta {kit.items.length} bolsas por <b>{pesos(Math.round(kit.precio))}</b> ({pesos(Math.round(kit.precioLista))} sueltas). Por transferencia, {cfg.descuentoTransferenciaPct}% menos. ¿Querés cambiar una bolsa por otra (almendra, chía, avena, higos)? Se arma a medida por WhatsApp.
           </div>
         )}
       </section>
@@ -108,8 +107,8 @@ export default async function AbriTuDietetica() {
 
       <section className="grid gap-4 md:grid-cols-3">
         {[
-          ["Lista de precios sugerida", `Te pasamos el precio de góndola de cada producto con tu margen (${recargo}% sobre el costo de la bolsa) y la actualizamos cuando cambia la lista de La Granja.`],
-          ["Reposición cada jueves", "Pedís hasta el miércoles a la noche y el jueves te lo llevamos. Si es un pedido grande, lo buscamos el mismo día. Sin mínimo en Carlos Paz y la zona."],
+          ["Lista de precios sugerida", `Te pasamos el precio de góndola de cada producto con tu margen (${recargo}% sobre el costo de la bolsa) y la actualizamos cada vez que cambia el costo.`],
+          ["Reposición cada jueves", "Pedís hasta el miércoles a la noche y el jueves te lo llevamos. Si es un pedido grande, lo buscamos el mismo día. El envío en Carlos Paz es de $3.000 por pedido."],
           ["Etiquetas y cartel con tu nombre", "Diseñamos las etiquetas y el cartel de precios con tu logo. Vos fraccionás, el cliente ve tu marca."],
         ].map(([t, d]) => (
           <div key={t} className="rounded-2xl border border-stone-200 bg-white p-5">

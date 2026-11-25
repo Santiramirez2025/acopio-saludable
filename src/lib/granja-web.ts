@@ -122,6 +122,13 @@ export function avisoCostos(lista: CostoSubio[]): string | null {
 export const ALTERNATIVAS: Record<string, string[]> = {
   "LG-DATIL": ["980-027", "980-047", "980-018"], // Egipto x 1 kg, Deglet Nour x 5 kg y x 1 kg
   "LG-DATIL-500": ["980-027", "980-047", "980-018"],
+  // 25/11 (Santiago: «cosas desactualizadas como las nueces que nos pueden hacer perder plata»): la caja de nuez de
+  // 10 kg dejó de estar y el costo quedó viejo. Lo que fraccionamos con un código que puede faltar, con su reemplazo.
+  "TG-NUEZ": ["981-028"],
+  "LG-NUEZ-10KG": ["981-028"],
+  "TG-ALMGUARA": ["981-024"],
+  "LG-PASAS-10KG": ["009-034", "916-602"],
+  "LG-CAJU-5KG": ["981-013", "981-003"],
 };
 
 /** Cruza la web con nuestro catálogo de La Granja. Con aplicar, pausa y reactiva. */
