@@ -199,6 +199,9 @@ const KITS_PARA_MOSTRAR: [string, string][] = [
 ];
 /** «Trío de frutos secos · mix…» y «Trío de frutos secos: mix…» son la misma foto: se compara el nombre (hasta «·» o «:»). */
 const nombreDePie = (pie: string) => pie.split(/ · |: /)[0].trim().slice(0, 40).toLowerCase();
+/** El video real de los dátiles (el de la ficha de la web), sin sonido, para quien pidió el Trío. */
+export const VIDEO_DATILES_TRIO = { url: "/video/productos/lg-datil-mudo.mp4", pie: "Así son los dátiles del Trío: carnosos y con carozo · recién fraccionados" };
+const NO_QUIERE = /no (me sirve|gracias|quiero|me interesa)|muy caro|lo compro (ac[aá]|en otro)|despu[eé]s (te )?aviso|m[aá]s adelante/i;
 const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen local|d[oó]nde est[aá]n|ver antes|c[oó]mo (llega|viene)|empaque|calidad|fresc/i;
 
 function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
@@ -292,6 +295,11 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
 function fotosOportunasSinTope(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number }): FotoOportuna[] {
   const fotos = fotosBase(a);
   const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
+  // 25/11 (Santiago): «mandarle video de los dátiles cuando piden el Trío, sin música, como el de la web».
+  // Va en la respuesta siguiente a la foto del Trío (nunca foto + video juntos), una vez por charla, y no si dijo que no.
+  const vioElTrio = nuestros.some((t) => /^\[Foto\] Tr[ií]o de frutos secos/i.test(t));
+  const yaDatiles = nuestros.some((t) => t.startsWith(`[Video] ${VIDEO_DATILES_TRIO.pie.split(" · ")[0]}`));
+  if (vioElTrio && !yaDatiles && !fotos.length && !NO_QUIERE.test(a.entrante)) return [VIDEO_DATILES_TRIO];
   const videosYa = nuestros.filter((t) => t.startsWith("[Video]"));
   if (videosYa.length >= 2) return fotos;
   const conPrecio = /\$\s?\d/.test(a.respuesta);

@@ -86,3 +86,14 @@ test("fotos: cuando el cliente se entusiasma se le muestra un kit que no vio, co
   const p = fotosOportunas({ entrante: "cuánto sale la nuez?", respuesta: "La nuez sale $24.500", historial: [{ de: "acopio", texto: "[Video] Así armamos tu mix de frutos secos" }] as never });
   assert.match(p[0].pie, /Nuez mariposa · \{precio:TG-NUEZ\} el kilo/);
 });
+
+test("fotos: a quien pidió el Trío, en la respuesta siguiente le va el video mudo de los dátiles, una sola vez", () => {
+  const h = [{ de: "yo", texto: "Hola, quiero el Trío con las 3 recetas" }, { de: "acopio", texto: "[Foto] Trío de frutos secos · mix con cajú, dátiles y pasas (3 kg): $ 24.000" }, { de: "acopio", texto: "¿De qué ciudad sos?" }];
+  const f = fotosOportunas({ entrante: "De Carlos Paz", respuesta: "Dale, el envío es $3.000. ¿Me pasás calle y número?", historial: h as never });
+  assert.equal(f.length, 1);
+  assert.match(f[0].url, /lg-datil-mudo\.mp4$/);
+  const otra = fotosOportunas({ entrante: "San Martín 100", respuesta: "Anotado.", historial: [...h, { de: "acopio", texto: `[Video] ${f[0].pie}` }] as never });
+  assert.ok(!otra.some((x) => /lg-datil/.test(x.url)));
+  const no = fotosOportunas({ entrante: "No me sirve gracias", respuesta: "Dale, gracias.", historial: h as never });
+  assert.equal(no.length, 0);
+});
