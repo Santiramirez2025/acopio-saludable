@@ -230,6 +230,7 @@ export const COMBOS_PROVEEDORES: ComboProveedor[] = [
   // 12/11 (Santiago): «lo que funcionó mucho es el 3 kg pero con mix de frutos secos». Los que compraron el Trío
   // pensaban que el mix era de frutos secos: este es ese combo. Escalera: Trío semillas $21.500 → este ~$24.000 → Despensa 4 kg $28.500.
   { slug: "trio-de-frutos-secos", nombre: "Trío de frutos secos · mix con cajú, dátiles y pasas (3 kg)", descuentoPct: 12.5 /* suelto $27.300; costo $17.619 */, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
+  { slug: "trio-con-avena", nombre: "Trío con avena · mix con cajú, dátiles y avena (3 kg)", descuentoPct: 7.3 /* 25/11 Santiago: próximo anuncio. $24.000 en la tienda; suelto $25.900; costo $15.949 (gana $8.051, $1.670 más que el Trío con pasas) */, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "LG-AVENA", cantidad: 1 }] },
   { slug: "trio-del-desayuno", nombre: "Trío del desayuno · semillas, dátiles y pasas (3 kg)", descuentoPct: 2 /* $21.500 en la tienda; suelto $22.000 */, destacado: true, items: [{ codigo: "LG-MIXSEM", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "pan-dulce-casero", nombre: "Pan dulce casero · pasas y dátiles", descuentoPct: 2 /* $22.000 en la tienda; suelto $22.700 */, destacado: true, items: [{ codigo: "TG-PASAS", cantidad: 2 }, { codigo: "LG-DATIL", cantidad: 1 }] },
   // 12/11: «Abrí tu dietética» (orden de Santiago): las bolsas cerradas básicas, 55 kilos, para arrancar a fraccionar. Suelto suma $473.000.
@@ -294,7 +295,7 @@ export const fotoProducto = (codigo: string) =>
   FOTO_ENCARGO[codigo] ?? (POR_ENCARGO.has(codigo) ? `/img/productos/encargo/${codigo.toLowerCase()}.webp` : CON_FOTO.has(codigo) ? `/img/productos/prov/${(FOTO_DE[codigo] ?? codigo).toLowerCase()}.webp` : null);
 /** Combos sin portada propia en public/img/combos/v3: sin foto, la página muestra los productos (no una imagen rota). */
 // Navidad dulce y Picada de Navidad (25/11): sin portada hasta que diseño haga la foto real; la página muestra los productos.
-const COMBOS_SIN_PORTADA = new Set<string>(["navidad-dulce", "picada-de-navidad"]);
+const COMBOS_SIN_PORTADA = new Set<string>(["navidad-dulce", "picada-de-navidad", "trio-con-avena"]);
 /** Portadas rehechas: archivo nuevo para que la caché de imágenes (30 días) no siga mostrando la vieja. */
 const PORTADA_VERSION: Record<string, string> = { "kit-alfajores-sin-tacc": "kit-alfajores-sin-tacc-v3" };
 export const fotoCombo = (slug: string) => (COMBOS_SIN_PORTADA.has(slug) ? null : `/img/combos/v3/${PORTADA_VERSION[slug] ?? slug}.webp`);
