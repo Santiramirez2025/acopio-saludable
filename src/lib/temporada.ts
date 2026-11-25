@@ -28,7 +28,7 @@ export const TEMPORADAS: Temporada[] = [
     desde: "10-20",
     hasta: "12-31",
     dia: "12-24",
-    slugs: ["pan-dulce-casero", "mesa-navidena", "regalo-navideno"],
+    slugs: ["pan-dulce-casero", "mesa-navidena", "navidad-dulce", "picada-de-navidad", "regalo-navideno"],
     patron: /\b(navid|pan dulce|pan dulces|panes dulces|fiestas|fin de ano|ano nuevo|noche buena|nochebuena|regalo|canasta|mesa dulce|turron|budin navide|para las fiestas)/,
     titulo: "Llegan las fiestas: armá tu mesa sin salir de casa",
     bajada: "Nueces, almendras, pasas y chips para el pan dulce, y la mesa navideña de frutos secos lista para servir. Te lo llevamos a domicilio en Carlos Paz y alrededores.",

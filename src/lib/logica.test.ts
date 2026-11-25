@@ -1378,7 +1378,7 @@ test("Mercado Libre: la respuesta no lleva contacto ni links y nunca «perfecto�
 test("ML: el precio mínimo deja la ganancia mínima y no sube si ya alcanza", async () => {
   const { precioMinimoMl } = await import("./mercadolibre-reglas");
   const mix3 = precioMinimoMl(25800); // Mix con cajú 3 kg
-  assert.ok(mix3 <= 55000, `mix 3 kg hoy a $55.000 no se toca (mínimo ${mix3})`);
+  assert.ok(mix3 <= 60500, `mix 3 kg: con el envío real de $13.000 el mínimo no pasa de $60.500 (mínimo ${mix3})`);
   assert.ok(precioMinimoMl(30000) > precioMinimoMl(25800));
   assert.equal(precioMinimoMl(25800) % 500, 0);
 });

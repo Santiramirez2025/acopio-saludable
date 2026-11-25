@@ -245,6 +245,10 @@ export const COMBOS_PROVEEDORES: ComboProveedor[] = [
   { slug: "kit-alfajores-sin-tacc", nombre: "Kit alfajores sin TACC · tapitas + dulce de leche con stevia", descuentoPct: 10, destacado: true, items: [{ codigo: "LG-NATUZEN-TAPAS", cantidad: 2 }, { codigo: "LG-DDL-STEVIA", cantidad: 1 }] },
   { slug: "merienda-sin-tacc-yuka", nombre: "Merienda sin TACC", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-YUKA-ALF-DDL", cantidad: 1 }, { codigo: "LG-YUKA-ALF-CHOC", cantidad: 1 }, { codigo: "LG-YUKA-GALL-VAI", cantidad: 1 }, { codigo: "LG-DONINAS-COCO", cantidad: 1 }, { codigo: "LG-DONINAS-CHIPS", cantidad: 1 }] },
   // Combo Navidad (opción A de Pablo, 27/10): costo $34.090, se vende a $49.000 (margen 30,4%). La suma suelta da $49.500.
+  // 25/11 (Santiago: «armar uno o más kits para Navidad, que le convengan a la gente y ganemos nosotros»). Costos al 25/11:
+  // dulce $16.800 → $26.000 aprox.; picada $25.400 → $39.500 aprox. Los dos dejan más del 30%.
+  { slug: "navidad-dulce", nombre: "Navidad dulce · garrapiñada, nueces, dátiles y mix", descuentoPct: 6, destacado: true, items: [{ codigo: "LG-GARRAPMANI-500", cantidad: 1 }, { codigo: "LG-981007", cantidad: 1 }, { codigo: "LG-DATIL-500", cantidad: 1 }, { codigo: "TG-MIXCG-500", cantidad: 1 }, { codigo: "LG-BOLSAREGALO", cantidad: 1 }] },
+  { slug: "picada-de-navidad", nombre: "Picada de Navidad · pistachos, higos, nueces y mix con cajú", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-PISTACHO-250", cantidad: 1 }, { codigo: "LG-HIGOS-500", cantidad: 1 }, { codigo: "LG-981007", cantidad: 1 }, { codigo: "TG-MIXC-500", cantidad: 1 }] },
   { slug: "mesa-navidena", nombre: "Mesa navideña", descuentoPct: 1.8, destacado: true, items: [{ codigo: "LG-GARRAPMANI-500", cantidad: 1 }, { codigo: "LG-ALMGARRAP-250", cantidad: 1 }, { codigo: "LG-PASASCHOC-400", cantidad: 1 }, { codigo: "LG-PANDULCE-CERAL", cantidad: 1 }, { codigo: "TG-MIXC-500", cantidad: 1 }, { codigo: "LG-BOLSAREGALO", cantidad: 1 }] },
   { slug: "arranque-gym", nombre: "Pack gym del mes", descuentoPct: 5, items: [{ codigo: "LG-GPROTE", cantidad: 1 }, { codigo: "LG-AVENA", cantidad: 1 }, { codigo: "LG-CACAO-250", cantidad: 1 }, { codigo: "LG-ALMNP-500", cantidad: 1 } ] },
 ];
@@ -290,6 +294,7 @@ export const fotoProducto = (codigo: string) =>
   FOTO_ENCARGO[codigo] ?? (POR_ENCARGO.has(codigo) ? `/img/productos/encargo/${codigo.toLowerCase()}.webp` : CON_FOTO.has(codigo) ? `/img/productos/prov/${(FOTO_DE[codigo] ?? codigo).toLowerCase()}.webp` : null);
 /** Combos sin portada propia en public/img/combos/v3: sin foto, la página muestra los productos (no una imagen rota). */
 const COMBOS_SIN_PORTADA = new Set<string>([]);
+// Navidad dulce y Picada de Navidad: portada armada con las fotos de sus productos (25/11), hasta que diseño haga la definitiva.
 /** Portadas rehechas: archivo nuevo para que la caché de imágenes (30 días) no siga mostrando la vieja. */
 const PORTADA_VERSION: Record<string, string> = { "kit-alfajores-sin-tacc": "kit-alfajores-sin-tacc-v3" };
 export const fotoCombo = (slug: string) => (COMBOS_SIN_PORTADA.has(slug) ? null : `/img/combos/v3/${PORTADA_VERSION[slug] ?? slug}.webp`);

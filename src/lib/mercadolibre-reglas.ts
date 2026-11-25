@@ -25,6 +25,8 @@ export const SKU_ML: Record<string, { combo?: string; codigo?: string; cantidad?
   "AS-PANDULCE": { combo: "pan-dulce-casero" },
   "AS-REGALO-NAVIDAD": { combo: "regalo-navideno" },
   "AS-MESA-NAVIDENA": { combo: "mesa-navidena" },
+  "AS-NAVIDAD-DULCE": { combo: "navidad-dulce" },
+  "AS-PICADA-NAVIDAD": { combo: "picada-de-navidad" },
   "AS-MIXC-2KG": { codigo: "TG-MIXC", cantidad: 2 },
   "AS-MIXC-3KG": { codigo: "TG-MIXC", cantidad: 3 },
   "AS-MIXC-5KG": { codigo: "TG-MIXC", cantidad: 5 },
@@ -34,7 +36,7 @@ export const SKU_ML: Record<string, { combo?: string; codigo?: string; cantidad?
 };
 
 /** Cargos de ML (Clásica, alimentos) y envío que paga el vendedor desde $33.000. Revisar cada tanto. */
-const ML = { comision: 0.133, iibb: 0.03, envio: 9000, fijos: [[15000, 1610], [25000, 3315], [33000, 4017]] as [number, number][], bolsa: 400 };
+const ML = { comision: 0.133, iibb: 0.03, envio: 13000 /* 25/11: la venta real de dátiles 5 kg pagó $13.090 de envío (antes se calculaba $9.000) */, fijos: [[15000, 1610], [25000, 3315], [33000, 4017]] as [number, number][], bolsa: 400 };
 
 function netoMl(precio: number): number {
   const fijo = ML.fijos.find(([hasta]) => precio < hasta)?.[1] ?? 0;
