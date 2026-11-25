@@ -77,7 +77,7 @@ async function ml<T = unknown>(ruta: string, init: RequestInit = {}): Promise<T>
     headers: { authorization: `Bearer ${t.access_token}`, "content-type": "application/json", accept: "application/json", ...(init.headers ?? {}) },
     signal: AbortSignal.timeout(20_000),
   });
-  if (!res.ok) throw new Error(`ML ${ruta} ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) throw new Error(`ML ${ruta} ${res.status}: ${(await res.text()).slice(0, 1500)}`);
   return res.json() as Promise<T>;
 }
 
@@ -464,4 +464,10 @@ export async function publicarMl(p: { titulo: string; categoria: string; precio:
   });
   if (p.descripcion) await cambiarDescripcionMl(item.id, p.descripcion).catch(() => null);
   return { id: item.id, link: item.permalink, piso };
+}
+
+/** Atributos de una publicación nuestra (para copiar los obligatorios de la categoría al publicar otra parecida). */
+export async function atributosMl(itemId: string): Promise<{ categoria: string; atributos: { id: string; nombre: string; valor: string | null }[] }> {
+  const it = await ml<{ category_id: string; attributes?: { id: string; name: string; value_name: string | null }[] }>(`/items/${itemId}`);
+  return { categoria: it.category_id, atributos: (it.attributes ?? []).map((a) => ({ id: a.id, nombre: a.name, valor: a.value_name })) };
 }

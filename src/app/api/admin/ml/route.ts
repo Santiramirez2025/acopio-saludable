@@ -17,7 +17,7 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { cambiarDescripcionMl, cambiarFotoMl, agregarFotosMl, cambiarFotoPrincipalMl, cambiarPrecioMl, cambiarTituloMl, categoriaMl, conectado, estadoPublicacionMl, estadoRealMl, fotosMl, parteDiario, preciosMl, preguntasPendientes, promocionesMl, publicarMl, quitarPromocionMl, responderPreguntaConTexto, ventasRecientes } from "@/lib/mercadolibre";
+import { atributosMl, cambiarDescripcionMl, cambiarFotoMl, agregarFotosMl, cambiarFotoPrincipalMl, cambiarPrecioMl, cambiarTituloMl, categoriaMl, conectado, estadoPublicacionMl, estadoRealMl, fotosMl, parteDiario, preciosMl, preguntasPendientes, promocionesMl, publicarMl, quitarPromocionMl, responderPreguntaConTexto, ventasRecientes } from "@/lib/mercadolibre";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -81,6 +81,9 @@ export async function POST(req: Request) {
       case "agregar_fotos":
         if (!item || !Array.isArray(b.urls) || !b.urls.length) break;
         return NextResponse.json({ ok: true, ...(await agregarFotosMl(item, b.urls.map(String))) });
+      case "atributos":
+        if (!item) break;
+        return NextResponse.json({ ok: true, ...(await atributosMl(item)) });
       case "estado":
         if (!item) break;
         return NextResponse.json({ ok: true, ...(await estadoRealMl(item)) });
