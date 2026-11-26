@@ -1,5 +1,13 @@
 import type { NextConfig } from "next";
 
+// Direcciones viejas o cortas de combos que circulan en anuncios, feeds y mensajes (Martín 26/11):
+// llevan con 301 al combo de hoy en vez de dar 404. Solo slugs que NO existen como combo.
+export const ALIAS_COMBOS: Record<string, string> = {
+  alacena: "alacena-de-frutos-secos",
+  trio: "trio-de-frutos-secos",
+  despensa: "despensa-4-kilos",
+};
+
 export const CSP_MINIMA = "base-uri 'self'; object-src 'none'; frame-ancestors 'self'";
 
 const nextConfig: NextConfig = {
@@ -36,6 +44,7 @@ const nextConfig: NextConfig = {
       // 21/11: los agentes y el bot mandaban /precios y daba 404. La lista con foto y precio es el catálogo.
       { source: "/precios", destination: "/catalogo", permanent: false },
       { source: "/lista-precios", destination: "/catalogo", permanent: false },
+      ...Object.entries(ALIAS_COMBOS).map(([viejo, nuevo]) => ({ source: `/combos/${viejo}`, destination: `/combos/${nuevo}`, statusCode: 301 as const })),
     ];
   },
   // Headers de seguridad en todo el sitio (HSTS ya lo pone Vercel):
