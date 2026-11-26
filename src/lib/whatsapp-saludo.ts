@@ -26,7 +26,7 @@ export function conMensaje(href: string, mensaje: string): string {
 
 /** La primera respuesta de la charla avisa, en media frase, que atiende una IA y que puede preguntar lo que quiera. */
 // 17/11 (Santiago: «sin molestar con tanto texto»): media línea, no una frase entera.
-export const PRESENTACION_IA = "Te atiende el asistente de Acopio 🤖.";
+export const PRESENTACION_IA = "Te habla el asistente de Acopio 🤖.";
 
 export function conPresentacion(texto: string): string {
   const t = texto.trim();

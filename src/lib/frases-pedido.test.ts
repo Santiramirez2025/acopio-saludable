@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { sinPedidoDadoPorHecho, hayPedidoEnCharla } from "./frases-pedido";
 
 test("23/11 Mayra: «Ya lo dejamos cargado:» sin pedido se saca", () => {
-  const t = "¡Hola! Te atiende el asistente de Acopio 🤖. Ya lo dejamos cargado: el Trío trae 1 kg de mix, 1 kg de dátiles y 1 kg de pasas, $24.000. ¿De qué ciudad sos, así te digo el envío?";
+  const t = "¡Hola! Te habla el asistente de Acopio 🤖. Ya lo dejamos cargado: el Trío trae 1 kg de mix, 1 kg de dátiles y 1 kg de pasas, $24.000. ¿De qué ciudad sos, así te digo el envío?";
   assert.equal(
     sinPedidoDadoPorHecho(t, false),
-    "¡Hola! Te atiende el asistente de Acopio 🤖. El Trío trae 1 kg de mix, 1 kg de dátiles y 1 kg de pasas, $24.000. ¿De qué ciudad sos, así te digo el envío?",
+    "¡Hola! Te habla el asistente de Acopio 🤖. El Trío trae 1 kg de mix, 1 kg de dátiles y 1 kg de pasas, $24.000. ¿De qué ciudad sos, así te digo el envío?",
   );
 });
 
