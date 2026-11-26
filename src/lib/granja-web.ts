@@ -132,6 +132,9 @@ export const ALTERNATIVAS: Record<string, string[]> = {
 };
 
 /** Cruza la web con nuestro catálogo de La Granja. Con aplicar, pausa y reactiva. */
+/** Productos que son el gancho de un anuncio: la falta en el proveedor avisa, pero no los saca de la venta. */
+export const NO_PAUSAR_SOLO = new Set(["LG-DATIL"]);
+
 export async function cruzarConWebGranja(aplicar: boolean): Promise<ResultadoGranjaWeb> {
   const { prisma } = await import("./prisma");
   const { cajas, paginas } = await leerWebGranja();
@@ -150,6 +153,7 @@ export async function cruzarConWebGranja(aplicar: boolean): Promise<ResultadoGra
   const pausar: ResultadoGranjaWeb["pausar"] = [];
   const reactivar: ResultadoGranjaWeb["reactivar"] = [];
   const noEstanEnLaWeb: ResultadoGranjaWeb["noEstanEnLaWeb"] = [];
+  const sinProveedor: string[] = [];
   for (const p of productos) {
     const k = nuestro.get(p.codigo)!.replace(/^\d-(?=\d{3}-\d{3}$)/, "");
     // 23/11: la caja de dátiles Egipto x 5 kg (980-028) figuró «no disponible» y el robot pausó los dátiles:
@@ -161,10 +165,15 @@ export async function cruzarConWebGranja(aplicar: boolean): Promise<ResultadoGra
       noEstanEnLaWeb.push({ codigo: p.codigo, producto: nombre });
       continue;
     }
+    // 26/11: segunda vez (23/11 y hoy) que el proveedor se queda sin dátiles y el robot apaga el Trío con la campaña
+    // prendida: 9 personas recibieron «el Trío está agotado». Lo que es gancho de un anuncio NO se pausa solo:
+    // se compra en otro lado (Santiago lo busca en Córdoba) y solo se apaga a mano desde el panel.
+    if (!d && p.estado === "ACTIVO" && NO_PAUSAR_SOLO.has(p.codigo)) { sinProveedor.push(nombre); continue; }
     if (!d && p.estado === "ACTIVO") pausar.push({ codigo: p.codigo, producto: nombre });
     if (d && p.estado === "SIN_STOCK" && p.ocultoMotivo === MOTIVO_GRANJA_WEB) reactivar.push({ codigo: p.codigo, producto: nombre });
   }
   const r: ResultadoGranjaWeb = { leidosWeb: cajas.length, paginas, nuestros: productos.length, pausar, reactivar, noEstanEnLaWeb, aplicado: false, costoSubio: costosQueSubieron(cajas) };
+  if (sinProveedor.length) r.aviso = `OJO: el proveedor no tiene ${sinProveedor.join(", ")}. Siguen a la venta porque son el gancho de la campaña: hay que comprarlos en otro lado o apagarlos a mano.`;
   // Si la web vino rota (pocas cajas) no se toca nada.
   if (cajas.length < 500) {
     r.aviso = `La web de La Granja devolvió solo ${cajas.length} productos: no se cambió nada.`;
