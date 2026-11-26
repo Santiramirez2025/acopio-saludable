@@ -80,6 +80,6 @@ export const sinIds = (texto: string) => texto.replace(/^\[(foto|audio|video|arc
 
 /** Qué contestar cuando manda algo que el vendedor no puede leer. */
 export function respuestaMedio(tipo: string): string {
-  if (tipo === "audio") return "¡Gracias por el audio! Justo ahora no puedo escucharlo, ¿me lo escribís en un mensajito? Así te respondo al toque 🙌";
+  if (tipo === "audio") return "Por acá no podemos escuchar audios 🙏 ¿Me lo podés escribir, por favor? Así te respondo enseguida.";
   return "¡Recibido! Contame en un mensajito qué estás buscando y te paso precio al toque.";
 }
