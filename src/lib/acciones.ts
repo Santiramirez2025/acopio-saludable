@@ -367,7 +367,9 @@ export async function cambiarEstadoPedido(fd: FormData) {
   await requireAdmin();
   const id = Number.parseInt(String(fd.get("id")), 10);
   const estado = String(fd.get("estado")) as EstadoPedido;
-  let destino = `/admin/pedidos/${id}?ok=1`;
+  // 26/11 (Santiago): la hoja del repartidor vuelve a la hoja, no a la ficha del pedido.
+  const alReparto = fd.get("volver") === "reparto";
+  let destino = alReparto ? `/admin/reparto?ok=entregado-${id}` : `/admin/pedidos/${id}?ok=1`;
   try {
     await aplicarEstadoPedido(id, estado, {
       nota: textoONull(fd, "nota")?.slice(0, 300) ?? null,
@@ -376,7 +378,7 @@ export async function cambiarEstadoPedido(fd: FormData) {
       silencioso: fd.get("silencioso") === "1",
     });
   } catch (e) {
-    destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
+    destino = alReparto ? `/admin/reparto?error=${encodeURIComponent(mensaje(e))}` : `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
   }
   revalidatePath("/", "layout");
   redirect(destino);
@@ -620,7 +622,8 @@ export async function borrarPedido(fd: FormData) {
 export async function avisarCincoMinutos(fd: FormData) {
   await requireAdmin();
   const id = Number.parseInt(String(fd.get("id")), 10);
-  let destino = `/admin/pedidos/${id}?ok=cinco`;
+  const alReparto = fd.get("volver") === "reparto";
+  let destino = alReparto ? `/admin/reparto?ok=cinco-${id}` : `/admin/pedidos/${id}?ok=cinco`;
   try {
     const p = await prisma.order.findUniqueOrThrow({ where: { id } });
     const { telefonoWa } = await import("./telefono");
@@ -649,8 +652,47 @@ export async function avisarCincoMinutos(fd: FormData) {
     await cambiarEstado(tel, "persona").catch(() => undefined);
     await prisma.orderEvent.create({ data: { orderId: id, estado: p.estado, nota: "Avisado: el cadete está a 5 minutos" } }).catch(() => undefined);
   } catch (e) {
-    destino = `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
+    destino = alReparto ? `/admin/reparto?error=${encodeURIComponent(mensaje(e))}` : `/admin/pedidos/${id}?error=${encodeURIComponent(mensaje(e))}`;
   }
   revalidatePath(`/admin/pedidos/${id}`);
+  revalidatePath("/admin/reparto");
+  redirect(destino);
+}
+
+export async function mensajeReparto(fd: FormData) {
+  await requireAdmin();
+  const id = Number.parseInt(String(fd.get("id")), 10);
+  const clave = String(fd.get("plantilla") ?? "");
+  let destino = `/admin/reparto?ok=msj-${id}`;
+  try {
+    const { PLANTILLAS_REPARTO } = await import("./plantillas-reparto");
+    const pl = PLANTILLAS_REPARTO[clave];
+    if (!pl) throw new Error("Mensaje desconocido");
+    const p = await prisma.order.findUniqueOrThrow({ where: { id } });
+    const { telefonoWa } = await import("./telefono");
+    const tel = telefonoWa(p.telefono);
+    if (!tel) throw new Error("El pedido no tiene un WhatsApp válido");
+    const { esNombreDePila } = await import("./nombres-comunes");
+    const pn = p.nombre.trim().split(/\s+/)[0] ?? "";
+    const nombre = esNombreDePila(pn) ? pn[0].toUpperCase() + pn.slice(1).toLowerCase() : "";
+    const texto = pl.texto(nombre);
+    const { enviarTexto } = await import("./whatsapp-cloud");
+    const { registrarSalida, ventanaAbierta, cambiarEstado } = await import("./whatsapp-memoria");
+    let ok = false;
+    if (await ventanaAbierta(tel).catch(() => false)) ok = await enviarTexto(tel, texto);
+    if (ok) await registrarSalida(tel, "persona", texto).catch(() => undefined);
+    else {
+      const { avisarReparto } = await import("./aviso-reparto");
+      const { numeroPedido } = await import("./pedido-calculos");
+      ok = Boolean(await avisarReparto(tel, nombre, numeroPedido(p.id), "ahora", texto));
+    }
+    if (!ok) throw new Error("WhatsApp no aceptó el mensaje");
+    // El cadete está en la puerta: el bot no contesta encima (vuelve solo).
+    await cambiarEstado(tel, "persona").catch(() => undefined);
+    await prisma.orderEvent.create({ data: { orderId: id, estado: p.estado, nota: `Cadete: ${pl.boton}` } }).catch(() => undefined);
+  } catch (e) {
+    destino = `/admin/reparto?error=${encodeURIComponent(mensaje(e))}`;
+  }
+  revalidatePath("/admin/reparto");
   redirect(destino);
 }
