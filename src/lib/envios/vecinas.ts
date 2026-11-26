@@ -24,17 +24,18 @@
 export const CARGO_CERCA = 4000;
 export const CARGO_LEJOS = 5000;
 
-const POR_CP: Record<string, number> = { "5155": CARGO_LEJOS, "5158": CARGO_CERCA };
+// 26/11 (Santiago): «Bialet Massé, Icho Cruz, 5 lucas lo cobramos».
+const POR_CP: Record<string, number> = { "5155": CARGO_LEJOS, "5158": CARGO_LEJOS };
 
 const POR_NOMBRE: [RegExp, number][] = [
-  [/\b(tanti|cuesta blanca|villa parque siquiman|parque siquiman|siquiman)\b/, CARGO_LEJOS],
-  [/\b(mayu sumaj|icho cruz|villa rio icho cruz|tala huasi|bialet masse|cabalango)\b/, CARGO_CERCA],
+  [/\b(tanti|cuesta blanca|villa parque siquiman|parque siquiman|siquiman|icho cruz|villa rio icho cruz|bialet masse|bialet)\b/, CARGO_LEJOS],
+  [/\b(mayu sumaj|tala huasi|cabalango)\b/, CARGO_CERCA],
 ];
 
 /** Las vecinas con cargo, como se las nombra en la tienda (mismo cargo que POR_NOMBRE; lo controla vecinas.test.ts). */
 export const VECINAS_CON_CARGO: { lugares: string[]; cargo: number }[] = [
-  { lugares: ["Mayu Sumaj", "Icho Cruz", "Tala Huasi", "Bialet Massé", "Cabalango"], cargo: CARGO_CERCA },
-  { lugares: ["Tanti", "Cuesta Blanca"], cargo: CARGO_LEJOS },
+  { lugares: ["Mayu Sumaj", "Tala Huasi", "Cabalango"], cargo: CARGO_CERCA },
+  { lugares: ["Tanti", "Cuesta Blanca", "Icho Cruz", "Bialet Massé"], cargo: CARGO_LEJOS },
 ];
 
 const sinTildes = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();

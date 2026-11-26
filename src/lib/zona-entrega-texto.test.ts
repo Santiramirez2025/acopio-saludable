@@ -18,8 +18,8 @@ test("zona: cada vecina con cargo de la tienda cobra lo mismo en el chat", () =>
 test("zona: el texto de entrega no promete sin cargo a Icho Cruz ni a Cuesta Blanca", () => {
   const t = sinEsp(textoEntregaZona(regla));
   assert.ok(t.startsWith(`En ${ZONA_SIN_CARGO}, envío $ 3.000 por pedido.`), t);
-  assert.match(t, /Mayu Sumaj, Icho Cruz, Tala Huasi, Bialet Massé y Cabalango, \$ 4\.000/);
-  assert.match(t, /Tanti y Cuesta Blanca, \$ 5\.000/);
+  assert.match(t, /Mayu Sumaj, Tala Huasi y Cabalango, \$ 4\.000/);
+  assert.match(t, /Tanti, Cuesta Blanca, Icho Cruz y Bialet Massé, \$ 5\.000/);
   assert.doesNotMatch(t.split("Al resto de la zona")[0], /Icho Cruz|Cuesta Blanca/);
   assert.equal(sinEsp(textoVecinasConCargo()).split(";").length, 2);
 });

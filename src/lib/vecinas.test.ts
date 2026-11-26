@@ -8,14 +8,14 @@ test("vecinas 19/11: hasta 8 km sin cargo; 8 a 14 km $4.000; más lejos $5.000 (
   assert.equal(cargoVecinaPorLugar("San Antonio 450, Carlos Paz"), 0);
   assert.equal(cargoVecinaPorLugar("San Antonio de Arredondo"), 0);
   assert.equal(cargoVecinaPorLugar("Mayu Sumaj"), 4000);
-  assert.equal(cargoVecinaPorLugar("Icho Cruz"), 4000);
-  assert.equal(cargoVecinaPorLugar("Bialet Massé"), 4000);
+  assert.equal(cargoVecinaPorLugar("Icho Cruz"), 5000);
+  assert.equal(cargoVecinaPorLugar("Bialet Massé"), 5000);
   assert.equal(cargoVecinaPorLugar("Tanti"), 5000);
   assert.equal(cargoVecinaPorLugar("Cuesta Blanca"), 5000);
   assert.equal(cargoVecinaPorCp("5152"), 0);
   assert.equal(cargoVecinaPorCp("X5153"), 0);
   assert.equal(cargoVecinaPorCp("5155"), 5000);
-  assert.equal(cargoVecinaPorCp("5158"), 4000);
+  assert.equal(cargoVecinaPorCp("5158"), 5000);
 });
 
 test("vecinas: el cargo se cobra siempre, y el chat cotiza lo mismo", () => {
