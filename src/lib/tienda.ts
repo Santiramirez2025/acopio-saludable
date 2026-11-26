@@ -88,6 +88,8 @@ export type ComboTienda = {
   precio: number;
   ahorro: number;
   disponible: boolean;
+  /** Productos del combo que hoy no se venden (sin stock o fuera de margen): por qué no se puede armar. */
+  faltan?: string[];
   items: { producto: ProductoTienda; cantidad: number }[];
 };
 
@@ -113,6 +115,7 @@ export function aComboTienda(c: ComboConItems, margenMinimoPct: number, reglas: 
     ahorro: redondear2(calc.precioLista - calc.precioCombo),
     disponible:
       c.items.length > 0 && comboVigente(c) && !calc.bloqueado && c.items.every((i) => estaPublicado(i.product, margenMinimoPct)),
+    faltan: c.items.filter((i) => !estaPublicado(i.product, margenMinimoPct)).map((i) => i.product.producto),
     items: c.items.map((i) => ({ producto: aTienda(i.product, reglas), cantidad: i.cantidad })),
   };
 }

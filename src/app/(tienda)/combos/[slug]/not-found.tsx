@@ -4,9 +4,8 @@ import { ordenarCombos } from "@/lib/destacado-inicio";
 import { TarjetaCombo } from "@/components/Tienda";
 import { EnlaceWhatsapp } from "@/components/Whatsapp";
 
-// Un combo que hoy no se puede armar (por ejemplo, falta el mix de semillas) sigue dando 404: así el equipo
-// sabe que no se ofrece. Pero quien llega desde un post, un anuncio o un link viejo ya no cae en una página
-// vacía sin menú: ve la tienda y los combos que sí están (Tomi 21/11).
+// Solo para un slug que no existe como combo (26/11: un combo agotado ya no cae acá, muestra «Hoy sin stock»
+// con 200 en page.tsx). Quien llega desde un link roto no cae en una página vacía: ve los combos que sí están.
 export default async function ComboNoDisponible() {
   const otros = ordenarCombos((await combosTienda({ tipo: "COMBO", activo: true })).filter((c) => c.disponible)).slice(0, 4);
   return (

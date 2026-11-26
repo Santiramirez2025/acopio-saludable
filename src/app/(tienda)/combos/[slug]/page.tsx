@@ -11,13 +11,45 @@ import { BotonAgregar } from "@/components/Carrito";
 import { BotonCompartir } from "@/components/Compartir";
 import { Foto } from "@/components/Foto";
 import { Medir } from "@/components/Medicion";
-import { AvisoSuplementos, Titulo } from "@/components/Tienda";
+import { AvisoSuplementos, TarjetaCombo, Titulo } from "@/components/Tienda";
+import { EnlaceWhatsapp } from "@/components/Whatsapp";
+import { ordenarCombos } from "@/lib/destacado-inicio";
+import { alternativas, mensajeSinStock, textoSinStock } from "@/lib/combo-agotado";
 
 type Props = { params: Promise<{ slug: string }> };
 
+// Devuelve el combo aunque hoy no se pueda armar: así la página dice «Hoy sin stock» en vez de 404 (Martín 26/11).
+// Un slug que no existe sigue dando 404 (not-found.tsx); los slugs viejos redirigen en next.config.ts.
 async function cargar(slug: string) {
   const [c] = await combosTienda({ slug, tipo: "COMBO" });
-  return c?.disponible ? c : null;
+  return c ?? null;
+}
+
+type Combo = NonNullable<Awaited<ReturnType<typeof cargar>>>;
+
+async function ComboSinStock({ c }: { c: Combo }) {
+  const otros = alternativas(ordenarCombos(await combosTienda({ tipo: "COMBO", activo: true })), c.slug);
+  return (
+    <div className="space-y-6">
+      <Link href="/combos" className="-my-3 inline-flex min-h-[48px] items-center text-sm text-stone-600 underline underline-offset-4">← Combos</Link>
+      <Titulo sobre="Combo">{c.nombre}</Titulo>
+      <div className="rounded-xl border border-tierra-200 bg-white p-5">
+        <p className="font-display text-lg font-bold text-acopio-900">{textoSinStock(c.faltan)}</p>
+        <p className="mt-1 text-sm text-stone-600">Escribinos y te avisamos cuando vuelve, o te ayudamos a armar algo parecido con lo que hay hoy.</p>
+        <EnlaceWhatsapp mensaje={mensajeSinStock(c.nombre)} medirComo="whatsapp_combo_sin_stock" className="btn mt-4 w-full justify-center sm:w-auto">Avisame por WhatsApp</EnlaceWhatsapp>
+      </div>
+      {otros.length > 0 && (
+        <section>
+          <h2 className="mb-3 font-display text-lg font-bold">Estos combos sí salen hoy</h2>
+          <div className="grid gap-3 sm:grid-cols-3">{otros.map((o) => <TarjetaCombo key={o.slug} c={o} />)}</div>
+        </section>
+      )}
+      <div className="flex flex-wrap gap-3">
+        <Link href="/combos" className="btn-sec">Ver todos los combos</Link>
+        <Link href="/catalogo" className="btn-sec">Armarlo con productos sueltos</Link>
+      </div>
+    </div>
+  );
 }
 
 // Combos con una segunda imagen de ambiente en public/img/combos/<slug>-2.webp.
@@ -33,6 +65,7 @@ const GUIA_FIESTAS: Record<string, [string, string]> = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const c = await cargar((await params).slug);
   if (!c) return { title: "Combo no disponible" };
+  if (!c.disponible) return { title: `Combo ${c.nombre} · hoy sin stock`, alternates: { canonical: `/combos/${c.slug}` } };
   const cfg = await leerConfig();
   return { ...seoCombo(c, cfg.compraMinimaPropia), alternates: { canonical: `/combos/${c.slug}` } };
 }
@@ -40,6 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ComboPagina({ params }: Props) {
   const c = await cargar((await params).slug);
   if (!c) notFound();
+  if (!c.disponible) return <ComboSinStock c={c} />;
   const cfg = await leerConfig();
   const faltaParaMinimo = Math.max(0, cfg.compraMinima - c.precio);
   const unidades = c.items.reduce((s, i) => s + i.cantidad, 0);
