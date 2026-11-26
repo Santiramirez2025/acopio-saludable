@@ -116,3 +116,11 @@ test("26/11 María Ilda: «Te confirmo 2 trios» con el pedido tomado es un camb
   for (const t of ["Te confirmo 2 trios, uno para mí ,otro para mí hijo.En el mismo domicilio.", "sumame un kilo de nuez", "agregá la miel", "en vez de pasas, avena"]) assert.equal(pideCambioDePedido(t), true, t);
   for (const t of ["Si te pido 2 combos de 24 mil el envío es gratis ?", "A qué hora es el reparto?", "Gracias", "Montecattini 888"]) assert.equal(pideCambioDePedido(t), false, t);
 });
+
+import { asienteAlCierre, confirmaPedido } from "./whatsapp-interactivo";
+test("26/11 Bety: «Ok» a «¿Lo dejamos confirmado? [Botones…]» confirma el pedido", () => {
+  const prev = "Gracias, Oliva Beatriz. Mañana viernes desde las 16 te llevamos el Trío y lo pagás al recibir: $27.000 con envío. ¿Lo dejamos confirmado? [Botones: Sí, confirmalo · Tengo una duda]";
+  assert.equal(asienteAlCierre("Ok", prev), true);
+  assert.equal(confirmaPedido("Sí, confirmalo"), true);
+  assert.equal(asienteAlCierre("Ok gracias", prev), false);
+});

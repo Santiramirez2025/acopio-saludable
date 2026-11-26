@@ -587,6 +587,7 @@ export function confirmaPedido(texto: string): boolean {
   // 22/11 (Beatriz, Carlos Paz): tocó «Sí, separalo» del recordatorio con la dirección dada y el «al recibir» ofrecido,
   // no contaba como confirmación y la IA contestó «quedó separado… te lo llevamos el lunes» sin crear el pedido.
   if (/^(si|sii+|dale|ok|listo|bueno)?[,.! ]*(si[,! ]*)?(separal[oa]|separamel[oa]|separalos|reservalo|reservamelo|reservala|guardamelo|guardamela)( nomas| porfa| por favor| dale)?[.! ]*$/.test(t)) return true;
+  if (/^(si|sii+|dale|ok)?[,.! ]*(confirmalo|confirmamelo|confirmala)[.! ]*$/.test(t)) return true;
   return /^(si|sii+|dale|ok|okey|listo|perfecto|genial|joya|bueno)?[,.! ]*(si[,! ]*)?(dejalo|dejenlo|dejamelo|dejen|deja)( todo)? listo[.! ]*$|^(si|sii+)[,.! ]*(dale|listo|perfecto|genial|joya|confirmo|confirmado)?[.! ]*$|^(confirmo|confirmado|lo confirmo)[.! ]*$|^(si|sii+|dale|ok|listo)?[,.! ]*(dejalo|dejamelo|dejenlo)( asi| confirmado)?[.! ]*$/.test(t);
 }
 
@@ -597,14 +598,16 @@ export function confirmaPedido(texto: string): boolean {
  */
 export function asienteAlCierre(texto: string, previoAcopio: string): boolean {
   if (texto.includes("?")) return false;
-  const prev = limpio(previoAcopio);
+  // 26/11 (Bety, «Oliva Beatriz»): «…¿Lo dejamos confirmado? [Botones: Sí, confirmalo · Tengo una duda]» + «Ok» → el
+  // bot contestó «¡De nada!» y el pedido no se creó: los botones guardados al final tapaban el «?».
+  const prev = limpio(previoAcopio.replace(/\s*\[Bot[oó]n(es)?:[^\]]*\]\s*$/i, "").replace(/\s*OPCIONES:.*$/i, ""));
   // 23/11 (Ricardo, Bialet, AS-173): ya había dado dirección y horario; le dijimos «Te lo llevamos mañana martes en el
   // reparto de las 16 y lo pagás cuando te llega. ¿Te queda bien que el cadete te escriba cuando esté cerca?» y contestó
   // «Si por supuesto». No era la pregunta «¿Te lo dejo listo?», pero el mensaje ya cerraba la entrega con pago al recibir:
   // el bot volvió a preguntar «¿Te lo dejo listo?» y el pedido lo tuvo que crear Nico a mano. Vale como cierre un mensaje
   // nuestro que promete la entrega («te lo llevamos», «te llevamos») con pago al recibir y termina en pregunta.
   const cierraEntrega = /\bte (lo |la |los |las )?llevamos\b/.test(prev) && aceptamosAlRecibir(previoAcopio) && /\?\s*$/.test(prev) && !/\b(agregar|sumar|sumarle|algo mas|otra cosa|cambiar|duda|otro producto|otro combo)\b/.test(prev.slice(prev.lastIndexOf(".") + 1));
-  if (!cierraEntrega && !/\b(te (lo|la|los|las) dejo listos?|lo dejamos listo|lo dejo listo|te (lo|la|los|las) separo|lo dejamos separado)\b/.test(prev)) return false;
+  if (!cierraEntrega && !/\b(te (lo|la|los|las) dejo listos?|lo dejamos listo|lo dejo listo|te (lo|la|los|las) separo|lo dejamos separado|lo dejamos confirmado|lo dejo confirmado|lo confirmamos)\b/.test(prev)) return false;
   const s = limpio(texto)
     .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{1F3FB}-\u{1F3FF}\u200d]/gu, " ")
     .replace(/[,.!;:]+/g, " ")
