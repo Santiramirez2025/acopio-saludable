@@ -369,7 +369,7 @@ export async function cambiarEstadoPedido(fd: FormData) {
   const estado = String(fd.get("estado")) as EstadoPedido;
   // 26/11 (Santiago): la hoja del repartidor vuelve a la hoja, no a la ficha del pedido.
   const alReparto = fd.get("volver") === "reparto";
-  let destino = alReparto ? `/admin/reparto?ok=entregado-${id}` : `/admin/pedidos/${id}?ok=1`;
+  let destino = alReparto ? `/admin/reparto?ok=${estado === "CANCELADO" ? "cancelado" : "entregado"}-${id}` : `/admin/pedidos/${id}?ok=1`;
   try {
     await aplicarEstadoPedido(id, estado, {
       nota: textoONull(fd, "nota")?.slice(0, 300) ?? null,

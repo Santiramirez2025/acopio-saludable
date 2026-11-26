@@ -65,7 +65,7 @@ export default async function Reparto({ searchParams }: { searchParams: Promise<
   const lista = paradas.filter((p) => !filtro || diaDe(p.notas.horario) === filtro || diaDe(p.notas.horario) === "");
   const porCobrar = lista.filter((p) => !p.o.pagadoAt).reduce((s, p) => s + Number(p.o.total), 0);
   const boton = "flex min-h-12 items-center justify-center rounded-xl px-3 py-2 text-center text-sm font-semibold";
-  const okTexto = ok?.startsWith("cinco") ? "Le avisamos que estás a 5 minutos 🚗" : ok?.startsWith("entregado") ? "Marcado como entregado ✅" : ok?.startsWith("msj") ? "Mensaje enviado ✅" : null;
+  const okTexto = ok?.startsWith("cinco") ? "Le avisamos que estás a 5 minutos 🚗" : ok?.startsWith("entregado") ? "Marcado como entregado ✅" : ok?.startsWith("msj") ? "Mensaje enviado ✅" : ok?.startsWith("cancelado") ? "Pedido cancelado (sin avisarle al cliente)" : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -94,6 +94,7 @@ export default async function Reparto({ searchParams }: { searchParams: Promise<
         {lista.map(({ o, notas }, i) => {
           const tel = telefonoWa(o.telefono);
           const mapa = linkMapa(o.calle, o.ciudad, o.provincia, o.cp, o.ubicacion);
+          const comoLlegar = mapa ?? (o.calle && !/a confirmar/i.test(o.calle) ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${o.calle}, ${o.ciudad}, Córdoba`)}` : null);
           const dir = mapa ? direccionCompleta(o.calle, o.ciudad, o.provincia, o.cp) : "";
           const pagado = !!o.pagadoAt;
           const dia = diaDe(notas.horario);
@@ -106,7 +107,14 @@ export default async function Reparto({ searchParams }: { searchParams: Promise<
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Parada {i + 1} · <Link href={`/admin/pedidos/${o.id}`} className="underline">{numeroPedido(o.id)}</Link>{dia && <span className="ml-1 chip bg-sol-claro text-acopio-900">{dia}</span>}</p>
                   <p className="text-lg font-bold">{o.nombre}</p>
-                  {mapa ? <a href={mapa} target="_blank" rel="noopener noreferrer" className="text-sm text-acopio-700 underline">{dir}</a> : <p className="text-sm font-semibold text-red-700">Falta la dirección</p>}
+                  {mapa ? (
+                    <a href={mapa} target="_blank" rel="noopener noreferrer" className="text-sm text-acopio-700 underline">{dir}</a>
+                  ) : o.calle && !/a confirmar/i.test(o.calle) ? (
+                    // Barrios sin números («Av. Eva Perón, casa azul», «Chaco y Garibaldi»): igual se muestra y se busca en el mapa.
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${o.calle}, ${o.ciudad}, Córdoba`)}`} target="_blank" rel="noopener noreferrer" className="text-sm text-acopio-700 underline">{o.calle}</a>
+                  ) : (
+                    <p className="text-sm font-semibold text-red-700">Falta la dirección</p>
+                  )}
                 </div>
                 <div className={`shrink-0 rounded-xl px-3 py-2 text-right ${pagado ? "bg-acopio-100 text-acopio-800" : esperaTransferencia ? "bg-amber-100 text-amber-900" : "bg-sol text-acopio-900"}`}>
                   <p className="text-[11px] font-semibold uppercase">{pagado ? "Ya pagó" : esperaTransferencia ? "Transferencia" : "Cobrar"}</p>
@@ -124,7 +132,7 @@ export default async function Reparto({ searchParams }: { searchParams: Promise<
               {avisos.map((e) => <p key={e.id} className="rounded-lg bg-amber-50 px-3 py-1.5 text-sm text-amber-900">⚠️ {e.nota}</p>)}
 
               <div className="grid grid-cols-2 gap-2">
-                {mapa && <a href={mapa} target="_blank" rel="noopener noreferrer" className={`${boton} bg-acopio-700 text-white`}>📍 Cómo llegar</a>}
+                {comoLlegar && <a href={comoLlegar} target="_blank" rel="noopener noreferrer" className={`${boton} bg-acopio-700 text-white`}>📍 Cómo llegar</a>}
                 {tel && (
                   <form action={avisarCincoMinutos} className="contents">
                     <input type="hidden" name="id" value={o.id} />
@@ -151,6 +159,16 @@ export default async function Reparto({ searchParams }: { searchParams: Promise<
                 </details>
               )}
 
+              <details className="text-right">
+                <summary className="cursor-pointer text-xs text-stone-500 underline">No va más</summary>
+                <form action={cambiarEstadoPedido} className="mt-2">
+                  <input type="hidden" name="id" value={o.id} />
+                  <input type="hidden" name="estado" value="CANCELADO" />
+                  <input type="hidden" name="silencioso" value="1" />
+                  <input type="hidden" name="volver" value="reparto" />
+                  <button className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700">Cancelar {numeroPedido(o.id)} (sin avisarle al cliente)</button>
+                </form>
+              </details>
               <form action={cambiarEstadoPedido}>
                 <input type="hidden" name="id" value={o.id} />
                 <input type="hidden" name="estado" value="ENTREGADO" />
