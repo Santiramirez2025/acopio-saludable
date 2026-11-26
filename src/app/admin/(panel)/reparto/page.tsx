@@ -33,9 +33,10 @@ export default async function Reparto({ searchParams }: { searchParams: Promise<
     where: {
       envioOrigen: "propia",
       OR: [
-        { estado: { in: ["PAGADO", "EN_COMPRA", "PREPARADO", "ENVIADO"] } },
+        // Lo viejo (pedidos de octubre que quedaron «Enviado» sin cerrar, transferencias que nunca llegaron) no va a la calle.
+        { estado: { in: ["PAGADO", "EN_COMPRA", "PREPARADO", "ENVIADO"] }, createdAt: { gte: hace10 } },
         { estado: "PENDIENTE_PAGO", medioPago: "AL_RECIBIR", createdAt: { gte: hace10 } },
-        { estado: "PENDIENTE_PAGO", medioPago: "TRANSFERENCIA", createdAt: { gte: hace10 } },
+        { estado: "PENDIENTE_PAGO", medioPago: "TRANSFERENCIA", createdAt: { gte: new Date(Date.now() - 4 * 86_400_000) } },
       ],
     },
     include: { items: { orderBy: { id: "asc" } }, eventos: { orderBy: { fecha: "desc" }, take: 6 } },

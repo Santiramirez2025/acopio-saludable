@@ -23,7 +23,7 @@ export default async function Hoy() {
     prisma.order.findMany({ where: { createdAt: { gte: desde }, estado: { not: "CANCELADO" } }, select: { total: true } }),
     prisma.order.findMany({ where: { createdAt: { gte: ayer, lt: desde }, estado: { not: "CANCELADO" } }, select: { total: true } }),
     prisma.order.findMany({
-      where: { envioOrigen: "propia", OR: [{ estado: { in: ["PAGADO", "EN_COMPRA", "PREPARADO", "ENVIADO"] } }, { estado: "PENDIENTE_PAGO", medioPago: "AL_RECIBIR", createdAt: { gte: hace10 } }] },
+      where: { envioOrigen: "propia", OR: [{ estado: { in: ["PAGADO", "EN_COMPRA", "PREPARADO", "ENVIADO"] }, createdAt: { gte: hace10 } }, { estado: "PENDIENTE_PAGO", medioPago: "AL_RECIBIR", createdAt: { gte: hace10 } }] },
       select: { total: true, pagadoAt: true },
     }),
     prisma.orderEvent.findMany({ where: { estado: "ENTREGADO", fecha: { gte: desde } }, select: { order: { select: { total: true } } } }),
