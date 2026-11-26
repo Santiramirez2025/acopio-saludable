@@ -514,7 +514,14 @@ export async function atender(e: Entrada): Promise<void> {
 
   // «Pago aquí» con el pedido armado: se cierra al recibir, sin preguntar zona (pagar al recibir
   // es solo en Carlos Paz y alrededores). Si en el mismo mensaje viene la dirección, queda anotada.
-  const guardado = canal === "whatsapp" ? await pedidoGuardado(e.clave) : null;
+  let guardado = canal === "whatsapp" ? await pedidoGuardado(e.clave) : null;
+  // 26/11 (Bety, Comuna San Roque): pidió el Trío del anuncio, dio la dirección y tocó «Sí, dejalo listo» dos veces, pero
+  // nunca había tocado «Lo quiero» y no había carrito guardado: el pedido no se creó y el bot siguió preguntando.
+  // Si la charla es del Trío y no hay nada guardado, lo que confirma es el Trío.
+  if (canal === "whatsapp" && !guardado && texto.length <= 60 && (confirmaPedido(texto) || pagaAlRecibir(texto) || /^\s*(ok|okey|dale|bueno|si|sí)\b/i.test(texto))) {
+    const h = await historialDe(e.clave, 12);
+    if (hablaDelTrio(h.map((x) => x.texto))) guardado = `/carrito?p=c-${TRIO_SLUG}*1`;
+  }
   // Solo si el último envío que le dijimos no es de otra zona (Córdoba capital, correo): ahí lo ve el vendedor.
   const ultimoEnvio = [...(await historialDe(e.clave, 9))].reverse().find((h) => h.de === "acopio" && /Envío a [^:]+:/.test(h.texto))?.texto.match(/Envío a ([^:]+):/)?.[1];
   // 14/11 (Graciela, San Antonio): el bot le ofreció pagar al recibir, ella eligió «Pago en efectivo al recibir»
