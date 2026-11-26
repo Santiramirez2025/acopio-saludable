@@ -34,6 +34,9 @@ export async function candidatosGrafica(): Promise<Candidato[]> {
       AND NOT EXISTS (SELECT 1 FROM "Order" o WHERE right(regexp_replace(o."telefono", '[^0-9]', '', 'g'), 10) = right(c."telefono", 10)
                         AND o."estado" <> 'CANCELADO' AND (o."createdAt" > now() - interval '10 days' OR o."estado" <> 'ENTREGADO'))
       AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" n WHERE n."telefono" = c."telefono" AND n."id" LIKE 'promo-no.%')
+      -- 26/11 (Lily dijo «Lo quiero» al Desayuno 30 días y le llegó el kit de alfajores): con carrito guardado le toca
+      -- el recordatorio de SU pedido, no una promo de otra cosa.
+      AND (c."pedido" IS NULL OR c."pedido" NOT LIKE '/carrito%')
       -- Esta gráfica, una vez por semana.
       AND NOT EXISTS (SELECT 1 FROM "WhatsappMensaje" g WHERE g."telefono" = c."telefono" AND g."id" LIKE 'graf.%' AND g."fecha" > now() - interval '7 days')
       -- Si una persona del equipo ya le hizo el seguimiento (escribió después del último mensaje del cliente), no va otro.

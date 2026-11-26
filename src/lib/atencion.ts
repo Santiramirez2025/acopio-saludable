@@ -1024,7 +1024,7 @@ export async function pensar(c: {
   // Beba, Cris), y si ya dijo de dónde es, no se le vuelve a preguntar.
   const cierraCharla = /\b(chau|por ahora no|m[aá]s adelante|despu[eé]s (te|le) (escribo|aviso|llamo)|te aviso|le aviso|te escribo|ya no me interesa|no me interesa|no[\s.,!]+gracias|otra oportunidad|otro momento|por ahora nada|ahora no|solo los? agend[eé]|despu[eé]s me comunico|consulto y (te )?contesto|cuando vaya|otro d[ií]a|lo pienso|lo charlo|le pregunto|te confirmo|prefiero (pasar|ir|comprar|retirar)|pas(o|ar) (a buscar|por)|ir a comprar|me gusta ir|(que|cuando) cobre|dame unos d[ií]as)\b/i.test(c.texto)
     // 23/11: Monica («prefiero pasar a buscar yo») recibió dos veces la despedida del bot + «¿Me pasás calle y número…?». Si la respuesta ya es una despedida, no se le cuelga la pregunta.
-    || /\b(cuando (quieras|quieran|necesites|puedas|llegues|lo combines)|si m[aá]s adelante|gracias por (escribir|la charla)|no pasa nada|que tengas? (una )?(linda|buena)|buen viaje|buenas noches)\b/i.test(respuesta.texto ?? "")
+    || /\b(cuando (quieras|quieran|necesites|puedas|llegues|lo combines)|si m[aá]s adelante|gracias por (escribir|la charla)|no pasa nada|que tengas? (una )?(linda|buena)|que disfrutes|gracias por (la|tu) compra|buen viaje|buenas noches)\b/i.test(respuesta.texto ?? "")
     // 25/11 noche: Romina («Gracias a vos!!! Saludos!!») y Roberto («Te llamo cuando esté en Carlos Paz») recibieron la despedida + la pregunta de cierre pegada.
     || /\b(te llamo|los? llamo|saludos|gracias a (vos|ustedes)|ya (lo )?combino|te aviso|les aviso|vemos (el|y)|hasta (luego|ma[ñn]ana|pronto))\b/i.test(c.texto);
   const yaDijoLugar = [...c.historial.filter((h) => h.de === "yo").map((h) => h.texto), c.texto].some((t) => zonaDeLugar(t, null) !== null);
@@ -1050,7 +1050,8 @@ export async function pensar(c: {
   if (!respuesta.envio && envio) respuesta = { ...respuesta, envio };
   const pedido = await pedidoDe(lineas, envio);
   // Imágenes en el momento justo (duda, combo nombrado, producto cotizado, pedido agendado), sin saturar.
-  if (c.canal === "whatsapp" && !web && !derivar && !respuesta.fotos?.length && !listaDeProductos(c.texto).length && estadoOrden !== "ENTREGADO" && estadoOrden !== "ENVIADO") {
+  // 26/11 (María Ilda: «soy jubilada con la mínima», se despedía y le llegó la Alacena de $41.000): a quien se despide, ninguna foto.
+  if (c.canal === "whatsapp" && !web && !derivar && !cierraCharla && !respuesta.fotos?.length && !listaDeProductos(c.texto).length && estadoOrden !== "ENTREGADO" && estadoOrden !== "ENVIADO") {
     const combos = [
       ...(respuesta.acciones ?? []).filter((a) => a.clase === "combo").map((a) => a.id),
       ...(respuesta.fichas ?? []).map((f) => f.href.match(/^\/combos\/(.+)$/)?.[1]).filter((x): x is string => Boolean(x)),
