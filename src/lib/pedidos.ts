@@ -503,3 +503,35 @@ export async function compraPorProveedor(items: Parameters<typeof listaDeCompra>
     return { proveedor: PROVEEDORES[id], renglones: suyos, total: redondear2(suyos.reduce((s, r) => s + r.total, 0)) };
   }).filter((g) => g.renglones.length);
 }
+
+/**
+ * 26/11 (María Ilda, AS-180): dijo «Te confirmo 2 tríos, uno para mí y otro para mi hijo», el bot contestó «Quedan 2 Tríos,
+ * total $51.000» y el pedido siguió con uno: se le entregó uno solo. Lo que el cliente suma con el pedido ya tomado
+ * (y todavía sin salir) entra al MISMO pedido: mismos ítems, total nuevo, sin envío extra (va en el mismo viaje).
+ * Devuelve el total nuevo, o null si no se pudo (el pedido salió, se canceló o no hay nada que sumar).
+ */
+export async function sumarAOrden(orderId: number, lineas: { tipo: "producto" | "combo"; id: string; cantidad: number }[]): Promise<{ total: number; agregado: string } | null> {
+  const o = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
+  if (!o || !["PENDIENTE_PAGO", "PAGADO"].includes(o.estado)) return null;
+  const cfg = await leerConfig();
+  const [cot, renglones] = await Promise.all([cotizarCarrito(lineas), expandirCarrito(lineas, cfg)]);
+  if (!renglones.length || !cot.subtotal) return null;
+  const parte = totales(cot.subtotal, 0, o.medioPago, cfg, 0, true, cot.subtotalTransferible);
+  const subtotal = redondear2(Number(o.subtotal) + cot.subtotal);
+  const descuento = redondear2(Number(o.descuento) + parte.descuento);
+  const total = redondear2(Number(o.total) + parte.total);
+  const costo = redondear2(Number(o.costoProductos) + renglones.reduce((s, r) => s + r.costoUnitario * r.cantidad, 0));
+  const agregado = cot.lineas.map((l) => `${l.cantidad > 1 ? `${l.cantidad} × ` : ""}${l.nombre}`).join(", ");
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      subtotal, descuento, total, costoProductos: costo,
+      notas: [o.notas, `Sumó por WhatsApp: ${agregado}`].filter(Boolean).join(" · ").slice(0, 500),
+      items: { create: renglones.map(aItemDePedido) },
+      eventos: { create: { estado: o.estado, nota: `Sumó por WhatsApp: ${agregado} (+${pesos(parte.total)}). Total nuevo ${pesos(total)}` } },
+    },
+  });
+  const { avisarSantiago } = await import("./avisos");
+  await avisarSantiago(`Pedido ${numeroPedido(orderId)} cambió`, `✏️ ${numeroPedido(orderId)} (${o.nombre}): sumó ${agregado}. Total nuevo ${pesos(total)}.`, { mail: false }).catch(() => false);
+  return { total, agregado };
+}

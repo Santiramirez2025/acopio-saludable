@@ -52,3 +52,13 @@ export function envioCotizadoEnCharla(historial: { de: "yo" | "acopio"; texto: s
   }
   return null;
 }
+
+/**
+ * ¿Pide cambiar lo que lleva un pedido ya tomado? «Te confirmo 2 tríos», «sumame un kilo de nuez», «agregá la miel»,
+ * «en vez de pasas, avena». Una pregunta («¿si te pido 2 el envío es gratis?») no es un cambio.
+ */
+export function pideCambioDePedido(texto: string): boolean {
+  const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  if (t.includes("?") || /\bsi te pido\b/.test(t)) return false;
+  return /\b(\d|dos|tres|cuatro|otro|otra|uno mas|una mas)\b.{0,25}\b(trios?|combos?|kilos?|kg|bolsas?|paquetes?|alacenas?|despensas?|kits?)\b|\b(sumame|agregame|agrega|suma|poneme|quiero tambien|tambien quiero|en vez de|cambiame|sacame|saca (el|la|los|las)|mejor que sean)\b/.test(t);
+}

@@ -19,9 +19,9 @@ import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsa
 import { TRIO_SLUG, hablaDelTrio, instruccionTrioSinStock } from "./trio-sin-stock";
 import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, asienteAlCierre, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, soloDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
-import { clienteNombraFueraDeZona, envioCotizadoEnCharla, lugarDelHistorial, sumarLineas } from "./pedido-charla";
+import { clienteNombraFueraDeZona, envioCotizadoEnCharla, lugarDelHistorial, pideCambioDePedido, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
-import { completarEntrega, crearPedidoWhatsapp, numeroPedido } from "./pedidos";
+import { completarEntrega, crearPedidoWhatsapp, numeroPedido, sumarAOrden } from "./pedidos";
 import { dioPorCerrada } from "./whatsapp-recordatorio";
 import { AVISOS_WHATSAPP, avisarSantiago } from "./avisos";
 import { fotosOportunas } from "./galeria";
@@ -238,7 +238,9 @@ async function cerrarVenta(
     return;
   }
   const total = pesos(Number(pedido.total));
-  const envioTxt = envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "más $3.000 de envío si es en Carlos Paz (si es en otra localidad, te confirmo el costo)";
+  // 26/11 (María Ilda, Nancy, Sandra…): «$27.000 con envío sin cargo» con los $3.000 adentro. Manda lo que cobró el pedido.
+  const envioPedido = Number(pedido.envioCobrado);
+  const envioTxt = envioPedido > 0 ? `con ${pesos(envioPedido)} de envío incluidos` : envio?.costo === 0 ? "con envío sin cargo" : envio?.costo ? "con el envío incluido" : "más $3.000 de envío si es en Carlos Paz (si es en otra localidad, te confirmo el costo)";
   // 18/11: a Cris (Av. Cárcano, Carlos Paz) le llegó «$22.000 más el envío, que te confirmo» después de que el bot le dijo «sin cargo».
   // 17/11 (Santiago): dos precios según CUÁNDO paga. Al recibir, el de lista; pagando antes por transferencia, con descuento.
   // 21/11 (Santiago): «no cobramos más 22mil de ninguna manera». El Trío no tiene precio por transferencia: solo lleva descuento el resto.
@@ -1051,7 +1053,22 @@ export async function pensar(c: {
   // Lo nuevo se suma a lo que ya tenía guardado (a Julieta el mix cervecero le borró el resto del pedido);
   // solo se arma de nuevo si el vendedor dijo que quitó o cambió algo.
   const previas = c.pedidoGuardado ? lineasDeCamino(c.pedidoGuardado) : [];
-  const nuevas = respuesta.acciones?.length ? lineasDeAcciones(respuesta.acciones) : [];
+  let nuevas = respuesta.acciones?.length ? lineasDeAcciones(respuesta.acciones) : [];
+  // 26/11 (María Ilda, AS-180: «te confirmo 2 tríos» → «Quedan 2 Tríos, $51.000» y se entregó uno): con el pedido ya
+  // tomado y sin salir, lo que suma va al MISMO pedido. Antes armaba un carrito aparte y el pedido quedaba igual.
+  if (ordenId && nuevas.length && (estadoOrden === "PENDIENTE_PAGO" || estadoOrden === "PAGADO") && c.canal === "whatsapp") {
+    const sumado = await sumarAOrden(ordenId, nuevas).catch((e) => { console.error("sumar al pedido", e); return null; });
+    if (sumado) {
+      nuevas = [];
+      respuesta = { ...respuesta, acciones: [], reemplazaPedido: false };
+    }
+  } else if (ordenId && estadoOrden === "PENDIENTE_PAGO" && !nuevas.length && pideCambioDePedido(c.texto)) {
+    // Pidió cambiar el pedido y el vendedor no lo sumó con la herramienta: que no se pierda. Queda escrito en el
+    // pedido y le llega el aviso a Santiago para revisarlo antes del reparto.
+    await prisma.orderEvent.create({ data: { orderId: ordenId, estado: "PENDIENTE_PAGO", nota: `⚠️ CAMBIO A REVISAR: «${c.texto.slice(0, 200)}»` } }).catch(() => null);
+    const { avisarSantiago } = await import("./avisos");
+    await avisarSantiago(`Cambio en AS-${String(ordenId).padStart(5, "0")}`, `⚠️ AS-${String(ordenId).padStart(5, "0")}: el cliente pidió un cambio y no quedó cargado: «${c.texto.slice(0, 200)}». Revisalo antes del reparto.`, { mail: false }).catch(() => false);
+  }
   const lineas = nuevas.length ? (respuesta.reemplazaPedido ? nuevas : sumarLineas(previas, nuevas)) : respuesta.envio && previas.length ? previas : [];
   // Si ya dijo de dónde es, el envío sale solo: no se le vuelve a preguntar la ciudad.
   const lugarSabido = respuesta.envio ? null : lugarDelHistorial(c.historial);
@@ -1106,6 +1123,22 @@ export async function pensar(c: {
   if (salientes.length > 1) {
     const sinRepetir = salientes.filter((s) => !repetido(s));
     if (sinRepetir.length) salientes = sinRepetir;
+  }
+  // 26/11 (auditoría: 40 de 281 charlas recibieron la MISMA foto o video dos o tres veces; a Nancy, el Trío 3 veces):
+  // venga del vendedor, de la promo o de las oportunas, una imagen que ya salió en la charla no se manda de nuevo.
+  const nombreMedia = (t: string) => t.replace(/^\[(Foto|Video)\]\s*/, "").split(/ · |: /)[0].trim().slice(0, 40).toLowerCase();
+  const mediaYa = new Set(c.historial.filter((h) => h.de === "acopio" && /^\[(Foto|Video)\]/.test(h.texto)).map((h) => nombreMedia(h.texto)));
+  salientes = salientes.filter((s) => {
+    const t = textoParaPanel(s);
+    if (!/^\[(Foto|Video)\]/.test(t)) return true;
+    const n = nombreMedia(t);
+    if (mediaYa.has(n)) return false;
+    mediaYa.add(n);
+    return true;
+  });
+  // Con la dirección ya en el pedido, nunca se vuelve a pedir (17 charlas la recibieron dos veces; a Clau, con el pedido cargado).
+  if (tieneCalle) {
+    salientes = salientes.map((s) => (s.tipo === "texto" && /calle y n[uú]mero/i.test(s.texto) ? { ...s, texto: s.texto.replace(/\s*¿[^?]*calle y n[uú]mero[^?]*\?/gi, "").trim() } : s)).filter((s) => s.tipo !== "texto" || s.texto.length > 0);
   }
   return { salientes, respuesta, derivar, conIA: Boolean(r) && !primeraLista, guardarPedido: pedido?.camino, aPersona: Boolean(r?.entregaGuardada) };
 }

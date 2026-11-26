@@ -110,3 +110,9 @@ test("26/11 Roberto: «Te llamo cuando esté en Carlos Paz» es esperar, no insi
   for (const t of ["Te llamo cuando esté en Carlos paz", "Te aviso cuando si voy a la tarde", "Te confirmo el finde", "Después decido"]) assert.equal(_posterga(t), true, t);
   for (const t of ["Lo quiero", "Hola, quiero el Trío con las 3 recetas", "Sí, dejalo listo", "quiero el trio para la semana que viene"]) assert.equal(_posterga(t), false, t);
 });
+
+import { pideCambioDePedido } from "./pedido-charla";
+test("26/11 María Ilda: «Te confirmo 2 trios» con el pedido tomado es un cambio que no se puede perder", () => {
+  for (const t of ["Te confirmo 2 trios, uno para mí ,otro para mí hijo.En el mismo domicilio.", "sumame un kilo de nuez", "agregá la miel", "en vez de pasas, avena"]) assert.equal(pideCambioDePedido(t), true, t);
+  for (const t of ["Si te pido 2 combos de 24 mil el envío es gratis ?", "A qué hora es el reparto?", "Gracias", "Montecattini 888"]) assert.equal(pideCambioDePedido(t), false, t);
+});

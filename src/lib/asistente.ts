@@ -33,7 +33,7 @@ const REGLAS: [Intencion, RegExp][] = [
  * y derivar ahí deja la venta tirada.
  */
 export function pidePersona(texto: string): boolean {
-  return /\b(humano|una persona|persona real|un asesor|una asesora|hablar con|atencion personalizada|llamame|me llaman|me podes llamar|quiero que me llamen)\b/.test(normalizar(texto));
+  return /\b(humano|una persona|persona real|persona de verdad|una maquina|un robot|no (quiero|me gusta) (hablar|que me conteste) con (un|una) (bot|robot|maquina)|no i ?a\b|un asesor|una asesora|hablar con|atencion personalizada|llamame|me llaman|me podes llamar|quiero que me llamen)\b/.test(normalizar(texto));
 }
 
 /**
