@@ -30,6 +30,7 @@ import { cortada, fichasNombradas, presentacionDe, separarOpciones, listaDeProdu
 import { pctTransferenciaCombo } from "./precio-fijo";
 import { totalTransferencia, argumentoCombo, COMBOS_ENTRADA, temaDe } from "./combos-tema";
 import { RECETAS } from "./recetas";
+import { TRIO_SLUG, hablaDelTrio, instruccionTrioSinStock } from "./trio-sin-stock";
 import type { Accion, Enlace, EnvioCotizado, Ficha, Foto, Respuesta } from "./asistente-catalogo";
 import { urlSitio } from "./sitio";
 
@@ -400,7 +401,13 @@ export async function correrHerramienta(nombre: string, entrada: Record<string, 
   if (nombre === "recomendar_combo") {
     const busca = String(entrada.busca ?? "");
     const cfg = await leerConfig();
-    const todos = (await combosTienda({ activo: true, tipo: "COMBO" })).filter((c) => c.disponible);
+    const activos = await combosTienda({ activo: true, tipo: "COMBO" });
+    const todos = activos.filter((c) => c.disponible);
+    // 26/11: piden el Trío y hoy no hay dátiles → sin foto de otro combo (salía la Alacena) y sin prometer día.
+    const trio = activos.find((c) => c.slug === TRIO_SLUG);
+    if (hablaDelTrio([busca]) && !todos.some((c) => c.slug === TRIO_SLUG)) {
+      return { texto: instruccionTrioSinStock(pesos(Math.round(trio?.precio ?? 24000))) };
+    }
     const tema = temaDe(busca);
     const porTema = tema ? tema.slugs.map((s) => todos.find((c) => c.slug === s)).filter((c): c is (typeof todos)[number] => Boolean(c)) : [];
     const porItems = porTema.length ? [] : (await hallarCombos(busca)).slice(0, 2);
