@@ -16,6 +16,7 @@ import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
+import { TRIO_SLUG, hablaDelTrio, instruccionTrioSinStock } from "./trio-sin-stock";
 import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, asienteAlCierre, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, soloDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { clienteNombraFueraDeZona, envioCotizadoEnCharla, lugarDelHistorial, sumarLineas } from "./pedido-charla";
@@ -910,7 +911,12 @@ export async function pensar(c: {
     promo && promoVigente(promo) && !promoYaDicha
       ? `<promo_semana>PROMO DE LA SEMANA (el foco de ventas, hasta ${promo.hasta}): ${promo.titulo}. ${promo.contexto} Nombrala UNA vez en esta charla, con las palabras «promo de la semana», cuando venga al caso: al pasar precios, si pregunta qué hay o qué conviene, o al cerrar un pedido como agregado opcional («¿Te sumo la promo de la semana?»). Sin insistir: si no le interesa, no se vuelve a nombrar.</promo_semana>\n`
       : "";
-  const crudo = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${cerrado}${promoTxt}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId, subtotalPedido }) : null);
+  // 26/11 (Laura, P1): sin dátiles, el Trío no se promete con día (ver trio-sin-stock.ts).
+  const trioSinStock = !web && hablaDelTrio([c.texto, textoAnuncio, ...c.historial.slice(-6).map((h) => h.texto)])
+    ? await combosTienda({ slug: TRIO_SLUG }).then((x) => (x[0] && !x[0].disponible ? x[0] : null)).catch(() => null)
+    : null;
+  const stockTxt = trioSinStock ? `<stock>${instruccionTrioSinStock(pesos(Math.round(trioSinStock.precio)))}</stock>\n` : "";
+  const crudo = web ?? (primeraLista ? { texto: primeraLista, opciones: OPCIONES_ZONA_PRIMERA_LISTA } : null) ?? (vendedorActivo() ? await responderComoVendedor(`${c.negocio}${cliente}${anuncio}${stockTxt}${cerrado}${promoTxt}${eligio}${c.texto}`, c.historial, null, "whatsapp", { ordenId, subtotalPedido }) : null);
   // Con calle y número ya dados (o un «Envío a X:» ya cotizado) no se repregunta la ciudad (Carlos Taborda, Martha Penfold, 12/11).
   const r = crudo ? sinRepreguntarCiudad(crudo, c.historial, c.texto) : null;
 
