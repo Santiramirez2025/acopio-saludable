@@ -104,3 +104,9 @@ test("fotos: si pide ver qué otro combo hay, van hasta 3 kits juntos con el pre
   assert.match(f[0].url, /combo-despensa-4-kilos/);
   assert.ok(f.every((x) => /\{combo:/.test(x.pie) && !/trio-de-frutos/.test(x.url)));
 });
+
+import { postergaCompra as _posterga } from "./whatsapp-interactivo";
+test("26/11 Roberto: «Te llamo cuando esté en Carlos Paz» es esperar, no insistir", () => {
+  for (const t of ["Te llamo cuando esté en Carlos paz", "Te aviso cuando si voy a la tarde", "Te confirmo el finde", "Después decido"]) assert.equal(_posterga(t), true, t);
+  for (const t of ["Lo quiero", "Hola, quiero el Trío con las 3 recetas", "Sí, dejalo listo", "quiero el trio para la semana que viene"]) assert.equal(_posterga(t), false, t);
+});

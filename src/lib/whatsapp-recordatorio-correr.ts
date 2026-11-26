@@ -100,11 +100,20 @@ export async function pendientes(): Promise<Pendiente[]> {
         SELECT 1 FROM "WhatsappMensaje" h
         WHERE h."telefono" = u."telefono" AND h."de" = 'persona' AND h."fecha" > now() - interval '24 hours'
       )
-      -- Máximo un automático sin respuesta por charla (a Azu le llegaban bienvenida + duda + reactivación seguidos).
+      -- Máximo un automático sin respuesta por charla (a Azu le llegaban bienvenida + duda + reactivación seguidos;
+      -- 26/11 a Roberto: gráfica de las 11:20 y este recordatorio a las 14:23, después de «Te llamo cuando esté»).
       AND NOT EXISTS (
         SELECT 1 FROM "WhatsappMensaje" a
         WHERE a."telefono" = u."telefono" AND a."fecha" > u.cliente
-          AND (a."id" LIKE 'react.%' OR a."id" LIKE 'seg.%' OR a."id" LIKE 'recompra.%')
+          AND (a."id" LIKE 'react.%' OR a."id" LIKE 'seg.%' OR a."id" LIKE 'recompra.%' OR a."id" LIKE 'graf.%'
+               OR a."id" LIKE 'promo.%' OR a."id" LIKE 'regalo.%' OR a."id" LIKE 'viaje.%')
+      )
+      -- Un solo automático por día por persona, venga de donde venga.
+      AND NOT EXISTS (
+        SELECT 1 FROM "WhatsappMensaje" d
+        WHERE d."telefono" = u."telefono" AND d."fecha" > now() - interval '20 hours'
+          AND (d."id" LIKE 'react.%' OR d."id" LIKE 'seg.%' OR d."id" LIKE 'recompra.%' OR d."id" LIKE 'graf.%'
+               OR d."id" LIKE 'promo.%' OR d."id" LIKE 'regalo.%' OR d."id" LIKE 'viaje.%' OR d."id" LIKE 'rec.%')
       )
     ORDER BY u.cliente DESC
     LIMIT ${RECORDATORIO.porCorrida}

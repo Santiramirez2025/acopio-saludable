@@ -9,7 +9,7 @@
 // y el seguimiento de carritos no le escriben a quien ya recibió esta gráfica después de su último mensaje.
 
 import { prisma } from "./prisma";
-import { primerNombre } from "./whatsapp-interactivo";
+import { postergaCompra, primerNombre } from "./whatsapp-interactivo";
 import { enviarSaliente } from "./whatsapp-cloud";
 import { leerPromo, promoVigente } from "./promo-semanal";
 import { imagenCombo } from "./galeria";
@@ -25,7 +25,7 @@ export async function candidatosGrafica(): Promise<Candidato[]> {
   const filas = await prisma.$queryRaw<Candidato[]>`
     SELECT c."telefono", c."nombre",
            -- Todo lo que dijo en los últimos 3 días: «Yo no pedí nada» seguido de «Ok, gracias» sigue siendo un no (Nilda).
-           (SELECT string_agg(m."texto", ' | ') FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente' AND m."fecha" > now() - interval '3 days') AS "ultimo"
+           (SELECT string_agg(m."texto", ' | ' ORDER BY m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente' AND m."fecha" > now() - interval '3 days') AS "ultimo"
     FROM "WhatsappConversacion" c
     WHERE c."baja" = false AND c."prospecto" IS NULL AND c."telefono" ~ '^[0-9]+$' AND c."estado" <> 'persona'
       AND (SELECT max(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente')
@@ -41,7 +41,8 @@ export async function candidatosGrafica(): Promise<Candidato[]> {
                         AND h."fecha" > (SELECT max(m."fecha") FROM "WhatsappMensaje" m WHERE m."telefono" = c."telefono" AND m."de" = 'cliente'))
     ORDER BY c."ultimoMensaje" DESC
     LIMIT ${TOPE}`;
-  return filas.filter((f: Candidato) => !NO_QUIERE.test(f.ultimo ?? ""));
+  // 26/11 (Roberto): «Te llamo cuando esté en Carlos Paz», «lo veo con mi esposo»: avisa él, no se le manda nada.
+  return filas.filter((f: Candidato) => !NO_QUIERE.test(f.ultimo ?? "") && !postergaCompra((f.ultimo ?? "").split(" | ").pop() ?? ""));
 }
 
 export async function piezaDelDia(): Promise<{ url: string; texto: (nombre: string) => string; nombre: string } | null> {

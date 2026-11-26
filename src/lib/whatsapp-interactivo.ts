@@ -324,6 +324,8 @@ export function postergaCompra(texto: string): boolean {
   const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   if (t.length > 160) return false;
   if (/\b(lo quiero|la quiero|quiero (el|la|los|las|uno|una)|separamel|dejamel|agregal|anotal|mandamel|como (pago|hago)|pasame (el|los) (alias|cbu|link))\b/.test(t)) return false;
+  // 26/11 (Roberto: «Te llamo cuando esté en Carlos Paz» y le llegaron 3 mensajes más): avisa él, no se le insiste.
+  if (/\bte (llamo|llamamos)\b|\bte (aviso|escribo|confirmo|digo)( \w+)? cuando\b|\bcuando (este|llegue|vaya|venga|vuelva|cobre|pase|tenga|sepa)\b|\b(despues|luego) (decido|veo|te digo)\b|\bte confirmo (el|la|mas|despues|cuando)\b|\b(el finde|la semana que viene|la proxima semana|el mes que viene)\b/.test(t)) return true;
   return /\b(lo|la|los|las) (veo|miro|reviso|pienso|charlo|hablo|consulto)\b|\bveo tra?n?quil|\b(miro|reviso|veo) (con calma|tranquil|bien)|\b(lo|la) voy a (pensar|ver|mirar|consultar)|\bvoy a (pensar|ver|mirar)lo\b|\b(despues|luego|mas tarde|manana|en un rato|en otro momento|la semana que viene|cuando (cobre|pueda|vuelva))\b.*\b(te )?(escribo|aviso|confirmo|hablo|encargo|pido)|\bte (escribo|aviso|confirmo|hablo) (despues|luego|mas tarde|manana|en un rato|para encargar)|\bte escribo para (encargar|pedir)|\b(cualquier cosa|si me decido) te (escribo|aviso)|\b(pregunto|consulto|averiguo|veo|lo hablo|lo charlo) y te (digo|aviso|confirmo|escribo|cuento)/.test(t);
 }
 
