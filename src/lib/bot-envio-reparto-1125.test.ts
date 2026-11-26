@@ -43,7 +43,9 @@ test("el reparto es de lunes a sábado, nunca «todos los días»", () => {
 });
 
 test("si quiere retirar, se ofrece la YPF del centro (después del envío)", () => {
-  assert.match(prompt, /Si igual quiere retirarlo[^.]*YPF del centro/);
-  assert.match(prompt, /Si insiste en buscarlo, ofrecé el punto de encuentro en la YPF/);
-  assert.match(prompt, /Primero siempre el envío a su casa/);
+  // 26/11 (Teresita): quien dice que lo retira recibe las dos opciones juntas, nunca «no damos dirección».
+  assert.match(prompt, /Si quiere retirarlo, pasar a buscarlo[^»]*YPF del centro/);
+  assert.match(prompt, /Si dice que quiere retirarlo o pasar a buscarlo, ofrecé YA las dos opciones/);
+  assert.match(prompt, /Si solo pregunta dónde estamos, sin decir que quiere ir, primero el envío a su casa/);
+  assert.match(prompt, /NUNCA lo digas como negativa/);
 });

@@ -204,6 +204,19 @@ const KITS_PARA_MOSTRAR: [string, string][] = [
 const nombreDePie = (pie: string) => pie.split(/ · |: /)[0].trim().slice(0, 40).toLowerCase();
 /** El video real de los dátiles (el de la ficha de la web), sin sonido, para quien pidió el Trío. */
 export const VIDEO_DATILES_TRIO = { url: "/video/productos/lg-datil-mudo.mp4", pie: "Así son los dátiles del Trío: carnosos y con carozo · recién fraccionados" };
+// 26/11 (Laura, por el Cerrador): el video de los dátiles salía en cualquier respuesta después de la foto del Trío
+// (Ester: «le voy a mandar la dirección a mi hija»; Teresita: «pasame dirección, lo paso a retirar»; Erica, Adriana,
+// Sara, Ale). Va solo si habla del Trío o de los dátiles, o si contesta corto la ciudad/barrio (la charla del anuncio);
+// nunca cuando está en otra cosa: dirección, retiro, pago, otra persona, otro producto.
+const TEMA_DATILES = /\b(d[aá]til\w*|tr[ií]o|qu[eé] (trae|viene|tiene|lleva)|c[oó]mo (son|es|vienen)|calidad|fresc[oa]s?|fotos?|video|verl[oa]s?)\b/i;
+const OTRA_COSA = /direcci[oó]n|retir|buscar|paso a|pasar por|ubicaci[oó]n|local|transf|alias|cbu|cvu|pag(o|ar|as|ás)\b|efectivo|hij[oa]|mam[aá]|marido|espos[oa]|semana pasada|ya (te |les )?compr|precio de|cu[aá]nto (sale|cuesta|est[aá]) (el|la|los|las) (?!tr[ií]o|d[aá]til)/i;
+export function videoDatilesVieneAlCaso(entrante: string): boolean {
+  const t = entrante.trim();
+  if (!t || OTRA_COSA.test(t)) return false;
+  if (TEMA_DATILES.test(t)) return true;
+  return t.split(/\s+/).length <= 4 && !/\d/.test(t);
+}
+
 const NO_QUIERE = /no (me sirve|gracias|quiero|me interesa)|muy caro|lo compro (ac[aá]|en otro)|despu[eé]s (te )?aviso|m[aá]s adelante/i;
 const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen local|d[oó]nde est[aá]n|ver antes|c[oó]mo (llega|viene)|empaque|calidad|fresc/i;
 
@@ -314,7 +327,7 @@ function fotosOportunasSinTope(a: { entrante: string; respuesta: string; combos?
   // Va en la respuesta siguiente a la foto del Trío (nunca foto + video juntos), una vez por charla, y no si dijo que no.
   const vioElTrio = nuestros.some((t) => /^\[Foto\] Tr[ií]o de frutos secos/i.test(t));
   const yaDatiles = nuestros.some((t) => t.startsWith(`[Video] ${VIDEO_DATILES_TRIO.pie.split(" · ")[0]}`));
-  if (vioElTrio && !yaDatiles && !fotos.length && !NO_QUIERE.test(a.entrante)) return [VIDEO_DATILES_TRIO];
+  if (vioElTrio && !yaDatiles && !fotos.length && !NO_QUIERE.test(a.entrante) && videoDatilesVieneAlCaso(a.entrante)) return [VIDEO_DATILES_TRIO];
   const videosYa = nuestros.filter((t) => t.startsWith("[Video]"));
   if (videosYa.length >= 2) return fotos;
   // Pidió ver opciones y hay varias gráficas: van las gráficas, sin video en el medio.
