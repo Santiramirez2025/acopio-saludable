@@ -208,8 +208,10 @@ export const VIDEO_DATILES_TRIO = { url: "/video/productos/lg-datil-mudo.mp4", p
 // (Ester: «le voy a mandar la dirección a mi hija»; Teresita: «pasame dirección, lo paso a retirar»; Erica, Adriana,
 // Sara, Ale). Va solo si habla del Trío o de los dátiles, o si contesta corto la ciudad/barrio (la charla del anuncio);
 // nunca cuando está en otra cosa: dirección, retiro, pago, otra persona, otro producto.
+// 26/11 tarde (Nico): «¿De dónde son?» y «¿dónde queda?» son cortas y pasaban como «contesta la ciudad» (Rosa 18:47,
+// Cristina 19:09): cualquier «dónde» es pregunta de dirección/ubicación, no la respuesta del barrio.
 const TEMA_DATILES = /\b(d[aá]til\w*|tr[ií]o|qu[eé] (trae|viene|tiene|lleva)|c[oó]mo (son|es|vienen)|calidad|fresc[oa]s?|fotos?|video|verl[oa]s?)\b/i;
-const OTRA_COSA = /direcci[oó]n|retir|buscar|paso a|pasar por|ubicaci[oó]n|local|transf|alias|cbu|cvu|pag(o|ar|as|ás)\b|efectivo|hij[oa]|mam[aá]|marido|espos[oa]|semana pasada|ya (te |les )?compr|precio de|cu[aá]nto (sale|cuesta|est[aá]) (el|la|los|las) (?!tr[ií]o|d[aá]til)/i;
+const OTRA_COSA = /direcci[oó]n|d[oó]nde\b|retir|buscar|paso a|pasar por|ubicaci[oó]n|local|transf|alias|cbu|cvu|pag(o|ar|as|ás)\b|efectivo|hij[oa]|mam[aá]|marido|espos[oa]|semana pasada|ya (te |les )?compr|precio de|cu[aá]nto (sale|cuesta|est[aá]) (el|la|los|las) (?!tr[ií]o|d[aá]til)/i;
 export function videoDatilesVieneAlCaso(entrante: string): boolean {
   const t = entrante.trim();
   if (!t || OTRA_COSA.test(t)) return false;

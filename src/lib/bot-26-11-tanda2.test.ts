@@ -22,6 +22,7 @@ test("26/11 María Ilda: en la zona «te transfiero» no manda el CVU ni pide pa
 test("26/11 Ester y Teresita: el video de los dátiles solo cuando viene al caso", () => {
   for (const t of ["Le voy a mandar la dirección a mi hija que vive en icho cruz", "Pásame dirección lo paso a retirar …", "Yo me vine la semana pasada", "Te transfiero cuando llegue", "San Martín 100"])
     assert.equal(videoDatilesVieneAlCaso(t), false, t);
+  for (const t of ["De dónde son??", "Hola donde queda??", "dónde están?"]) assert.equal(videoDatilesVieneAlCaso(t), false, t);
   for (const t of ["De Carlos Paz", "Carlos Paz", "¿Cómo son los dátiles?", "qué trae el trío?"]) assert.equal(videoDatilesVieneAlCaso(t), true, t);
   const h = [{ de: "acopio", texto: "[Foto] Trío de frutos secos: mix con cajú, dátiles y pasas · $24.000" }];
   const f = fotosOportunas({ entrante: "Le voy a mandar la dirección a mi hija que vive en icho cruz", respuesta: "Dale.", historial: h as never });
