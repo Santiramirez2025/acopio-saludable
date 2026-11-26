@@ -955,7 +955,19 @@ export function preguntaDondeEstan(texto: string): boolean {
   );
 }
 
-export function textoDondeEstanSinIA(c: { nombre: string | null; sinCargoDesde: number; envioZona?: number; pesos: (n: number) => string }): string {
+/** Quiere ir a buscarlo (no solo saber dónde estamos): se le ofrece la YPF del centro además del envío (26/11, Teresita). */
+export function quiereRetirar(texto: string): boolean {
+  const t = sinTildes(texto);
+  return /\b(retirar|retiro|lo retiro|paso a buscar|voy a buscar|vamos a buscar|ir a buscar|lo busco|voy personalmente|voy yo|vamos nosotros|pasar a buscar|pasamos a buscar|pasa a buscar|para buscarl[oa]|a buscarl[oa]|paso por el (negocio|local)|pasar por el (negocio|local))\b/.test(t);
+}
+
+export function textoDondeEstanSinIA(c: { nombre: string | null; sinCargoDesde: number; envioZona?: number; pesos: (n: number) => string; texto?: string }): string {
+  if (c.texto && quiereRetirar(c.texto)) {
+    return [
+      `¡Hola${c.nombre ? ` ${c.nombre}` : ""}! No tenemos local a la calle: trabajamos online desde Villa Carlos Paz.`,
+      `Te lo llevamos a tu casa${c.envioZona ? ` (envío ${c.pesos(c.envioZona)} en Carlos Paz)` : ""} o, si te queda cómodo pasar por el centro, te lo dejamos en la YPF del centro coordinando día y hora, y lo pagás ahí. ¿Qué te sirve más?`,
+    ].join("\n");
+  }
   return [
     `¡Hola${c.nombre ? ` ${c.nombre}` : ""}! No tenemos local a la calle: trabajamos online desde Villa Carlos Paz y el pedido te lo llevamos nosotros.`,
     `${c.envioZona ? `En Carlos Paz el envío cuesta ${c.pesos(c.envioZona)} y lo pagás al recibir` : `En Carlos Paz va sin cargo desde ${c.pesos(c.sinCargoDesde)}`} (localidades vecinas, con un cargo de envío). ¿Me pasás calle, número y barrio así te lo agendo?`,

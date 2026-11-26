@@ -56,6 +56,7 @@ import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
 import { telefonoFin } from "./telefono";
 import { sinPerfecto } from "./sin-perfecto";
 import { textoSalidaReparto } from "./salida-reparto";
+import { respuestaTransferencia, textoDatosSinApuro, textoTransferirAlRecibir } from "./transferencia-zona";
 
 const SALUD =
   "Entiendo, y qué bueno que te estés cuidando 💚 Sobre salud no te puedo aconsejar, eso lo ve mejor tu médico o nutricionista. " +
@@ -601,10 +602,18 @@ export async function atender(e: Entrada): Promise<void> {
             : sub - base + (precioTransferencia(base, cfg.descuentoTransferenciaPct) ?? base) + Number(orden.envioCobrado);
         const pn = e.nombre ? primerNombre(e.nombre) : null;
         const quien = pn ? `, ${pn}` : "";
-        console.log("chat: va a transferir con pedido hecho, monto y alias directo", cola(e.clave), orden.id);
+        // 26/11 (María Ilda, AS-00180): en la zona y el viaje a Córdoba se paga al recibir; «te transfiero» no es «mandame el CVU ya».
+        const zonaOrden = zonaDeLugar(orden.ciudad ?? "", orden.provincia)?.tipo ?? (hablaDeFueraDeZona(orden.ciudad ?? "") ? "correo" : null);
+        const que = respuestaTransferencia({ zona: zonaOrden, pidioDatos: pideDatosTransferencia(texto, previo) });
+        const nro = numeroPedido(orden.id);
+        console.log("chat: va a transferir con pedido hecho", que, cola(e.clave), orden.id);
         await responder(
           e.clave,
-          `¡Dale${quien}! Son ${pesos(monto)} por transferencia (pedido ${numeroPedido(orden.id)}).\n\n${cfg.transferenciaDatos}\n\nMandame el comprobante por acá y ${hablaDeFueraDeZona(orden.ciudad ?? "") ? "te aviso cuando sale" : textoSalidaReparto(Date.now())} 🙌`,
+          que === "al_recibir"
+            ? textoTransferirAlRecibir({ quien, monto: pesos(monto), pedido: nro })
+            : que === "datos_sin_apuro"
+              ? textoDatosSinApuro({ quien, monto: pesos(monto), pedido: nro, datos: cfg.transferenciaDatos })
+              : `¡Dale${quien}! Son ${pesos(monto)} por transferencia (pedido ${nro}).\n\n${cfg.transferenciaDatos}\n\nMandame el comprobante por acá y ${hablaDeFueraDeZona(orden.ciudad ?? "") ? "te aviso cuando sale" : textoSalidaReparto(Date.now())} 🙌`,
         );
         return;
       }
@@ -980,7 +989,7 @@ export async function pensar(c: {
       const texto = !cfgZona
         ? null
         : preguntaDondeEstan(c.texto)
-          ? textoDondeEstanSinIA({ nombre: primerNombre(c.nombre) || null, sinCargoDesde: cfgZona.compraMinimaPropia, envioZona: envioPropioPara(cfgZona, 1) || undefined, pesos })
+          ? textoDondeEstanSinIA({ nombre: primerNombre(c.nombre) || null, sinCargoDesde: cfgZona.compraMinimaPropia, envioZona: envioPropioPara(cfgZona, 1) || undefined, pesos, texto: c.texto })
           : textoPideDireccionSinIA(primerNombre(c.nombre) || null);
       if (texto && !recientes.includes(texto)) return { salientes: [{ tipo: "texto" as const, texto }], respuesta: { texto }, derivar: true, conIA: false, sinIA: true };
     }
