@@ -81,8 +81,8 @@ test("domingo o pasadas las 15 no sale el video «si pagás antes de las 15, hoy
 test("fotos: cuando el cliente se entusiasma se le muestra un kit que no vio, con el precio en el pie", () => {
   const f = fotosOportunas({ entrante: "Me gustó todooooo", respuesta: "¡Qué bueno, Patricia!", historial: [] as never });
   assert.equal(f.length, 1);
-  assert.match(f[0].url, /combo-alacena-de-frutos-secos/);
-  assert.match(f[0].pie, /\{combo:alacena-de-frutos-secos\}/);
+  assert.match(f[0].url, /combo-trio-de-la-manana/);
+  assert.match(f[0].pie, /\{combo:trio-de-la-manana\}/);
   const p = fotosOportunas({ entrante: "cuánto sale la nuez?", respuesta: "La nuez sale $24.500", historial: [{ de: "acopio", texto: "[Video] Así armamos tu mix de frutos secos" }] as never });
   assert.match(p[0].pie, /Nuez mariposa · \{precio:TG-NUEZ\} el kilo/);
 });

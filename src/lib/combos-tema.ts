@@ -32,7 +32,7 @@ export const TEMAS: Tema[] = [
 export const COMBO_ENTRADA = "despensa-4-kilos";
 /** Si la Despensa no está (sin almendra, 11/11), la red es el Trío del desayuno: 3 kilos a $21.500. En orden de preferencia. */
 // 12/11 (Santiago): el que vende es el 3 kg con mix de frutos secos: va primero.
-export const COMBOS_ENTRADA = ["trio-de-frutos-secos", COMBO_ENTRADA, "trio-del-desayuno"];
+export const COMBOS_ENTRADA = ["trio-de-la-manana", "trio-de-frutos-secos", COMBO_ENTRADA, "trio-del-desayuno"];
 
 const sinTildes = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 

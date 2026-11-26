@@ -7,7 +7,7 @@
 // 14/11: el Kit semanal va primero (Santiago: «se vendería mucho»).
 /** El Kit semanal: el menú de arriba y el atajo del inicio lo enlazan solo si se puede comprar (si no, daba 404). */
 export const KIT_SEMANAL = "kit-semanal";
-export const COMBOS_DE_LA_SEMANA = [KIT_SEMANAL, "trio-de-frutos-secos", "trio-del-desayuno", "pan-dulce-casero"] as const;
+export const COMBOS_DE_LA_SEMANA = [KIT_SEMANAL, "trio-de-la-manana", "trio-de-frutos-secos", "trio-del-desayuno", "pan-dulce-casero"] as const;
 
 /** El mix de la casa (orden de Santiago 4/11) y lo que va si no está. */
 export const DESTACADO_PRODUCTO = "TG-MIXC";

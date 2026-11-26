@@ -19,6 +19,7 @@ const COMBOS: Record<string, string> = {
   "arranque-gym": "combo-arranque-gym",
   "trio-del-desayuno": "combo-trio-del-desayuno",
   "trio-de-frutos-secos": "combo-trio-de-frutos-secos",
+  "trio-de-la-manana": "combo-trio-de-la-manana",
   "pan-dulce-casero": "combo-pan-dulce-casero",
 };
 
@@ -161,10 +162,12 @@ type Turno = { de: "yo" | "acopio"; texto: string };
 export type FotoOportuna = { url: string; pie: string };
 
 const NOMBRES_COMBO: [RegExp, string, string][] = [
+  [/tr[ií]o de la ma[ñn]ana|avena y granola|granola y avena/i, "trio-de-la-manana", "Trío de la mañana: mix con cajú, avena y granola"],
   [/tr[ií]o de frutos|tr[ií]o (con|de) mix|3 ?(kg|kilos) (con|de) (mix|frutos)/i, "trio-de-frutos-secos", "Trío de frutos secos: mix con cajú, dátiles y pasas"],
   [/tr[ií]o del desayuno|tr[ií]o (con|de) semillas/i, "trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas"],
   // 17/11: a Clau, que pedía el Trío del anuncio (frutos secos), le llegó la foto del Trío del desayuno. «Trío» a secas es el del anuncio.
-  [/tr[ií]o/i, "trio-de-frutos-secos", "Trío de frutos secos: mix con cajú, dátiles y pasas"],
+  // 26/11 noche: sin dátiles, «Trío» a secas es el Trío de la mañana (el principal).
+  [/tr[ií]o/i, "trio-de-la-manana", "Trío de la mañana: mix con cajú, avena y granola"],
   [/pan dulce casero|combo pan dulce/i, "pan-dulce-casero", "Pan dulce casero: pasas y dátiles"],
   [/despensa de 4 kilos|despensa grande/i, "despensa-4-kilos", "Despensa de 4 kilos"],
   [/despensa chica/i, "despensa-chica", "Despensa chica de 2 kilos"],
@@ -196,6 +199,7 @@ const TOPE_CHARLA = 8;
 const PIDE_OPCIONES = /otr[oa]s? (combo|kit|promo|opci[oó]n|cosa|producto)|qu[eé] (m[aá]s|otr[oa]s?) (ten[eé]s|tienen|hay|venden|combo|promo)|(m[aá]s|otras) (opciones|promos|combos)|qu[eé] combos|qu[eé] promos|aparte del? /i;
 const ENTUSIASMO = /me gust[oó]|me encant|qu[eé] (rico|lindo|bueno|buena pinta)|quiero todo|todo+ (me gusta|rico|lindo)|espectacular|hermos[oa]|buen[ií]simo|riqu[ií]sim/i;
 const KITS_PARA_MOSTRAR: [string, string][] = [
+  ["trio-de-la-manana", "Trío de la mañana: mix con cajú, avena y granola (3 kg)"],
   ["alacena-de-frutos-secos", "Alacena de frutos secos: nuez, mix con cajú y pasas (3 kg)"],
   ["despensa-4-kilos", "Despensa de 4 kilos: mix, dátiles, pasas y semillas"],
   ["trio-de-frutos-secos", "Trío de frutos secos: mix con cajú, dátiles y pasas"],
