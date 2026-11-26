@@ -229,7 +229,7 @@ export const COMBOS_PROVEEDORES: ComboProveedor[] = [
   // (compra de La Granja del 5/11) y pasan los $20.000 del envío sin cargo. Se quedan aunque vuelva la almendra.
   // 12/11 (Santiago): «lo que funcionó mucho es el 3 kg pero con mix de frutos secos». Los que compraron el Trío
   // pensaban que el mix era de frutos secos: este es ese combo. Escalera: Trío semillas $21.500 → este ~$24.000 → Despensa 4 kg $28.500.
-  { slug: "trio-de-frutos-secos", nombre: "Trío de frutos secos · mix con cajú, dátiles y pasas (3 kg)", descuentoPct: 12.5 /* suelto $27.300; costo $17.619 */, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
+  { slug: "trio-de-frutos-secos", nombre: "Trío de frutos secos · mix con cajú, dátiles y pasas (3 kg)", descuentoPct: -9.9 /* 26/11 noche (Santiago): $30.000 en la web, sin dátiles casi; suelto $27.300. Antes 12.5 → $24.000 */, destacado: true, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "TG-PASAS", cantidad: 1 }] },
   { slug: "trio-con-avena", nombre: "Trío con avena · mix con cajú, dátiles y avena (3 kg)", descuentoPct: 7.3 /* 25/11 Santiago: próximo anuncio. $24.000 en la tienda; suelto $25.900; costo $15.949 (gana $8.051, $1.670 más que el Trío con pasas) */, items: [{ codigo: "TG-MIXCG", cantidad: 1 }, { codigo: "LG-DATIL", cantidad: 1 }, { codigo: "LG-AVENA", cantidad: 1 }] },
   // 26/11 (Santiago): el Trío del próximo anuncio, sin dátiles ni pasas (La Granja sin dátiles). $24.000; suelto $25.920.
   // Costo de lista $16.296 (mix $7.400 + avena $2.380 + granola $6.516); con avena x 30 kg y granola promo 10 x 1 kg ≈ $14.900.

@@ -341,10 +341,22 @@ export async function crearPedidoWhatsapp(a: {
   const envio = zonaPropia ? envioPedidoZonaPropia(cfg, a.envio.lugar, cotizacion.subtotal) : (a.envio.costo ?? 0);
   const propia = zonaPropia || (a.envio.costo !== null && (a.envio.costo === 0 || a.medioPago === "AL_RECIBIR"));
   // El envío propio se cobra tal cual, sin recargo por comisión; y a nosotros nos cuesta $0 (lo llevamos nosotros).
-  const { descuento, envioCobrado, total, comisionPago } = mayoristaPct
+  const calc = mayoristaPct
     ? totales(cotizacion.subtotal, envio, a.medioPago, { ...cfg, descuentoTransferenciaPct: 0 }, mayoristaPct, propia)
     : totales(cotizacion.subtotal, envio, a.medioPago, cfg, 0, propia, cotizacion.subtotalTransferible);
+  const { envioCobrado, comisionPago } = calc;
   const charla = await prisma.$queryRaw<{ anuncioTitulo: string | null; prospecto: string | null }[]>`SELECT "anuncioTitulo", "prospecto" FROM "WhatsappConversacion" WHERE "telefono" = ${a.telefono}`;
+  // 26/11 noche (Santiago: «subilo de precio al Trío a $30.000 en la web»): a quien vino por un anuncio de $24.000 o ya
+  // se le cotizó el Trío a $24.000 en la charla, se le respeta: el pedido sale al precio que se le dijo.
+  const trioLinea = cotizacion.lineas.find((l) => l.tipo === "combo" && l.id === "trio-de-frutos-secos");
+  let respetoTrio = 0;
+  if (trioLinea && trioLinea.precioUnitario > 24000) {
+    const anuncio24 = /24[.,]?000/.test(charla[0]?.anuncioTitulo ?? "");
+    const dicho24 = anuncio24 || (await prisma.whatsappMensaje.count({ where: { telefono: a.telefono, de: { in: ["bot", "persona"] }, fecha: { gte: new Date(Date.now() - 14 * 86_400_000) }, texto: { contains: "24.000" } } }).catch(() => 0)) > 0;
+    if (dicho24) respetoTrio = (trioLinea.precioUnitario - 24000) * trioLinea.cantidad;
+  }
+  const descuento = redondear2(calc.descuento + respetoTrio);
+  const total = redondear2(calc.total - respetoTrio);
   // Si vino de la web con un link con utm (consultorio, alianza) y tocó «Pedir por WhatsApp», el mensaje trae «Vengo de: …».
   const campania = charla[0]?.prospecto || charla[0]?.anuncioTitulo ? null : campaniaEnMensajes(
     (await prisma.whatsappMensaje.findMany({ where: { telefono: a.telefono, de: "cliente", fecha: { gte: new Date(Date.now() - 14 * 86_400_000) }, texto: { contains: MARCA } }, orderBy: { fecha: "desc" }, take: 5, select: { texto: true } }).catch(() => [])).map((m: { texto: string }) => m.texto),
