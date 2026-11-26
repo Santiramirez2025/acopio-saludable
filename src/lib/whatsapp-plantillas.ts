@@ -90,7 +90,7 @@ export const PLANTILLAS: Record<"desayuno" | "kit" | "gastronomia" | "gimnasio" 
       "2) a sus pacientes se lo llevamos a la casa en Villa Carlos Paz y la zona (envío $3.000) y lo pagan al recibir (a Córdoba Capital va en el viaje semanal a Córdoba, con el envío que dé costo_envio y pago al recibir; al resto del país, por correo y pago antes); 3) de todo lo que se compre con su link, el 10% es para el profesional en productos, todos los meses; " +
       "4) si quiere, armamos un mix con su receta y su nombre. Los precios reales salen de buscar_productos; no ofrezcas descuento por transferencia. " +
       "Nunca afirmes propiedades médicas ni «apto diabéticos/celíacos» salvo lo rotulado sin TACC: el criterio nutricional es del profesional. " +
-      "Cuando diga qué productos quiere en el kit, anotalos textual y decile que Martina, del equipo, le manda el link armado por este chat en el día.",
+      "Cuando diga qué productos quiere en el kit, el link lo armás y lo mandás VOS en ese mismo mensaje (25/11, Santiago: «cómo va a cambiar de agente por un link»): buscá los códigos con buscar_productos y escribí https://www.acopiosaludable.com/carrito?p=CODIGO*1,CODIGO*1 (los códigos separados por coma, cada uno con *1), con el detalle y el total de hoy. Nunca digas que Martina, Nico ni nadie del equipo se lo manda después. Si un producto no está, armá el link con los que sí hay y decilo.",
   },
   regalos: {
     // 17/11 (Santiago: «tenemos que ser campeones en mensajes en frío»): 0 respuestas con el pitch largo.
