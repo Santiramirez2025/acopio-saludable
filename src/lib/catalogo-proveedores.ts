@@ -243,7 +243,7 @@ export const COMBOS_PROVEEDORES: ComboProveedor[] = [
   { slug: "alfajorcitos-caseros", nombre: "Kit alfajorcitos caseros", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-TAPITAS-VAI", cantidad: 2 }, { codigo: "LG-TAPITAS-CHOC", cantidad: 1 }, { codigo: "LG-DDL-REPOSTERO", cantidad: 1 }] },
   // 20/11 (Santiago): «tapitas sin TACC Natuzen y dulce de leche Trini sin TACC con stevia… el mejor kit». 2 paquetes de tapitas
   // (200 g c/u) + 1 pote de 400 g: el pote rellena más o menos lo que traen las dos bolsas. Costo $12.294 (web de La Granja 20/11).
-  { slug: "kit-alfajores-sin-tacc", nombre: "Kit alfajores sin TACC · tapitas + dulce de leche con stevia", descuentoPct: 10, destacado: true, items: [{ codigo: "LG-NATUZEN-TAPAS", cantidad: 2 }, { codigo: "LG-DDL-STEVIA", cantidad: 1 }] },
+  { slug: "kit-alfajores-sin-tacc", nombre: "Kit alfajores sin TACC · tapitas + dulce de leche con stevia", descuentoPct: 12.4 /* 25/11: la promo dice $18.700 y la tienda había subido a $19.200 (Lidia y María Ilda vieron los dos precios) */, destacado: true, items: [{ codigo: "LG-NATUZEN-TAPAS", cantidad: 2 }, { codigo: "LG-DDL-STEVIA", cantidad: 1 }] },
   { slug: "merienda-sin-tacc-yuka", nombre: "Merienda sin TACC", descuentoPct: 5, destacado: true, items: [{ codigo: "LG-YUKA-ALF-DDL", cantidad: 1 }, { codigo: "LG-YUKA-ALF-CHOC", cantidad: 1 }, { codigo: "LG-YUKA-GALL-VAI", cantidad: 1 }, { codigo: "LG-DONINAS-COCO", cantidad: 1 }, { codigo: "LG-DONINAS-CHIPS", cantidad: 1 }] },
   // Combo Navidad (opción A de Pablo, 27/10): costo $34.090, se vende a $49.000 (margen 30,4%). La suma suelta da $49.500.
   // 25/11 (Santiago: «armar uno o más kits para Navidad, que le convengan a la gente y ganemos nosotros»). Costos al 25/11:

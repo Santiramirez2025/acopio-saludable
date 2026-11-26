@@ -97,3 +97,10 @@ test("fotos: a quien pidió el Trío, en la respuesta siguiente le va el video m
   const no = fotosOportunas({ entrante: "No me sirve gracias", respuesta: "Dale, gracias.", historial: h as never });
   assert.equal(no.length, 0);
 });
+
+test("fotos: si pide ver qué otro combo hay, van hasta 3 kits juntos con el precio en el pie", () => {
+  const f = fotosOportunas({ entrante: "Ok . Aparte del trío tenés otro combo", respuesta: "Sí, tenemos la Despensa de 4 kilos a $28.000.", historial: [{ de: "acopio", texto: "[Foto] Trío de frutos secos · mix con cajú, dátiles y pasas (3 kg): $ 24.000" }, { de: "acopio", texto: "[Video] Así son los dátiles del Trío: carnosos y con carozo · recién fraccionados" }] as never });
+  assert.equal(f.length, 3);
+  assert.match(f[0].url, /combo-despensa-4-kilos/);
+  assert.ok(f.every((x) => /\{combo:/.test(x.pie) && !/trio-de-frutos/.test(x.url)));
+});

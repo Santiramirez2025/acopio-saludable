@@ -191,6 +191,9 @@ const DERIVADO = /harina|pasta de|con chocolate|aceite|leche de|bebida|crema de/
 // 15/11: Graciela pidió «mandame solo el mix» y le llegó la foto de la nuez que estaba sacando. Si saca algo, sin foto.
 const SACA = /\bsolo\b|sac[aá](me|lo|la)?\b|sin (la|el|los|las)\b|no quiero|sacamos/i;
 const esDerivado = (a: { entrante: string; respuesta: string }) => DERIVADO.test(a.entrante) || SACA.test(a.entrante) || /por encargo|sacamos/i.test(a.respuesta);
+/** Hasta cuántas imágenes automáticas por charla (era 4; Santiago 25/11: «todo entra por la vista»). */
+const TOPE_CHARLA = 8;
+const PIDE_OPCIONES = /otr[oa]s? (combo|kit|promo|opci[oó]n|cosa|producto)|qu[eé] (m[aá]s|otr[oa]s?) (ten[eé]s|tienen|hay|venden|combo|promo)|(m[aá]s|otras) (opciones|promos|combos)|qu[eé] combos|qu[eé] promos|aparte del? /i;
 const ENTUSIASMO = /me gust[oó]|me encant|qu[eé] (rico|lindo|bueno|buena pinta)|quiero todo|todo+ (me gusta|rico|lindo)|espectacular|hermos[oa]|buen[ií]simo|riqu[ií]sim/i;
 const KITS_PARA_MOSTRAR: [string, string][] = [
   ["alacena-de-frutos-secos", "Alacena de frutos secos: nuez, mix con cajú y pasas (3 kg)"],
@@ -211,7 +214,7 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
   const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
   const yaMandadas = nuestros.filter((t) => t.startsWith("[Foto]"));
   // 12/11 (Santiago): «todas las ventas con imágenes, entra por los ojos». Hasta 4 fotos por charla, nunca repetida.
-  if (yaMandadas.length >= 4) return [];
+  if (yaMandadas.length >= TOPE_CHARLA) return [];
   const yaSalio = (pie: string) => yaMandadas.some((t) => t.toLowerCase().includes(nombreDePie(pie)));
   const candidata = (archivo: string, pie: string): FotoOportuna | null => (yaSalio(pie) ? null : { url: url(archivo), pie });
   const real = REALES[0];
@@ -225,6 +228,17 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
   if (/agendad|queda confirmad|tu pedido es el/i.test(a.respuesta)) {
     const f = candidata(real.archivo, real.pie);
     return f ? [f] : [];
+  }
+  // 3a. 25/11 (María Ilda: «Aparte del trío tenés otro combo» → le fue un párrafo y una sola foto). Pide ver opciones:
+  // van las gráficas de los kits que el vendedor nombró y, si faltan, los que más salen. El precio, en el pie.
+  if (PIDE_OPCIONES.test(a.entrante)) {
+    const nombrados = NOMBRES_COMBO.filter(([re]) => re.test(a.respuesta)).map(([, slug, nombre]) => [slug, nombre] as [string, string]);
+    const vistos = new Set<string>();
+    const kits = [...nombrados, ...KITS_PARA_MOSTRAR, ["pan-dulce-casero", "Pan dulce casero: pasas y dátiles"] as [string, string]]
+      .filter(([slug]) => COMBOS[slug] && !vistos.has(slug) && vistos.add(slug))
+      .map(([slug, nombre]) => candidata(COMBOS[slug], `${nombre} · {combo:${slug}}`))
+      .filter((f): f is FotoOportuna => f !== null);
+    if (kits.length) return kits.slice(0, 3);
   }
   // 3. Un combo que la persona nombró o eligió (no uno que el vendedor ofreció por su cuenta).
   const hablaDeCombos = /combo|despensa|alacena|kit|bolsa|caja|mesa|regalo|recomend|conviene|aconsej/i.test(a.entrante);
@@ -283,13 +297,14 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
   // Reglas: una imagen por respuesta (nunca foto + video juntos), nunca la misma imagen dos veces en la charla,
   // un solo video por charla y como mucho 4 imágenes en toda la charla (si pide más, va por ver_fotos).
   const nuestras = a.historial.filter((t) => t.de === "acopio" && /^\[(Foto|Video)\]/.test(t.texto)).map((t) => t.texto);
-  if (nuestras.length >= 4) return [];
+  if (nuestras.length >= TOPE_CHARLA) return [];
   const yaVideo = nuestras.some((t) => t.startsWith("[Video]"));
   // «Trío de frutos secos · mix…» y «Trío de frutos secos: mix…» son la misma foto: se compara el nombre (hasta «·» o «:»).
   const yaSalio = (f: FotoOportuna) => nuestras.some((t) => t.toLowerCase().includes(nombreDePie(f.pie)));
   return fotosOportunasSinTope(a)
     .filter((f) => !yaSalio(f) && !(yaVideo && /\.mp4$/i.test(f.url)))
-    .slice(0, 1);
+    // 25/11 (Santiago, por María Ilda: «más imágenes, no tanto texto»): si pide ver qué más hay, van hasta 3 kits juntos.
+    .slice(0, PIDE_OPCIONES.test(a.entrante) ? Math.min(3, TOPE_CHARLA - nuestras.length) : 1);
 }
 
 function fotosOportunasSinTope(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number }): FotoOportuna[] {
@@ -302,6 +317,8 @@ function fotosOportunasSinTope(a: { entrante: string; respuesta: string; combos?
   if (vioElTrio && !yaDatiles && !fotos.length && !NO_QUIERE.test(a.entrante)) return [VIDEO_DATILES_TRIO];
   const videosYa = nuestros.filter((t) => t.startsWith("[Video]"));
   if (videosYa.length >= 2) return fotos;
+  // Pidió ver opciones y hay varias gráficas: van las gráficas, sin video en el medio.
+  if (fotos.length > 1) return fotos;
   const conPrecio = /\$\s?\d/.test(a.respuesta);
   for (const [re, archivo, pie] of VIDEOS) {
     const yaSalio = videosYa.some((t) => t.includes(pie.split(" · ")[0].slice(0, 30)));

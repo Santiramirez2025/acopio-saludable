@@ -1070,7 +1070,8 @@ export async function pensar(c: {
     }
     // La gráfica de la promo va la vez que el vendedor la nombra (una sola vez por charla), en lugar de otra foto.
     if (promo && promoVigente(promo) && !promoYaDicha && /promo de la semana/i.test(respuesta.texto) && promo.imagen) {
-      respuesta = { ...respuesta, fotos: [{ url: promo.imagen, pie: `Promo de la semana · ${promo.titulo}` }] };
+      // 25/11: la promo va primero y no pisa las demás gráficas (si pidió ver qué más hay, van juntas; como mucho 3).
+      respuesta = { ...respuesta, fotos: [{ url: promo.imagen, pie: `Promo de la semana · ${promo.titulo}` }, ...(respuesta.fotos ?? []).filter((f) => !/\.mp4$/i.test(f.url))].slice(0, 3) };
     }
   }
   // A una duda de confianza se le contesta la duda: sin el resumen ni los botones de pago en ese mensaje

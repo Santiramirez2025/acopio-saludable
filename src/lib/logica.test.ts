@@ -1164,8 +1164,8 @@ test("imágenes oportunas: en el momento justo y sin repetir", () => {
   // 12/11: el video de venta sale una sola vez por tema
   const conVideo = [{ de: "acopio" as const, texto: "[Video] Así armamos tu mix de frutos secos, a mano y el mismo día · Mix clásico con cajú $12.500 el kilo" }];
   assert.ok(!fotosOportunas({ entrante: "y la nuez?", respuesta: "La nuez sale $20.500", historial: conVideo }).some((f) => f.url.endsWith(".mp4")));
-  // Tope de 4 por charla (12/11: «todas las ventas con imágenes»)
-  const tres = ["a", "b", "c", "d"].map((x) => ({ de: "acopio" as const, texto: `[Foto] ${x}` }));
+  // Tope de 8 por charla (25/11: «más imágenes, no tanto texto»; antes 4)
+  const tres = ["a", "b", "c", "d", "e", "f", "g", "h"].map((x) => ({ de: "acopio" as const, texto: `[Foto] ${x}` }));
   assert.equal(fotosOportunas({ entrante: "¿es confiable?", respuesta: "sí", historial: tres }).length, 0);
   // Charla común sin disparador → nada
   assert.equal(fotosOportunas({ entrante: "hola", respuesta: "¡Hola! ¿Qué estás buscando?", historial: vacio }).length, 0);
