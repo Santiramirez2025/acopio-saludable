@@ -21,6 +21,7 @@ import { urlSitio } from "@/lib/sitio";
 import { leerConfig } from "@/lib/config";
 import { argumentoCombo } from "@/lib/combos-tema";
 import { montoSinSigno } from "@/lib/monto-sin-signo";
+import { decidirLoPidio, detalleLoPidio, hashTelefono, LO_PIDIO_TOPE_24H, motivoLoPidio } from "@/lib/lo-pidio";
 
 // Solo a los agentes (curl con la clave): en el panel una persona escribe el texto tal cual.
 function frenoMonto(req: Request, texto: string) {
@@ -44,8 +45,20 @@ async function frenoSeguidos(req: Request, telefono: string, texto: string, forz
   if (forzar && /perd[oó]n|disculp/i.test(texto)) return null;
   // 24/11: Eduardo le pidió al cadete en la puerta «mandame la lista de precios». Lo que el cliente pidió en persona o
   // por otro canal no es un seguimiento: sale con el encabezado x-lo-pidio: "<quién y dónde lo pidió>" (10 letras o más).
-  if ((req.headers.get("x-lo-pidio") ?? "").trim().length >= 10) return null;
+  // 26/11 (Rodri): una vez por teléfono cada 24 h y con registro del motivo (ver lib/lo-pidio).
+  const motivo = motivoLoPidio(req.headers.get("x-lo-pidio"));
   const { prisma } = await import("@/lib/prisma");
+  if (motivo) {
+    const h = hashTelefono(telefono);
+    const usos = await prisma.$queryRaw<{ n: bigint }[]>`
+      SELECT count(*) AS n FROM "CronCorrida"
+      WHERE "nombre" = 'lo-pidio' AND "detalle" LIKE ${h + "·%"} AND "fecha" > now() - interval '24 hours'
+    `.catch(() => [{ n: BigInt(LO_PIDIO_TOPE_24H) }]);
+    const error = decidirLoPidio(Number(usos[0]?.n ?? 0));
+    if (error) return NextResponse.json({ error }, { status: 409 });
+    await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES ('lo-pidio', true, ${detalleLoPidio(telefono, motivo)})`.catch(() => undefined);
+    return null;
+  }
   // Cuántos textos nuestros (sin contar fotos ni videos) hay desde el último mensaje del cliente, en las últimas 24 h.
   // Uno (la respuesta del bot) deja lugar a UN seguimiento de una persona; dos o más, se espera a que conteste.
   const filas = await prisma.$queryRaw<{ n: bigint }[]>`
