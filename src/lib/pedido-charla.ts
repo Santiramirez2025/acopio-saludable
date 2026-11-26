@@ -31,8 +31,20 @@ export function lugarDelHistorial(historial: { de: "yo" | "acopio"; texto: strin
  * y una dirección como «Av. Colón 1234, Córdoba» no la detecta lugarDelHistorial (solo mira el botón y «Envío a X:»).
  * Si el mismo mensaje nombra un lugar de la zona propia, vale ese. Puro.
  */
+/**
+ * 26/11 (Myriam: «La Antartida 598 esq San Luis»; Su: «entre San Luis y Mendoza»): en Carlos Paz muchas calles se llaman
+ * como provincias o ciudades. «esq. San Luis», «entre X y Y», «calle Mendoza» o «Córdoba 450» son calles, no lugares:
+ * se sacan antes de buscar si nombra algo fuera de la zona. «Av. Colón 1234, Córdoba» sigue diciendo Córdoba.
+ */
+export function sinCallesConNombreDeLugar(t: string): string {
+  return t
+    .replace(/\b(entre)\s+[a-záéíóúñ.]+(?:\s+[a-záéíóúñ.]+){0,2}\s+y\s+[a-záéíóúñ.]+(?:\s+[a-záéíóúñ.]+){0,2}/gi, " ")
+    .replace(/\b(esq\.?|esquina|calle|av\.?|avda\.?|avenida|pasaje|pje\.?|bv\.?|bulevar|boulevard)\s+[a-záéíóúñ.]+(?:\s+(?!y\b)[a-záéíóúñ.]+){0,2}/gi, " ")
+    .replace(/\b[a-záéíóúñ]{3,}(?:\s+[a-záéíóúñ]{3,})?\s+\d{1,5}\b/gi, " ");
+}
+
 export function clienteNombraFueraDeZona(historial: { de: "yo" | "acopio"; texto: string }[], textoActual = ""): boolean {
-  const delCliente = [...historial.filter((h) => h.de === "yo").map((h) => h.texto), textoActual].filter(Boolean);
+  const delCliente = [...historial.filter((h) => h.de === "yo").map((h) => h.texto), textoActual].filter(Boolean).map(sinCallesConNombreDeLugar);
   return delCliente.some((t) => {
     const z = zonaDeLugar(t, null);
     return z ? z.tipo !== "propia" : hablaDeFueraDeZona(t);

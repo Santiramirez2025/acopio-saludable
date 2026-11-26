@@ -124,3 +124,11 @@ test("26/11 Bety: «Ok» a «¿Lo dejamos confirmado? [Botones…]» confirma el
   assert.equal(confirmaPedido("Sí, confirmalo"), true);
   assert.equal(asienteAlCierre("Ok gracias", prev), false);
 });
+
+import { clienteNombraFueraDeZona as _fuera } from "./pedido-charla";
+test("26/11 Myriam y Su: calles con nombre de provincia no sacan de la zona", () => {
+  assert.equal(_fuera([], "La Antartida 598 esq San Luis . Podra ser tipo 17.30 ?"), false);
+  assert.equal(_fuera([], "La Antártida 610 (entre San Luis y Mendoza), B° Malvinas"), false);
+  assert.equal(_fuera([], "Av. Colón 1234, Córdoba"), true);
+  assert.equal(_fuera([], "Soy de Mendoza"), true);
+});
