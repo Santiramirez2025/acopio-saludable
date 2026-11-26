@@ -332,6 +332,12 @@ function fotosOportunasSinTope(a: { entrante: string; respuesta: string; combos?
   if (videosYa.length >= 2) return fotos;
   // Pidió ver opciones y hay varias gráficas: van las gráficas, sin video en el medio.
   if (fotos.length > 1) return fotos;
+  // 26/11 (Santiago: «vende más con imágenes»): la primera respuesta de la charla nunca va sola. Noemí («¿dónde es la
+  // entrega?») y Mabel («¿están en Córdoba?») recibieron solo texto. Si nada más pidió foto, va la de cómo llega el pedido.
+  if (!fotos.length && !nuestros.some((t) => /^\[(Foto|Video)\]/.test(t)) && !NO_QUIERE.test(a.entrante) && /entrega|env[ií]o|d[oó]nde (est|son|qued|entreg)|est[aá]n en|llevan|reparto|retir|de d[oó]nde/i.test(a.entrante)) {
+    const real = REALES[0];
+    return [{ url: url(real.archivo), pie: real.pie }];
+  }
   const conPrecio = /\$\s?\d/.test(a.respuesta);
   for (const [re, archivo, pie] of VIDEOS) {
     const yaSalio = videosYa.some((t) => t.includes(pie.split(" · ")[0].slice(0, 30)));
