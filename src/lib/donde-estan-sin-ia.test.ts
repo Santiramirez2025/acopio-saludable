@@ -17,7 +17,8 @@ test("las charlas reales del 14/11 que preguntan dónde estamos", () => {
 
 test("sin IA, dónde estamos: sin local, sin dirección, pide calle y número", () => {
   const t = textoDondeEstanSinIA({ nombre: "Carlos", sinCargoDesde: 20000, pesos });
-  assert.match(t, /^¡Hola Carlos! No tenemos local a la calle/);
+  assert.match(t, /^¡Hola Carlos! Somos de Villa Carlos Paz y el reparto lo hacemos nosotros/);
+  assert.doesNotMatch(t, /no tenemos local|trabajamos online/i);
   assert.match(t, /sin cargo desde \$20\.000/);
   assert.match(t, /calle, número y barrio/);
   assert.doesNotMatch(t, /perfecto|al recibir|antes de pagar|Santiago/i);
@@ -90,4 +91,18 @@ test("22/11: pedir NUESTRA dirección no es dar un domicilio (AS-162)", async ()
 test("el mensaje del anuncio no es un domicilio (AS-169, 23/11)", () => {
   assert.equal(tieneDireccion("Hola, quiero el Trío con las 3 recetas"), false);
   assert.equal(tieneDireccion("Morandini 271 Dpto 3"), true);
+});
+
+test("27/11: «¿de dónde son?» se contesta con hechos, no con «no tenemos local»", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("./vendedor.ts", import.meta.url), "utf8");
+  const local = src.split("\n").find((l) => l.includes("LOCAL (Santiago, 19/11)")) ?? "";
+  assert.match(local, /NO arranques por «no tenemos local»/);
+  assert.match(local, /«Somos de Villa Carlos Paz y el reparto lo hacemos nosotros, de lunes a sábado desde las 16/);
+  assert.match(local, /YPF del centro/);
+  assert.doesNotMatch(src, /«Todavía no tenemos local, el reparto/);
+  assert.doesNotMatch(src, /trabajamos online desde Villa Carlos Paz, sin local a la calle/);
+  const retira = textoDondeEstanSinIA({ nombre: "Ana", sinCargoDesde: 0, envioZona: 3000, pesos, texto: "Me pasás la dirección que paso a buscarlo" });
+  assert.match(retira, /^¡Hola Ana! Somos de Villa Carlos Paz/);
+  assert.match(retira, /YPF del centro/);
 });
