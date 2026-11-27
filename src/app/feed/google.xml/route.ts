@@ -8,6 +8,7 @@ import { SITIO, urlSitio } from "@/lib/sitio";
 import { descripcionFeed, tituloLimpio } from "@/lib/producto-ld";
 import { PRODUCTOS_PROVEEDORES } from "@/lib/catalogo-proveedores";
 import { fotoFeed } from "@/lib/foto-feed";
+import { comboConFaltante, nombreFaltaHoy } from "@/lib/faltante-web";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,8 @@ export async function GET() {
   const cfg = await leerConfig();
   const base = urlSitio();
   const filas = await prisma.product.findMany({ where: { AND: [wherePublicado(cfg.margenMinimoPct), { fotoUrl: { not: null } }, { categoria: { not: "Congelados" } }] }, orderBy: { codigo: "asc" } });
-  const items = filas.filter((f) => !NO_ENVIAR.test(`${f.producto} ${f.presentacion}`)).flatMap((f) => {
+  // Lo que falta hoy (stock-dia.ts) no se manda: Google pide que el feed coincida con lo que se puede comprar.
+  const items = filas.filter((f) => !NO_ENVIAR.test(`${f.producto} ${f.presentacion}`) && !nombreFaltaHoy(f.producto)).flatMap((f) => {
     const p = aTienda(f, cfg);
     const img = fotoFeed(p.codigo, p.fotoUrl, f.fotos ?? []);
     if (!img) return [];
@@ -35,7 +37,7 @@ export async function GET() {
   });
   // Los combos también van: Despensa 4 kg es lo más vendido. Se marcan como paquete armado por nosotros (is_bundle).
   const combos = (await combosTienda({ tipo: "COMBO", activo: true }))
-    .filter((c) => c.disponible && c.fotoUrl && !c.items.some((i) => NO_ENVIAR.test(`${i.producto.producto} ${i.producto.presentacion}`)))
+    .filter((c) => c.disponible && c.fotoUrl && !comboConFaltante(c) && !c.items.some((i) => NO_ENVIAR.test(`${i.producto.producto} ${i.producto.presentacion}`)))
     .map((c) => {
       const foto = c.fotoUrl!.startsWith("/") ? `${base}${c.fotoUrl}` : c.fotoUrl!;
       const peso = medida(pesoCombo(c.items), "g");

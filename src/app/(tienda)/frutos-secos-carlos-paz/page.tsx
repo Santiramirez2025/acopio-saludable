@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda } from "@/lib/tienda";
+import { comboConFaltante, nombreFaltaHoy } from "@/lib/faltante-web";
 import { pesos } from "@/lib/precios";
 import { textoEntregaZona, textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { textoComoPagar } from "@/lib/como-pagar";
@@ -22,11 +23,13 @@ export const dynamic = "force-dynamic";
 
 export default async function FrutosSecosCarlosPaz() {
   const cfg = await leerConfig();
-  const [productos, combos] = await Promise.all([
+  const [todosProductos, combos] = await Promise.all([
     productosTienda({ where: { categoria: CATEGORIA }, orderBy: [{ gancho: "desc" }, { vendidos: "desc" }, { producto: "asc" }], take: 16 }),
     combosTienda({ tipo: "COMBO", activo: true }),
   ]);
-  const conFrutos = combos.filter((c) => c.disponible && c.items.some((i) => i.producto.categoria === CATEGORIA)).slice(0, 4);
+  // Lo que falta hoy (stock-dia.ts) no se ofrece en la página de entrada desde Google.
+  const productos = todosProductos.filter((p) => !nombreFaltaHoy(p.producto));
+  const conFrutos = combos.filter((c) => c.disponible && !comboConFaltante(c) && c.items.some((i) => i.producto.categoria === CATEGORIA)).slice(0, 4);
   const minimo = pesos(umbralZona(cfg));
   const sinMinimo = zonaSinMinimo(cfg);
 
