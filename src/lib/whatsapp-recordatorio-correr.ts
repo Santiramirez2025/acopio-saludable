@@ -5,6 +5,7 @@ import { AVISOS_WHATSAPP } from "./avisos";
 import { enHorario, tocaRecordatorio, planRecordatorio, RECORDATORIO, type CarritoCotizado, type OfertaConcreta } from "./whatsapp-recordatorio";
 import { cotizarCarrito } from "./tienda";
 import { leerPedido } from "./pedido-enlace";
+import { reemplazarCombos } from "./trio-sin-stock";
 
 /** El combo que se propone a quien no armó nada (lo que más se vende para casa). */
 export const OFERTA_RECORDATORIO = "alacena-de-frutos-secos";
@@ -18,7 +19,7 @@ function resumir(partes: string[]): string | undefined {
 /** Cotiza con el precio real de hoy; si algo falla, el recordatorio sale igual con el texto de siempre. */
 async function cotizar(camino: string): Promise<CarritoCotizado | null> {
   try {
-    const cot = await cotizarCarrito(leerPedido(camino.replace(/^\/carrito\?p=/, "")));
+    const cot = await cotizarCarrito(leerPedido(reemplazarCombos(camino).replace(/^\/carrito\?p=/, "")));
     if (!cot.subtotal) return null;
     const resumen = resumir(cot.lineas.map((l) => (l.cantidad > 1 ? `${l.cantidad} × ${l.nombre}` : l.nombre)));
     return { total: cot.subtotal, transferencia: cot.conTransferencia, resumen };

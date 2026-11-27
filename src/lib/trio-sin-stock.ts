@@ -30,3 +30,17 @@ export function instruccionTrioSinStock(precio: string): string {
     `buscalo con las herramientas. No digas «lo anotamos» ni «queda agendado».`
   );
 }
+
+/**
+ * Combos que hoy no se ofrecen y su reemplazo en los carritos que arma el bot y en el recordatorio (27/11: sin dátiles, el Trío con
+ * dátiles se cambia por el Trío de la mañana; a Eduardo le llegó «Trío con dátiles $30.000» después
+ * de que el bot le dijo que no había). Vaciar el mapa cuando vuelvan los dátiles.
+ */
+export const COMBO_REEMPLAZO: Record<string, string> = { "trio-de-frutos-secos": "trio-de-la-manana" };
+
+export function reemplazarCombos(camino: string): string {
+  let c = camino;
+  for (const [de, a] of Object.entries(COMBO_REEMPLAZO)) c = c.split(`c-${de}*`).join(`c-${a}*`);
+  return c;
+}
+

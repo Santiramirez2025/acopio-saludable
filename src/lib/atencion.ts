@@ -16,7 +16,7 @@ import { cotizarEnvioChat, envioZonaPropia } from "./envio-chat";
 import { argumentoCombo } from "./combos-tema";
 import { responderComoVendedor, vendedorActivo, type Turno } from "./vendedor";
 import { enviarSaliente, enviarTexto, marcarLeido, paraWhatsapp } from "./whatsapp-cloud";
-import { TRIO_SLUG, hablaDelTrio, instruccionTrioSinStock } from "./trio-sin-stock";
+import { TRIO_SLUG, hablaDelTrio, instruccionTrioSinStock, reemplazarCombos } from "./trio-sin-stock";
 import { ordenarParaVer, primerNombre, leerToque, pagaAlRecibir, confirmaPedido, asienteAlCierre, aceptamosAlRecibir, pideDatosTransferencia, vaATransferir, planDeNada, planSinApuro, soloAgradece, tieneDireccion, soloDireccion, planTrae, planVer, planWhatsapp, postergaCompra, noPorAhora, CIERRE_NO_POR_AHORA, pidePreciosPorKilo, textoPreciosPorKilo, MARCA_PRECIOS_POR_KILO, esPrimerPedidoDePrecios, esToqueReactivacion, textoPrimeraListaPorKilo, OPCIONES_ZONA_PRIMERA_LISTA, quiereVer, textoParaPanel, sinRepreguntarCiudad, nombraElTrio, textoComboSinIA, preguntaQueTraeElCombo, textoQueTraeSinIA, preguntaDondeEstan, textoDondeEstanSinIA, aceptaComboOfrecido, textoPideDireccionSinIA, type PedidoArmado, type Saliente, listaDeProductos } from "./whatsapp-interactivo";
 import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { clienteNombraFueraDeZona, envioCotizadoEnCharla, lugarDelHistorial, pideCambioDePedido, sumarLineas } from "./pedido-charla";
@@ -521,7 +521,7 @@ export async function atender(e: Entrada): Promise<void> {
   // Si la charla es del Trío y no hay nada guardado, lo que confirma es el Trío.
   if (canal === "whatsapp" && !guardado && texto.length <= 60 && (confirmaPedido(texto) || pagaAlRecibir(texto) || /^\s*(ok|okey|dale|bueno|si|sí)\b/i.test(texto))) {
     const h = await historialDe(e.clave, 12);
-    if (hablaDelTrio(h.map((x) => x.texto))) guardado = `/carrito?p=c-${TRIO_SLUG}*1`;
+    if (hablaDelTrio(h.map((x) => x.texto))) guardado = reemplazarCombos(`/carrito?p=c-${TRIO_SLUG}*1`);
   }
   // Solo si el último envío que le dijimos no es de otra zona (Córdoba capital, correo): ahí lo ve el vendedor.
   const ultimoEnvio = [...(await historialDe(e.clave, 9))].reverse().find((h) => h.de === "acopio" && /Envío a [^:]+:/.test(h.texto))?.texto.match(/Envío a ([^:]+):/)?.[1];

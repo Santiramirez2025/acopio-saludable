@@ -132,3 +132,9 @@ test("26/11 Myriam y Su: calles con nombre de provincia no sacan de la zona", ()
   assert.equal(_fuera([], "Av. Colón 1234, Córdoba"), true);
   assert.equal(_fuera([], "Soy de Mendoza"), true);
 });
+
+import { reemplazarCombos as _rc } from "./trio-sin-stock";
+test("sin dátiles, el carrito del Trío pasa al Trío de la mañana (Eduardo 27/11)", () => {
+  assert.equal(_rc("/carrito?p=c-trio-de-frutos-secos*1,p-LG-MIEL*1"), "/carrito?p=c-trio-de-la-manana*1,p-LG-MIEL*1");
+  assert.equal(_rc("/carrito?p=c-despensa-4-kilos*1"), "/carrito?p=c-despensa-4-kilos*1");
+});
