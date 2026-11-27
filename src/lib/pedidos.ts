@@ -28,6 +28,7 @@ export * from "./pedido-calculos";
 // Renglon y aItemDePedido viven en pedido-calculos (sin base de datos) y ya salen por el `export *` de arriba.
 import { aItemDePedido, type Renglon } from "./pedido-calculos";
 import { telefonoFin } from "./telefono";
+import { puedeSumarAOrden } from "./sumar-pedido";
 
 /** Abre productos y combos en renglones con precio y costo. Solo entra lo que hoy se vende. */
 export async function expandirCarrito(entrada: unknown, cfg: Config): Promise<Renglon[]> {
@@ -524,7 +525,8 @@ export async function compraPorProveedor(items: Parameters<typeof listaDeCompra>
  */
 export async function sumarAOrden(orderId: number, lineas: { tipo: "producto" | "combo"; id: string; cantidad: number }[]): Promise<{ total: number; agregado: string } | null> {
   const o = await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } });
-  if (!o || !["PENDIENTE_PAGO", "PAGADO"].includes(o.estado)) return null;
+  // 27/11 (seguridad): a un pedido ya cobrado no se le suma nada solo (lo agregado saldría como pagado sin cobrarse).
+  if (!o || !puedeSumarAOrden(o)) return null;
   const cfg = await leerConfig();
   const [cot, renglones] = await Promise.all([cotizarCarrito(lineas), expandirCarrito(lineas, cfg)]);
   if (!renglones.length || !cot.subtotal) return null;

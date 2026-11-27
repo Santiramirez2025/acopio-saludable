@@ -22,6 +22,7 @@ import { enlacePedido, leerPedido } from "./pedido-enlace";
 import { clienteNombraFueraDeZona, envioCotizadoEnCharla, lugarDelHistorial, pideCambioDePedido, sumarLineas } from "./pedido-charla";
 import { combosTienda, cotizarCarrito, productosTienda } from "./tienda";
 import { completarEntrega, crearPedidoWhatsapp, numeroPedido, sumarAOrden } from "./pedidos";
+import { avisarCambioNoCargado } from "./sumar-pedido";
 import { dioPorCerrada } from "./whatsapp-recordatorio";
 import { AVISOS_WHATSAPP, avisarSantiago } from "./avisos";
 import { fotosOportunas } from "./galeria";
@@ -1063,16 +1064,17 @@ export async function pensar(c: {
   let nuevas = respuesta.acciones?.length ? lineasDeAcciones(respuesta.acciones) : [];
   // 26/11 (María Ilda, AS-180: «te confirmo 2 tríos» → «Quedan 2 Tríos, $51.000» y se entregó uno): con el pedido ya
   // tomado y sin salir, lo que suma va al MISMO pedido. Antes armaba un carrito aparte y el pedido quedaba igual.
-  if (ordenId && nuevas.length && (estadoOrden === "PENDIENTE_PAGO" || estadoOrden === "PAGADO") && c.canal === "whatsapp") {
+  // 27/11 (seguridad): solo a un pedido sin cobrar. A uno PAGADO lo agregado saldría como pagado sin cobrarse: va el aviso.
+  if (ordenId && nuevas.length && estadoOrden === "PENDIENTE_PAGO" && c.canal === "whatsapp") {
     const sumado = await sumarAOrden(ordenId, nuevas).catch((e) => { console.error("sumar al pedido", e); return null; });
     if (sumado) {
       nuevas = [];
       respuesta = { ...respuesta, acciones: [], reemplazaPedido: false };
     }
-  } else if (ordenId && estadoOrden === "PENDIENTE_PAGO" && !nuevas.length && pideCambioDePedido(c.texto)) {
-    // Pidió cambiar el pedido y el vendedor no lo sumó con la herramienta: que no se pierda. Queda escrito en el
-    // pedido y le llega el aviso a Santiago para revisarlo antes del reparto.
-    await prisma.orderEvent.create({ data: { orderId: ordenId, estado: "PENDIENTE_PAGO", nota: `⚠️ CAMBIO A REVISAR: «${c.texto.slice(0, 200)}»` } }).catch(() => null);
+  } else if (ordenId && avisarCambioNoCargado(estadoOrden) && ((estadoOrden === "PAGADO" && nuevas.length) || (!nuevas.length && pideCambioDePedido(c.texto)))) {
+    // Pidió cambiar el pedido y el vendedor no lo sumó con la herramienta (o el pedido ya está cobrado): que no se
+    // pierda. Queda escrito en el pedido y le llega el aviso a Santiago para revisarlo (y cobrar la diferencia) antes del reparto.
+    await prisma.orderEvent.create({ data: { orderId: ordenId, estado: estadoOrden as "PENDIENTE_PAGO" | "PAGADO", nota: `⚠️ CAMBIO A REVISAR${estadoOrden === "PAGADO" ? " (pedido ya cobrado: falta cobrar lo nuevo)" : ""}: «${c.texto.slice(0, 200)}»` } }).catch(() => null);
     const { avisarSantiago } = await import("./avisos");
     await avisarSantiago(`Cambio en AS-${String(ordenId).padStart(5, "0")}`, `⚠️ AS-${String(ordenId).padStart(5, "0")}: el cliente pidió un cambio y no quedó cargado: «${c.texto.slice(0, 200)}». Revisalo antes del reparto.`, { mail: false }).catch(() => false);
   }
