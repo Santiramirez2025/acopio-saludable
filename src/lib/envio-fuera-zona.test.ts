@@ -145,3 +145,12 @@ test("preguntar el banco es pedir los datos (María Inés 27/11)", () => {
   assert.equal(_pdt("no encuentro ningún carrito por favor decime vos el banco"), true);
   assert.equal(_pdt("ya te transferí"), false);
 });
+
+import { tieneDireccion as _td } from "./whatsapp-interactivo";
+test("«la promo de 24» o lo que pidió una amiga no es una dirección (Laura AS-192, 27/11)", () => {
+  assert.equal(_td("Mi amiga pidió la promo de 24 y todavía la está esperando"), false);
+  assert.equal(_td("quiero el de 30 mil"), false);
+  assert.equal(_td("la promo de 24 a Saavedra 165"), true);
+  assert.equal(_td("Atahualpa 513"), true);
+  assert.equal(_td("Pasteur 221 dpto 7"), true);
+});

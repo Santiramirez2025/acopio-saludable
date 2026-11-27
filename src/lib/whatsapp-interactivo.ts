@@ -539,6 +539,15 @@ export function tieneDireccion(texto: string): boolean {
     .replace(/\b\d{1,2} ?[:.] ?\d{2}\b( ?hs?\b)?/g, " ")
     .replace(/\b(a|hasta|desde|despues de|antes de|tipo|como a|entre|y|estoy|estare|llego|vuelvo|salgo|seguro|exacto)( (la|las))? \d{1,2}\b( ?(hs?|horas?|y media|y cuarto|en punto)\b)?/g, " ")
     .replace(/\b\d{1,2} ?(hs|horas?)\b/g, " ");
+  // 27/11 (Laura, AS-192): «Mi amiga pidió la promo de 24 y todavía la está esperando» se tomó como domicilio
+  // («promo de 24» = palabra + número) y se le creó un pedido «Va a Mi amiga pidió la promo…». Un precio («la promo
+  // de 24», «el de 30 mil», «24 lucas») o lo que pidió otra persona no es una dirección.
+  if (/\b(mi|una|la) (amiga|amigo|vecina|vecino|hermana|hermano|mama|hija|hijo|prima|tia|suegra|cunada)\b[^.]*\b(pidio|encargo|compro|esta esperando|espera)\b/.test(t)) return false;
+  const sinPrecios = t
+    .replace(/\b(promo|promocion|oferta|combo|trio|precio|pack|kit)( (de|a|por|del?))? \d{1,3}\b/g, " ")
+    .replace(/\b(la|el|los|las) de \d{1,3}\b/g, " ")
+    .replace(/\b\d{1,3} ?(mil|lucas|luquitas)\b/g, " ");
+  if (sinPrecios !== t && !/\b[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b/.test(sinPrecios) && !/\b(calle|avenida|av\.|esquina|barrio|b°|manzana|lote|depto|departamento|piso)\b/.test(sinPrecios)) return false;
   // La palabra «dirección» sola no es un domicilio: tiene que venir como «mi/la dirección es …» o «dirección: …».
   if (/\b(mi|la) direccion (es|seria)\b|\bdireccion ?:/.test(t) && t.replace(/.*\bdireccion (es|seria)?:? ?/, "").trim().length >= 4) return true;
   return /\b(calle|avenida|av\.|pasaje|esquina|barrio|b°|manzana|lote|depto|departamento|piso|casa (blanca|azul|verde|amarilla|roja|gris|de|con))\b/.test(t) || /\b(?!quiero|dame|mandame|sumame|agregame|son|sale|cuesta|precio|total|hasta|cada|minimo|compra)[a-z]{3,}(?: [a-z]{2,})? \d{1,5}\b(?! ?(kg|kilos?|k\b|gr|gramos|g\b|unid|unidades|u\b|pesos|\$|%|x\b|cajas?|bolsas?|paquetes?|recetas?|productos?|meses|dias|personas))/.test(t);
