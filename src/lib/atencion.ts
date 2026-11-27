@@ -1130,7 +1130,11 @@ export async function pensar(c: {
   }
   // A una duda de confianza se le contesta la duda: sin el resumen ni los botones de pago en ese mensaje
   // (salvo que en ese mismo mensaje haya pedido algo nuevo). El pedido guardado no cambia.
-  const pedidoParaMostrar = esDudaDeConfianza(c.texto) && !nuevas.length ? null : pedido;
+  // 27/11 (auditoría, Santiago: «escribimos mucho, mareamos al cliente»): el resumen «• … Total: $X» salía en cada
+  // mensaje aunque el pedido no cambiara (Myriam, Isabel, Cristina, Angie). Si ese mismo total ya se le mostró en
+  // los últimos mensajes y no sumó nada, no se repite.
+  const totalYaMostrado = Boolean(pedido && !nuevas.length && c.historial.slice(-6).some((h) => h.de === "acopio" && h.texto.includes(`Total: ${pedido.total}`)));
+  const pedidoParaMostrar = (esDudaDeConfianza(c.texto) && !nuevas.length) || totalYaMostrado ? null : pedido;
   let salientes = derivar ? [{ tipo: "texto" as const, texto: DERIVADO }] : planWhatsapp(respuesta, pedidoParaMostrar);
   // Sin repetir: si el resumen del pedido o la pregunta de la zona ya salieron en los últimos
   // mensajes, no se mandan de nuevo. A Juan le llegó tres veces lo mismo y eso molesta.
@@ -1155,6 +1159,46 @@ export async function pensar(c: {
     mediaYa.add(n);
     return true;
   });
+  // 27/11 (auditoría de 163 charlas: a 10 se les volvió a preguntar la ciudad que ya habían dicho, y a 15 el mismo
+  // «¿Te lo dejo listo?» dos a cuatro veces). Pasada final sobre lo que sale:
+  //  - si ya sabemos de dónde es (lo dijo, o ya hay un envío cotizado o un pedido con ciudad), fuera «¿de qué barrio/ciudad sos?»;
+  //  - si el mensaje anterior nuestro ya terminaba con la misma pregunta de cierre y no sumó nada, no se repite;
+  //  - a quien se despide o lo deja para después, ninguna pregunta.
+  const sabeLugarFinal =
+    yaDijoLugar || Boolean(respuesta.envio) || Boolean(lugarDelHistorial([...c.historial, { de: "yo", texto: c.texto }])) || Boolean(orden?.ciudad && !/a confirmar/i.test(orden.ciudad));
+  const PREG_LUGAR = /\s*¿[^?]*\b(de qu[eé] (barrio|ciudad|zona|localidad)|en qu[eé] (barrio|ciudad|zona)|sos de (villa )?carlos paz|de d[oó]nde (sos|son|me escrib))[^?]*\?/gi;
+  const PREG_CIERRE = /\s*¿[^?]*\b(te lo (dejo|dejamos) (listo|armado|as[ií])|lo (dejamos|dejo) (listo|armado|as[ií])|te lo armo|te lo armamos|lo cerramos|te lo separo|te lo separamos|lo confirmamos)[^?]*\?/gi;
+  const ultimoNuestro = [...c.historial].reverse().find((h) => h.de === "acopio" && !/^\[(Foto|Video)\]/.test(h.texto))?.texto ?? "";
+  const yaPreguntoCierre = new RegExp(PREG_CIERRE.source, "i").test(ultimoNuestro);
+  const limpiar = (t: string) => {
+    let x = t;
+    if (sabeLugarFinal) x = x.replace(PREG_LUGAR, "");
+    if (yaPreguntoCierre && !nuevas.length) x = x.replace(PREG_CIERRE, "");
+    if (cierraCharla) x = x.replace(/\s*¿[^?]*\?\s*$/g, "");
+    return x.replace(/[ \t]+\n/g, "\n").trim();
+  };
+  salientes = salientes
+    .map((s) => (s.tipo === "texto" ? { ...s, texto: limpiar(s.texto) } : s.tipo === "botones" || s.tipo === "cta" ? { ...s, cuerpo: limpiar(s.cuerpo) } : s))
+    .filter((s) => (s.tipo === "texto" ? s.texto.length > 0 : s.tipo === "botones" || s.tipo === "cta" ? s.cuerpo.length > 0 : true));
+  // Si ya se sabe el lugar, los botones de zona sobran: queda el texto solo.
+  if (sabeLugarFinal) {
+    salientes = salientes.map((s) =>
+      s.tipo === "botones" && s.botones.some((b) => b.id.startsWith("zona|")) ? { tipo: "texto" as const, texto: s.cuerpo } : s,
+    );
+  }
+  // Una imagen por respuesta como mucho, y ninguna si la respuesta anterior nuestra ya fue una imagen
+  // (a Isabel, que preguntó si abrimos los domingos, le llegó el video de los dátiles). Salvo que pida verlas.
+  const pideVer = /\b(foto|fotos|imagen|imagenes|im[aá]genes|video|ver como|mostrame|muestra|mostra)\b/i.test(c.texto);
+  if (!pideVer) {
+    const anteriorFueMedia = /^\[(Foto|Video)\]/.test([...c.historial].reverse().find((h) => h.de === "acopio")?.texto ?? "") && c.historial.slice(-3).filter((h) => h.de === "yo").length <= 1;
+    let medias = 0;
+    salientes = salientes.filter((s) => {
+      if (!/^\[(Foto|Video)\]/.test(textoParaPanel(s))) return true;
+      if (anteriorFueMedia) return false;
+      medias++;
+      return medias <= 1;
+    });
+  }
   // Con la dirección ya en el pedido, nunca se vuelve a pedir (17 charlas la recibieron dos veces; a Clau, con el pedido cargado).
   if (tieneCalle) {
     salientes = salientes.map((s) => (s.tipo === "texto" && /calle y n[uú]mero/i.test(s.texto) ? { ...s, texto: s.texto.replace(/\s*¿[^?]*calle y n[uú]mero[^?]*\?/gi, "").trim() } : s)).filter((s) => s.tipo !== "texto" || s.texto.length > 0);

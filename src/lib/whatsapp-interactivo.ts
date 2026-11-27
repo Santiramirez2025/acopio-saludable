@@ -9,6 +9,7 @@
 // venta (lo quiero, la zona del envío, cómo paga). Una pregunta para conocer al cliente («¿para tu casa o
 // para un negocio?») va en texto, sin botones: con botones en cada mensaje la charla parecía un menú.
 
+import { faltaHoy } from "./stock-dia";
 import { esNombreDePila } from "./nombres-comunes";
 import { claves, palabrasDeRespaldo } from "./lista-palabras";
 import { PAGO_AL_RECIBIR } from "./politica";
@@ -390,6 +391,7 @@ export function textoPreciosPorKilo(
   const kilos = productos.filter((p) => esUnKilo(p) && p.precio > 0);
   const renglones: string[] = [];
   for (const l of LISTA_POR_KILO) {
+    if (faltaHoy(l.etiqueta)) continue;
     const p = kilos.find((k) => l.si.test(norm(k.producto)) && !(l.no && l.no.test(norm(k.producto))));
     if (p) renglones.push(`• ${l.etiqueta} ${pesos(p.precio)}`);
   }
@@ -451,6 +453,7 @@ export function textoPrimeraListaPorKilo(
   const kilos = productos.filter((p) => esUnKilo(p) && p.precio > 0);
   const renglones: string[] = [];
   for (const l of LISTA_POR_KILO) {
+    if (faltaHoy(l.etiqueta)) continue;
     const p = kilos.find((k) => l.si.test(norm(k.producto)) && !(l.no && l.no.test(norm(k.producto))));
     if (p) renglones.push(`• ${l.etiqueta} ${pesos(p.precio)}`);
   }
@@ -501,6 +504,9 @@ export function pideDatosTransferencia(texto: string, ultimoNuestro = ""): boole
   // 20/11 (Rossana): «Cárcano 2830 carlos paz, pasame el aluas porfavor» → el bot no lo reconoció y esperó 4 h el alias.
   // Se aceptan los errores de tipeo comunes de «alias» (aluas, alis, allias, alais, aliass).
   if (/\b(al+[iu]a?s+|alais|cbu|cvu)\b/.test(t)) return true;
+  // 27/11 (María Inés, 75 años, Alta Gracia): «para hacer la transferencia c q banco trabajan» y «decime vos el banco»
+  // → el bot la mandó tres veces a buscar el carrito de la web. Preguntar el banco o la cuenta es pedir los datos.
+  if (/\b(que|q|cual|con que|c q) banco\b|\bdecime (vos )?el banco\b|\b(a )?que cuenta\b|\bdonde (te )?(transfiero|deposito)\b|\bpara (hacer )?(la )?transferencia\b/.test(t)) return true;
   if (/\b(pasame|pasa|mandame|manda|enviame|dame|pasan|mandan|necesito) (los |tus |sus )?datos( (para|de) (la )?(transferir|transferencia|pago|pagar))?\b/.test(t)) return true;
   if (/\b(quiero|prefiero|voy a|lo|te) (pagar |pago |hago )?(por |con |una )?transferencia\b/.test(t) && /\b(pasame|mandame|dame|datos|cuenta|ya)\b/.test(t)) return true;
   const ofrecimos = /datos (para|de) (transferir|la transferencia|pagar|pago)/.test(limpio(ultimoNuestro));

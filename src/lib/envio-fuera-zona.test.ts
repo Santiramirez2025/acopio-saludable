@@ -138,3 +138,10 @@ test("sin dátiles, el carrito del Trío pasa al Trío de la mañana (Eduardo 27
   assert.equal(_rc("/carrito?p=c-trio-de-frutos-secos*1,p-LG-MIEL*1"), "/carrito?p=c-trio-de-la-manana*1,p-LG-MIEL*1");
   assert.equal(_rc("/carrito?p=c-despensa-4-kilos*1"), "/carrito?p=c-despensa-4-kilos*1");
 });
+
+import { pideDatosTransferencia as _pdt } from "./whatsapp-interactivo";
+test("preguntar el banco es pedir los datos (María Inés 27/11)", () => {
+  assert.equal(_pdt("Y para hacer la transferencia c q banco trabajan"), true);
+  assert.equal(_pdt("no encuentro ningún carrito por favor decime vos el banco"), true);
+  assert.equal(_pdt("ya te transferí"), false);
+});

@@ -35,6 +35,6 @@ test("vendedor: no promete protecciones de Mercado Pago sin verificar", () => {
 
 test("atención: a la duda de confianza no le van los botones de pago", () => {
   const src = readFileSync(new URL("./atencion.ts", import.meta.url), "utf8");
-  assert.match(src, /esDudaDeConfianza\(c\.texto\) && !nuevas\.length \? null : pedido/);
+  assert.match(src, /\(esDudaDeConfianza\(c\.texto\) && !nuevas\.length\) \|\| totalYaMostrado \? null : pedido/);
   assert.match(src, /guardarPedido: pedido\?\.camino/);
 });
