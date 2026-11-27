@@ -1,6 +1,6 @@
 // Reglas puras de la atención por WhatsApp (sin base ni red), separadas para poder probarlas.
 
-import { hablaDeFueraDeZona } from "./envio-zona";
+import { hablaDeFueraDeZona, PLAZO_CORREO, zonaDeLugar } from "./envio-zona";
 
 /**
  * Un mensaje sin texto (foto, audio, archivo) solo pasa al vendedor si ya sabemos qué es.
@@ -73,11 +73,13 @@ export function notaPlazoEntrega(estado: string | null | undefined, ciudad?: str
     return " Es al recibir: sale en el reparto de las 16 del día acordado y lo paga cuando lo recibe. Si pregunta si viene, confirmale el día y que el cadete le escribe al llegar. Nunca le hables de pagar antes ni de «antes de las 15».";
   // 13/11: con el pedido de Córdoba Capital la regla de la zona («antes de las 15 sale hoy») no corre.
   if (ciudad && hablaDeFueraDeZona(ciudad))
-    return " Este pedido es fuera de Carlos Paz y la zona: sale en 24 a 48 h hábiles (más el plazo del correo si va por correo). No le digas «sale hoy» ni «si pagás antes de las 15».";
+    return zonaDeLugar(ciudad, null)?.tipo === "capital"
+      ? " Este pedido es fuera de Carlos Paz y la zona: sale en 24 a 48 h hábiles, en el viaje a Córdoba. No le digas «sale hoy» ni «si pagás antes de las 15»."
+      : ` Este pedido es fuera de Carlos Paz y la zona. No le digas «sale hoy» ni «si pagás antes de las 15».${PLAZO_CORREO}`;
   // 13/11 (Martín): antes decía solo «24 a 48 h, no prometas día ni hora» también a los PENDIENTE_PAGO, y eso
   // contradecía la regla de cobro del 12/11 («pagado antes de las 15, sale hoy a las 16»), justo en la etapa
   // donde esa certeza es lo que hace pagar. Ahora el pedido sin pagar recibe la regla del reparto.
-  const correo = " Fuera de Carlos Paz y la zona (por correo): despacho en 24 a 48 h hábiles más el plazo del correo.";
+  const correo = ` Fuera de Carlos Paz y la zona (por correo):${PLAZO_CORREO}`;
   if (estado === "PENDIENTE_PAGO")
     return ` Si pregunta cuándo se lo llevan (Carlos Paz y la zona): el reparto sale de lunes a sábado a las 16 (los domingos no hay reparto); si lo paga antes de las 15, sale ese mismo día, y si paga después, al día siguiente de reparto desde las 16. Nunca digas «todos los días». Podés decirlo para cerrar el pago («si lo pagás antes de las 15, hoy a la tarde lo tenés»). No prometas una hora exacta de llegada: el chico del reparto le escribe para coordinar.${correo}`;
   return ` Si pregunta cuándo se lo llevan (Carlos Paz y la zona): sale en el reparto de las 16, de lunes a sábado (los domingos no hay reparto; nunca digas «todos los días»); el día del reparto le avisamos y el chico del reparto le escribe para coordinar el horario. No prometas una hora exacta de llegada.${correo}`;

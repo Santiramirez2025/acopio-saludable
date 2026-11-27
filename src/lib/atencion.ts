@@ -51,7 +51,6 @@ import { transcribirAudio } from "./oir-audio";
 import { aplicarComprobante, leerComprobante, type ResultadoComprobante } from "./comprobante";
 import { esReclamoDeProducto, textoReclamo, charlaTieneComprobante, clienteDiceQuePago, equipoDijoQueVa, esDudaDeConfianza, esperaElPedido, hoyEnArgentina, llegaAlVendedor, notaPedidoQueSalio, notaPedidoSinPagar, notaPlazoEntrega, soloAcuse, yaMandoComprobante, sinPreguntaDeCortesia } from "./atencion-reglas";
 import { completarDireccion, direccionDeUbicacion, leerDireccionDeFoto } from "./direccion-cliente";
-import { REALES } from "./galeria";
 import { prisma } from "./prisma";
 import { MARCA_PROVEEDOR } from "./whatsapp-proveedores";
 import { telefonoFin } from "./telefono";
@@ -808,8 +807,12 @@ export async function pensar(c: {
     return { salientes, respuesta: { texto: salientes[0] ? textoParaPanel(salientes[0]) : "" }, derivar: false, conIA: false };
   }
   if (!c.toque && !preguntaAbierta && postergaCompra(c.texto)) {
-    const yaMandoReal = c.historial.some((h) => h.de === "acopio" && h.texto.includes("Así llega tu pedido"));
-    const salientes = planSinApuro(c.nombre, urlSitio(), yaMandoReal ? undefined : `${urlSitio()}${REALES[0] ? "/img/galeria/real-asi-llega.jpg" : ""}`);
+    // La zona del cliente, si ya la dijo (la última que nombró) o si ya le cotizamos el envío.
+    const dichos = [...c.historial.filter((h) => h.de === "yo").map((h) => h.texto), c.texto].reverse();
+    const lugarDicho = dichos.map((t) => zonaDeLugar(t, null)).find((z) => z !== null) ?? null;
+    const lugarCotizado = lugarDelHistorial(c.historial);
+    const zona = (lugarDicho ?? (lugarCotizado ? zonaDeLugar(lugarCotizado, null) : null))?.tipo ?? null;
+    const salientes = planSinApuro(c.nombre, urlSitio(), zona);
     return { salientes, respuesta: { texto: textoParaPanel(salientes[0]) }, derivar: false, conIA: false };
   }
   // 22/11 (Selva): tocó «Ver el carrito» y la IA le preguntó «¿qué es lo que lo hace pensarlo?». Se le manda el link.

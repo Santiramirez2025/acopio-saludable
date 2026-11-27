@@ -876,9 +876,16 @@ test("postergar la compra: se le da tiempo, sin pedido ni zonas", () => {
   const [s] = planSinApuro("Gloria Pérez", "https://x.com");
   assert.equal(s.tipo, "texto");
   assert.ok(s.tipo === "texto" && s.texto.startsWith("¡Dale, Gloria!"));
-  const [foto, b] = planSinApuro("Ana", "https://x.com", "https://x.com/img/galeria/real-asi-llega.jpg");
-  assert.equal(foto.tipo, "imagen");
-  assert.equal(b.tipo, "texto");
+  // 27/11 (Nico): un solo texto, sin foto, y la zona solo si la sabemos.
+  const solo = planSinApuro("Ana", "https://x.com", "propia");
+  assert.equal(solo.length, 1);
+  assert.ok(solo[0].tipo === "texto" && /En Carlos Paz y la zona/.test(solo[0].texto));
+  const cba = planSinApuro("Roberto", "https://x.com", "capital");
+  assert.ok(cba[0].tipo === "texto" && !/Carlos Paz/.test(cba[0].texto) && /A Córdoba/.test(cba[0].texto));
+  const correo = planSinApuro("Gladis", "https://x.com", "correo");
+  assert.ok(correo[0].tipo === "texto" && !/cuando te llega|al recibir|Carlos Paz/.test(correo[0].texto));
+  const nada = planSinApuro("Hugo", "https://x.com", null);
+  assert.ok(nada[0].tipo === "texto" && !/Carlos Paz|Córdoba|correo/.test(nada[0].texto));
 });
 
 import { leerEntrante, partirMarca, sinIds } from "./whatsapp-media";
@@ -1153,28 +1160,28 @@ import { fotosOportunas } from "./galeria";
 test("imágenes oportunas: en el momento justo y sin repetir", () => {
   const vacio: { de: "yo" | "acopio"; texto: string }[] = [];
   // Duda → foto real
-  assert.equal(fotosOportunas({ entrante: "¿es confiable?", respuesta: "Somos de Carlos Paz", historial: vacio })[0].url, "/img/galeria/real-asi-llega.jpg");
+  assert.equal(fotosOportunas({ faltantes: [],  entrante: "¿es confiable?", respuesta: "Somos de Carlos Paz", historial: vacio })[0].url, "/img/galeria/real-asi-llega.jpg");
   // Combo nombrado → su imagen
-  assert.equal(fotosOportunas({ entrante: "qué me recomendás", respuesta: "Te conviene la Despensa de 4 kilos a $35.227", historial: vacio })[0].url, "/img/galeria/combo-despensa-4-kilos.jpg");
+  assert.equal(fotosOportunas({ faltantes: [],  entrante: "qué me recomendás", respuesta: "Te conviene la Despensa de 4 kilos a $35.227", historial: vacio })[0].url, "/img/galeria/combo-despensa-4-kilos.jpg");
   // Producto preguntado y cotizado → su imagen
-  assert.equal(fotosOportunas({ entrante: "precio nueces?", respuesta: "La nuez sale $24.872 el kilo", historial: vacio })[0].url, "/img/galeria/producto-nuez.jpg");
+  assert.equal(fotosOportunas({ faltantes: [],  entrante: "precio nueces?", respuesta: "La nuez sale $24.872 el kilo", historial: vacio })[0].url, "/img/galeria/producto-nuez.jpg");
   // Ya se mandó → no se repite
   const conFoto = [{ de: "acopio" as const, texto: "[Foto] Despensa de 4 kilos" }];
-  assert.equal(fotosOportunas({ entrante: "y la despensa?", respuesta: "La Despensa de 4 kilos sale $35.227", historial: conFoto }).filter((f) => !f.url.endsWith(".mp4")).length, 0);
+  assert.equal(fotosOportunas({ faltantes: [],  entrante: "y la despensa?", respuesta: "La Despensa de 4 kilos sale $35.227", historial: conFoto }).filter((f) => !f.url.endsWith(".mp4")).length, 0);
   // 12/11: el video de venta sale una sola vez por tema
   const conVideo = [{ de: "acopio" as const, texto: "[Video] Así armamos tu mix de frutos secos, a mano y el mismo día · Mix clásico con cajú $12.500 el kilo" }];
-  assert.ok(!fotosOportunas({ entrante: "y la nuez?", respuesta: "La nuez sale $20.500", historial: conVideo }).some((f) => f.url.endsWith(".mp4")));
+  assert.ok(!fotosOportunas({ faltantes: [],  entrante: "y la nuez?", respuesta: "La nuez sale $20.500", historial: conVideo }).some((f) => f.url.endsWith(".mp4")));
   // Tope de 8 por charla (25/11: «más imágenes, no tanto texto»; antes 4)
   const tres = ["a", "b", "c", "d", "e", "f", "g", "h"].map((x) => ({ de: "acopio" as const, texto: `[Foto] ${x}` }));
-  assert.equal(fotosOportunas({ entrante: "¿es confiable?", respuesta: "sí", historial: tres }).length, 0);
+  assert.equal(fotosOportunas({ faltantes: [],  entrante: "¿es confiable?", respuesta: "sí", historial: tres }).length, 0);
   // Charla común sin disparador → nada
-  assert.equal(fotosOportunas({ entrante: "hola", respuesta: "¡Hola! ¿Qué estás buscando?", historial: vacio }).length, 0);
+  assert.equal(fotosOportunas({ faltantes: [],  entrante: "hola", respuesta: "¡Hola! ¿Qué estás buscando?", historial: vacio }).length, 0);
   // Pidió una granola: no va la foto del mix (Lorenzo)
-  assert.equal(fotosOportunas({ entrante: "Hola! Quiero Granola proteica Sport x 1 kg", respuesta: "La granola sale $14.200", historial: vacio }).length, 0);
+  assert.equal(fotosOportunas({ faltantes: [],  entrante: "Hola! Quiero Granola proteica Sport x 1 kg", respuesta: "La granola sale $14.200", historial: vacio }).length, 0);
   // 12/11: el vendedor ofrece un combo con precio → va su foto, para que vea qué trae antes de pagar
-  assert.equal(fotosOportunas({ entrante: "quiero algo para el desayuno", respuesta: "Te recomiendo el Trío del desayuno a $21.500", historial: vacio })[0].url, "/img/galeria/combo-trio-del-desayuno.jpg");
+  assert.equal(fotosOportunas({ faltantes: [],  entrante: "quiero algo para el desayuno", respuesta: "Te recomiendo el Trío del desayuno a $21.500", historial: vacio })[0].url, "/img/galeria/combo-trio-del-desayuno.jpg");
   // «mix de semillas» es semillas, no el mix de frutos secos (Olga y Graciela)
-  assert.equal(fotosOportunas({ entrante: "cuánto el mix de semillas?", respuesta: "El mix de semillas sale $5.200", historial: vacio })[0].url, "/img/galeria/producto-mix-semillas.jpg");
+  assert.equal(fotosOportunas({ faltantes: [],  entrante: "cuánto el mix de semillas?", respuesta: "El mix de semillas sale $5.200", historial: vacio })[0].url, "/img/galeria/producto-mix-semillas.jpg");
 });
 
 test("imágenes oportunas: el primer «precios por kilo» va con la imagen del mix", () => {
@@ -1713,10 +1720,10 @@ test("vendedor: una «lista» sin productos no reemplaza la respuesta (Graciela 
 });
 
 test("cobro anticipado: «lo pienso» no promete pagar al recibir", () => {
-  const plan = planSinApuro("Ana", "Acopio Saludable", "https://x/foto.jpg");
+  const plan = planSinApuro("Ana", "Acopio Saludable", "correo");
   const texto = JSON.stringify(plan);
   assert.doesNotMatch(texto, /reci[eé]n ah[ií] (pag|decid)|decid[ií]s si lo pag|sin compromiso|en tu puerta|al recibir|antes de pagar|tra[eé]melo/i);
-  assert.ok(plan.some((s) => s.tipo === "imagen"));
+  assert.ok(plan.every((s) => s.tipo === "texto"));
 });
 
 test("prospección del sistema: exclusiones, mails válidos y ventana de envío", async () => {

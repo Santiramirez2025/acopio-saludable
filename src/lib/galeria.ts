@@ -6,6 +6,7 @@
 
 import { hablaDeFueraDeZona } from "./envio-zona";
 import { avisoReparto } from "./salida-reparto";
+import { SIN_STOCK_HOY } from "./stock-dia";
 
 const BASE = "/img/galeria";
 
@@ -132,6 +133,25 @@ export const REALES = [
 
 const url = (archivo: string) => `${BASE}/${archivo}.jpg`;
 
+// 27/11 (Cerrador, Noelia AS-190): sin dátiles, el bot le mandó la foto del «Trío de frutos secos: mix con cajú,
+// dátiles y pasas $24.000», la de la «Despensa 4 kg con dátiles» y el video de los dátiles. Lo que falta hoy
+// (stock-dia.ts, la misma lista del bot y de la web) no sale en ninguna foto ni video, ni los combos que lo traen.
+// Cuando se vacía SIN_STOCK_HOY, todo vuelve solo.
+const COMBOS_QUE_TRAEN: Record<string, string[]> = {
+  datil: ["trio-de-frutos-secos", "trio-del-desayuno", "pan-dulce-casero", "despensa-4-kilos"],
+};
+const sinTildesMin = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const raiz = (etiqueta: string) => sinTildesMin(etiqueta).replace(/(es|s)$/, "");
+/** La foto o video muestra algo que hoy falta (por el pie, por el archivo o por el combo que nombra). Puro. */
+export function muestraFaltante(f: { url: string; pie: string }, faltantes: { etiqueta: string }[] = SIN_STOCK_HOY): boolean {
+  const pie = sinTildesMin(`${f.pie} ${f.url}`);
+  const combo = /\{combo:([a-z0-9-]+)\}/.exec(f.pie)?.[1] ?? Object.entries(COMBOS).find(([, archivo]) => f.url.includes(`/${archivo}.`))?.[0];
+  return faltantes.some((x) => {
+    const r = raiz(x.etiqueta);
+    return r.length >= 3 && (pie.includes(r) || Boolean(combo && COMBOS_QUE_TRAEN[r]?.includes(combo)));
+  });
+}
+
 export function imagenCombo(slug: string): string | null {
   return COMBOS[slug] ? url(COMBOS[slug]) : null;
 }
@@ -185,7 +205,8 @@ const PRODUCTOS_TEXTO: [RegExp, string, string][] = [
   [/almendra/i, "producto-almendras", "Almendras · {precio:TG-ALMGUARA} el kilo"],
   [/caj[uú]/i, "producto-caju", "Castañas de cajú · {precio:TG-CAJU} el kilo"],
   [/d[aá]til/i, "producto-datiles", "Dátiles con carozo · {precio:LG-DATIL} el kilo"],
-  [/\bpasas?\b/i, "producto-pasas", "Pasas de uva · {precio:TG-PASAS} el kilo"],
+  // «¿me pasas los precios?» es el verbo, no las pasas de uva.
+  [/\bpasas? de uva\b|\bpasas\b(?!\s+(el|la|los|las|un|una|tu|precios?|lista|info|alias|cbu|direcci))/i, "producto-pasas", "Pasas de uva · {precio:TG-PASAS} el kilo"],
   [/\bmix\b(?! de semillas)/i, "producto-mix-clasico", "Mix clásico con cajú · {precio:TG-MIXC} el kilo"],
 ];
 // 14/11: «harina de almendras», «pasta de maní crocante» o lo que es por encargo no son la almendra ni el mix
@@ -226,7 +247,7 @@ export function videoDatilesVieneAlCaso(entrante: string): boolean {
 const NO_QUIERE = /no (me sirve|gracias|quiero|me interesa)|muy caro|lo compro (ac[aá]|en otro)|despu[eé]s (te )?aviso|m[aá]s adelante/i;
 const DUDA = /estafa|confi[aá]|confiable|es seguro|son de verdad|existen|tienen local|d[oó]nde est[aá]n|ver antes|c[oó]mo (llega|viene)|empaque|calidad|fresc/i;
 
-function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean }): FotoOportuna[] {
+function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; faltantes?: { etiqueta: string }[] }): FotoOportuna[] {
   // 12/11: con el Mix clásico sin stock, la foto de «el más pedido» mostraba algo que no se podía vender (Elvira).
   const masPedido = (): FotoOportuna | null =>
     a.mixClasicoDisponible === false ? candidata("combo-trio-del-desayuno", "Trío del desayuno: semillas, dátiles y pasas") : candidata("combo-trio-de-frutos-secos", "Trío de frutos secos: mix con cajú, dátiles y pasas · el más pedido") ?? candidata("producto-mix-clasico", "Mix clásico con cajú · el más pedido");
@@ -235,7 +256,7 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
   // 12/11 (Santiago): «todas las ventas con imágenes, entra por los ojos». Hasta 4 fotos por charla, nunca repetida.
   if (yaMandadas.length >= TOPE_CHARLA) return [];
   const yaSalio = (pie: string) => yaMandadas.some((t) => t.toLowerCase().includes(nombreDePie(pie)));
-  const candidata = (archivo: string, pie: string): FotoOportuna | null => (yaSalio(pie) ? null : { url: url(archivo), pie });
+  const candidata = (archivo: string, pie: string): FotoOportuna | null => (yaSalio(pie) || muestraFaltante({ url: url(archivo), pie }, a.faltantes) ? null : { url: url(archivo), pie });
   const real = REALES[0];
 
   // 1. Duda o desconfianza: la foto real convence más que cualquier texto.
@@ -278,12 +299,16 @@ function fotosBase(a: { entrante: string; respuesta: string; combos?: string[]; 
     }
   }
   // 4. Preguntó por un producto con imagen y le contestamos el precio.
+  // 27/11 (Nico: Rosa, Carlos, Mab): con la lista de precios o la explicación del mix salía la foto de la «Nuez
+  // mariposa», porque la nuez es la primera de la tabla que aparece en el texto. La foto va del producto que pidió
+  // la persona; por lo que dice la respuesta, solo si nombra un único producto. Si no, ninguna.
   if (/\$\s?\d/.test(a.respuesta) && !esDerivado(a)) {
-    for (const [re, archivo, pie] of PRODUCTOS_TEXTO) {
-      if (re.test(a.entrante) || re.test(a.respuesta)) {
-        const f = candidata(archivo, pie);
-        if (f) return [f];
-      }
+    const pedido = PRODUCTOS_TEXTO.find(([re]) => re.test(a.entrante));
+    const enRespuesta = PRODUCTOS_TEXTO.filter(([re]) => re.test(a.respuesta));
+    const elegido = pedido ?? (enRespuesta.length === 1 ? enRespuesta[0] : undefined);
+    if (elegido) {
+      const f = candidata(elegido[1], elegido[2]);
+      if (f) return [f];
     }
   }
   // 4b. Vuelve por la reactivación o un seguimiento («Sí, pasame precios») y le contestamos con precios: entra por los ojos.
@@ -310,7 +335,7 @@ const VIDEOS: [RegExp, string, string][] = [
   // (CONFIANZA PRIMERO) y salía junto con foto y texto: tres mensajes por una pregunta (Norberto).
 ];
 
-export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number }): FotoOportuna[] {
+export function fotosOportunas(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number; faltantes?: { etiqueta: string }[] }): FotoOportuna[] {
   // 21/11 (Santiago): «Enviar fotos es clave. La foto es lo que más vende, no puede faltar», pero sin saturar:
   // Norberto recibió la MISMA foto del Trío dos veces y un video en 3 minutos; Leila, foto + video + texto.
   // Reglas: una imagen por respuesta (nunca foto + video juntos), nunca la misma imagen dos veces en la charla,
@@ -321,12 +346,12 @@ export function fotosOportunas(a: { entrante: string; respuesta: string; combos?
   // «Trío de frutos secos · mix…» y «Trío de frutos secos: mix…» son la misma foto: se compara el nombre (hasta «·» o «:»).
   const yaSalio = (f: FotoOportuna) => nuestras.some((t) => t.toLowerCase().includes(nombreDePie(f.pie)));
   return fotosOportunasSinTope(a)
-    .filter((f) => !yaSalio(f) && !(yaVideo && /\.mp4$/i.test(f.url)))
+    .filter((f) => !yaSalio(f) && !(yaVideo && /\.mp4$/i.test(f.url)) && !muestraFaltante(f, a.faltantes))
     // 25/11 (Santiago, por María Ilda: «más imágenes, no tanto texto»): si pide ver qué más hay, van hasta 3 kits juntos.
     .slice(0, PIDE_OPCIONES.test(a.entrante) ? Math.min(3, TOPE_CHARLA - nuestras.length) : 1);
 }
 
-function fotosOportunasSinTope(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number }): FotoOportuna[] {
+function fotosOportunasSinTope(a: { entrante: string; respuesta: string; combos?: string[]; historial: Turno[]; mixClasicoDisponible?: boolean; ahoraMs?: number; faltantes?: { etiqueta: string }[] }): FotoOportuna[] {
   const fotos = fotosBase(a);
   const nuestros = a.historial.filter((t) => t.de === "acopio").map((t) => t.texto);
   // 25/11 (Santiago): «mandarle video de los dátiles cuando piden el Trío, sin música, como el de la web».
