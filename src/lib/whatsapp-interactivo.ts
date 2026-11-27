@@ -679,20 +679,21 @@ export function planDeNada(nombre: string | null): Saliente[] {
   return [{ tipo: "texto", texto: `¡De nada${quien}! Cualquier cosa nos escribís por acá 🙌` }];
 }
 
-export function planSinApuro(nombre: string | null, tienda: string, fotoReal?: string): Saliente[] {
+/**
+ * «Lo pienso / te aviso»: un solo texto, sin foto y sin botones (27/11, Nico: salía foto + texto, 2 mensajes, 6 veces
+ * en el día). La zona se nombra solo si la sabemos: a Roberto (Córdoba Capital) le llegó «En Carlos Paz y la zona…».
+ * Córdoba Capital y Malagueño van en el viaje a Córdoba y también pagan al recibir (22/11); por correo, nada de «al recibir».
+ */
+export function planSinApuro(nombre: string | null, tienda: string, zona?: "propia" | "capital" | "correo" | null): Saliente[] {
   const n = primerNombre(nombre);
   const quien = n ? `, ${n}` : "";
-  // «Lo pienso» es donde más se corta la venta. En vez de soltar, una foto real y una sola pregunta de cierre blando.
-  const foto: Saliente[] = fotoReal ? [{ tipo: "imagen", url: fotoReal, pie: "Así llega tu pedido: en bolsa kraft, fraccionado y con una nota para vos" }] : [];
-  // Sin botones: a quien pide tiempo no se le pone un menú adelante. Una frase cálida y una puerta abierta.
   void tienda;
-  return [
-    ...foto,
-    {
-      tipo: "texto",
-      texto: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado. En Carlos Paz y la zona te lo llevamos nosotros y lo pagás cuando te llega. Si te queda alguna duda, preguntame por acá nomás.`,
-    },
-  ];
+  const entrega =
+    zona === "propia" ? " En Carlos Paz y la zona te lo llevamos nosotros y lo pagás cuando te llega."
+    : zona === "capital" ? " A Córdoba te lo llevamos nosotros en el viaje y lo pagás cuando te llega."
+    : zona === "correo" ? " Te lo mandamos por correo, con número de seguimiento."
+    : "";
+  return [{ tipo: "texto", texto: `¡Dale${quien}! Sin apuro 🙌 Te lo dejo guardado.${entrega} Si te queda alguna duda, preguntame por acá nomás.` }];
 }
 
 // «Ver combos»: primero los que vendemos (la Alacena es la oferta de entrada, la Mesa navideña es la de la temporada,

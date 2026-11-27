@@ -105,10 +105,16 @@ export function conMinimoFueraDeZona(envio: EnvioCotizado, compraMinima: number,
 }
 
 /** Lo que el bot recibe de costo_envio: el costo y, fuera de la zona, el mínimo con una propuesta para llegar. */
+/**
+ * 27/11 (Nico): a Cristina se le dijo «24 a 48 h hábiles» y a Gladis «3 a 9 días hábiles» por el mismo correo.
+ * Un solo texto en todo el bot: las dos partes juntas (despacho + correo), nunca el despacho solo como si fuera la llegada.
+ */
+export const PLAZO_CORREO = " Plazo por correo, siempre con las dos partes y en este orden: «sale en 24 a 48 h hábiles y el correo tarda <el plazo que dio cotizar_envio para esa provincia>»; si todavía no cotizaste, «y el correo tarda de 2 a 7 días hábiles según la provincia». Nunca digas «24 a 48 h» solo, como si fuera cuándo llega, ni sumes un total por tu cuenta.";
+
 export function instruccionCostoEnvio(envio: EnvioCotizado): string {
   if (envio.zonaPropia)
     return `${envio.detalle} Es zona de reparto propio: no hay compra mínima, no le hables de mínimo, de correo ni de sumar productos para llegar. Decíselo en una frase y, si ya eligió algo, decile que abajo le quedan los botones para pagar. No vuelvas a agregar el pedido: ya está guardado.`;
-  const plazo = " No le digas «sale hoy» ni «si pagás antes de las 15»: eso es solo para Carlos Paz y la zona; acá el plazo es 24 a 48 h hábiles (más el correo si va por correo).";
+  const plazo = ` No le digas «sale hoy» ni «si pagás antes de las 15»: eso es solo para Carlos Paz y la zona.${PLAZO_CORREO}`;
   if (envio.faltaMinimo && envio.compraMinima)
     return `${envio.detalle} Decile en UN mensaje el costo del envío Y la compra mínima de ${pesos(envio.compraMinima)} (nunca el envío solo: sin el mínimo el checkout no lo deja pagar). Proponé UNA forma concreta de llegar con lo que ya eligió, sumando lo que más deja (nuez o mix con cajú; precios de buscar_productos de este turno), con el total, y preguntá si se lo armás así. No le digas que abajo están los botones para pagar todavía.${plazo}`;
   return `${envio.detalle} Decíselo en una frase y, si ya eligió algo, decile que abajo le quedan los botones para pagar. No vuelvas a agregar el pedido: ya está guardado.${plazo}`;
