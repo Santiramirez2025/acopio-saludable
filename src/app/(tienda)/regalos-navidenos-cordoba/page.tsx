@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { leerConfig } from "@/lib/config";
 import { combosTienda, productosTienda, type ComboTienda } from "@/lib/tienda";
+import { comboConFaltante, nombreFaltaHoy } from "@/lib/faltante-web";
 import { pesos } from "@/lib/precios";
 import { textoEntregaZona, textoZonaSinMinimo, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { textoComoPagar } from "@/lib/como-pagar";
@@ -34,8 +35,9 @@ export default async function RegalosNavidenosCordoba() {
     combosTienda({ slug: { in: COMBOS_NAVIDAD } }),
     productosTienda({ where: { codigo: { in: PRODUCTOS_NAVIDAD } } }),
   ]);
-  const combos = todos.filter((c) => c.disponible).sort((a, b) => COMBOS_NAVIDAD.indexOf(a.slug) - COMBOS_NAVIDAD.indexOf(b.slug));
-  const ordenados = [...productos].sort((a, b) => PRODUCTOS_NAVIDAD.indexOf(a.codigo) - PRODUCTOS_NAVIDAD.indexOf(b.codigo));
+  // Lo que falta hoy (stock-dia.ts) no se ofrece: ni el combo que lo trae ni el producto suelto.
+  const combos = todos.filter((c) => c.disponible && !comboConFaltante(c)).sort((a, b) => COMBOS_NAVIDAD.indexOf(a.slug) - COMBOS_NAVIDAD.indexOf(b.slug));
+  const ordenados = productos.filter((p) => !nombreFaltaHoy(p.producto)).sort((a, b) => PRODUCTOS_NAVIDAD.indexOf(a.codigo) - PRODUCTOS_NAVIDAD.indexOf(b.codigo));
   const minimo = pesos(umbralZona(cfg));
   const sinMinimo = zonaSinMinimo(cfg);
   const bolsa = combos.find((c) => c.slug === "regalo-navideno");

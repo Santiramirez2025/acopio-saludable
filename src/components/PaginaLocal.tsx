@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { leerConfig } from "@/lib/config";
 import { wherePublicado } from "@/lib/filtros-producto";
 import { combosTienda, productosTienda } from "@/lib/tienda";
+import { comboConFaltante, nombreFaltaHoy } from "@/lib/faltante-web";
 import { pesos } from "@/lib/precios";
 import { textoEntregaZona, textoCompraMinima, umbralZona, zonaSinMinimo } from "@/lib/minimo-zona";
 import { textoComoPagar } from "@/lib/como-pagar";
@@ -18,11 +19,14 @@ export async function PaginaLocal({ lugar }: { lugar?: Localidad }) {
   const cfg = await leerConfig();
   // Córdoba Capital: llega nuestro reparto con costo fijo, igual que dice /envios.
   const zonaPaga = propia ? null : zonaPagaDe(cfg.tabla);
-  const [destacados, combos, conteos] = await Promise.all([
-    productosTienda({ orderBy: [{ gancho: "desc" }, { vendidos: "desc" }], take: 8 }),
+  const [masPedidos, todosCombos, conteos] = await Promise.all([
+    productosTienda({ orderBy: [{ gancho: "desc" }, { vendidos: "desc" }], take: 10 }),
     combosTienda({ tipo: "COMBO", activo: true }),
     prisma.product.groupBy({ by: ["categoria"], where: wherePublicado(cfg.margenMinimoPct), _count: true, orderBy: { _count: { categoria: "desc" } } }),
   ]);
+  // Lo que falta hoy (stock-dia.ts) no se muestra en la página local: ni suelto ni dentro de un combo.
+  const destacados = masPedidos.filter((p) => !nombreFaltaHoy(p.producto)).slice(0, 8);
+  const combos = todosCombos.filter((c) => !comboConFaltante(c));
   const categorias = conteos.filter((c) => c.categoria !== "Sin categoría");
   const preguntas: [string, string][] = [
     ["¿Tienen local a la calle en Villa Carlos Paz?", "No. Somos una dietética online con base en Villa Carlos Paz: pedís por la web y te lo llevamos a tu casa o a tu negocio."],
