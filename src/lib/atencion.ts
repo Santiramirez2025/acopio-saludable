@@ -671,6 +671,16 @@ export async function atender(e: Entrada): Promise<void> {
       `Venta por cerrar: ${e.nombre ?? e.clave}`,
       `🛒 El vendedor le dijo a ${e.nombre ?? e.clave} que el pedido queda agendado, pero no hay pedido creado en el panel (falta llegar al mínimo o elegir cómo paga). Revisalo: ${urlSitio()}/admin/whatsapp?c=${e.clave}`,
     ).catch((err) => console.error("aviso de venta por cerrar falló", err));
+    // 27/11 (Santiago): «que te avise a vos también, así la cerrás vos». El aviso queda como orden para el
+    // Cerrador, que la toma primero en su próxima corrida (cada 30 minutos), sin que Santiago tenga que reenviarla.
+    await import("./agentes-chat")
+      .then(({ guardarOrden }) =>
+        guardarOrden(
+          "ventas",
+          `PRIORIDAD: ventas — VENTA POR CERRAR ${e.clave} (${e.nombre ?? "sin nombre"}): el bot le dijo que queda agendado y no hay pedido. Leé la charla y cerrala (crear el pedido o pedir lo que falte, un solo mensaje). Bot dijo: «${dichoAhora.slice(0, 220)}»`,
+        ),
+      )
+      .catch((err) => console.error("orden de venta por cerrar falló", err));
   }
 
   if (p.derivar && p.sinIA) {
