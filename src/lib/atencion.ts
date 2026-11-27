@@ -1055,7 +1055,10 @@ export async function pensar(c: {
     // 23/11: Monica («prefiero pasar a buscar yo») recibió dos veces la despedida del bot + «¿Me pasás calle y número…?». Si la respuesta ya es una despedida, no se le cuelga la pregunta.
     || /\b(cuando (quieras|quieran|necesites|puedas|llegues|lo combines)|si m[aá]s adelante|gracias por (escribir|la charla)|no pasa nada|que tengas? (una )?(linda|buena)|que disfrutes|gracias por (la|tu) compra|buen viaje|buenas noches)\b/i.test(respuesta.texto ?? "")
     // 25/11 noche: Romina («Gracias a vos!!! Saludos!!») y Roberto («Te llamo cuando esté en Carlos Paz») recibieron la despedida + la pregunta de cierre pegada.
-    || /\b(te llamo|los? llamo|saludos|gracias a (vos|ustedes)|ya (lo )?combino|te aviso|les aviso|vemos (el|y)|hasta (luego|ma[ñn]ana|pronto))\b/i.test(c.texto);
+    || /\b(te llamo|los? llamo|saludos|gracias a (vos|ustedes)|ya (lo )?combino|te aviso|les aviso|vemos (el|y)|hasta (luego|ma[ñn]ana|pronto))\b/i.test(c.texto)
+    // 27/11 (Bety: «Buen finde para ustedes también» / «Bendiciones») → le llegó «¿De qué barrio o ciudad sos?» pegado a la despedida.
+    || /\b(bendicion(es)?|buen (finde|fin de semana|d[ií]a)|igualmente|un abrazo|besos|nos hablamos|cuando me organice)\b/i.test(c.texto)
+    || /\b(nos escrib[ií]s|cuando te organices|buen finde|igual para vos)\b/i.test(respuesta.texto ?? "");
   const yaDijoLugar = [...c.historial.filter((h) => h.de === "yo").map((h) => h.texto), c.texto].some((t) => zonaDeLugar(t, null) !== null);
   if (!derivar && respuesta.texto && !/\?/.test(respuesta.texto) && !estadoOrden && !soloAcuse(c.texto) && !cierraCharla && c.canal === "whatsapp") {
     const sabeLugar = yaDijoLugar || Boolean(respuesta.envio) || Boolean(lugarDelHistorial([...c.historial, { de: "yo", texto: c.texto }]));
