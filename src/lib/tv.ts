@@ -4,6 +4,7 @@
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
+import { igualesSeguro } from "./freno";
 
 export const COOKIE_TV = "acopio_tv";
 const DIAS_SESION = 365;
@@ -26,6 +27,13 @@ async function leerCodigo(codigo: string): Promise<{ d: Codigo; fecha: Date } | 
 
 async function escribirCodigo(codigo: string, d: Codigo) {
   await prisma.$executeRaw`INSERT INTO "CronCorrida" ("nombre", "ok", "detalle") VALUES (${`tv-${codigo}`}, ${d.aprobado}, ${JSON.stringify(d)})`;
+}
+
+/** Cuántos códigos de TV se crearon en los últimos 10 minutos (para el tope global de /api/tv/codigo). */
+export async function codigosTvRecientes(): Promise<number> {
+  const desde = new Date(Date.now() - MIN_CODIGO * 60_000);
+  const r = await prisma.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM "CronCorrida" WHERE "nombre" ~ '^tv-[0-9]{6}$' AND "ok" = false AND "fecha" >= ${desde}`;
+  return r[0]?.n ?? 0;
 }
 
 /** La TV pide un código nuevo. */
@@ -51,7 +59,7 @@ export async function vincularCodigo(codigo: string): Promise<boolean> {
 /** La TV pregunta si ya la aprobaron. Si sí, devuelve el token de sesión (una sola vez). */
 export async function canjearCodigo(codigo: string, secreto: string): Promise<{ estado: "esperando" | "listo" | "vencido"; token?: string }> {
   const c = await leerCodigo(codigo);
-  if (!c || c.d.secreto !== secreto || c.d.usado) return { estado: "vencido" };
+  if (!c || !igualesSeguro(secreto, c.d.secreto) || c.d.usado) return { estado: "vencido" };
   if (!c.d.aprobado) return { estado: "esperando" };
   await escribirCodigo(codigo, { ...c.d, usado: true });
   const token = randomBytes(32).toString("base64url");

@@ -74,6 +74,18 @@ export function decidirLogin(fallos: { total: number; ip: number }): { admite: b
   };
 }
 
+/**
+ * Códigos para vincular una TV (/api/tv/codigo, ruta pública): cada pedido escribe una fila en la base.
+ * Una TV pide uno cada 9 minutos (cada 5 s si falla). Por IP: 10 cada 10 minutos. Global: hasta 60 códigos
+ * vivos (los últimos 10 minutos) en toda la tienda, así un script desde muchas IPs no llena la tabla.
+ */
+export const TV_CODIGO_MAX_POR_IP = 10;
+export const TV_CODIGO_VENTANA_MS = 10 * 60_000;
+export const TV_CODIGO_MAX_GLOBAL = 60;
+export function admiteCodigoTv(codigosUltimos10Min: number): boolean {
+  return codigosUltimos10Min < TV_CODIGO_MAX_GLOBAL;
+}
+
 /** Compara una firma o clave que llega de afuera con la esperada sin que el tiempo de respuesta delate cuántos caracteres acertó. */
 export function igualesSeguro(recibida: string, esperada: string): boolean {
   const a = Buffer.from(String(recibida));
