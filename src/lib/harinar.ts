@@ -9,21 +9,24 @@ export const COMPRAR_EN_HARINAR = ["girasol", "lino", "avena", "harina integral"
 /** Categorías de Pediwa que importan para Acopio (las demás son de panadería). */
 const CATEGORIAS = { 1039: "frutas secas", 1040: "cereales y semillas", 1044: "azúcar", 1042: "dulces y miel", 1050: "harinas", 1051: "almidón", 1047: "chocolates" } as const;
 
-/** Producto de Harinar ↔ de La Granja, con los kilos de cada presentación para comparar por kilo. */
+/** Producto de Harinar ↔ de La Granja, con los kilos de cada presentación para comparar por kilo.
+ *  28/11 (Pablo): del lado de La Granja se compara el BULTO que compramos para fraccionar (avena 30 kg, cajú 20 kg,
+ *  nuez y almendra 10 kg, pasas premium 10 kg; la lista ya trae el precio por kilo), no el paquete de 1 a 3 kg,
+ *  que daba alertas falsas (almendra «18% más barata en Harinar» cuando el bulto de La Granja es más barato). */
 export const EQUIVALENCIAS: { clave: string; harinar: RegExp; kgH: number; granja: RegExp; kgG: number }[] = [
   { clave: "girasol", harinar: /GIRASOL PELADA/, kgH: 1, granja: /^GIRASOL PELADO X 1 KG/, kgG: 1 },
   { clave: "lino", harinar: /SEMILLA DE LINO X 1/, kgH: 1, granja: /^LINO SEMILLAS X 1 KG/, kgG: 1 },
-  { clave: "avena", harinar: /AVENA GRUESA\s+X1 KG/, kgH: 1, granja: /AVENA ARROLLADA GRUESA MARCILLI X 3 KG/, kgG: 1 },
+  { clave: "avena", harinar: /AVENA GRUESA\s+X1 KG/, kgH: 1, granja: /^AVENA FINA X 30 KG/, kgG: 1 },
   { clave: "harina integral", harinar: /HARINA INTEGRAL CTIAL X 25/, kgH: 25, granja: /^HARINA INTEGRAL X 5 KG/, kgG: 1 },
   { clave: "salvado de trigo", harinar: /SALVADO DE TRIGO .*X 20/, kgH: 20, granja: /SALVADO DE TRIGO GRUESO X 2 KG/, kgG: 1 },
   { clave: "gluten", harinar: /^GLUTEN X 1 KG/, kgH: 1, granja: /GLUTEN DE TRIGO X 2.5 KG/, kgG: 1 },
   { clave: "gotas de chocolate", harinar: /GOTAS AGUILA\s+NEGRAS X 1 KG/, kgH: 1, granja: /GOTAS DE CHOCOLATE SEMIAMARGO X 1 KG/, kgG: 1 },
   { clave: "chía", harinar: /SEMILLA DE CHIA X 1/, kgH: 1, granja: /^CHIA SEMILLA X KG/, kgG: 1 },
   { clave: "sésamo integral", harinar: /SESAMO INTEGRAL X 1/, kgH: 1, granja: /^SESAMO INTEGRAL X 1 KG/, kgG: 1 },
-  { clave: "cajú", harinar: /CAJU X 1000/, kgH: 1, granja: /CASTAÑA DE CAJU SK3 X 1 KG/, kgG: 1 },
-  { clave: "nuez mariposa", harinar: /NUECES BLANCAS MARIPOZAS X 1/, kgH: 1, granja: /NUEZ MARIPOSA LIGHT X 1 KG/, kgG: 1 },
-  { clave: "almendra", harinar: /ALMENDRA NON PAREIL CHILE X 1/, kgH: 1, granja: /ALMENDRAS NON PAREIL X 1KG/, kgG: 1 },
-  { clave: "pasas", harinar: /PASAS DE UVA SIN SEMILLAS X 10/, kgH: 10, granja: /PASAS DE UVA SIN SEMILLA - CLASICA X 10 KG/, kgG: 1 },
+  { clave: "cajú", harinar: /CAJU X 1000/, kgH: 1, granja: /CASTA[ÑN]AS DE CAJU SK1 X 20 KG/, kgG: 1 },
+  { clave: "nuez mariposa", harinar: /NUECES BLANCAS MARIPOZAS X 1/, kgH: 1, granja: /^NUEZ MARIPOSA LIGHT X 10 KG/, kgG: 1 },
+  { clave: "almendra", harinar: /ALMENDRA NON PAREIL CHILE X 1/, kgH: 1, granja: /^ALMENDRAS NON PAREIL X 10 KG/, kgG: 1 },
+  { clave: "pasas", harinar: /PASAS DE UVA SIN SEMILLAS X 10/, kgH: 10, granja: /PASAS DE UVA SIN SEMILLA PREMIUM X 10 KG/, kgG: 1 },
   { clave: "mix tropical", harinar: /MIX FRUTA TROPICAL X 1/, kgH: 1, granja: /^MIX TROPICAL X 1 KG/, kgG: 1 },
   { clave: "mascabo", harinar: /MASCABO X 2.5/, kgH: 2.5, granja: /AZUCAR INTEGRAL MASCABO X 10 KG/, kgG: 1 },
   { clave: "miel", harinar: /MIEL PURA .* X 5 KG/, kgH: 5, granja: /DOS ZANGANOS - MIEL DE ABEJAS 6 X 1 KG/, kgG: 1 },

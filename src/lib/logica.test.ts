@@ -1755,6 +1755,13 @@ test("harinar: lee precios de Pediwa y compara por kilo con La Granja", async ()
   const lino = c.find((x) => x.producto === "lino")!;
   assert.equal(lino.conviene, "La Granja");
   assert.match(lino.alerta ?? "", /volver a comprarlo/);
+  // 28/11: La Granja se compara por el bulto que compramos (avena 30 kg, almendra 10 kg), no por el paquete chico.
+  const h2: [string, number, string][] = [["AVENA GRUESA  X1 KG", 1678.86, "x"], ["ALMENDRA NON PAREIL CHILE X 1 KG", 28152, "x"]];
+  const g2: [string, string, number][] = [["001-295", "AVENA ARROLLADA FINA MARCILLI X 3 KG", 2379], ["001-196", "AVENA FINA X 30 KG", 1590], ["981-025", "ALMENDRAS NON PAREIL X 1KG", 34249], ["981-001", "ALMENDRAS NON PAREIL X 10 KG", 24531]];
+  const c2 = comparar(h2, g2);
+  assert.equal(c2.find((x) => x.producto === "avena")!.granjaKg, 1590);
+  assert.match(c2.find((x) => x.producto === "avena")!.alerta ?? "", /volver a comprarlo/);
+  assert.equal(c2.find((x) => x.producto === "almendra")!.conviene, "La Granja");
 });
 
 import { esSinTacc, textosSeguros } from "./filtros-producto";
